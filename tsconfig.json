@@ -1,0 +1,35 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "commonjs",
+    "lib": ["ES2020"],
+    "declaration": true,
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "resolveJsonModule": true,
+    "moduleResolution": "node",
+    "composite": true,
+    "declarationMap": true
+  },
+  "files": [],
+  "include": [],
+  "exclude": ["node_modules", "dist", "**/dist", "**/node_modules", "packages", "example"],
+  "references": [
+    { "path": "./packages/core" },
+    { "path": "./packages/ai" },
+    { "path": "./packages/cache" },
+    { "path": "./packages/websocket" },
+    { "path": "./packages/serverless" },
+    { "path": "./packages/swagger" },
+    { "path": "./packages/prisma" },
+    { "path": "./packages/auth" },
+    { "path": "./packages/config" },
+    { "path": "./packages/cron" },
+    { "path": "./packages/cli" }
+  ],
+  "exclude": ["node_modules", "dist", "**/dist", "**/node_modules"]
+}

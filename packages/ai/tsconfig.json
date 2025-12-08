@@ -1,0 +1,23 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "skipLibCheck": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "composite": true,
+    "declarationMap": true,
+    "baseUrl": ".",
+    "skipLibCheck": true,
+    "paths": {
+      "@hazeljs/core": ["../core/src"],
+      "@hazeljs/cache": ["../cache/src"]
+    }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "**/*.test.ts", "**/node_modules/openai/src/**"],
+  "references": [
+    { "path": "../core" },
+    { "path": "../cache" }
+  ]
+}
+

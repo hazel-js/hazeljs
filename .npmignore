@@ -1,0 +1,74 @@
+# Source files (packages have their own .npmignore)
+packages/*/src/
+packages/*/*.ts
+!packages/*/*.d.ts
+
+# Tests
+**/*.test.ts
+**/*.spec.ts
+tests/
+coverage/
+.nyc_output/
+
+# Development files
+example/
+scripts/
+docs/
+benchmarks/
+
+# Configuration
+.eslintrc.js
+.eslintrc.strict.js
+.prettierrc
+tsconfig.json
+jest.config.js
+jest.setup.js
+docker-compose.yml
+.env
+.env.*
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Dependencies
+node_modules/
+
+# Build artifacts
+*.tsbuildinfo
+
+# Documentation (keep only essential)
+LINTING_TODO.md
+IMPROVEMENTS.md
+UPGRADE_SUMMARY.md
+POSTMAN_TESTS.md
+
+# Husky
+.husky/
+
+# Lint staged
+.lintstagedrc

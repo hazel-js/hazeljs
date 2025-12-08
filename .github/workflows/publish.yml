@@ -1,0 +1,97 @@
+name: Publish Package to NPM
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '23.x'
+          registry-url: 'https://registry.npmjs.org'
+      
+      - name: Extract version from tag
+        id: version
+        run: |
+          TAG_NAME=${GITHUB_REF#refs/tags/}
+          VERSION=${TAG_NAME#v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
+          echo "Extracted version: $VERSION from tag: $TAG_NAME"
+      
+      - name: Determine release tag
+        id: release-tag
+        run: |
+          if [[ "${{ steps.version.outputs.version }}" == *"beta"* ]] || [[ "${{ steps.version.outputs.version }}" == *"alpha"* ]] || [[ "${{ steps.version.outputs.version }}" == *"rc"* ]]; then
+            if [[ "${{ steps.version.outputs.version }}" == *"beta"* ]]; then
+              echo "tag=beta" >> $GITHUB_OUTPUT
+            elif [[ "${{ steps.version.outputs.version }}" == *"alpha"* ]]; then
+              echo "tag=alpha" >> $GITHUB_OUTPUT
+            else
+              echo "tag=rc" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "tag=latest" >> $GITHUB_OUTPUT
+          fi
+          echo "Release tag: $(cat $GITHUB_OUTPUT | grep tag= | cut -d'=' -f2)"
+      
+      - name: Update package versions
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          echo "Updating all package.json files to version: $VERSION"
+          
+          # Update root package.json
+          node -e "const fs=require('fs');const pkg=JSON.parse(fs.readFileSync('package.json'));pkg.version='$VERSION';fs.writeFileSync('package.json',JSON.stringify(pkg,null,2)+'\n')"
+          
+          # Update all package.json files in packages directory
+          find packages -name "package.json" -type f | while read -r file; do
+            echo "Updating $file"
+            node -e "const fs=require('fs');const pkg=JSON.parse(fs.readFileSync('$file'));pkg.version='$VERSION';fs.writeFileSync('$file',JSON.stringify(pkg,null,2)+'\n')"
+          done
+          
+          echo "Version update complete. Updated files:"
+          git diff --name-only
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build all packages
+        run: npm run build
+      
+      - name: Publish packages to NPM
+        run: |
+          RELEASE_TAG="${{ steps.release-tag.outputs.tag }}"
+          echo "Publishing with tag: $RELEASE_TAG"
+          
+          # Publish each package individually with the appropriate tag
+          for package in packages/*/; do
+            if [ -f "$package/package.json" ]; then
+              PACKAGE_NAME=$(node -e "console.log(require('$package/package.json').name)")
+              echo "Publishing $PACKAGE_NAME with tag $RELEASE_TAG"
+              cd "$package"
+              npm publish --tag "$RELEASE_TAG" --access public
+              cd - > /dev/null
+            fi
+          done
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.version.outputs.tag_name }}
+          name: Release ${{ steps.version.outputs.version }}
+          draft: false
+          prerelease: ${{ steps.release-tag.outputs.tag != 'latest' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
