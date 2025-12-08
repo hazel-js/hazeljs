@@ -11,4 +11,3 @@ export {
   getOperationMetadata,
 } from './swagger.decorator';
 export type { SwaggerOptions, SwaggerOperation, SwaggerSchema } from './swagger.types';
-

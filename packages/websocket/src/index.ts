@@ -36,4 +36,3 @@ export {
   type SubscriptionOptions,
   type WebSocketStats,
 } from './websocket.types';
-

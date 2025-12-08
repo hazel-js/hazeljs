@@ -28,6 +28,7 @@ describe('CLI', () => {
   });
 
   it('should register all generator commands', () => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     require('./index');
 
     expect(generateController).toHaveBeenCalled();

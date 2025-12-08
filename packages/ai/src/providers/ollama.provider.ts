@@ -62,7 +62,8 @@ export class OllamaProvider implements IAIProvider {
   private transformMessages(messages: AIMessage[]): string {
     return messages
       .map((msg) => {
-        const role = msg.role === 'assistant' ? 'Assistant' : msg.role === 'system' ? 'System' : 'User';
+        const role =
+          msg.role === 'assistant' ? 'Assistant' : msg.role === 'system' ? 'System' : 'User';
         return `${role}: ${msg.content}`;
       })
       .join('\n\n');
@@ -289,4 +290,3 @@ export class OllamaProvider implements IAIProvider {
     return ['llama2', 'mistral', 'nomic-embed-text'];
   }
 }
-

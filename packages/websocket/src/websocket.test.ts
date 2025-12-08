@@ -96,9 +96,9 @@ describe('RoomManager', () => {
 
       const rooms = roomManager.getAllRooms();
       expect(rooms).toHaveLength(3);
-      expect(rooms.map(r => r.name)).toContain('room1');
-      expect(rooms.map(r => r.name)).toContain('room2');
-      expect(rooms.map(r => r.name)).toContain('room3');
+      expect(rooms.map((r) => r.name)).toContain('room1');
+      expect(rooms.map((r) => r.name)).toContain('room2');
+      expect(rooms.map((r) => r.name)).toContain('room3');
     });
   });
 
@@ -335,10 +335,13 @@ describe('SSEHandler', () => {
     const connectionId = sseHandler.initConnection(mockReq, mockRes);
 
     expect(connectionId).toBeDefined();
-    expect(mockRes.writeHead).toHaveBeenCalledWith(200, expect.objectContaining({
-      'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache',
-    }));
+    expect(mockRes.writeHead).toHaveBeenCalledWith(
+      200,
+      expect.objectContaining({
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+      })
+    );
     expect(sseHandler.getConnectionCount()).toBe(1);
     expect(sseHandler.hasConnection(connectionId)).toBe(true);
   });
@@ -352,7 +355,7 @@ describe('SSEHandler', () => {
 
   it('should handle connection close', () => {
     const connectionId = sseHandler.initConnection(mockReq, mockRes);
-    
+
     // Simulate connection close
     const closeCallback = mockReq.on.mock.calls.find((call: any[]) => call[0] === 'close')?.[1];
     if (closeCallback) {
@@ -416,11 +419,13 @@ describe('SSEHandler', () => {
     expect(written).toContain('data: line3');
   });
 
-    it('should broadcast to all connections', () => {
-      const connectionId1 = sseHandler.initConnection(mockReq, mockRes);
-      const mockReq2 = { on: jest.fn() } as any;
-      const mockRes2 = { writeHead: jest.fn(), write: jest.fn(), end: jest.fn() } as any;
-      const connectionId2 = sseHandler.initConnection(mockReq2, mockRes2);
+  it('should broadcast to all connections', () => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const _connectionId1 = sseHandler.initConnection(mockReq, mockRes);
+    const mockReq2 = { on: jest.fn() } as any;
+    const mockRes2 = { writeHead: jest.fn(), write: jest.fn(), end: jest.fn() } as any;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const _connectionId2 = sseHandler.initConnection(mockReq2, mockRes2);
 
     sseHandler.broadcast({
       event: 'broadcast-event',
@@ -442,11 +447,11 @@ describe('SSEHandler', () => {
     expect(mockRes.end).toHaveBeenCalled();
   });
 
-    it('should close all connections', () => {
-      sseHandler.initConnection(mockReq, mockRes);
-      const mockReq2 = { on: jest.fn() } as any;
-      const mockRes2 = { writeHead: jest.fn(), write: jest.fn(), end: jest.fn() } as any;
-      sseHandler.initConnection(mockReq2, mockRes2);
+  it('should close all connections', () => {
+    sseHandler.initConnection(mockReq, mockRes);
+    const mockReq2 = { on: jest.fn() } as any;
+    const mockRes2 = { writeHead: jest.fn(), write: jest.fn(), end: jest.fn() } as any;
+    sseHandler.initConnection(mockReq2, mockRes2);
 
     expect(sseHandler.getConnectionCount()).toBe(2);
 
@@ -466,10 +471,13 @@ describe('SSEHandler', () => {
 
       createSSEResponse(mockRes);
 
-      expect(mockRes.writeHead).toHaveBeenCalledWith(200, expect.objectContaining({
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-      }));
+      expect(mockRes.writeHead).toHaveBeenCalledWith(
+        200,
+        expect.objectContaining({
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+        })
+      );
     });
 
     it('should include retry option', () => {
@@ -613,10 +621,10 @@ describe('WebSocketGateway', () => {
     it('should handle client connection', () => {
       const mockSocket = { send: jest.fn(), close: jest.fn() };
       const client = createWebSocketClient(mockSocket, 'client1');
-      
+
       // Access protected method via type assertion
       (gateway as any).handleConnection(client);
-      
+
       expect(gateway.getClientCount()).toBe(1);
       expect(gateway.getClient('client1')).toBeDefined();
     });
@@ -624,10 +632,10 @@ describe('WebSocketGateway', () => {
     it('should handle client disconnection', () => {
       const mockSocket = { send: jest.fn(), close: jest.fn() };
       const client = createWebSocketClient(mockSocket, 'client1');
-      
+
       (gateway as any).handleConnection(client);
       expect(gateway.getClientCount()).toBe(1);
-      
+
       (gateway as any).handleDisconnection('client1');
       expect(gateway.getClientCount()).toBe(0);
       expect(gateway.getClient('client1')).toBeUndefined();
@@ -641,12 +649,16 @@ describe('WebSocketGateway', () => {
     it('should handle incoming message', () => {
       const mockSocket = { send: jest.fn(), close: jest.fn() };
       const client = createWebSocketClient(mockSocket, 'client1');
-      
+
       (gateway as any).handleConnection(client);
-      
-      const message: WebSocketMessage = { event: 'test', data: { foo: 'bar' }, timestamp: Date.now() };
+
+      const message: WebSocketMessage = {
+        event: 'test',
+        data: { foo: 'bar' },
+        timestamp: Date.now(),
+      };
       (gateway as any).handleMessage('client1', message);
-      
+
       const stats = gateway.getStats();
       expect(stats.messagesReceived).toBe(1);
       expect(stats.bytesReceived).toBeGreaterThan(0);
@@ -655,13 +667,13 @@ describe('WebSocketGateway', () => {
     it('should get client by ID', () => {
       const mockSocket = { send: jest.fn(), close: jest.fn() };
       const client = createWebSocketClient(mockSocket, 'client1');
-      
+
       (gateway as any).handleConnection(client);
-      
+
       const retrieved = gateway.getClient('client1');
       expect(retrieved).toBeDefined();
       expect(retrieved?.id).toBe('client1');
-      
+
       const notFound = gateway.getClient('non-existent');
       expect(notFound).toBeUndefined();
     });
@@ -671,13 +683,13 @@ describe('WebSocketGateway', () => {
     it('should send message to specific client', () => {
       const mockSocket = { send: jest.fn(), close: jest.fn() };
       const client = createWebSocketClient(mockSocket, 'client1');
-      
+
       (gateway as any).handleConnection(client);
-      
+
       const result = gateway.sendToClient('client1', 'test-event', { data: 'test' });
       expect(result).toBe(true);
       expect(mockSocket.send).toHaveBeenCalled();
-      
+
       const stats = gateway.getStats();
       expect(stats.messagesSent).toBe(1);
     });
@@ -692,15 +704,15 @@ describe('WebSocketGateway', () => {
       const mockSocket2 = { send: jest.fn(), close: jest.fn() };
       const client1 = createWebSocketClient(mockSocket1, 'client1');
       const client2 = createWebSocketClient(mockSocket2, 'client2');
-      
+
       (gateway as any).handleConnection(client1);
       (gateway as any).handleConnection(client2);
-      
+
       gateway.broadcast('test-event', { data: 'broadcast' });
-      
+
       expect(mockSocket1.send).toHaveBeenCalled();
       expect(mockSocket2.send).toHaveBeenCalled();
-      
+
       const stats = gateway.getStats();
       expect(stats.messagesSent).toBe(2);
     });
@@ -710,12 +722,12 @@ describe('WebSocketGateway', () => {
       const mockSocket2 = { send: jest.fn(), close: jest.fn() };
       const client1 = createWebSocketClient(mockSocket1, 'client1');
       const client2 = createWebSocketClient(mockSocket2, 'client2');
-      
+
       (gateway as any).handleConnection(client1);
       (gateway as any).handleConnection(client2);
-      
+
       gateway.broadcast('test-event', { data: 'broadcast' }, 'client1');
-      
+
       expect(mockSocket1.send).not.toHaveBeenCalled();
       expect(mockSocket2.send).toHaveBeenCalled();
     });
@@ -725,18 +737,18 @@ describe('WebSocketGateway', () => {
       const mockSocket2 = { send: jest.fn(), close: jest.fn() };
       const client1 = createWebSocketClient(mockSocket1, 'client1');
       const client2 = createWebSocketClient(mockSocket2, 'client2');
-      
+
       (gateway as any).handleConnection(client1);
       (gateway as any).handleConnection(client2);
-      
+
       gateway.joinRoom('client1', 'room1');
       gateway.joinRoom('client2', 'room1');
-      
+
       gateway.broadcastToRoom('room1', 'test-event', { data: 'room-broadcast' });
-      
+
       expect(mockSocket1.send).toHaveBeenCalled();
       expect(mockSocket2.send).toHaveBeenCalled();
-      
+
       const stats = gateway.getStats();
       expect(stats.messagesSent).toBe(1);
     });
@@ -746,15 +758,15 @@ describe('WebSocketGateway', () => {
       const mockSocket2 = { send: jest.fn(), close: jest.fn() };
       const client1 = createWebSocketClient(mockSocket1, 'client1');
       const client2 = createWebSocketClient(mockSocket2, 'client2');
-      
+
       (gateway as any).handleConnection(client1);
       (gateway as any).handleConnection(client2);
-      
+
       gateway.joinRoom('client1', 'room1');
       gateway.joinRoom('client2', 'room1');
-      
+
       gateway.broadcastToRoom('room1', 'test-event', { data: 'room-broadcast' }, 'client1');
-      
+
       expect(mockSocket1.send).not.toHaveBeenCalled();
       expect(mockSocket2.send).toHaveBeenCalled();
     });
@@ -764,14 +776,14 @@ describe('WebSocketGateway', () => {
     it('should join room', () => {
       const mockSocket = { send: jest.fn(), close: jest.fn() };
       const client = createWebSocketClient(mockSocket, 'client1');
-      
+
       (gateway as any).handleConnection(client);
-      
+
       gateway.joinRoom('client1', 'room1');
-      
+
       expect(gateway.getClientRooms('client1')).toContain('room1');
       expect(gateway.getRoomClients('room1')).toContain('client1');
-      
+
       const stats = gateway.getStats();
       expect(stats.totalRooms).toBe(1);
     });
@@ -784,12 +796,12 @@ describe('WebSocketGateway', () => {
     it('should leave room', () => {
       const mockSocket = { send: jest.fn(), close: jest.fn() };
       const client = createWebSocketClient(mockSocket, 'client1');
-      
+
       (gateway as any).handleConnection(client);
-      
+
       gateway.joinRoom('client1', 'room1');
       expect(gateway.getClientRooms('client1')).toContain('room1');
-      
+
       gateway.leaveRoom('client1', 'room1');
       expect(gateway.getClientRooms('client1')).not.toContain('room1');
     });
@@ -804,13 +816,13 @@ describe('WebSocketGateway', () => {
       const mockSocket2 = { send: jest.fn(), close: jest.fn() };
       const client1 = createWebSocketClient(mockSocket1, 'client1');
       const client2 = createWebSocketClient(mockSocket2, 'client2');
-      
+
       (gateway as any).handleConnection(client1);
       (gateway as any).handleConnection(client2);
-      
+
       gateway.joinRoom('client1', 'room1');
       gateway.joinRoom('client2', 'room1');
-      
+
       const clients = gateway.getRoomClients('room1');
       expect(clients).toHaveLength(2);
       expect(clients).toContain('client1');
@@ -820,12 +832,12 @@ describe('WebSocketGateway', () => {
     it('should get client rooms', () => {
       const mockSocket = { send: jest.fn(), close: jest.fn() };
       const client = createWebSocketClient(mockSocket, 'client1');
-      
+
       (gateway as any).handleConnection(client);
-      
+
       gateway.joinRoom('client1', 'room1');
       gateway.joinRoom('client1', 'room2');
-      
+
       const rooms = gateway.getClientRooms('client1');
       expect(rooms).toHaveLength(2);
       expect(rooms).toContain('room1');
@@ -837,14 +849,14 @@ describe('WebSocketGateway', () => {
     it('should disconnect specific client', () => {
       const mockSocket = { send: jest.fn(), close: jest.fn() };
       const client = createWebSocketClient(mockSocket, 'client1');
-      
+
       (gateway as any).handleConnection(client);
       gateway.joinRoom('client1', 'room1');
-      
+
       expect(gateway.getClientCount()).toBe(1);
-      
+
       gateway.disconnectClient('client1');
-      
+
       expect(gateway.getClientCount()).toBe(0);
       expect(mockSocket.close).toHaveBeenCalled();
     });
@@ -859,12 +871,12 @@ describe('WebSocketGateway', () => {
       const mockSocket2 = { send: jest.fn(), close: jest.fn() };
       const client1 = createWebSocketClient(mockSocket1, 'client1');
       const client2 = createWebSocketClient(mockSocket2, 'client2');
-      
+
       (gateway as any).handleConnection(client1);
       (gateway as any).handleConnection(client2);
-      
+
       gateway.disconnectAll();
-      
+
       expect(gateway.getClientCount()).toBe(0);
       expect(mockSocket1.close).toHaveBeenCalled();
       expect(mockSocket2.close).toHaveBeenCalled();
@@ -886,11 +898,11 @@ describe('WebSocketGateway', () => {
     it('should update stats correctly', () => {
       const mockSocket = { send: jest.fn(), close: jest.fn() };
       const client = createWebSocketClient(mockSocket, 'client1');
-      
+
       (gateway as any).handleConnection(client);
       gateway.sendToClient('client1', 'test', {});
       gateway.joinRoom('client1', 'room1');
-      
+
       const stats = gateway.getStats();
       expect(stats.connectedClients).toBe(1);
       expect(stats.totalRooms).toBe(1);
@@ -1010,7 +1022,7 @@ describe('WebSocket Decorators', () => {
   describe('@Client', () => {
     it('should store client parameter metadata', () => {
       class TestGateway {
-        handleConnection(@Client() client: any) {}
+        handleConnection(@Client() _client: any) {}
       }
 
       const instance = new TestGateway();
@@ -1022,7 +1034,7 @@ describe('WebSocket Decorators', () => {
   describe('@Data', () => {
     it('should store data parameter metadata', () => {
       class TestGateway {
-        handleMessage(@Data() data: any) {}
+        handleMessage(@Data() _data: any) {}
       }
 
       const instance = new TestGateway();
@@ -1034,7 +1046,7 @@ describe('WebSocket Decorators', () => {
   describe('parameter decorators combination', () => {
     it('should handle multiple parameter decorators', () => {
       class TestGateway {
-        handleMessage(@Client() client: any, @Data() data: any) {}
+        handleMessage(@Client() _client: any, @Data() _data: any) {}
       }
 
       const instance = new TestGateway();

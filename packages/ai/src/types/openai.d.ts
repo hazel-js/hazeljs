@@ -4,4 +4,3 @@
 declare module 'openai/src/core' {
   export function _addRequestID<T>(json: unknown, response: T): T & { request_id?: string };
 }
-

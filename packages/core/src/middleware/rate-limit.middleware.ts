@@ -137,7 +137,7 @@ export class RateLimitMiddleware implements MiddlewareClass {
 
     // Set defaults
     this.options = {
-      keyGenerator: (req: Request) => {
+      keyGenerator: (req: Request): string => {
         const forwarded = req.headers?.['x-forwarded-for'];
         const ip = forwarded
           ? (Array.isArray(forwarded) ? forwarded[0] : forwarded.split(',')[0].trim())

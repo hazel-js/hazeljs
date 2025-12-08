@@ -27,6 +27,9 @@ module.exports = {
   overrides: [
     {
       files: ['**/*.test.ts'],
+      parserOptions: {
+        project: null, // Disable project for test files
+      },
       rules: {
         '@typescript-eslint/no-explicit-any': 'off',
         '@typescript-eslint/explicit-function-return-type': 'off',

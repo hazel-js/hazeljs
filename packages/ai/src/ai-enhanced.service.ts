@@ -79,7 +79,9 @@ export class AIEnhancedService {
       logger.info('Ollama provider registered (will check availability on first use)');
 
       if (this.providers.size === 0) {
-        logger.warn('No AI providers configured. Set API keys in environment variables or start Ollama server.');
+        logger.warn(
+          'No AI providers configured. Set API keys in environment variables or start Ollama server.'
+        );
       }
     } catch (error) {
       logger.error('Error initializing AI providers:', error);

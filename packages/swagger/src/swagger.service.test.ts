@@ -184,9 +184,9 @@ describe('SwaggerService', () => {
 
     it('should handle error during spec generation', (): void => {
       // Test error handling by making getSwaggerMetadata throw
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const swaggerDecorator = require('./swagger.decorator');
-      const originalGetSwaggerMetadata = swaggerDecorator.getSwaggerMetadata;
-      
+
       jest.spyOn(swaggerDecorator, 'getSwaggerMetadata').mockImplementation(() => {
         throw new Error('Metadata access error');
       });

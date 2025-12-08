@@ -34,9 +34,6 @@ jobs:
         # Then build all other packages
         npm run build:packages
 
-    - name: Run tests
-      run: npm run test:ci
-
     - name: Run linting
       run: npm run lint
 

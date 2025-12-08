@@ -5,7 +5,6 @@ import { PipeTransform, PipeMetadata } from './pipes/pipe';
 import { Interceptor, InterceptorMetadata } from './interceptors/interceptor';
 import { HazelApp } from './hazel-app';
 
-const MODULE_METADATA_KEY = 'hazel:module';
 const CONTROLLER_METADATA_KEY = 'hazel:controller';
 const INJECTABLE_METADATA_KEY = 'hazel:injectable';
 const ROUTE_METADATA_KEY = 'hazel:routes';
