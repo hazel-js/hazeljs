@@ -26,24 +26,20 @@ jobs:
     - name: Install dependencies
       run: npm ci
 
-    - name: Build
-      run: npm run build
+    - name: Build packages in order
+      run: |
+        # Build core first (it's a dependency for other packages)
+        npm run build:core
+        
+        # Then build all other packages
+        npm run build:packages
 
     - name: Run tests
       run: npm run test:ci
 
     - name: Run linting
-      run: npx eslint src/**/*.ts
+      run: npm run lint
 
     - name: Run security audit
       run: npm audit --audit-level=moderate
       continue-on-error: true
-
-    - name: Upload coverage reports
-      uses: codecov/codecov-action@v4
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-        fail_ci_if_error: false
-        flags: unittests
-        name: codecov-umbrella
-        verbose: true 
