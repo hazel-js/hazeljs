@@ -30,6 +30,7 @@ export class Container {
   private static instance: Container;
   private providers: Map<InjectionToken, ProviderMetadata> = new Map();
   private requestScopedProviders: Map<string, Map<InjectionToken, unknown>> = new Map();
+  private resolutionStack: Set<InjectionToken> = new Set();
 
   private constructor() {
     logger.info('Container initialized');
@@ -100,12 +101,16 @@ export class Container {
    */
   resolve<T>(token: InjectionToken<T>, requestId?: string): T {
     if (!token) {
-      logger.debug('No token provided for resolution');
+      if (logger.isDebugEnabled()) {
+        logger.debug('No token provided for resolution');
+      }
       return undefined as T;
     }
 
-    const tokenName = this.getTokenName(token);
-    logger.debug(`Resolving dependency: ${tokenName}`);
+    if (logger.isDebugEnabled()) {
+      const tokenName = this.getTokenName(token);
+      logger.debug(`Resolving dependency: ${tokenName}`);
+    }
 
     // Check if provider is registered
     const metadata = this.providers.get(token);
@@ -119,7 +124,9 @@ export class Container {
       return this.autoResolve(token as Type<T>, requestId);
     }
 
-    logger.warn(`No provider found for token: ${tokenName}`);
+    if (logger.isDebugEnabled()) {
+      logger.warn(`No provider found for token: ${this.getTokenName(token)}`);
+    }
     return undefined as T;
   }
 
@@ -133,42 +140,54 @@ export class Container {
   ): unknown {
     const tokenName = this.getTokenName(token);
 
-    // Check for circular dependencies
-    if (metadata.isResolving) {
-      throw new Error(`Circular dependency detected for: ${tokenName}`);
+    // Check for circular dependencies using resolution stack
+    if (this.resolutionStack.has(token)) {
+      const chain = Array.from(this.resolutionStack).map(t => this.getTokenName(t));
+      chain.push(tokenName);
+      throw new Error(`Circular dependency detected: ${chain.join(' → ')}`);
     }
 
-    // Handle different scopes
-    switch (metadata.scope) {
-      case Scope.SINGLETON:
-        if (metadata.instance !== undefined) {
-          return metadata.instance;
-        }
-        if (metadata.factory) {
-          metadata.isResolving = true;
-          try {
-            metadata.instance = metadata.factory(requestId);
+    // Add to resolution stack
+    this.resolutionStack.add(token);
+
+    try {
+      // Handle different scopes
+      switch (metadata.scope) {
+        case Scope.SINGLETON:
+          if (metadata.instance !== undefined) {
             return metadata.instance;
-          } finally {
-            metadata.isResolving = false;
           }
-        }
-        break;
+          if (metadata.factory) {
+            const result = metadata.factory(requestId);
+            // Handle async factories
+            metadata.instance = result instanceof Promise ? Promise.resolve(result).then(r => {
+              metadata.instance = r;
+              return r;
+            }) : result;
+            return metadata.instance;
+          }
+          break;
 
-      case Scope.TRANSIENT:
-        if (metadata.factory) {
-          return metadata.factory(requestId);
-        }
-        break;
+        case Scope.TRANSIENT:
+          if (metadata.factory) {
+            const result = metadata.factory(requestId);
+            // Handle async factories for transient scope
+            return result instanceof Promise ? Promise.resolve(result) : result;
+          }
+          break;
 
-      case Scope.REQUEST:
-        if (!requestId) {
-          throw new Error(`Request scope requires requestId for: ${tokenName}`);
-        }
-        return this.resolveRequestScoped(token, metadata, requestId);
+        case Scope.REQUEST:
+          if (!requestId) {
+            throw new Error(`Request scope requires requestId for: ${tokenName}`);
+          }
+          return this.resolveRequestScoped(token, metadata, requestId);
+      }
+
+      return undefined;
+    } finally {
+      // Always remove from resolution stack
+      this.resolutionStack.delete(token);
     }
-
-    return undefined;
   }
 
   /**
@@ -203,8 +222,9 @@ export class Container {
    * Auto-resolve a class without explicit registration
    */
   private autoResolve<T>(token: Type<T>, requestId?: string): T {
-    const tokenName = token.name;
-    logger.debug(`Auto-resolving: ${tokenName}`);
+    if (logger.isDebugEnabled()) {
+      logger.debug(`Auto-resolving: ${token.name}`);
+    }
 
     // Check if already registered
     if (this.providers.has(token)) {
@@ -226,13 +246,13 @@ export class Container {
    * Create instance of a class with dependency injection
    */
   private createInstance<T>(token: Type<T>, requestId?: string): T {
-    const tokenName = this.getTokenName(token);
-
     // Get constructor parameters
     const params = Reflect.getMetadata('design:paramtypes', token) || [];
-    logger.debug(
-      `Constructor parameters: ${params.map((p: Type<unknown>) => p?.name || 'undefined').join(', ')}`
-    );
+    if (logger.isDebugEnabled()) {
+      logger.debug(
+        `Constructor parameters: ${params.map((p: Type<unknown>) => p?.name || 'undefined').join(', ')}`
+      );
+    }
 
     // Get injection tokens if specified
     const injectionTokens = Reflect.getMetadata('hazel:inject', token) || [];
@@ -243,17 +263,23 @@ export class Container {
       const tokenToResolve = injectionToken || param;
 
       if (!tokenToResolve) {
-        logger.debug('Undefined parameter type found');
+        if (logger.isDebugEnabled()) {
+          logger.debug('Undefined parameter type found');
+        }
         return undefined;
       }
 
-      logger.debug(`Resolving dependency for: ${this.getTokenName(tokenToResolve)}`);
+      if (logger.isDebugEnabled()) {
+        logger.debug(`Resolving dependency for: ${this.getTokenName(tokenToResolve)}`);
+      }
       return this.resolve(tokenToResolve, requestId);
     });
 
     // Create instance with dependencies
     const instance = new token(...dependencies);
-    logger.info(`Created instance of: ${tokenName}`);
+    if (logger.isDebugEnabled()) {
+      logger.info(`Created instance of: ${this.getTokenName(token)}`);
+    }
 
     return instance;
   }
@@ -262,7 +288,9 @@ export class Container {
    * Clear request-scoped providers for a specific request
    */
   clearRequestScope(requestId: string): void {
-    logger.debug(`Clearing request scope: ${requestId}`);
+    if (logger.isDebugEnabled()) {
+      logger.debug(`Clearing request scope: ${requestId}`);
+    }
     this.requestScopedProviders.delete(requestId);
   }
 

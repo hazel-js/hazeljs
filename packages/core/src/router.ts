@@ -23,10 +23,17 @@ type RouteHandler = (req: Request, res: Response, context?: RequestContext) => v
 
 export class Router {
   private routes: Map<string, RouteHandler[]> = new Map();
+  private routesByMethod: Map<string, Map<string, RouteHandler[]>> = new Map();
   private middlewareHandler: MiddlewareHandler;
 
   constructor(private container: Container) {
     this.middlewareHandler = new MiddlewareHandler(container);
+    // Initialize route cache for common HTTP methods
+    this.routesByMethod.set('GET', new Map());
+    this.routesByMethod.set('POST', new Map());
+    this.routesByMethod.set('PUT', new Map());
+    this.routesByMethod.set('DELETE', new Map());
+    this.routesByMethod.set('PATCH', new Map());
   }
 
   registerController(controller: Type<unknown>): void {
@@ -58,7 +65,19 @@ export class Router {
       // Create a route handler for this specific route
       // Pass the controller class, not instance, so it can be resolved per-request
       const handler = this.createRouteHandler(controller, propertyKey);
-      this.routes.set(`${method.toUpperCase()} ${fullPath}`, [handler]);
+      const methodUpper = method.toUpperCase();
+      const routeKey = `${methodUpper} ${fullPath}`;
+      
+      // Store in both maps for compatibility
+      this.routes.set(routeKey, [handler]);
+      
+      // Store in method-specific cache for faster lookup
+      let methodRoutes = this.routesByMethod.get(methodUpper);
+      if (!methodRoutes) {
+        methodRoutes = new Map();
+        this.routesByMethod.set(methodUpper, methodRoutes);
+      }
+      methodRoutes.set(fullPath, [handler]);
 
       // Log the route pattern for debugging
       const pattern = this.createRoutePattern(fullPath);
@@ -119,17 +138,19 @@ export class Router {
     methodName: string | symbol
   ): RouteHandler {
     return async (req: Request, res: Response, matchedContext?: RequestContext): Promise<void> => {
+      // Generate a unique request ID for request-scoped providers
+      const requestId = `req-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      
       try {
         logger.debug('=== Request Handler Start ===');
         logger.debug(`Method: ${req.method}, URL: ${req.url}`);
         logger.debug('Matched context:', matchedContext);
 
-        // Safely log request body without circular references
-        const safeBody = JSON.parse(JSON.stringify(req.body || {}));
-        logger.debug(`Request body: ${JSON.stringify(safeBody, null, 2)}`);
-
-        // Generate a unique request ID for request-scoped providers
-        const requestId = `req-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        // Optimize: Only serialize for debug logging
+        if (logger.isDebugEnabled && logger.isDebugEnabled()) {
+          const safeBody = JSON.parse(JSON.stringify(req.body || {}));
+          logger.debug(`Request body: ${JSON.stringify(safeBody, null, 2)}`);
+        }
 
         // Resolve controller instance per-request with requestId
         const controller = this.container.resolve(controllerClass, requestId);
@@ -148,8 +169,8 @@ export class Router {
         // Use the matched context if available, otherwise create a new one
         const context: RequestContext = matchedContext || {
           params: req.params || {},
-          query: JSON.parse(JSON.stringify(req.query || {})),
-          body: safeBody,
+          query: req.query || {},
+          body: req.body || {},
           headers: Object.fromEntries(
             Object.entries(req.headers || {})
               .filter(([key]) => !key.toLowerCase().includes('authorization'))
@@ -269,11 +290,24 @@ export class Router {
             message: error.message,
           });
         } else {
+          // Log unhandled errors with full context
+          logger.error('Unhandled error:', {
+            error: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : undefined,
+            requestId,
+            method: req.method,
+            url: req.url,
+          });
           res.status(500).json({
             statusCode: 500,
-            message: 'Internal server error',
+            message: process.env.NODE_ENV === 'production' 
+              ? 'Internal server error'
+              : error instanceof Error ? error.message : 'Unknown error',
           });
         }
+      } finally {
+        // CRITICAL: Clean up request-scoped providers to prevent memory leaks
+        this.container.clearRequestScope(requestId);
       }
     };
   }
@@ -334,9 +368,16 @@ export class Router {
     const path = url.split('?')[0];
     logger.debug(`Matching route: ${method} ${path}`);
 
-    for (const [routeKey, handlers] of this.routes.entries()) {
-      const [routeMethod, routePath] = routeKey.split(' ');
-      if (routeMethod === method && this.matchPath(path, routePath)) {
+    // Use method-specific cache for O(1) method lookup instead of O(n)
+    const methodRoutes = this.routesByMethod.get(method);
+    if (!methodRoutes) {
+      logger.debug(`No routes registered for method: ${method}`);
+      return null;
+    }
+
+    // Now only iterate through routes for this specific HTTP method
+    for (const [routePath, handlers] of methodRoutes.entries()) {
+      if (this.matchPath(path, routePath)) {
         const params = this.extractParams(path, routePath);
         logger.debug('Matched route:', { method, url, params });
 

@@ -8,6 +8,16 @@ export { HazelApp } from './hazel-app';
 export { HazelModule, Module, HazelModuleInstance, getModuleMetadata } from './hazel-module';
 export type { ModuleOptions } from './hazel-module';
 
+// Shutdown & Health
+export { ShutdownManager } from './shutdown';
+export type { ShutdownHandler } from './shutdown';
+export { HealthCheckManager, BuiltInHealthChecks } from './health';
+export type { HealthCheck, HealthCheckResult, HealthStatus } from './health';
+
+// Timeout Middleware (new)
+export { TimeoutMiddleware } from './middleware/timeout.middleware';
+export type { TimeoutOptions } from './middleware/timeout.middleware';
+
 // Decorators
 export {
   Controller,
