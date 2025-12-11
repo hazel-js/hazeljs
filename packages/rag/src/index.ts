@@ -26,6 +26,8 @@ export * from './embeddings/cohere-embeddings';
 export * from './vector-stores/memory-vector-store';
 export * from './vector-stores/pinecone.store';
 export * from './vector-stores/qdrant.store';
+export * from './vector-stores/weaviate.store';
+export * from './vector-stores/chroma.store';
 
 // Text Splitters
 export * from './text-splitters/recursive-text-splitter';

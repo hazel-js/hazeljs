@@ -10,15 +10,17 @@
 
 ### December 11, 2025
 
-**✅ RAG Package Implementation (@hazeljs/rag) - EXPANDED**
+**✅ RAG Package Implementation (@hazeljs/rag) - COMPLETE**
 - Complete RAG (Retrieval-Augmented Generation) package implementation
 - **Embedding Providers:**
   - OpenAI embeddings (text-embedding-3-small, text-embedding-3-large)
   - Cohere embeddings (embed-english-v3.0, multilingual support)
-- **Vector Stores:**
+- **Vector Stores (5 Total):**
   - Memory vector store (development/testing)
-  - Pinecone vector store (production-ready, serverless)
-  - Qdrant vector store (production-ready, high-performance)
+  - Pinecone vector store (production-ready, serverless, managed)
+  - Qdrant vector store (production-ready, high-performance, Rust-based)
+  - Weaviate vector store (production-ready, GraphQL API, semantic search)
+  - ChromaDB vector store (embedded, lightweight, easy setup)
 - **Advanced Retrieval:**
   - BM25 keyword search algorithm
   - Hybrid search (combines vector + keyword with configurable weights)
@@ -39,6 +41,8 @@
 - `packages/rag/src/vector-stores/memory-vector-store.ts` - In-memory storage
 - `packages/rag/src/vector-stores/pinecone.store.ts` - Pinecone integration
 - `packages/rag/src/vector-stores/qdrant.store.ts` - Qdrant integration
+- `packages/rag/src/vector-stores/weaviate.store.ts` - Weaviate integration
+- `packages/rag/src/vector-stores/chroma.store.ts` - ChromaDB integration
 - `packages/rag/src/retrieval/bm25.ts` - BM25 keyword search
 - `packages/rag/src/retrieval/hybrid-search.ts` - Hybrid search
 - `packages/rag/src/retrieval/multi-query.ts` - Multi-query retrieval
@@ -47,6 +51,7 @@
 - `example/src/rag/simple-rag-example.ts` - Simple usage example
 - `example/src/rag/decorator-rag-example.ts` - Decorator-based example
 - `example/src/rag/advanced-rag-example.ts` - Advanced features example
+- `example/src/rag/vector-stores-example.ts` - Vector stores comparison
 
 **✅ Query Decorator Implementation**
 - Added `@Query()` decorator to `@hazeljs/core` for extracting query parameters
@@ -1607,8 +1612,10 @@ export class AlertService {
 - ✅ OpenAI embeddings provider
 - ✅ Cohere embeddings provider
 - ✅ Memory vector store (in-memory)
-- ✅ Pinecone vector store (production-ready)
-- ✅ Qdrant vector store (production-ready)
+- ✅ Pinecone vector store (production-ready, serverless)
+- ✅ Qdrant vector store (production-ready, high-performance)
+- ✅ Weaviate vector store (production-ready, GraphQL)
+- ✅ ChromaDB vector store (embedded, lightweight)
 - ✅ Recursive text splitter
 - ✅ Semantic search decorators
 - ✅ RAG service and module
@@ -1617,17 +1624,15 @@ export class AlertService {
 - ✅ BM25 keyword search
 - ✅ Hybrid search (vector + keyword)
 - ✅ Multi-query retrieval pattern
-- ✅ Working examples (simple, decorator-based, advanced)
+- ✅ Working examples (simple, decorator-based, advanced, vector stores)
 - ✅ Full documentation and README
-- ⏳ Weaviate vector store
-- ⏳ ChromaDB vector store
 - ⏳ Multi-modal embeddings (images, code)
 - ⏳ Contextual compression
 - ⏳ Re-ranking with Cohere
 
 **Features:**
 - ✅ Automatic embeddings generation
-- ✅ Multiple vector database support (Memory, Pinecone, Qdrant)
+- ✅ **5 Vector Databases** (Memory, Pinecone, Qdrant, Weaviate, ChromaDB)
 - ✅ Multiple embedding providers (OpenAI, Cohere)
 - ✅ Semantic search out-of-the-box
 - ✅ Document chunking strategies (Recursive splitter)
@@ -1635,6 +1640,7 @@ export class AlertService {
 - ✅ Multi-query retrieval
 - ✅ RAG pipeline automation
 - ✅ Context-aware retrieval
+- ✅ Production-ready vector stores
 - ⏳ Multi-modal embeddings (text, images, code)
 
 **API Design:**
@@ -1793,13 +1799,14 @@ export class MultiModalService {
 ```
 
 **Built-in Vector Database Support:**
-- **Pinecone** - Managed, serverless
-- **Weaviate** - Open-source, GraphQL
-- **Qdrant** - High-performance, Rust-based
-- **Chroma** - Lightweight, embedded
-- **Milvus** - Scalable, production-ready
-- **PostgreSQL + pgvector** - SQL-based
-- **Redis** - In-memory vector search
+- ✅ **Memory** - In-memory, development/testing
+- ✅ **Pinecone** - Managed, serverless, production-ready
+- ✅ **Qdrant** - High-performance, Rust-based, self-hosted
+- ✅ **Weaviate** - Open-source, GraphQL API, semantic search
+- ✅ **ChromaDB** - Lightweight, embedded, easy setup
+- ⏳ **Milvus** - Scalable, production-ready (planned)
+- ⏳ **PostgreSQL + pgvector** - SQL-based (planned)
+- ⏳ **Redis** - In-memory vector search (planned)
 
 **Chunking Strategies:**
 - Fixed-size chunks
