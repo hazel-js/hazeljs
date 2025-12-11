@@ -9,6 +9,29 @@
 ## 📋 Recent Updates
 
 ### December 11, 2025
+
+**✅ RAG Package Implementation (@hazeljs/rag)**
+- Complete RAG (Retrieval-Augmented Generation) package implementation
+- OpenAI embeddings provider with text-embedding-3-small support
+- In-memory vector store for development and testing
+- Recursive text splitter with configurable chunk size and overlap
+- RAG pipeline with semantic search capabilities
+- Decorator-based API (@Embeddable, @SemanticSearch, @AutoEmbed)
+- RAG service and module for dependency injection
+- Cosine similarity calculations for vector search
+- Two comprehensive examples (simple and decorator-based)
+- Full documentation and README
+
+**Files Created:**
+- `packages/rag/` - Complete RAG package
+- `packages/rag/src/rag-pipeline.ts` - Core RAG pipeline
+- `packages/rag/src/embeddings/openai-embeddings.ts` - OpenAI integration
+- `packages/rag/src/vector-stores/memory-vector-store.ts` - In-memory storage
+- `packages/rag/src/text-splitters/recursive-text-splitter.ts` - Text chunking
+- `packages/rag/src/decorators/` - Decorator implementations
+- `example/src/rag/simple-rag-example.ts` - Simple usage example
+- `example/src/rag/decorator-rag-example.ts` - Decorator-based example
+
 **✅ Query Decorator Implementation**
 - Added `@Query()` decorator to `@hazeljs/core` for extracting query parameters
 - Supports both named parameters (`@Query('q')`) and all query params (`@Query()`)
@@ -26,6 +49,7 @@
 
 **Usage Example:**
 ```typescript
+// Query Decorator
 @Controller('/documents')
 export class DocumentController {
   @Get('/search')
@@ -33,6 +57,18 @@ export class DocumentController {
     return { query };
   }
 }
+
+// RAG Pipeline
+import { RAGPipeline, OpenAIEmbeddings, MemoryVectorStore } from '@hazeljs/rag';
+
+const rag = new RAGPipeline({
+  vectorStore: new MemoryVectorStore(embeddings),
+  embeddingProvider: new OpenAIEmbeddings({ apiKey: '...' }),
+  topK: 3
+});
+
+await rag.addDocuments([{ content: 'HazelJS is awesome!', metadata: {} }]);
+const results = await rag.query('What is HazelJS?');
 ```
 
 ---
@@ -1545,20 +1581,36 @@ export class AlertService {
 ---
 
 ### 5.14 RAG & Vector Search (Out-of-the-Box) 🔍
-**Status**: Not Started  
+**Status**: ✅ Core Implementation Complete  
 **Priority**: HIGH  
 **Effort**: Medium  
 **Package**: `@hazeljs/rag`
 
+**Implementation Progress:**
+- ✅ Core RAG pipeline
+- ✅ OpenAI embeddings provider
+- ✅ Memory vector store (in-memory)
+- ✅ Recursive text splitter
+- ✅ Semantic search decorators
+- ✅ RAG service and module
+- ✅ Embeddable decorator
+- ✅ Cosine similarity utilities
+- ✅ Working examples (simple & decorator-based)
+- ✅ Full documentation and README
+- ⏳ Additional vector databases (Pinecone, Weaviate, Qdrant)
+- ⏳ Hybrid search implementation
+- ⏳ Multi-modal embeddings
+- ⏳ Advanced RAG patterns (multi-query, compression, etc.)
+
 **Features:**
-- Automatic embeddings generation
-- Multiple vector database support
-- Semantic search out-of-the-box
-- Document chunking strategies
-- Hybrid search (vector + keyword)
-- RAG pipeline automation
-- Context-aware retrieval
-- Multi-modal embeddings (text, images, code)
+- ✅ Automatic embeddings generation
+- ⏳ Multiple vector database support (Memory store implemented)
+- ✅ Semantic search out-of-the-box
+- ✅ Document chunking strategies (Recursive splitter)
+- ⏳ Hybrid search (vector + keyword)
+- ✅ RAG pipeline automation
+- ✅ Context-aware retrieval
+- ⏳ Multi-modal embeddings (text, images, code)
 
 **API Design:**
 ```typescript
@@ -1771,19 +1823,32 @@ async recentBiasedSearch(query: string) {
 }
 ```
 
-**Files to Create:**
-- `packages/rag/src/rag.module.ts`
-- `packages/rag/src/rag.service.ts`
-- `packages/rag/src/embeddings/embedding.service.ts`
-- `packages/rag/src/embeddings/providers/openai.provider.ts`
-- `packages/rag/src/embeddings/providers/cohere.provider.ts`
-- `packages/rag/src/vector-stores/pinecone.store.ts`
-- `packages/rag/src/vector-stores/weaviate.store.ts`
-- `packages/rag/src/vector-stores/qdrant.store.ts`
-- `packages/rag/src/chunking/chunking.service.ts`
-- `packages/rag/src/retrieval/retrieval.service.ts`
-- `packages/rag/src/decorators/embeddable.decorator.ts`
-- `packages/rag/src/decorators/semantic-search.decorator.ts`
+**Files Created (Core Implementation):**
+- ✅ `packages/rag/src/rag.module.ts` - RAG module for DI
+- ✅ `packages/rag/src/rag.service.ts` - RAG service implementation
+- ✅ `packages/rag/src/rag-pipeline.ts` - Core RAG pipeline
+- ✅ `packages/rag/src/embeddings/openai-embeddings.ts` - OpenAI provider
+- ✅ `packages/rag/src/vector-stores/memory-vector-store.ts` - In-memory store
+- ✅ `packages/rag/src/text-splitters/recursive-text-splitter.ts` - Text chunking
+- ✅ `packages/rag/src/decorators/embeddable.decorator.ts` - Embeddable entities
+- ✅ `packages/rag/src/decorators/semantic-search.decorator.ts` - Search decorators
+- ✅ `packages/rag/src/decorators/rag.decorator.ts` - RAG decorators
+- ✅ `packages/rag/src/utils/similarity.ts` - Cosine similarity
+- ✅ `packages/rag/src/types/index.ts` - Type definitions
+- ✅ `packages/rag/README.md` - Full documentation
+- ✅ `example/src/rag/simple-rag-example.ts` - Simple example
+- ✅ `example/src/rag/decorator-rag-example.ts` - Decorator example
+
+**Files to Create (Future Enhancements):**
+- ⏳ `packages/rag/src/embeddings/providers/cohere.provider.ts`
+- ⏳ `packages/rag/src/embeddings/providers/anthropic.provider.ts`
+- ⏳ `packages/rag/src/vector-stores/pinecone.store.ts`
+- ⏳ `packages/rag/src/vector-stores/weaviate.store.ts`
+- ⏳ `packages/rag/src/vector-stores/qdrant.store.ts`
+- ⏳ `packages/rag/src/vector-stores/chroma.store.ts`
+- ⏳ `packages/rag/src/retrieval/hybrid-search.ts`
+- ⏳ `packages/rag/src/retrieval/multi-query.ts`
+- ⏳ `packages/rag/src/retrieval/reranking.ts`
 
 ---
 
