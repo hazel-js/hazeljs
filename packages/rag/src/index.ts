@@ -20,12 +20,20 @@ export * from './decorators/semantic-search.decorator';
 
 // Embeddings
 export * from './embeddings/openai-embeddings';
+export * from './embeddings/cohere-embeddings';
 
 // Vector Stores
 export * from './vector-stores/memory-vector-store';
+export * from './vector-stores/pinecone.store';
+export * from './vector-stores/qdrant.store';
 
 // Text Splitters
 export * from './text-splitters/recursive-text-splitter';
+
+// Retrieval Strategies
+export * from './retrieval/bm25';
+export * from './retrieval/hybrid-search';
+export * from './retrieval/multi-query';
 
 // Utils
 export * from './utils/similarity';

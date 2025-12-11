@@ -10,27 +10,43 @@
 
 ### December 11, 2025
 
-**✅ RAG Package Implementation (@hazeljs/rag)**
+**✅ RAG Package Implementation (@hazeljs/rag) - EXPANDED**
 - Complete RAG (Retrieval-Augmented Generation) package implementation
-- OpenAI embeddings provider with text-embedding-3-small support
-- In-memory vector store for development and testing
+- **Embedding Providers:**
+  - OpenAI embeddings (text-embedding-3-small, text-embedding-3-large)
+  - Cohere embeddings (embed-english-v3.0, multilingual support)
+- **Vector Stores:**
+  - Memory vector store (development/testing)
+  - Pinecone vector store (production-ready, serverless)
+  - Qdrant vector store (production-ready, high-performance)
+- **Advanced Retrieval:**
+  - BM25 keyword search algorithm
+  - Hybrid search (combines vector + keyword with configurable weights)
+  - Multi-query retrieval (generates multiple search queries for better results)
 - Recursive text splitter with configurable chunk size and overlap
 - RAG pipeline with semantic search capabilities
-- Decorator-based API (@Embeddable, @SemanticSearch, @AutoEmbed)
+- Decorator-based API (@Embeddable, @SemanticSearch, @HybridSearch, @AutoEmbed)
 - RAG service and module for dependency injection
 - Cosine similarity calculations for vector search
-- Two comprehensive examples (simple and decorator-based)
+- Three comprehensive examples (simple, decorator-based, advanced)
 - Full documentation and README
 
 **Files Created:**
 - `packages/rag/` - Complete RAG package
 - `packages/rag/src/rag-pipeline.ts` - Core RAG pipeline
 - `packages/rag/src/embeddings/openai-embeddings.ts` - OpenAI integration
+- `packages/rag/src/embeddings/cohere-embeddings.ts` - Cohere integration
 - `packages/rag/src/vector-stores/memory-vector-store.ts` - In-memory storage
+- `packages/rag/src/vector-stores/pinecone.store.ts` - Pinecone integration
+- `packages/rag/src/vector-stores/qdrant.store.ts` - Qdrant integration
+- `packages/rag/src/retrieval/bm25.ts` - BM25 keyword search
+- `packages/rag/src/retrieval/hybrid-search.ts` - Hybrid search
+- `packages/rag/src/retrieval/multi-query.ts` - Multi-query retrieval
 - `packages/rag/src/text-splitters/recursive-text-splitter.ts` - Text chunking
 - `packages/rag/src/decorators/` - Decorator implementations
 - `example/src/rag/simple-rag-example.ts` - Simple usage example
 - `example/src/rag/decorator-rag-example.ts` - Decorator-based example
+- `example/src/rag/advanced-rag-example.ts` - Advanced features example
 
 **✅ Query Decorator Implementation**
 - Added `@Query()` decorator to `@hazeljs/core` for extracting query parameters
@@ -1589,25 +1605,34 @@ export class AlertService {
 **Implementation Progress:**
 - ✅ Core RAG pipeline
 - ✅ OpenAI embeddings provider
+- ✅ Cohere embeddings provider
 - ✅ Memory vector store (in-memory)
+- ✅ Pinecone vector store (production-ready)
+- ✅ Qdrant vector store (production-ready)
 - ✅ Recursive text splitter
 - ✅ Semantic search decorators
 - ✅ RAG service and module
 - ✅ Embeddable decorator
 - ✅ Cosine similarity utilities
-- ✅ Working examples (simple & decorator-based)
+- ✅ BM25 keyword search
+- ✅ Hybrid search (vector + keyword)
+- ✅ Multi-query retrieval pattern
+- ✅ Working examples (simple, decorator-based, advanced)
 - ✅ Full documentation and README
-- ⏳ Additional vector databases (Pinecone, Weaviate, Qdrant)
-- ⏳ Hybrid search implementation
-- ⏳ Multi-modal embeddings
-- ⏳ Advanced RAG patterns (multi-query, compression, etc.)
+- ⏳ Weaviate vector store
+- ⏳ ChromaDB vector store
+- ⏳ Multi-modal embeddings (images, code)
+- ⏳ Contextual compression
+- ⏳ Re-ranking with Cohere
 
 **Features:**
 - ✅ Automatic embeddings generation
-- ⏳ Multiple vector database support (Memory store implemented)
+- ✅ Multiple vector database support (Memory, Pinecone, Qdrant)
+- ✅ Multiple embedding providers (OpenAI, Cohere)
 - ✅ Semantic search out-of-the-box
 - ✅ Document chunking strategies (Recursive splitter)
-- ⏳ Hybrid search (vector + keyword)
+- ✅ Hybrid search (vector + keyword BM25)
+- ✅ Multi-query retrieval
 - ✅ RAG pipeline automation
 - ✅ Context-aware retrieval
 - ⏳ Multi-modal embeddings (text, images, code)
