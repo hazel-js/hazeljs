@@ -30,6 +30,7 @@ export {
   Patch,
   Body,
   Param,
+  Query,
   Res,
   Inject,
   UsePipes,

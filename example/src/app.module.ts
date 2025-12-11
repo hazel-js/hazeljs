@@ -16,12 +16,12 @@ import { CacheExampleModule } from './cache/cache-example.module';
     ConfigModule.forRoot({
       envFilePath: ['.env', '.env.local'],
       isGlobal: true,
-    }),
+    }) as any,
     // Cache module with memory strategy
     CacheModule.forRoot({
       strategy: 'memory',
       isGlobal: true,
-    }),
+    }) as any,
     PrismaModule,
     UserModule,
     AuthModule,

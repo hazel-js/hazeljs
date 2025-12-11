@@ -242,6 +242,31 @@ export function Param(paramName: string, pipe?: Type<PipeTransform>): ParameterD
   };
 }
 
+export function Query(paramName?: string, pipe?: Type<PipeTransform>): ParameterDecorator {
+  return (
+    target: object,
+    propertyKey: string | symbol | undefined,
+    parameterIndex: number
+  ): void => {
+    if (!propertyKey) {
+      throw new Error('Query decorator must be used on a method parameter');
+    }
+
+    logger.debug(
+      `Registering query param ${paramName || 'all'} at index ${parameterIndex} in ${target.constructor?.name} with pipe:`,
+      pipe?.name
+    );
+
+    // Get the constructor of the target
+    const constructor = (target as { constructor: { new (...args: unknown[]): object } })
+      .constructor;
+    const injections = Reflect.getMetadata(INJECT_METADATA_KEY, constructor, propertyKey) || [];
+    injections[parameterIndex] = { type: 'query', name: paramName, pipe };
+    Reflect.defineMetadata(INJECT_METADATA_KEY, injections, constructor, propertyKey);
+    logger.debug('Updated injections:', JSON.stringify(injections, null, 2));
+  };
+}
+
 export function UsePipes(
   ...pipes: (Type<PipeTransform> | PipeMetadata)[]
 ): ClassDecorator & MethodDecorator {

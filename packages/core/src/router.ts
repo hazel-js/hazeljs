@@ -227,6 +227,16 @@ export class Router {
               } else {
                 args[i] = paramValue;
               }
+            } else if (injection.type === 'query') {
+              // Handle @Query decorator with pipe
+              const paramName = injection.name;
+              const queryValue = paramName ? context.query[paramName] : context.query;
+              if (injection.pipe) {
+                const pipe = this.container.resolve(injection.pipe) as PipeTransform;
+                args[i] = await pipe.transform(queryValue, context);
+              } else {
+                args[i] = queryValue;
+              }
             }
           }
         }

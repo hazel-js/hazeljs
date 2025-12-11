@@ -8,6 +8,7 @@ import {
   Patch,
   Body,
   Param,
+  Query,
   Request,
   Res,
   Inject,
@@ -266,6 +267,55 @@ describe('Decorators', () => {
       });
     });
 
+    describe('Query', () => {
+      it('should register query parameter', () => {
+        class TestController {
+          search(@Query('q') query: string) {
+            return { query };
+          }
+        }
+
+        const injections = Reflect.getMetadata('hazel:inject', TestController, 'search');
+        expect(injections[0].type).toBe('query');
+        expect(injections[0].name).toBe('q');
+      });
+
+      it('should register query parameter without name (all query params)', () => {
+        class TestController {
+          search(@Query() query: Record<string, string>) {
+            return { query };
+          }
+        }
+
+        const injections = Reflect.getMetadata('hazel:inject', TestController, 'search');
+        expect(injections[0].type).toBe('query');
+        expect(injections[0].name).toBeUndefined();
+      });
+
+      it('should register query with pipe', () => {
+        class ParseIntPipe {
+          transform(value: any) {
+            return parseInt(value);
+          }
+        }
+
+        class TestController {
+          search(@Query('limit', ParseIntPipe) limit: number) {
+            return { limit };
+          }
+        }
+
+        const injections = Reflect.getMetadata('hazel:inject', TestController, 'search');
+        expect(injections[0].pipe).toBe(ParseIntPipe);
+      });
+
+      it('should throw error when used outside method', () => {
+        expect(() => {
+          const decorator = Query('q');
+          decorator({}, undefined as any, 0);
+        }).toThrow('Query decorator must be used on a method parameter');
+      });
+    });
 
     describe('Request', () => {
       it('should register request parameter', () => {
