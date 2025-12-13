@@ -33,7 +33,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/hazeljs/hazeljs.git",
+    "url": "git+https://github.com/hazel-js/hazeljs.git",
     "directory": "packages/ai"
   },
   "keywords": [

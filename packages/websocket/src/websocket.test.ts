@@ -19,6 +19,17 @@ import {
   isRealtimeGateway,
 } from './decorators/realtime.decorator';
 
+// Mock logger to suppress error logs during tests
+jest.mock('@hazeljs/core', () => ({
+  __esModule: true,
+  default: {
+    info: jest.fn(),
+    debug: jest.fn(),
+    error: jest.fn(),
+    warn: jest.fn(),
+  },
+}));
+
 // Test index.ts exports
 describe('Index exports', () => {
   it('should export all expected modules', () => {

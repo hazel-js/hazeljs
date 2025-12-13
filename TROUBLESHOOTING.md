@@ -431,9 +431,8 @@ If you can't find a solution here:
 
 2. **Search Issues**
    - GitHub Issues: https://github.com/hazeljs/hazel-js/issues
-
 3. **Ask Community**
-   - GitHub Discussions: https://github.com/hazeljs/hazeljs/discussions
+   - GitHub Discussions: https://github.com/hazel-js/hazeljs/discussions
    - Discord: (Coming soon)
 
 4. **Report Bug**

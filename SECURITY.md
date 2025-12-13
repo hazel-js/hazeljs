@@ -224,7 +224,7 @@ logger.warn('Failed login attempt', { ip, username });
 
 Security advisories will be published at:
 
-- GitHub Security Advisories: https://github.com/hazeljs/hazeljs/security/advisories
+- GitHub Security Advisories: https://github.com/hazel-js/hazeljs/security/advisories
 - npm: https://www.npmjs.com/package/@hazeljs/core\?activeTab\=versions
 
 ## Bug Bounty Program
@@ -238,7 +238,7 @@ For security concerns, contact:
 - PGP Key: (Coming soon)
 
 For general questions:
-- GitHub Discussions: https://github.com/hazeljs/hazeljs/discussions
+- GitHub Discussions: https://github.com/hazel-js/hazeljs/discussions
 - Discord: (Coming soon)
 
 ---
