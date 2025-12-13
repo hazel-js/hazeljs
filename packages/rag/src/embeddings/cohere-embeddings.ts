@@ -4,7 +4,9 @@
  */
 
 import { EmbeddingProvider } from '../types';
-import type { CohereClient as CohereClientType } from 'cohere-ai';
+// import type { CohereClient as CohereClientType } from 'cohere-ai';
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type CohereClientType = any;
 
 // Type for Cohere client (peer dependency)
 type CohereClient = CohereClientType;

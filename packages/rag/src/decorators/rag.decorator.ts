@@ -48,10 +48,10 @@ const MULTIMODAL_EMBEDDING_KEY = Symbol('multiModalEmbedding');
  * Configure RAG for a module
  */
 export function RAG(options: RAGModuleOptions): ClassDecorator {
-  return (target: NewableFunction) => {
+  return ((target: NewableFunction) => {
     Reflect.defineMetadata(RAG_MODULE_KEY, options, target);
     return target;
-  };
+  }) as ClassDecorator;
 }
 
 /**
@@ -65,20 +65,20 @@ export function getRAGConfig(target: NewableFunction): RAGModuleOptions | undefi
  * Configure conversational RAG with memory
  */
 export function ConversationalRAG(options: ConversationalRAGOptions): ClassDecorator {
-  return (target: NewableFunction) => {
+  return ((target: NewableFunction) => {
     Reflect.defineMetadata(CONVERSATIONAL_RAG_KEY, options, target);
     return target;
-  };
+  }) as ClassDecorator;
 }
 
 /**
  * Configure multi-modal embeddings
  */
 export function MultiModalEmbedding(options: MultiModalEmbeddingOptions): ClassDecorator {
-  return (target: NewableFunction) => {
+  return ((target: NewableFunction) => {
     Reflect.defineMetadata(MULTIMODAL_EMBEDDING_KEY, options, target);
     return target;
-  };
+  }) as ClassDecorator;
 }
 
 /**

@@ -270,4 +270,3 @@ describe('ServiceClient', () => {
     });
   });
 });
-

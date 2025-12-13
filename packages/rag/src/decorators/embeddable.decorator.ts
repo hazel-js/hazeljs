@@ -21,10 +21,10 @@ const EMBEDDABLE_METADATA_KEY = Symbol('embeddable');
  * Marks an entity as embeddable with automatic embedding generation
  */
 export function Embeddable(options: EmbeddableOptions): ClassDecorator {
-  return (target: NewableFunction) => {
+  return ((target: NewableFunction) => {
     Reflect.defineMetadata(EMBEDDABLE_METADATA_KEY, options, target);
     return target;
-  };
+  }) as ClassDecorator;
 }
 
 /**

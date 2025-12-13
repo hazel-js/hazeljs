@@ -100,14 +100,21 @@ export class PineconeVectorStore implements VectorStore {
   async searchByVector(embedding: number[], options?: QueryOptions): Promise<SearchResult[]> {
     const topK = options?.topK || 5;
     const minScore = options?.minScore;
+    const filter = options?.filter;
 
     // Query Pinecone
-    const queryResponse = await this.index.namespace(this.namespace).query({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const queryOptions: any = {
       vector: embedding,
       topK,
       includeMetadata: true,
-      filter,
-    });
+    };
+
+    if (filter && Object.keys(filter).length > 0) {
+      queryOptions.filter = filter;
+    }
+
+    const queryResponse = await this.index.namespace(this.namespace).query(queryOptions);
 
     // Transform results
     const results: SearchResult[] = queryResponse.matches

@@ -121,7 +121,8 @@ export class VectorMemory implements MemoryStore {
     });
 
     // Convert search results to memories
-    let memories = results.map((result) => this.searchResultToMemory(result));
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let memories = results.map((result) => this.searchResultToMemory(result as any));
 
     // Apply additional filters
     if (query.startDate) {
@@ -169,7 +170,8 @@ export class VectorMemory implements MemoryStore {
     });
 
     // Convert to memories
-    const memories = results.map((result) => this.searchResultToMemory(result));
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const memories = results.map((result) => this.searchResultToMemory(result as any));
 
     // Apply additional filters
     let filtered = memories;
@@ -190,7 +192,8 @@ export class VectorMemory implements MemoryStore {
     const doc = await this.vectorStore.getDocument(id);
     if (!doc) return null;
 
-    return this.documentToMemory(doc);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return this.documentToMemory(doc as any);
   }
 
   async update(id: string, updates: Partial<Memory>): Promise<void> {

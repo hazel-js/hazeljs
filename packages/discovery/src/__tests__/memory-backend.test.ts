@@ -304,4 +304,3 @@ describe('MemoryRegistryBackend', () => {
     });
   });
 });
-

@@ -190,7 +190,7 @@ Answer:`;
     return results
       .map((result) => {
         const timestamp = result.metadata?.timestamp || now;
-        const age = (now - timestamp) / (1000 * 60 * 60 * 24); // days
+        const age = (now - Number(timestamp)) / (1000 * 60 * 60 * 24); // days
         const timeWeight = Math.exp(-decayRate * age);
 
         return {
