@@ -18,7 +18,10 @@
     "microservices:gateway": "PORT=3003 ts-node src/microservices/api-gateway.ts",
     "microservices:redis-user": "PORT=3001 ts-node src/microservices/redis-example/user-service-redis.ts",
     "microservices:redis-order": "PORT=3002 ts-node src/microservices/redis-example/order-service-redis.ts",
-    "rag:simple": "ts-node src/rag/simple-rag-example.ts"
+    "rag:simple": "ts-node src/rag/simple-rag-example.ts",
+    "memory:basic": "ts-node src/memory/basic-memory-example.ts",
+    "memory:rag": "ts-node src/memory/rag-with-memory-example.ts",
+    "memory:chatbot": "ts-node src/memory/chatbot-with-memory-example.ts"
   },
   "dependencies": {
     "@hazeljs/core": "file:../packages/core",

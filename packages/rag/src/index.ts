@@ -39,3 +39,7 @@ export * from './retrieval/multi-query';
 
 // Utils
 export * from './utils/similarity';
+
+// Memory
+export * from './memory';
+export * from './rag-pipeline-with-memory';

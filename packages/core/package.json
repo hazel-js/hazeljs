@@ -25,6 +25,7 @@
     "reflect-metadata": "^0.2.2",
     "winston": "^3.17.0"
   },
+  "peerDependencies": {},
   "devDependencies": {
     "@types/jest": "^29.5.14",
     "@types/node": "^20.17.50",
@@ -60,7 +61,7 @@
   "author": "Muhammad Arslan <marslan@hazeljs.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/hazeljs/hazeljs/issues"
+    "url": "https://github.com/hazeljs/hazel-js/issues"
   },
   "homepage": "https://hazeljs.com"
 }

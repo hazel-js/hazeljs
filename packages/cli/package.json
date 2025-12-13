@@ -55,7 +55,7 @@
     "directory": "packages/cli"
   },
   "bugs": {
-    "url": "https://github.com/hazeljs/hazeljs/issues"
+    "url": "https://github.com/hazeljs/hazel-js/issues"
   },
   "homepage": "https://hazeljs.com",
   "funding": {

@@ -430,7 +430,7 @@ If you can't find a solution here:
    - [README.md](README.md)
 
 2. **Search Issues**
-   - GitHub Issues: https://github.com/hazeljs/hazeljs/issues
+   - GitHub Issues: https://github.com/hazeljs/hazel-js/issues
 
 3. **Ask Community**
    - GitHub Discussions: https://github.com/hazeljs/hazeljs/discussions
