@@ -7,7 +7,9 @@ import { VectorStore, Document, SearchResult, QueryOptions } from '../types';
 import { EmbeddingProvider } from '../types';
 
 // Type for Pinecone client (peer dependency)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type PineconeClient = any;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Index = any;
 
 export interface PineconeConfig {
@@ -35,6 +37,7 @@ export class PineconeVectorStore implements VectorStore {
     this.metadataKey = config.metadataKey || 'metadata';
 
     // Initialize Pinecone client
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { Pinecone } = require('@pinecone-database/pinecone');
     this.client = new Pinecone({
       apiKey: config.apiKey,
@@ -87,27 +90,16 @@ export class PineconeVectorStore implements VectorStore {
     return ids;
   }
 
-  async search(
-    query: string,
-    options?: QueryOptions
-  ): Promise<SearchResult[]> {
-    const topK = options?.topK || 5;
-    const minScore = options?.minScore;
-    const filter = options?.filter;
-
+  async search(query: string, options?: QueryOptions): Promise<SearchResult[]> {
     // Generate embedding for query
     const queryEmbedding = await this.embeddingProvider.embed(query);
 
     return this.searchByVector(queryEmbedding, options);
   }
 
-  async searchByVector(
-    embedding: number[],
-    options?: QueryOptions
-  ): Promise<SearchResult[]> {
+  async searchByVector(embedding: number[], options?: QueryOptions): Promise<SearchResult[]> {
     const topK = options?.topK || 5;
     const minScore = options?.minScore;
-    const filter = options?.filter;
 
     // Query Pinecone
     const queryResponse = await this.index.namespace(this.namespace).query({
@@ -119,8 +111,8 @@ export class PineconeVectorStore implements VectorStore {
 
     // Transform results
     const results: SearchResult[] = queryResponse.matches
-      .filter((match: any) => !minScore || match.score >= minScore)
-      .map((match: any) => ({
+      .filter((match: { score?: number }) => !minScore || (match.score ?? 0) >= minScore)
+      .map((match: { id: string; score: number; metadata: Record<string, unknown> }) => ({
         id: match.id,
         content: match.metadata[this.textKey],
         metadata: match.metadata[this.metadataKey],
@@ -151,21 +143,23 @@ export class PineconeVectorStore implements VectorStore {
     }
 
     // Upsert updated document
-    await this.index.namespace(this.namespace).upsert([{
-      id,
-      values: embedding!,
-      metadata: {
-        [this.textKey]: updated.content,
-        [this.metadataKey]: updated.metadata || {},
+    await this.index.namespace(this.namespace).upsert([
+      {
+        id,
+        values: embedding!,
+        metadata: {
+          [this.textKey]: updated.content,
+          [this.metadataKey]: updated.metadata || {},
+        },
       },
-    }]);
+    ]);
   }
 
   async getDocument(id: string): Promise<Document | null> {
     try {
       const response = await this.index.namespace(this.namespace).fetch([id]);
       const vector = response.vectors[id];
-      
+
       if (!vector) {
         return null;
       }
@@ -176,7 +170,7 @@ export class PineconeVectorStore implements VectorStore {
         metadata: vector.metadata[this.metadataKey],
         embedding: vector.values,
       };
-    } catch (error) {
+    } catch {
       return null;
     }
   }

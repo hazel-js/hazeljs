@@ -29,11 +29,7 @@ export class HybridMemory implements MemoryStore {
   private vectorStore: VectorMemory;
   private archiveThreshold: number;
 
-  constructor(
-    buffer: BufferMemory,
-    vectorStore: VectorMemory,
-    config: HybridMemoryConfig = {}
-  ) {
+  constructor(buffer: BufferMemory, vectorStore: VectorMemory, config: HybridMemoryConfig = {}) {
     this.buffer = buffer;
     this.vectorStore = vectorStore;
     this.archiveThreshold = config.archiveThreshold || 20;
@@ -76,9 +72,7 @@ export class HybridMemory implements MemoryStore {
     const merged = this.mergeResults(bufferResults, vectorResults);
 
     // Sort by timestamp
-    merged.sort(
-      (a, b) => b.metadata.timestamp.getTime() - a.metadata.timestamp.getTime()
-    );
+    merged.sort((a, b) => b.metadata.timestamp.getTime() - a.metadata.timestamp.getTime());
 
     return merged.slice(0, query.limit || 100);
   }
@@ -98,7 +92,7 @@ export class HybridMemory implements MemoryStore {
 
   async get(id: string): Promise<Memory | null> {
     // Try buffer first (faster)
-    let memory = await this.buffer.get(id);
+    const memory = await this.buffer.get(id);
     if (memory) return memory;
 
     // Fall back to vector store
@@ -192,15 +186,11 @@ export class HybridMemory implements MemoryStore {
         bufferStats.newestMemory > vectorStats.newestMemory
           ? bufferStats.newestMemory
           : vectorStats.newestMemory,
-      averageImportance:
-        (bufferStats.averageImportance + vectorStats.averageImportance) / 2,
+      averageImportance: (bufferStats.averageImportance + vectorStats.averageImportance) / 2,
     };
   }
 
-  async prune(options?: {
-    olderThan?: Date;
-    minImportance?: number;
-  }): Promise<number> {
+  async prune(options?: { olderThan?: Date; minImportance?: number }): Promise<number> {
     const [bufferPruned, vectorPruned] = await Promise.all([
       this.buffer.prune(options),
       this.vectorStore.prune(options),
@@ -236,10 +226,7 @@ export class HybridMemory implements MemoryStore {
   /**
    * Merge and deduplicate results from multiple stores
    */
-  private mergeResults(
-    bufferResults: Memory[],
-    vectorResults: Memory[]
-  ): Memory[] {
+  private mergeResults(bufferResults: Memory[], vectorResults: Memory[]): Memory[] {
     const seen = new Set<string>();
     const merged: Memory[] = [];
 

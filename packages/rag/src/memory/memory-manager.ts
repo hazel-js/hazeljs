@@ -45,11 +45,7 @@ export class MemoryManager {
   /**
    * Add a message to conversation history
    */
-  async addMessage(
-    message: Message,
-    sessionId: string,
-    userId?: string
-  ): Promise<string> {
+  async addMessage(message: Message, sessionId: string, userId?: string): Promise<string> {
     const memory: Memory = {
       id: randomUUID(),
       type: MemoryType.CONVERSATION,
@@ -75,10 +71,7 @@ export class MemoryManager {
   /**
    * Get conversation history for a session
    */
-  async getConversationHistory(
-    sessionId: string,
-    limit?: number
-  ): Promise<Message[]> {
+  async getConversationHistory(sessionId: string, limit?: number): Promise<Message[]> {
     const memories = await this.store.retrieve({
       sessionId,
       types: [MemoryType.CONVERSATION],
@@ -164,10 +157,7 @@ export class MemoryManager {
   /**
    * Update entity information
    */
-  async updateEntity(
-    name: string,
-    updates: Partial<Entity>
-  ): Promise<void> {
+  async updateEntity(name: string, updates: Partial<Entity>): Promise<void> {
     const existing = await this.getEntity(name);
     if (!existing) {
       throw new Error(`Entity ${name} not found`);
@@ -223,10 +213,7 @@ export class MemoryManager {
   /**
    * Store a fact or piece of knowledge
    */
-  async storeFact(
-    fact: string,
-    metadata?: Record<string, any>
-  ): Promise<string> {
+  async storeFact(fact: string, metadata?: Record<string, unknown>): Promise<string> {
     const memory: Memory = {
       id: randomUUID(),
       type: MemoryType.FACT,
@@ -244,10 +231,7 @@ export class MemoryManager {
   /**
    * Recall facts related to a query
    */
-  async recallFacts(
-    query: string,
-    options?: MemorySearchOptions
-  ): Promise<string[]> {
+  async recallFacts(query: string, options?: MemorySearchOptions): Promise<string[]> {
     const memories = await this.store.search(query, {
       types: [MemoryType.FACT],
       topK: options?.topK || 5,
@@ -275,11 +259,7 @@ export class MemoryManager {
   /**
    * Set a value in working memory (temporary context)
    */
-  async setContext(
-    key: string,
-    value: any,
-    sessionId: string
-  ): Promise<void> {
+  async setContext(key: string, value: unknown, sessionId: string): Promise<void> {
     // Check if context already exists
     const existing = await this.store.retrieve({
       sessionId,
@@ -287,9 +267,7 @@ export class MemoryManager {
       limit: 1000,
     });
 
-    const existingContext = existing.find(
-      (m) => m.metadata.contextKey === key
-    );
+    const existingContext = existing.find((m) => m.metadata.contextKey === key);
 
     if (existingContext) {
       // Update existing
@@ -324,7 +302,7 @@ export class MemoryManager {
   /**
    * Get a value from working memory
    */
-  async getContext(key: string, sessionId: string): Promise<any> {
+  async getContext(key: string, sessionId: string): Promise<unknown> {
     const memories = await this.store.retrieve({
       sessionId,
       types: [MemoryType.WORKING],
@@ -361,10 +339,7 @@ export class MemoryManager {
   /**
    * Get relevant memories for a query
    */
-  async relevantMemories(
-    query: string,
-    options: MemorySearchOptions
-  ): Promise<Memory[]> {
+  async relevantMemories(query: string, options: MemorySearchOptions): Promise<Memory[]> {
     return this.store.search(query, options);
   }
 
@@ -378,7 +353,7 @@ export class MemoryManager {
   /**
    * Get memory statistics
    */
-  async getStats(sessionId?: string) {
+  async getStats(sessionId?: string): Promise<import('./types').MemoryStats> {
     return this.store.getStats(sessionId);
   }
 
@@ -415,10 +390,10 @@ export class MemoryManager {
     if (memories.length >= this.config.summarizeAfter) {
       // Summarize oldest messages
       const toSummarize = memories.slice(this.config.maxConversationLength!);
-      
+
       if (toSummarize.length > 0) {
-        const summary = await this.store.consolidate(toSummarize);
-        
+        await this.store.consolidate(toSummarize);
+
         // Delete original messages
         const ids = toSummarize.map((m) => m.id);
         await this.store.deleteBatch(ids);

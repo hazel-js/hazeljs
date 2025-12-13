@@ -7,7 +7,9 @@ import { RegistryBackend } from './registry-backend';
 import { ServiceInstance, ServiceFilter, ServiceStatus } from '../types';
 
 // Type definitions for Kubernetes (optional peer dependency)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type KubeConfig = any;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type CoreV1Api = any;
 
 export interface KubernetesBackendConfig {
@@ -22,6 +24,7 @@ export class KubernetesRegistryBackend implements RegistryBackend {
 
   constructor(kubeConfig: KubeConfig, config: KubernetesBackendConfig = {}) {
     // Import CoreV1Api dynamically to avoid build errors when @kubernetes/client-node is not installed
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { CoreV1Api: CoreV1ApiClass } = require('@kubernetes/client-node');
     this.k8sApi = kubeConfig.makeApiClient(CoreV1ApiClass);
     this.namespace = config.namespace || 'default';
@@ -33,25 +36,25 @@ export class KubernetesRegistryBackend implements RegistryBackend {
    * In Kubernetes, services are registered via Service/Endpoints objects
    * This is typically handled by K8s itself
    */
-  async register(instance: ServiceInstance): Promise<void> {
+  async register(_instance: ServiceInstance): Promise<void> {
     // In Kubernetes, service registration is handled by the platform
     // We can optionally create/update annotations on the pod
-    console.log(`Service ${instance.name} registered (managed by Kubernetes)`);
+    // Service registration is managed by Kubernetes
   }
 
   /**
    * Deregister a service instance
    * In Kubernetes, this is handled automatically when pods terminate
    */
-  async deregister(instanceId: string): Promise<void> {
-    console.log(`Service ${instanceId} deregistered (managed by Kubernetes)`);
+  async deregister(_instanceId: string): Promise<void> {
+    // Service deregistration is managed by Kubernetes
   }
 
   /**
    * Update service instance heartbeat
    * Kubernetes handles liveness/readiness probes
    */
-  async heartbeat(instanceId: string): Promise<void> {
+  async heartbeat(_instanceId: string): Promise<void> {
     // Kubernetes handles health checks via probes
     // No manual heartbeat needed
   }
@@ -115,8 +118,7 @@ export class KubernetesRegistryBackend implements RegistryBackend {
       }
 
       return instances;
-    } catch (error) {
-      console.error(`Failed to get instances for ${serviceName}:`, error);
+    } catch {
       return [];
     }
   }
@@ -146,9 +148,10 @@ export class KubernetesRegistryBackend implements RegistryBackend {
         this.labelSelector
       );
 
-      return servicesResponse.body.items.map((service: any) => service.metadata?.name || '');
-    } catch (error) {
-      console.error('Failed to get all services:', error);
+      return servicesResponse.body.items.map(
+        (service: { metadata?: { name?: string } }) => service.metadata?.name || ''
+      );
+    } catch {
       return [];
     }
   }
@@ -157,9 +160,8 @@ export class KubernetesRegistryBackend implements RegistryBackend {
    * Update service instance status
    * In Kubernetes, status is managed by readiness probes
    */
-  async updateStatus(instanceId: string, status: string): Promise<void> {
+  async updateStatus(_instanceId: string, _status: string): Promise<void> {
     // Kubernetes manages status via probes
-    console.log(`Status update for ${instanceId}: ${status} (managed by Kubernetes)`);
   }
 
   /**
@@ -175,10 +177,14 @@ export class KubernetesRegistryBackend implements RegistryBackend {
    */
   private createServiceInstance(
     serviceName: string,
-    address: any,
-    port: any,
+    address: { ip: string; targetRef?: { name?: string }; nodeName?: string },
+    port: { port: number },
     status: ServiceStatus,
-    metadata: any
+    metadata: {
+      annotations?: Record<string, string>;
+      labels?: Record<string, string>;
+      creationTimestamp?: string;
+    }
   ): ServiceInstance {
     const host = address.ip;
     const portNumber = port.port;
@@ -200,7 +206,8 @@ export class KubernetesRegistryBackend implements RegistryBackend {
         nodeName: address.nodeName,
       },
       tags: Object.keys(labels),
-      zone: labels['topology.kubernetes.io/zone'] || labels['failure-domain.beta.kubernetes.io/zone'],
+      zone:
+        labels['topology.kubernetes.io/zone'] || labels['failure-domain.beta.kubernetes.io/zone'],
       lastHeartbeat: new Date(),
       registeredAt: new Date(metadata?.creationTimestamp || Date.now()),
     };

@@ -20,7 +20,7 @@ export interface Message {
   role: 'user' | 'assistant' | 'system';
   content: string;
   timestamp?: Date;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 /**
@@ -37,7 +37,7 @@ export interface Memory {
     importance?: number;
     entities?: string[];
     expiresAt?: Date;
-    [key: string]: any;
+    [key: string]: unknown;
   };
   embedding?: number[];
 }
@@ -48,7 +48,7 @@ export interface Memory {
 export interface Entity {
   name: string;
   type: string;
-  attributes: Record<string, any>;
+  attributes: Record<string, unknown>;
   relationships: Array<{
     type: string;
     target: string;

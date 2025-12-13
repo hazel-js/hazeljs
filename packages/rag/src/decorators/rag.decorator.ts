@@ -5,8 +5,18 @@
 
 import 'reflect-metadata';
 
+type NewableFunction = new (...args: unknown[]) => unknown;
+
 export interface RAGModuleOptions {
-  vectorDB?: 'pinecone' | 'weaviate' | 'qdrant' | 'chroma' | 'milvus' | 'pgvector' | 'redis' | 'memory';
+  vectorDB?:
+    | 'pinecone'
+    | 'weaviate'
+    | 'qdrant'
+    | 'chroma'
+    | 'milvus'
+    | 'pgvector'
+    | 'redis'
+    | 'memory';
   embeddingModel?: string;
   chunkSize?: number;
   chunkOverlap?: number;
@@ -38,7 +48,7 @@ const MULTIMODAL_EMBEDDING_KEY = Symbol('multiModalEmbedding');
  * Configure RAG for a module
  */
 export function RAG(options: RAGModuleOptions): ClassDecorator {
-  return (target: any) => {
+  return (target: NewableFunction) => {
     Reflect.defineMetadata(RAG_MODULE_KEY, options, target);
     return target;
   };
@@ -47,7 +57,7 @@ export function RAG(options: RAGModuleOptions): ClassDecorator {
 /**
  * Get RAG module configuration
  */
-export function getRAGConfig(target: any): RAGModuleOptions | undefined {
+export function getRAGConfig(target: NewableFunction): RAGModuleOptions | undefined {
   return Reflect.getMetadata(RAG_MODULE_KEY, target);
 }
 
@@ -55,7 +65,7 @@ export function getRAGConfig(target: any): RAGModuleOptions | undefined {
  * Configure conversational RAG with memory
  */
 export function ConversationalRAG(options: ConversationalRAGOptions): ClassDecorator {
-  return (target: any) => {
+  return (target: NewableFunction) => {
     Reflect.defineMetadata(CONVERSATIONAL_RAG_KEY, options, target);
     return target;
   };
@@ -65,7 +75,7 @@ export function ConversationalRAG(options: ConversationalRAGOptions): ClassDecor
  * Configure multi-modal embeddings
  */
 export function MultiModalEmbedding(options: MultiModalEmbeddingOptions): ClassDecorator {
-  return (target: any) => {
+  return (target: NewableFunction) => {
     Reflect.defineMetadata(MULTIMODAL_EMBEDDING_KEY, options, target);
     return target;
   };
@@ -75,7 +85,7 @@ export function MultiModalEmbedding(options: MultiModalEmbeddingOptions): ClassD
  * Embed image decorator
  */
 export function EmbedImage(): MethodDecorator {
-  return (target: any, propertyKey: string | symbol, descriptor: PropertyDescriptor) => {
+  return (target: object, propertyKey: string | symbol, descriptor: PropertyDescriptor) => {
     Reflect.defineMetadata('embedImage', true, target, propertyKey);
     return descriptor;
   };
@@ -85,7 +95,7 @@ export function EmbedImage(): MethodDecorator {
  * Embed code decorator
  */
 export function EmbedCode(): MethodDecorator {
-  return (target: any, propertyKey: string | symbol, descriptor: PropertyDescriptor) => {
+  return (target: object, propertyKey: string | symbol, descriptor: PropertyDescriptor) => {
     Reflect.defineMetadata('embedCode', true, target, propertyKey);
     return descriptor;
   };
@@ -95,7 +105,7 @@ export function EmbedCode(): MethodDecorator {
  * Cross-modal search decorator
  */
 export function CrossModalSearch(): MethodDecorator {
-  return (target: any, propertyKey: string | symbol, descriptor: PropertyDescriptor) => {
+  return (target: object, propertyKey: string | symbol, descriptor: PropertyDescriptor) => {
     Reflect.defineMetadata('crossModalSearch', true, target, propertyKey);
     return descriptor;
   };

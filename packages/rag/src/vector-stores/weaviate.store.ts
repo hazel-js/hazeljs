@@ -7,6 +7,7 @@ import { VectorStore, Document, SearchResult, QueryOptions } from '../types';
 import { EmbeddingProvider } from '../types';
 
 // Type for Weaviate client (peer dependency)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type WeaviateClient = any;
 
 export interface WeaviateConfig {
@@ -33,6 +34,7 @@ export class WeaviateVectorStore implements VectorStore {
     this.metadataKeys = config.metadataKeys || ['metadata'];
 
     // Initialize Weaviate client
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const weaviate = require('weaviate-ts-client');
     this.client = weaviate.client({
       scheme: config.scheme,
@@ -46,7 +48,7 @@ export class WeaviateVectorStore implements VectorStore {
       // Check if class exists
       const schema = await this.client.schema.getter().do();
       const classExists = schema.classes?.some(
-        (c: any) => c.class === this.className
+        (c: { class: string }) => c.class === this.className
       );
 
       if (!classExists) {
@@ -109,20 +111,14 @@ export class WeaviateVectorStore implements VectorStore {
     return ids;
   }
 
-  async search(
-    query: string,
-    options?: QueryOptions
-  ): Promise<SearchResult[]> {
+  async search(query: string, options?: QueryOptions): Promise<SearchResult[]> {
     // Generate embedding for query
     const queryEmbedding = await this.embeddingProvider.embed(query);
 
     return this.searchByVector(queryEmbedding, options);
   }
 
-  async searchByVector(
-    embedding: number[],
-    options?: QueryOptions
-  ): Promise<SearchResult[]> {
+  async searchByVector(embedding: number[], options?: QueryOptions): Promise<SearchResult[]> {
     const topK = options?.topK || 5;
     const minScore = options?.minScore;
 
@@ -147,10 +143,10 @@ export class WeaviateVectorStore implements VectorStore {
 
       // Transform results
       const results: SearchResult[] = (response.data.Get[this.className] || [])
-        .map((item: any) => {
+        .map((item: { [key: string]: unknown; _additional: { id: string; distance: number } }) => {
           // Convert distance to similarity score (1 - distance for cosine)
           const score = 1 - item._additional.distance;
-          
+
           return {
             id: item._additional.id,
             content: item[this.textKey],
@@ -228,7 +224,7 @@ export class WeaviateVectorStore implements VectorStore {
         metadata: response.properties.metadata,
         embedding: response.vector,
       };
-    } catch (error) {
+    } catch {
       return null;
     }
   }
@@ -237,7 +233,7 @@ export class WeaviateVectorStore implements VectorStore {
     try {
       // Delete all objects of this class
       await this.client.schema.classDeleter().withClassName(this.className).do();
-      
+
       // Recreate the class
       await this.initialize();
     } catch (error) {
@@ -248,7 +244,17 @@ export class WeaviateVectorStore implements VectorStore {
   /**
    * Build Weaviate where filter from simple key-value pairs
    */
-  private buildWhereFilter(filter: Record<string, any>): any {
+  private buildWhereFilter(filter: Record<string, unknown>):
+    | {
+        path: string[];
+        operator: string;
+        valueText: string;
+      }
+    | {
+        operator: string;
+        operands: Array<{ path: string[]; operator: string; valueText: string }>;
+      }
+    | undefined {
     const conditions = Object.entries(filter).map(([key, value]) => ({
       path: ['metadata', key],
       operator: 'Equal',

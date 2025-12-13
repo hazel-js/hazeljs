@@ -6,7 +6,7 @@
 import { VectorStore, SearchResult, QueryOptions } from '../types';
 
 export interface MultiQueryConfig {
-  numQueries?: number;      // Number of queries to generate (default: 3)
+  numQueries?: number; // Number of queries to generate (default: 3)
   llmProvider?: 'openai' | 'anthropic' | 'custom';
   apiKey?: string;
   model?: string;
@@ -29,10 +29,7 @@ export class MultiQueryRetrieval {
   /**
    * Perform multi-query retrieval
    */
-  async retrieve(
-    question: string,
-    options?: QueryOptions
-  ): Promise<SearchResult[]> {
+  async retrieve(question: string, options?: QueryOptions): Promise<SearchResult[]> {
     // Generate multiple queries
     const queries = await this.generateQueries(question);
 
@@ -42,7 +39,7 @@ export class MultiQueryRetrieval {
 
     for (const query of queries) {
       const results = await this.vectorStore.search(query, options);
-      
+
       // Deduplicate results
       for (const result of results) {
         if (!seenIds.has(result.id)) {
@@ -83,11 +80,9 @@ export class MultiQueryRetrieval {
   /**
    * Generate queries using OpenAI
    */
-  private async generateWithOpenAI(
-    question: string,
-    numQueries: number
-  ): Promise<string[]> {
+  private async generateWithOpenAI(question: string, numQueries: number): Promise<string[]> {
     try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { OpenAI } = require('openai');
       const client = new OpenAI({ apiKey: this.config.apiKey });
 
@@ -114,8 +109,8 @@ Generate ${numQueries} search queries (one per line):`;
 
       // Include original question
       return [question, ...queries].slice(0, numQueries + 1);
-    } catch (error) {
-      console.warn('Failed to generate queries with OpenAI, using fallback:', error);
+    } catch {
+      // Fallback to simple variations on error
       return this.generateSimpleVariations(question, numQueries);
     }
   }
@@ -123,10 +118,7 @@ Generate ${numQueries} search queries (one per line):`;
   /**
    * Generate simple query variations (fallback)
    */
-  private generateSimpleVariations(
-    question: string,
-    numQueries: number
-  ): string[] {
+  private generateSimpleVariations(question: string, numQueries: number): string[] {
     const queries = [question];
 
     // Add variations
@@ -145,10 +137,7 @@ Generate ${numQueries} search queries (one per line):`;
   /**
    * Rank results by frequency and average score
    */
-  private rankResults(
-    results: SearchResult[],
-    queries: string[]
-  ): SearchResult[] {
+  private rankResults(results: SearchResult[], queries: string[]): SearchResult[] {
     // Group results by ID and calculate average score
     const scoreMap = new Map<string, { result: SearchResult; scores: number[] }>();
 

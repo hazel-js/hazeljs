@@ -52,13 +52,13 @@ export class BufferMemory implements MemoryStore {
     if (memory.metadata.sessionId) {
       const buffer = this.sessionBuffers.get(memory.metadata.sessionId) || [];
       buffer.push(id);
-      
+
       // Enforce max size per session
       if (buffer.length > this.maxSize) {
         const removedId = buffer.shift()!;
         this.memories.delete(removedId);
       }
-      
+
       this.sessionBuffers.set(memory.metadata.sessionId, buffer);
     }
 
@@ -110,9 +110,7 @@ export class BufferMemory implements MemoryStore {
 
     // Filter by importance
     if (query.minImportance !== undefined) {
-      results = results.filter(
-        (m) => (m.metadata.importance || 0) >= query.minImportance!
-      );
+      results = results.filter((m) => (m.metadata.importance || 0) >= query.minImportance!);
     }
 
     // Filter by entities
@@ -123,9 +121,7 @@ export class BufferMemory implements MemoryStore {
     }
 
     // Sort by timestamp (newest first)
-    results.sort(
-      (a, b) => b.metadata.timestamp.getTime() - a.metadata.timestamp.getTime()
-    );
+    results.sort((a, b) => b.metadata.timestamp.getTime() - a.metadata.timestamp.getTime());
 
     // Apply limit
     if (query.limit) {
@@ -138,7 +134,7 @@ export class BufferMemory implements MemoryStore {
   async search(query: string, options: MemorySearchOptions): Promise<Memory[]> {
     // Simple text-based search (no semantic search in buffer)
     const memories = await this.retrieve(options);
-    
+
     const queryLower = query.toLowerCase();
     const scored = memories
       .map((memory) => ({
@@ -184,7 +180,7 @@ export class BufferMemory implements MemoryStore {
 
   async delete(id: string): Promise<void> {
     this.memories.delete(id);
-    
+
     // Remove from session buffers
     for (const [sessionId, buffer] of this.sessionBuffers.entries()) {
       const index = buffer.indexOf(id);
@@ -275,7 +271,7 @@ export class BufferMemory implements MemoryStore {
     for (const memory of memories) {
       byType[memory.type]++;
       totalImportance += memory.metadata.importance || 0;
-      
+
       const time = memory.metadata.timestamp.getTime();
       if (time < oldestTime) oldestTime = time;
       if (time > newestTime) newestTime = time;
@@ -290,10 +286,7 @@ export class BufferMemory implements MemoryStore {
     };
   }
 
-  async prune(options?: {
-    olderThan?: Date;
-    minImportance?: number;
-  }): Promise<number> {
+  async prune(options?: { olderThan?: Date; minImportance?: number }): Promise<number> {
     this.cleanExpired();
 
     let pruned = 0;
@@ -333,10 +326,7 @@ export class BufferMemory implements MemoryStore {
     const toDelete: string[] = [];
 
     for (const [id, memory] of this.memories.entries()) {
-      if (
-        memory.metadata.expiresAt &&
-        memory.metadata.expiresAt.getTime() < now
-      ) {
+      if (memory.metadata.expiresAt && memory.metadata.expiresAt.getTime() < now) {
         toDelete.push(id);
       }
     }
@@ -352,14 +342,14 @@ export class BufferMemory implements MemoryStore {
   private calculateTextScore(content: string, query: string): number {
     const contentLower = content.toLowerCase();
     const words = query.split(/\s+/);
-    
+
     let score = 0;
     for (const word of words) {
       if (contentLower.includes(word)) {
         score += 1;
       }
     }
-    
+
     return score / words.length;
   }
 }

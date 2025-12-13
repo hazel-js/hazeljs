@@ -4,9 +4,10 @@
  */
 
 import { EmbeddingProvider } from '../types';
+import type { CohereClient as CohereClientType } from 'cohere-ai';
 
 // Type for Cohere client (peer dependency)
-type CohereClient = any;
+type CohereClient = CohereClientType;
 
 export interface CohereEmbeddingsConfig {
   apiKey: string;
@@ -25,13 +26,14 @@ export class CohereEmbeddings implements EmbeddingProvider {
   private dimension: number;
 
   constructor(config: CohereEmbeddingsConfig) {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { CohereClient } = require('cohere-ai');
     this.client = new CohereClient({ token: config.apiKey });
     this.model = config.model || 'embed-english-v3.0';
     this.inputType = config.inputType || 'search_document';
     this.truncate = config.truncate || 'END';
     this.batchSize = config.batchSize || 96;
-    
+
     // Set dimension based on model
     this.dimension = this.getModelDimension(this.model);
   }

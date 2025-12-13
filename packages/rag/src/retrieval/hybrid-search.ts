@@ -6,8 +6,8 @@ import { VectorStore, SearchResult, QueryOptions } from '../types';
 import { BM25, BM25Document } from './bm25';
 
 export interface HybridSearchConfig {
-  vectorWeight?: number;    // Weight for vector search (default: 0.7)
-  keywordWeight?: number;   // Weight for keyword search (default: 0.3)
+  vectorWeight?: number; // Weight for vector search (default: 0.7)
+  keywordWeight?: number; // Weight for keyword search (default: 0.3)
   bm25Config?: {
     k1?: number;
     b?: number;
@@ -52,10 +52,7 @@ export class HybridSearchRetrieval {
   /**
    * Perform hybrid search combining vector and keyword search
    */
-  async search(
-    query: string,
-    options?: QueryOptions
-  ): Promise<SearchResult[]> {
+  async search(query: string, options?: QueryOptions): Promise<SearchResult[]> {
     if (!this.documentsIndexed) {
       throw new Error('Documents must be indexed before searching');
     }
@@ -96,10 +93,7 @@ export class HybridSearchRetrieval {
     const keywordScores = new Map(normalizedKeyword.map((r) => [r.id, r.score]));
 
     // Get all unique document IDs
-    const allIds = new Set([
-      ...vectorResults.map((r) => r.id),
-      ...keywordResults.map((r) => r.id),
-    ]);
+    const allIds = new Set([...vectorResults.map((r) => r.id), ...keywordResults.map((r) => r.id)]);
 
     // Calculate hybrid scores
     const hybridScores: Array<{ id: string; score: number; result: SearchResult }> = [];
@@ -108,8 +102,7 @@ export class HybridSearchRetrieval {
       const vectorScore = vectorScores.get(id) || 0;
       const keywordScore = keywordScores.get(id) || 0;
 
-      const hybridScore =
-        this.vectorWeight * vectorScore + this.keywordWeight * keywordScore;
+      const hybridScore = this.vectorWeight * vectorScore + this.keywordWeight * keywordScore;
 
       // Find the original result
       const result = vectorResults.find((r) => r.id === id);
@@ -123,9 +116,7 @@ export class HybridSearchRetrieval {
     }
 
     // Sort by hybrid score
-    return hybridScores
-      .sort((a, b) => b.score - a.score)
-      .map((item) => item.result);
+    return hybridScores.sort((a, b) => b.score - a.score).map((item) => item.result);
   }
 
   /**

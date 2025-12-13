@@ -11,7 +11,7 @@ export interface BM25Document {
 
 export interface BM25Config {
   k1?: number; // Term frequency saturation parameter (default: 1.5)
-  b?: number;  // Length normalization parameter (default: 0.75)
+  b?: number; // Length normalization parameter (default: 0.75)
 }
 
 export class BM25 {
@@ -48,9 +48,7 @@ export class BM25 {
     }
 
     // Sort by score descending and return top K
-    return scores
-      .sort((a, b) => b.score - a.score)
-      .slice(0, topK);
+    return scores.sort((a, b) => b.score - a.score).slice(0, topK);
   }
 
   /**
@@ -66,8 +64,7 @@ export class BM25 {
 
       // BM25 formula
       const numerator = tf * (this.k1 + 1);
-      const denominator =
-        tf + this.k1 * (1 - this.b + this.b * (docLength / this.avgDocLength));
+      const denominator = tf + this.k1 * (1 - this.b + this.b * (docLength / this.avgDocLength));
 
       score += idf * (numerator / denominator);
     }
@@ -102,10 +99,7 @@ export class BM25 {
    * Calculate average document length
    */
   private calculateAvgDocLength(): void {
-    const totalLength = this.documents.reduce(
-      (sum, doc) => sum + doc.tokens.length,
-      0
-    );
+    const totalLength = this.documents.reduce((sum, doc) => sum + doc.tokens.length, 0);
     this.avgDocLength = totalLength / this.documents.length || 1;
   }
 

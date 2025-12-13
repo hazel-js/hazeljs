@@ -45,7 +45,7 @@ export class VectorMemory implements MemoryStore {
 
   async save(memory: Memory): Promise<string> {
     const id = memory.id || randomUUID();
-    
+
     // Generate embedding if not provided
     let embedding = memory.embedding;
     if (!embedding) {
@@ -100,7 +100,7 @@ export class VectorMemory implements MemoryStore {
 
   async retrieve(query: MemoryQuery): Promise<Memory[]> {
     // Build metadata filter
-    const filter: Record<string, any> = {};
+    const filter: Record<string, unknown> = {};
 
     if (query.sessionId) {
       filter.sessionId = query.sessionId;
@@ -125,17 +125,13 @@ export class VectorMemory implements MemoryStore {
 
     // Apply additional filters
     if (query.startDate) {
-      memories = memories.filter(
-        (m) => m.metadata.timestamp >= query.startDate!
-      );
+      memories = memories.filter((m) => m.metadata.timestamp >= query.startDate!);
     }
     if (query.endDate) {
       memories = memories.filter((m) => m.metadata.timestamp <= query.endDate!);
     }
     if (query.minImportance !== undefined) {
-      memories = memories.filter(
-        (m) => (m.metadata.importance || 0) >= query.minImportance!
-      );
+      memories = memories.filter((m) => (m.metadata.importance || 0) >= query.minImportance!);
     }
     if (query.entities && query.entities.length > 0) {
       memories = memories.filter((m) =>
@@ -144,16 +140,14 @@ export class VectorMemory implements MemoryStore {
     }
 
     // Sort by timestamp
-    memories.sort(
-      (a, b) => b.metadata.timestamp.getTime() - a.metadata.timestamp.getTime()
-    );
+    memories.sort((a, b) => b.metadata.timestamp.getTime() - a.metadata.timestamp.getTime());
 
     return memories.slice(0, query.limit || 100);
   }
 
   async search(query: string, options: MemorySearchOptions): Promise<Memory[]> {
     // Build metadata filter
-    const filter: Record<string, any> = {};
+    const filter: Record<string, unknown> = {};
 
     if (options.sessionId) {
       filter.sessionId = options.sessionId;
@@ -186,9 +180,7 @@ export class VectorMemory implements MemoryStore {
       filtered = filtered.filter((m) => m.metadata.timestamp <= options.endDate!);
     }
     if (options.minImportance !== undefined) {
-      filtered = filtered.filter(
-        (m) => (m.metadata.importance || 0) >= options.minImportance!
-      );
+      filtered = filtered.filter((m) => (m.metadata.importance || 0) >= options.minImportance!);
     }
 
     return filtered;
@@ -245,7 +237,7 @@ export class VectorMemory implements MemoryStore {
     // Retrieve all memories for session
     const memories = await this.retrieve({ sessionId });
     const ids = memories.map((m) => m.id);
-    
+
     if (ids.length > 0) {
       await this.deleteBatch(ids);
     }
@@ -331,10 +323,7 @@ export class VectorMemory implements MemoryStore {
     };
   }
 
-  async prune(options?: {
-    olderThan?: Date;
-    minImportance?: number;
-  }): Promise<number> {
+  async prune(options?: { olderThan?: Date; minImportance?: number }): Promise<number> {
     const memories = await this.retrieve({ limit: 10000 });
     const toDelete: string[] = [];
 
@@ -367,7 +356,12 @@ export class VectorMemory implements MemoryStore {
   /**
    * Convert search result to memory
    */
-  private searchResultToMemory(result: any): Memory {
+  private searchResultToMemory(result: {
+    id: string;
+    content: string;
+    metadata: Record<string, unknown> & { memoryType: MemoryType; timestamp: string };
+    embedding?: number[];
+  }): Memory {
     return {
       id: result.id,
       type: result.metadata.memoryType as MemoryType,
@@ -383,7 +377,12 @@ export class VectorMemory implements MemoryStore {
   /**
    * Convert document to memory
    */
-  private documentToMemory(doc: any): Memory {
+  private documentToMemory(doc: {
+    id: string;
+    content: string;
+    metadata: Record<string, unknown> & { memoryType: MemoryType; timestamp: string };
+    embedding?: number[];
+  }): Memory {
     return {
       id: doc.id,
       type: doc.metadata.memoryType as MemoryType,

@@ -8,7 +8,7 @@
 export interface Document {
   id?: string;
   content: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   embedding?: number[];
 }
 
@@ -18,7 +18,7 @@ export interface Document {
 export interface SearchResult {
   id: string;
   content: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   score: number;
   embedding?: number[];
 }
@@ -28,7 +28,7 @@ export interface SearchResult {
  */
 export interface QueryOptions {
   topK?: number;
-  filter?: Record<string, any>;
+  filter?: Record<string, unknown>;
   includeMetadata?: boolean;
   includeEmbedding?: boolean;
   minScore?: number;

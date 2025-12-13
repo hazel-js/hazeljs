@@ -36,16 +36,16 @@ export class ServiceClient {
   /**
    * GET request
    */
-  async get<T = any>(path: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
+  async get<T = unknown>(path: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
     return this.request<T>({ ...config, method: 'GET', url: path });
   }
 
   /**
    * POST request
    */
-  async post<T = any>(
+  async post<T = unknown>(
     path: string,
-    data?: any,
+    data?: unknown,
     config?: AxiosRequestConfig
   ): Promise<AxiosResponse<T>> {
     return this.request<T>({ ...config, method: 'POST', url: path, data });
@@ -54,9 +54,9 @@ export class ServiceClient {
   /**
    * PUT request
    */
-  async put<T = any>(
+  async put<T = unknown>(
     path: string,
-    data?: any,
+    data?: unknown,
     config?: AxiosRequestConfig
   ): Promise<AxiosResponse<T>> {
     return this.request<T>({ ...config, method: 'PUT', url: path, data });
@@ -65,16 +65,16 @@ export class ServiceClient {
   /**
    * DELETE request
    */
-  async delete<T = any>(path: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
+  async delete<T = unknown>(path: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
     return this.request<T>({ ...config, method: 'DELETE', url: path });
   }
 
   /**
    * PATCH request
    */
-  async patch<T = any>(
+  async patch<T = unknown>(
     path: string,
-    data?: any,
+    data?: unknown,
     config?: AxiosRequestConfig
   ): Promise<AxiosResponse<T>> {
     return this.request<T>({ ...config, method: 'PATCH', url: path, data });
@@ -83,7 +83,7 @@ export class ServiceClient {
   /**
    * Generic request with service discovery
    */
-  private async request<T = any>(config: AxiosRequestConfig): Promise<AxiosResponse<T>> {
+  private async request<T = unknown>(config: AxiosRequestConfig): Promise<AxiosResponse<T>> {
     let lastError: Error | null = null;
 
     for (let attempt = 0; attempt < this.retries; attempt++) {
@@ -110,10 +110,11 @@ export class ServiceClient {
         return await this.axiosInstance.request<T>(fullConfig);
       } catch (error) {
         lastError = error as Error;
-        console.error(
-          `Request failed (attempt ${attempt + 1}/${this.retries}):`,
-          error
-        );
+        // Log error only in development
+        if (process.env.NODE_ENV === 'development') {
+          // eslint-disable-next-line no-console
+          console.error(`Request failed (attempt ${attempt + 1}/${this.retries}):`, error);
+        }
 
         // Wait before retry
         if (attempt < this.retries - 1) {

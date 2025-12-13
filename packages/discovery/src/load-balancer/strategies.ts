@@ -103,7 +103,8 @@ export class WeightedRoundRobinStrategy extends BaseStrategy {
     // Build weighted list
     const weighted: ServiceInstance[] = [];
     for (const instance of healthy) {
-      const weight = instance.metadata?.weight || 1;
+      const weightValue = instance.metadata?.weight;
+      const weight = typeof weightValue === 'number' && weightValue > 0 ? weightValue : 1;
       for (let i = 0; i < weight; i++) {
         weighted.push(instance);
       }
@@ -200,7 +201,7 @@ export class LoadBalancerFactory {
     return this.strategies.get(name);
   }
 
-  create(name: string, options?: any): LoadBalancerStrategy {
+  create(name: string, options?: { zone?: string }): LoadBalancerStrategy {
     if (name === 'zone-aware') {
       return new ZoneAwareStrategy(options?.zone);
     }

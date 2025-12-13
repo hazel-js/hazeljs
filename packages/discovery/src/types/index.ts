@@ -8,7 +8,7 @@ export interface ServiceInstance {
   host: string;
   port: number;
   protocol?: 'http' | 'https' | 'grpc';
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   healthCheckPath?: string;
   healthCheckInterval?: number;
   zone?: string;
@@ -33,16 +33,16 @@ export interface ServiceRegistryConfig {
   protocol?: 'http' | 'https' | 'grpc';
   healthCheckPath?: string;
   healthCheckInterval?: number;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   zone?: string;
   tags?: string[];
   backend?: 'memory' | 'redis' | 'consul' | 'etcd' | 'kubernetes';
-  backendConfig?: any;
+  backendConfig?: Record<string, unknown>;
 }
 
 export interface DiscoveryClientConfig {
   backend?: 'memory' | 'redis' | 'consul' | 'etcd' | 'kubernetes';
-  backendConfig?: any;
+  backendConfig?: Record<string, unknown>;
   cacheEnabled?: boolean;
   cacheTTL?: number;
   refreshInterval?: number;
@@ -62,6 +62,6 @@ export interface HealthCheckResult {
 export interface ServiceFilter {
   zone?: string;
   tags?: string[];
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   status?: ServiceStatus;
 }

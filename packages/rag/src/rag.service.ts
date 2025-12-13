@@ -80,9 +80,10 @@ export class RAGService {
       throw new Error('LLM function not configured');
     }
 
-    const contextStr = typeof context === 'string' 
-      ? context 
-      : context.map((r, idx) => `[${idx + 1}] ${r.content}`).join('\n\n');
+    const contextStr =
+      typeof context === 'string'
+        ? context
+        : context.map((r, idx) => `[${idx + 1}] ${r.content}`).join('\n\n');
 
     const prompt = `Based on the following context, answer the question.
 
@@ -99,7 +100,10 @@ Answer:`;
   /**
    * Full RAG pipeline: retrieve + generate
    */
-  async ask(query: string, options?: QueryOptions): Promise<{ answer: string; sources: SearchResult[] }> {
+  async ask(
+    query: string,
+    options?: QueryOptions
+  ): Promise<{ answer: string; sources: SearchResult[] }> {
     const sources = await this.retrieve(query, options);
     const answer = await this.generate(query, sources);
     return { answer, sources };
@@ -109,7 +113,7 @@ Answer:`;
    * Multi-query RAG
    * Generates multiple search queries and combines results
    */
-  async multiQuery(question: string, numQueries: number = 3): Promise<SearchResult[]> {
+  async multiQuery(question: string, _numQueries: number = 3): Promise<SearchResult[]> {
     // TODO: Implement query generation using LLM
     // For now, just use the original query
     return this.search(question, { topK: 10 });
@@ -118,7 +122,7 @@ Answer:`;
   /**
    * Compress retrieved context
    */
-  async compress(documents: SearchResult[], query: string): Promise<SearchResult[]> {
+  async compress(documents: SearchResult[], _query: string): Promise<SearchResult[]> {
     // TODO: Implement context compression
     // For now, return top results
     return documents.slice(0, 5);
@@ -136,7 +140,10 @@ Answer:`;
   /**
    * Conversational RAG with session memory
    */
-  async chat(message: string, sessionId: string): Promise<{ answer: string; sources: SearchResult[] }> {
+  async chat(
+    message: string,
+    _sessionId: string
+  ): Promise<{ answer: string; sources: SearchResult[] }> {
     // TODO: Implement conversation memory
     return this.ask(message);
   }
@@ -154,7 +161,7 @@ Answer:`;
   /**
    * Rerank search results
    */
-  async rerank(results: SearchResult[], query: string, topN?: number): Promise<SearchResult[]> {
+  async rerank(results: SearchResult[], _query: string, topN?: number): Promise<SearchResult[]> {
     // TODO: Implement reranking with external model
     // For now, return top N results
     return results.slice(0, topN || 5);
@@ -163,7 +170,11 @@ Answer:`;
   /**
    * Ensemble retrieval combining multiple methods
    */
-  async ensemble(query: string, methods: RetrievalStrategy[], weights?: number[]): Promise<SearchResult[]> {
+  async ensemble(
+    query: string,
+    _methods: RetrievalStrategy[],
+    _weights?: number[]
+  ): Promise<SearchResult[]> {
     // TODO: Implement ensemble retrieval
     return this.search(query);
   }
@@ -173,19 +184,21 @@ Answer:`;
    */
   async timeWeighted(query: string, decayRate: number = 0.01): Promise<SearchResult[]> {
     const results = await this.search(query, { includeMetadata: true });
-    
+
     // Apply time decay to scores
     const now = Date.now();
-    return results.map(result => {
-      const timestamp = result.metadata?.timestamp || now;
-      const age = (now - timestamp) / (1000 * 60 * 60 * 24); // days
-      const timeWeight = Math.exp(-decayRate * age);
-      
-      return {
-        ...result,
-        score: result.score * timeWeight,
-      };
-    }).sort((a, b) => b.score - a.score);
+    return results
+      .map((result) => {
+        const timestamp = result.metadata?.timestamp || now;
+        const age = (now - timestamp) / (1000 * 60 * 60 * 24); // days
+        const timeWeight = Math.exp(-decayRate * age);
+
+        return {
+          ...result,
+          score: result.score * timeWeight,
+        };
+      })
+      .sort((a, b) => b.score - a.score);
   }
 
   /**

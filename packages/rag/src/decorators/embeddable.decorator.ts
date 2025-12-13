@@ -5,6 +5,8 @@
 
 import 'reflect-metadata';
 
+type NewableFunction = new (...args: unknown[]) => unknown;
+
 export interface EmbeddableOptions {
   fields: string[];
   strategy?: 'concat' | 'weighted' | 'separate';
@@ -19,7 +21,7 @@ const EMBEDDABLE_METADATA_KEY = Symbol('embeddable');
  * Marks an entity as embeddable with automatic embedding generation
  */
 export function Embeddable(options: EmbeddableOptions): ClassDecorator {
-  return (target: any) => {
+  return (target: NewableFunction) => {
     Reflect.defineMetadata(EMBEDDABLE_METADATA_KEY, options, target);
     return target;
   };
@@ -28,7 +30,7 @@ export function Embeddable(options: EmbeddableOptions): ClassDecorator {
 /**
  * Get embeddable metadata from a class
  */
-export function getEmbeddableMetadata(target: any): EmbeddableOptions | undefined {
+export function getEmbeddableMetadata(target: NewableFunction): EmbeddableOptions | undefined {
   return Reflect.getMetadata(EMBEDDABLE_METADATA_KEY, target);
 }
 
@@ -36,7 +38,7 @@ export function getEmbeddableMetadata(target: any): EmbeddableOptions | undefine
  * Marks a property as a vector column for storing embeddings
  */
 export function VectorColumn(): PropertyDecorator {
-  return (target: any, propertyKey: string | symbol) => {
+  return (target: object, propertyKey: string | symbol) => {
     const vectorColumns = Reflect.getMetadata('vectorColumns', target.constructor) || [];
     vectorColumns.push(propertyKey);
     Reflect.defineMetadata('vectorColumns', vectorColumns, target.constructor);
@@ -46,6 +48,6 @@ export function VectorColumn(): PropertyDecorator {
 /**
  * Get vector column metadata
  */
-export function getVectorColumns(target: any): string[] {
+export function getVectorColumns(target: NewableFunction): string[] {
   return Reflect.getMetadata('vectorColumns', target) || [];
 }

@@ -7,7 +7,9 @@ import { VectorStore, Document, SearchResult, QueryOptions } from '../types';
 import { EmbeddingProvider } from '../types';
 
 // Type for ChromaDB client (peer dependency)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type ChromaClient = any;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Collection = any;
 
 export interface ChromaConfig {
@@ -31,9 +33,10 @@ export class ChromaVectorStore implements VectorStore {
     this.collectionName = config.collectionName;
 
     // Initialize ChromaDB client
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { ChromaClient } = require('chromadb');
-    
-    const clientConfig: any = {};
+
+    const clientConfig: Record<string, unknown> = {};
     if (config.url) {
       clientConfig.path = config.url;
     }
@@ -65,7 +68,7 @@ export class ChromaVectorStore implements VectorStore {
 
     const ids: string[] = [];
     const embeddings: number[][] = [];
-    const metadatas: any[] = [];
+    const metadatas: Record<string, unknown>[] = [];
     const documentsTexts: string[] = [];
 
     // Generate embeddings for all documents
@@ -75,7 +78,7 @@ export class ChromaVectorStore implements VectorStore {
     for (let i = 0; i < documents.length; i++) {
       const doc = documents[i];
       const id = doc.id || this.generateId();
-      
+
       ids.push(id);
       embeddings.push(generatedEmbeddings[i]);
       documentsTexts.push(doc.content);
@@ -93,20 +96,14 @@ export class ChromaVectorStore implements VectorStore {
     return ids;
   }
 
-  async search(
-    query: string,
-    options?: QueryOptions
-  ): Promise<SearchResult[]> {
+  async search(query: string, options?: QueryOptions): Promise<SearchResult[]> {
     // Generate embedding for query
     const queryEmbedding = await this.embeddingProvider.embed(query);
 
     return this.searchByVector(queryEmbedding, options);
   }
 
-  async searchByVector(
-    embedding: number[],
-    options?: QueryOptions
-  ): Promise<SearchResult[]> {
+  async searchByVector(embedding: number[], options?: QueryOptions): Promise<SearchResult[]> {
     if (!this.collection) {
       throw new Error('Collection not initialized');
     }
@@ -117,7 +114,11 @@ export class ChromaVectorStore implements VectorStore {
 
     try {
       // Build query
-      const queryParams: any = {
+      const queryParams: {
+        queryEmbeddings: number[][];
+        nResults: number;
+        where?: Record<string, unknown>;
+      } = {
         queryEmbeddings: [embedding],
         nResults: topK,
       };
@@ -228,7 +229,7 @@ export class ChromaVectorStore implements VectorStore {
         metadata: response.metadatas?.[0] || {},
         embedding: response.embeddings?.[0],
       };
-    } catch (error) {
+    } catch {
       return null;
     }
   }
@@ -241,7 +242,7 @@ export class ChromaVectorStore implements VectorStore {
     try {
       // Delete the collection
       await this.client.deleteCollection({ name: this.collectionName });
-      
+
       // Recreate it
       await this.initialize();
     } catch (error) {

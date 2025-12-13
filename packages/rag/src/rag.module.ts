@@ -18,13 +18,12 @@ export class RAGModule {
   /**
    * Configure RAG module with options
    */
-  static forRoot(config: RAGModuleConfig = {}) {
+  static forRoot(config: RAGModuleConfig = {}): typeof ConfiguredRAGModule {
     const {
       vectorDB = 'memory',
       embeddingModel = 'text-embedding-3-small',
       chunkSize = 1000,
       chunkOverlap = 200,
-      indexName = 'default',
       isGlobal = false,
     } = config;
 
@@ -62,11 +61,11 @@ export class RAGModule {
         {
           provide: RAGService,
           useFactory: () => new RAGService(ragServiceConfig),
-        } as any,
+        },
       ],
       exports: [RAGService],
       global: isGlobal,
-    } as any)
+    })
     class ConfiguredRAGModule {}
 
     return ConfiguredRAGModule;
@@ -76,19 +75,19 @@ export class RAGModule {
    * Configure RAG module asynchronously
    */
   static forRootAsync(options: {
-    useFactory: (...args: any[]) => Promise<RAGModuleConfig> | RAGModuleConfig;
-    inject?: any[];
-  }) {
+    useFactory: (...args: unknown[]) => Promise<RAGModuleConfig> | RAGModuleConfig;
+    inject?: unknown[];
+  }): typeof AsyncConfiguredRAGModule {
     @HazelModule({
       providers: [
         {
           provide: 'RAG_CONFIG',
           useFactory: options.useFactory,
           inject: options.inject || [],
-        } as any,
+        },
         {
           provide: RAGService,
-          useFactory: async (config: RAGModuleConfig) => {
+          useFactory: async (config: RAGModuleConfig): Promise<RAGService> => {
             // Create providers based on config
             const embeddingProvider = new OpenAIEmbeddings({
               apiKey: config.apiKey || '',
@@ -112,10 +111,10 @@ export class RAGModule {
             return ragService;
           },
           inject: ['RAG_CONFIG'],
-        } as any,
+        },
       ],
       exports: [RAGService],
-    } as any)
+    })
     class AsyncConfiguredRAGModule {}
 
     return AsyncConfiguredRAGModule;

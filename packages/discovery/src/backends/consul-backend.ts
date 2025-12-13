@@ -7,6 +7,7 @@ import { RegistryBackend } from './registry-backend';
 import { ServiceInstance, ServiceFilter, ServiceStatus } from '../types';
 
 // Type definition for Consul (optional peer dependency)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Consul = any;
 
 export interface ConsulBackendConfig {
@@ -77,8 +78,8 @@ export class ConsulRegistryBackend implements RegistryBackend {
     try {
       // Pass TTL check
       await this.consul.agent.check.pass(checkId);
-    } catch (error) {
-      console.error(`Failed to update heartbeat for ${instanceId}:`, error);
+    } catch {
+      // Silently fail - will be retried on next heartbeat
     }
   }
 
@@ -92,36 +93,48 @@ export class ConsulRegistryBackend implements RegistryBackend {
         passing: filter?.status === ServiceStatus.UP,
       });
 
-      const instances: ServiceInstance[] = result.map((entry: any) => {
-        const service = entry.Service;
-        const checks = entry.Checks || [];
+      const instances: ServiceInstance[] = result.map(
+        (entry: {
+          Service: {
+            ID: string;
+            Service: string;
+            Address: string;
+            Port: number;
+            Meta?: Record<string, string>;
+            Tags?: string[];
+          };
+          Checks?: Array<{ Status: string }>;
+        }) => {
+          const service = entry.Service;
+          const checks = entry.Checks || [];
 
-        // Determine status from checks
-        let status = ServiceStatus.UP;
-        for (const check of checks) {
-          if (check.Status === 'critical') {
-            status = ServiceStatus.DOWN;
-            break;
-          } else if (check.Status === 'warning') {
-            status = ServiceStatus.STARTING;
+          // Determine status from checks
+          let status = ServiceStatus.UP;
+          for (const check of checks) {
+            if (check.Status === 'critical') {
+              status = ServiceStatus.DOWN;
+              break;
+            } else if (check.Status === 'warning') {
+              status = ServiceStatus.STARTING;
+            }
           }
-        }
 
-        return {
-          id: service.ID,
-          name: service.Service,
-          host: service.Address,
-          port: service.Port,
-          status,
-          metadata: service.Meta || {},
-          tags: service.Tags || [],
-          zone: service.Meta?.zone || undefined,
-          lastHeartbeat: new Date(),
-          registeredAt: service.Meta?.registeredAt
-            ? new Date(service.Meta.registeredAt)
-            : new Date(),
-        };
-      });
+          return {
+            id: service.ID,
+            name: service.Service,
+            host: service.Address,
+            port: service.Port,
+            status,
+            metadata: service.Meta || {},
+            tags: service.Tags || [],
+            zone: service.Meta?.zone || undefined,
+            lastHeartbeat: new Date(),
+            registeredAt: service.Meta?.registeredAt
+              ? new Date(service.Meta.registeredAt)
+              : new Date(),
+          };
+        }
+      );
 
       // Apply additional filters
       if (filter) {
@@ -129,8 +142,7 @@ export class ConsulRegistryBackend implements RegistryBackend {
       }
 
       return instances;
-    } catch (error) {
-      console.error(`Failed to get instances for ${serviceName}:`, error);
+    } catch {
       return [];
     }
   }
@@ -171,12 +183,9 @@ export class ConsulRegistryBackend implements RegistryBackend {
         tags: service.Tags || [],
         zone: service.Meta?.zone || undefined,
         lastHeartbeat: new Date(),
-        registeredAt: service.Meta?.registeredAt
-          ? new Date(service.Meta.registeredAt)
-          : new Date(),
+        registeredAt: service.Meta?.registeredAt ? new Date(service.Meta.registeredAt) : new Date(),
       };
-    } catch (error) {
-      console.error(`Failed to get instance ${instanceId}:`, error);
+    } catch {
       return null;
     }
   }
@@ -188,8 +197,7 @@ export class ConsulRegistryBackend implements RegistryBackend {
     try {
       const services = await this.consul.catalog.service.list();
       return Object.keys(services);
-    } catch (error) {
-      console.error('Failed to get all services:', error);
+    } catch {
       return [];
     }
   }
@@ -208,8 +216,8 @@ export class ConsulRegistryBackend implements RegistryBackend {
       } else if (status === ServiceStatus.STARTING) {
         await this.consul.agent.check.warn(checkId);
       }
-    } catch (error) {
-      console.error(`Failed to update status for ${instanceId}:`, error);
+    } catch {
+      // Silently fail - status will be updated on next heartbeat
     }
   }
 
@@ -243,8 +251,8 @@ export class ConsulRegistryBackend implements RegistryBackend {
     const interval = setInterval(async () => {
       try {
         await this.consul.agent.check.pass(checkId);
-      } catch (error) {
-        console.error(`Failed to pass TTL check for ${instanceId}:`, error);
+      } catch {
+        // Silently fail - will be retried on next interval
       }
     }, intervalMs);
 

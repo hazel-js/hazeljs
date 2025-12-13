@@ -3,9 +3,10 @@
  */
 
 import { EmbeddingProvider } from '../types';
+import type { OpenAI as OpenAIType } from 'openai';
 
 // Type for OpenAI (optional peer dependency)
-type OpenAI = any;
+type OpenAI = OpenAIType;
 
 export interface OpenAIEmbeddingsConfig {
   apiKey: string;
@@ -21,6 +22,7 @@ export class OpenAIEmbeddings implements EmbeddingProvider {
   private batchSize: number;
 
   constructor(config: OpenAIEmbeddingsConfig) {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { OpenAI: OpenAIClass } = require('openai');
     this.client = new OpenAIClass({ apiKey: config.apiKey });
     this.model = config.model || 'text-embedding-3-small';
@@ -56,7 +58,7 @@ export class OpenAIEmbeddings implements EmbeddingProvider {
           dimensions: this.dimensions,
         });
 
-        embeddings.push(...response.data.map((item: any) => item.embedding));
+        embeddings.push(...response.data.map((item: { embedding: number[] }) => item.embedding));
       } catch (error) {
         throw new Error(`Failed to generate batch embeddings: ${error}`);
       }

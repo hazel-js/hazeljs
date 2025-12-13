@@ -119,8 +119,8 @@ export class RAGPipeline {
 
     if (candidates.length === 0) return [];
 
-    // Get query embedding
-    const queryEmbedding = await this.config.embeddingProvider.embed(query);
+    // Get query embedding (not used in MMR, but kept for potential future use)
+    await this.config.embeddingProvider.embed(query);
 
     // MMR algorithm
     const selected: SearchResult[] = [];
@@ -185,9 +185,7 @@ export class RAGPipeline {
   private buildContext(results: SearchResult[]): string {
     return results
       .map((result, idx) => {
-        const metadata = result.metadata
-          ? `\nMetadata: ${JSON.stringify(result.metadata)}`
-          : '';
+        const metadata = result.metadata ? `\nMetadata: ${JSON.stringify(result.metadata)}` : '';
         return `[${idx + 1}] ${result.content}${metadata}`;
       })
       .join('\n\n');
@@ -201,9 +199,7 @@ export class RAGPipeline {
       throw new Error('LLM function not configured');
     }
 
-    const fullPrompt = prompt
-      .replace('{context}', context)
-      .replace('{query}', query);
+    const fullPrompt = prompt.replace('{context}', context).replace('{query}', query);
 
     return this.llmFunction(fullPrompt);
   }

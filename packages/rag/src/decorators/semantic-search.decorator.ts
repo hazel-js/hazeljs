@@ -9,7 +9,7 @@ export interface SemanticSearchOptions {
   topK?: number;
   minScore?: number;
   includeMetadata?: boolean;
-  filter?: Record<string, any>;
+  filter?: Record<string, unknown>;
 }
 
 export interface HybridSearchOptions extends SemanticSearchOptions {
@@ -25,7 +25,7 @@ const HYBRID_SEARCH_KEY = Symbol('hybridSearch');
  * Enables semantic search on a method
  */
 export function SemanticSearch(options: SemanticSearchOptions = {}): MethodDecorator {
-  return (target: any, propertyKey: string | symbol, descriptor: PropertyDescriptor) => {
+  return (target: object, propertyKey: string | symbol, descriptor: PropertyDescriptor) => {
     Reflect.defineMetadata(SEMANTIC_SEARCH_KEY, options, target, propertyKey);
     return descriptor;
   };
@@ -35,7 +35,7 @@ export function SemanticSearch(options: SemanticSearchOptions = {}): MethodDecor
  * Enables hybrid search (vector + keyword) on a method
  */
 export function HybridSearch(options: HybridSearchOptions = {}): MethodDecorator {
-  return (target: any, propertyKey: string | symbol, descriptor: PropertyDescriptor) => {
+  return (target: object, propertyKey: string | symbol, descriptor: PropertyDescriptor) => {
     Reflect.defineMetadata(HYBRID_SEARCH_KEY, options, target, propertyKey);
     return descriptor;
   };
@@ -44,16 +44,16 @@ export function HybridSearch(options: HybridSearchOptions = {}): MethodDecorator
 /**
  * Auto-embed decorator for automatic embedding generation
  */
-export function AutoEmbed(fields?: string[]): MethodDecorator {
-  return (target: any, propertyKey: string | symbol, descriptor: PropertyDescriptor) => {
+export function AutoEmbed(_fields?: string[]): MethodDecorator {
+  return (target: object, propertyKey: string | symbol, descriptor: PropertyDescriptor) => {
     const originalMethod = descriptor.value;
 
-    descriptor.value = async function (...args: any[]) {
+    descriptor.value = async function (...args: unknown[]): Promise<unknown> {
       const result = await originalMethod.apply(this, args);
-      
+
       // TODO: Implement automatic embedding generation
       // This would integrate with the RAG service to generate embeddings
-      
+
       return result;
     };
 
@@ -65,7 +65,7 @@ export function AutoEmbed(fields?: string[]): MethodDecorator {
  * Multi-query RAG decorator
  */
 export function MultiQueryRAG(options: { queries?: number } = {}): MethodDecorator {
-  return (target: any, propertyKey: string | symbol, descriptor: PropertyDescriptor) => {
+  return (target: object, propertyKey: string | symbol, descriptor: PropertyDescriptor) => {
     Reflect.defineMetadata('multiQueryRAG', options, target, propertyKey);
     return descriptor;
   };
@@ -75,7 +75,7 @@ export function MultiQueryRAG(options: { queries?: number } = {}): MethodDecorat
  * Compress context decorator
  */
 export function CompressContext(options: { maxTokens?: number } = {}): MethodDecorator {
-  return (target: any, propertyKey: string | symbol, descriptor: PropertyDescriptor) => {
+  return (target: object, propertyKey: string | symbol, descriptor: PropertyDescriptor) => {
     Reflect.defineMetadata('compressContext', options, target, propertyKey);
     return descriptor;
   };
@@ -85,7 +85,7 @@ export function CompressContext(options: { maxTokens?: number } = {}): MethodDec
  * Self-query RAG with automatic metadata filtering
  */
 export function SelfQueryRAG(): MethodDecorator {
-  return (target: any, propertyKey: string | symbol, descriptor: PropertyDescriptor) => {
+  return (target: object, propertyKey: string | symbol, descriptor: PropertyDescriptor) => {
     Reflect.defineMetadata('selfQueryRAG', true, target, propertyKey);
     return descriptor;
   };
@@ -95,7 +95,7 @@ export function SelfQueryRAG(): MethodDecorator {
  * Rerank results decorator
  */
 export function Rerank(options: { model?: string; topN?: number } = {}): MethodDecorator {
-  return (target: any, propertyKey: string | symbol, descriptor: PropertyDescriptor) => {
+  return (target: object, propertyKey: string | symbol, descriptor: PropertyDescriptor) => {
     Reflect.defineMetadata('rerank', options, target, propertyKey);
     return descriptor;
   };
@@ -105,7 +105,7 @@ export function Rerank(options: { model?: string; topN?: number } = {}): MethodD
  * Parent-child document retrieval
  */
 export function ParentChildRetrieval(): MethodDecorator {
-  return (target: any, propertyKey: string | symbol, descriptor: PropertyDescriptor) => {
+  return (target: object, propertyKey: string | symbol, descriptor: PropertyDescriptor) => {
     Reflect.defineMetadata('parentChildRetrieval', true, target, propertyKey);
     return descriptor;
   };
@@ -114,11 +114,13 @@ export function ParentChildRetrieval(): MethodDecorator {
 /**
  * Ensemble retrieval combining multiple methods
  */
-export function EnsembleRetrieval(options: {
-  methods?: string[];
-  weights?: number[];
-} = {}): MethodDecorator {
-  return (target: any, propertyKey: string | symbol, descriptor: PropertyDescriptor) => {
+export function EnsembleRetrieval(
+  options: {
+    methods?: string[];
+    weights?: number[];
+  } = {}
+): MethodDecorator {
+  return (target: object, propertyKey: string | symbol, descriptor: PropertyDescriptor) => {
     Reflect.defineMetadata('ensembleRetrieval', options, target, propertyKey);
     return descriptor;
   };
@@ -128,7 +130,7 @@ export function EnsembleRetrieval(options: {
  * Time-weighted retrieval favoring recent documents
  */
 export function TimeWeightedRetrieval(options: { decayRate?: number } = {}): MethodDecorator {
-  return (target: any, propertyKey: string | symbol, descriptor: PropertyDescriptor) => {
+  return (target: object, propertyKey: string | symbol, descriptor: PropertyDescriptor) => {
     Reflect.defineMetadata('timeWeightedRetrieval', options, target, propertyKey);
     return descriptor;
   };

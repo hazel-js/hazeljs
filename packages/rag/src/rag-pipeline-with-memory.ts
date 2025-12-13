@@ -11,7 +11,7 @@ import { MemoryType, Message } from './memory/types';
  * Extended RAG response with memory context
  */
 export interface RAGResponseWithMemory extends RAGResponse {
-  memories: any[];
+  memories: import('./memory/types').Memory[];
   conversationHistory: Message[];
 }
 
@@ -69,20 +69,13 @@ export class RAGPipelineWithMemory extends RAGPipeline {
     });
 
     // 3. Get recent conversation history
-    const conversationHistory = await this.memoryManager.getConversationHistory(
-      sessionId,
-      5
-    );
+    const conversationHistory = await this.memoryManager.getConversationHistory(sessionId, 5);
 
     // 4. Perform RAG retrieval
     const ragResults = await this.retrieve(query, options);
 
     // 5. Build enhanced context
-    const context = this.buildEnhancedContext(
-      memories,
-      conversationHistory,
-      ragResults
-    );
+    const context = this.buildEnhancedContext(memories, conversationHistory, ragResults);
 
     // 6. Generate response with LLM
     let answer = '';
@@ -152,11 +145,7 @@ export class RAGPipelineWithMemory extends RAGPipeline {
   /**
    * Store a fact in memory
    */
-  async storeFact(
-    fact: string,
-    sessionId?: string,
-    userId?: string
-  ): Promise<string> {
+  async storeFact(fact: string, sessionId?: string, userId?: string): Promise<string> {
     return this.memoryManager.storeFact(fact, {
       sessionId,
       userId,
@@ -173,7 +162,7 @@ export class RAGPipelineWithMemory extends RAGPipeline {
   /**
    * Get memory statistics
    */
-  async getMemoryStats(sessionId?: string) {
+  async getMemoryStats(sessionId?: string): Promise<import('./memory/types').MemoryStats> {
     return this.memoryManager.getStats(sessionId);
   }
 
@@ -181,7 +170,7 @@ export class RAGPipelineWithMemory extends RAGPipeline {
    * Build enhanced context combining memories, conversation, and RAG results
    */
   private buildEnhancedContext(
-    memories: any[],
+    memories: import('./memory/types').Memory[],
     conversationHistory: Message[],
     ragResults: SearchResult[]
   ): string {
@@ -232,12 +221,7 @@ export class RAGPipelineWithMemory extends RAGPipeline {
       return customPrompt
         .replace('{context}', context)
         .replace('{query}', query)
-        .replace(
-          '{history}',
-          conversationHistory
-            .map((m) => `${m.role}: ${m.content}`)
-            .join('\n')
-        );
+        .replace('{history}', conversationHistory.map((m) => `${m.role}: ${m.content}`).join('\n'));
     }
 
     return `You are a helpful AI assistant with access to relevant context and conversation history.
@@ -264,13 +248,9 @@ Response:`;
 
     for (const sentence of sentences) {
       const trimmed = sentence.trim();
-      
+
       // Store sentences that look like facts (not questions, not too short)
-      if (
-        !trimmed.includes('?') &&
-        trimmed.length > 30 &&
-        trimmed.length < 200
-      ) {
+      if (!trimmed.includes('?') && trimmed.length > 30 && trimmed.length < 200) {
         await this.memoryManager.storeFact(trimmed, {
           sessionId,
           userId,

@@ -7,6 +7,7 @@ import { VectorStore, Document, SearchResult, QueryOptions } from '../types';
 import { EmbeddingProvider } from '../types';
 
 // Type for Qdrant client (peer dependency)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type QdrantClient = any;
 
 export interface QdrantConfig {
@@ -29,6 +30,7 @@ export class QdrantVectorStore implements VectorStore {
     this.vectorSize = config.vectorSize || embeddingProvider.getDimension();
 
     // Initialize Qdrant client
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { QdrantClient: Client } = require('@qdrant/js-client-rest');
     this.client = new Client({
       url: config.url,
@@ -41,7 +43,7 @@ export class QdrantVectorStore implements VectorStore {
       // Check if collection exists
       const collections = await this.client.getCollections();
       const exists = collections.collections.some(
-        (c: any) => c.name === this.collectionName
+        (c: { name: string }) => c.name === this.collectionName
       );
 
       if (!exists) {
@@ -91,20 +93,14 @@ export class QdrantVectorStore implements VectorStore {
     return ids;
   }
 
-  async search(
-    query: string,
-    options?: QueryOptions
-  ): Promise<SearchResult[]> {
+  async search(query: string, options?: QueryOptions): Promise<SearchResult[]> {
     // Generate embedding for query
     const queryEmbedding = await this.embeddingProvider.embed(query);
 
     return this.searchByVector(queryEmbedding, options);
   }
 
-  async searchByVector(
-    embedding: number[],
-    options?: QueryOptions
-  ): Promise<SearchResult[]> {
+  async searchByVector(embedding: number[], options?: QueryOptions): Promise<SearchResult[]> {
     const topK = options?.topK || 5;
     const minScore = options?.minScore;
     const filter = options?.filter;
@@ -122,13 +118,19 @@ export class QdrantVectorStore implements VectorStore {
 
     // Transform results
     const results: SearchResult[] = searchResponse
-      .filter((result: any) => !minScore || result.score >= minScore)
-      .map((result: any) => ({
-        id: result.id.toString(),
-        content: result.payload.content,
-        metadata: result.payload.metadata,
-        score: result.score,
-      }));
+      .filter((result: { score: number }) => !minScore || result.score >= minScore)
+      .map(
+        (result: {
+          id: string | number;
+          score: number;
+          payload: { content: string; metadata: Record<string, unknown> };
+        }) => ({
+          id: result.id.toString(),
+          content: result.payload.content,
+          metadata: result.payload.metadata,
+          score: result.score,
+        })
+      );
 
     return results;
   }
@@ -159,14 +161,16 @@ export class QdrantVectorStore implements VectorStore {
     // Upsert updated document
     await this.client.upsert(this.collectionName, {
       wait: true,
-      points: [{
-        id,
-        vector: embedding!,
-        payload: {
-          content: updated.content,
-          metadata: updated.metadata || {},
+      points: [
+        {
+          id,
+          vector: embedding!,
+          payload: {
+            content: updated.content,
+            metadata: updated.metadata || {},
+          },
         },
-      }],
+      ],
     });
   }
 
@@ -189,7 +193,7 @@ export class QdrantVectorStore implements VectorStore {
         metadata: point.payload.metadata,
         embedding: point.vector,
       };
-    } catch (error) {
+    } catch {
       return null;
     }
   }
@@ -200,9 +204,11 @@ export class QdrantVectorStore implements VectorStore {
     await this.initialize();
   }
 
-  private buildFilter(filter: Record<string, any>): any {
+  private buildFilter(filter: Record<string, unknown>): {
+    must: Array<{ key: string; match: { value: unknown } }>;
+  } {
     // Build Qdrant filter from simple key-value pairs
-    const must: any[] = [];
+    const must: Array<{ key: string; match: { value: unknown } }> = [];
 
     for (const [key, value] of Object.entries(filter)) {
       must.push({

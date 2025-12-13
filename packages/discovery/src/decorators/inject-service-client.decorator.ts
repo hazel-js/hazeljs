@@ -5,6 +5,8 @@
 
 import 'reflect-metadata';
 
+type NewableFunction = new (...args: unknown[]) => unknown;
+
 const INJECT_SERVICE_CLIENT_METADATA = 'hazeljs:inject-service-client';
 
 export interface InjectServiceClientOptions {
@@ -17,8 +19,12 @@ export interface InjectServiceClientOptions {
 export function InjectServiceClient(
   serviceName: string,
   options?: Omit<InjectServiceClientOptions, 'serviceName'>
-) {
-  return function (target: any, propertyKey: string | symbol, parameterIndex: number) {
+): ParameterDecorator {
+  return function (
+    target: object,
+    propertyKey: string | symbol | undefined,
+    parameterIndex: number
+  ) {
     const config: InjectServiceClientOptions = {
       serviceName,
       ...options,
@@ -34,7 +40,7 @@ export function InjectServiceClient(
 }
 
 export function getInjectServiceClientMetadata(
-  target: any
+  target: NewableFunction
 ): InjectServiceClientOptions[] | undefined {
   return Reflect.getMetadata(INJECT_SERVICE_CLIENT_METADATA, target);
 }

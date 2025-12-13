@@ -45,7 +45,6 @@ export class ServiceRegistry {
     };
 
     await this.backend.register(this.instance);
-    console.log(`Service registered: ${this.instance.name} (${this.instance.id})`);
 
     // Start heartbeat
     this.startHeartbeat();
@@ -73,7 +72,6 @@ export class ServiceRegistry {
 
     if (this.instance) {
       await this.backend.deregister(this.instance.id);
-      console.log(`Service deregistered: ${this.instance.name} (${this.instance.id})`);
       this.instance = null;
     }
   }
@@ -133,10 +131,9 @@ export class ServiceRegistry {
         this.instance.status = ServiceStatus.DOWN;
         await this.backend.updateStatus(this.instance.id, ServiceStatus.DOWN);
       }
-    } catch (error) {
+    } catch {
       this.instance.status = ServiceStatus.DOWN;
       await this.backend.updateStatus(this.instance.id, ServiceStatus.DOWN);
-      console.error(`Health check failed for ${this.instance.name}:`, error);
     }
   }
 
@@ -151,6 +148,7 @@ export class ServiceRegistry {
    * Get local IP address
    */
   private getLocalIP(): string {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { networkInterfaces } = require('os');
     const nets = networkInterfaces();
 
