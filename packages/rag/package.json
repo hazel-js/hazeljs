@@ -16,7 +16,8 @@
   },
   "dependencies": {
     "@hazeljs/core": "file:../core",
-    "@hazeljs/ai": "file:../ai"
+    "@hazeljs/ai": "file:../ai",
+    "reflect-metadata": "^0.2.1"
   },
   "peerDependencies": {
     "@pinecone-database/pinecone": "^3.0.0",

@@ -8,6 +8,98 @@
 
 ## 📋 Recent Updates
 
+### December 13, 2025
+
+**✅ Agent Runtime Implementation (@hazeljs/agent) - COMPLETE**
+- **Core primitive for AI-native applications** - Not a feature, but foundational infrastructure
+- Complete production-grade agent execution engine
+- **Core Components:**
+  - Agent decorators (@Agent, @Tool) for declarative agent definition
+  - Agent and Tool registries for centralized management
+  - State machine with 7 states (idle, thinking, using_tool, waiting_for_input, waiting_for_approval, completed, failed)
+  - Agent executor with controlled execution loop
+  - Tool executor with approval workflows, timeout, and retry logic
+  - Event system with 15+ event types for full observability
+  - Context builder with Memory and RAG integration
+  - Agent runtime for lifecycle orchestration
+- **Key Features:**
+  - Stateful execution with pause/resume
+  - Human-in-the-loop approval workflows
+  - Automatic memory persistence (conversation, entities, facts, working memory)
+  - RAG integration for context-aware reasoning
+  - Tool system with validation, approval, timeout, and retry
+  - Comprehensive event system for monitoring
+  - Multi-level error handling
+  - Production-ready architecture
+- **Integration:**
+  - Native integration with @hazeljs/rag for memory and context
+  - HazelJS module system integration
+  - Dependency injection support
+- **Documentation:**
+  - Complete README with examples
+  - Architecture deep-dive document
+  - Implementation summary
+  - Quick start guide
+  - Working support agent example
+- **Status:** Production-ready, tested with real LLM (OpenAI)
+
+**Files Created:**
+- `packages/agent/` - Complete Agent Runtime package (15 TypeScript files)
+- `packages/agent/src/types/` - Agent, Tool, and Event type definitions
+- `packages/agent/src/decorators/` - @Agent and @Tool decorators
+- `packages/agent/src/registry/` - Agent and Tool registries
+- `packages/agent/src/state/` - State machine and persistence
+- `packages/agent/src/context/` - Context builder with Memory/RAG
+- `packages/agent/src/executor/` - Agent and Tool executors
+- `packages/agent/src/events/` - Event emitter system
+- `packages/agent/src/runtime/` - Main runtime orchestrator
+- `packages/agent/src/agent.module.ts` - HazelJS module integration
+- `packages/agent/README.md` - Complete documentation
+- `packages/agent/ARCHITECTURE.md` - Technical architecture
+- `packages/agent/IMPLEMENTATION_SUMMARY.md` - Implementation overview
+- `packages/agent/QUICKSTART.md` - Quick start guide
+- `example/src/agenet/support-agent.example.ts` - Working example
+
+**Usage Example:**
+```typescript
+@Agent({
+  name: 'support-agent',
+  description: 'Customer support agent',
+  enableMemory: true,
+  enableRAG: true,
+})
+export class SupportAgent {
+  @Tool({
+    description: 'Look up order by ID',
+    parameters: [{ name: 'orderId', type: 'string', required: true }],
+  })
+  async lookupOrder(input: { orderId: string }) {
+    return this.orderService.findById(input.orderId);
+  }
+
+  @Tool({
+    description: 'Process refund',
+    requiresApproval: true, // Human approval required
+  })
+  async processRefund(input: { orderId: string; amount: number }) {
+    return this.refundService.process(input);
+  }
+}
+
+// Initialize and execute
+const runtime = new AgentRuntime({ memoryManager, llmProvider });
+runtime.registerAgent(SupportAgent);
+runtime.registerAgentInstance('support-agent', new SupportAgent());
+
+const result = await runtime.execute(
+  'support-agent',
+  'Check order #12345',
+  { sessionId: 'session-123', enableMemory: true }
+);
+```
+
+---
+
 ### December 11, 2025
 
 **✅ RAG Package Implementation (@hazeljs/rag) - COMPLETE**
@@ -101,6 +193,71 @@ HazelJS 2.0 will transform the framework into a complete microservices platform,
 **Target Release**: Q2-Q3 2026  
 **Current Version**: 0.2.0  
 **Next Major**: 2.0.0
+
+---
+
+## 🧠 Core AI Primitives (Foundation Layer)
+
+These are **not features** - they are foundational infrastructure components that make HazelJS AI-native at its core.
+
+### ✅ Agent Runtime (@hazeljs/agent) - COMPLETE
+**Status**: Production-ready  
+**Priority**: CRITICAL - Core Primitive  
+**Package**: `@hazeljs/agent`
+
+The Agent Runtime is a **core primitive** of HazelJS, equivalent to how Controllers, Services, and Modules are primitives in traditional frameworks. It provides:
+
+- **Stateful Execution Engine**: Long-running, resumable agent workflows
+- **Tool System**: Declarative, auditable function calling with approval workflows
+- **Memory Integration**: Automatic persistence of conversation, entities, and facts
+- **Human-in-the-Loop**: Built-in pause/resume and approval mechanisms
+- **Event System**: Comprehensive observability for agent execution
+- **State Machine**: Deterministic state transitions (7 states)
+
+**Why It's a Primitive:**
+- Agents are first-class citizens, not add-ons
+- Deep integration with Memory and RAG modules
+- Framework-level lifecycle management
+- Built-in dependency injection support
+- Production-grade error handling and retry logic
+
+**Architecture Position:**
+```
+┌─────────────────────────────────────────┐
+│         Application Layer               │
+│  Controllers, Services, Agents          │
+└─────────────────────────────────────────┘
+                  ↓
+┌─────────────────────────────────────────┐
+│      HazelJS Core Primitives            │
+│  Routing, DI, Validation, Agents        │
+└─────────────────────────────────────────┘
+                  ↓
+┌─────────────────────────────────────────┐
+│      Infrastructure Layer               │
+│  Memory, RAG, Database, Cache           │
+└─────────────────────────────────────────┘
+```
+
+### ✅ RAG & Memory (@hazeljs/rag) - COMPLETE
+**Status**: Production-ready  
+**Priority**: CRITICAL - Core Primitive  
+**Package**: `@hazeljs/rag`
+
+Memory and RAG are **core primitives** that enable AI-native applications:
+
+- **5 Vector Databases**: Pinecone, Qdrant, Weaviate, ChromaDB, Memory
+- **Automatic Embeddings**: OpenAI, Cohere providers
+- **Semantic Search**: Built-in vector similarity search
+- **Hybrid Search**: Combines vector + keyword (BM25)
+- **Memory Types**: Conversation, Entity, Fact, Working memory
+- **Decorator API**: @Embeddable, @SemanticSearch, @HybridSearch
+
+**Why It's a Primitive:**
+- Memory is as fundamental as database access
+- RAG enables context-aware AI applications
+- Deep integration with Agent Runtime
+- Framework-level abstractions over vector databases
 
 ---
 
@@ -1884,7 +2041,14 @@ async recentBiasedSearch(query: string) {
 
 ---
 
-## 📦 New Package Structure
+## 📦 Package Structure
+
+### Core AI Primitives (Foundation - Not Features)
+```
+@hazeljs/agent              - ✅ Agent Runtime (stateful execution engine)
+@hazeljs/rag                - ✅ RAG & Memory (vector search, embeddings, memory)
+@hazeljs/ai                 - AI provider abstractions (OpenAI, Anthropic, etc.)
+```
 
 ### Traditional Microservices Packages
 ```
@@ -1905,9 +2069,8 @@ async recentBiasedSearch(query: string) {
 @hazeljs/graphql-federation - GraphQL federation
 ```
 
-### Innovative AI-Native Packages (Unique to HazelJS)
+### Innovative AI-Native Packages (Built on Core Primitives)
 ```
-@hazeljs/rag                    - RAG & vector search out-of-the-box (IN PROGRESS)
 @hazeljs/ai-discovery           - AI-powered service discovery
 @hazeljs/self-healing           - Self-healing microservices
 @hazeljs/conversational-api     - Natural language API development
@@ -2004,23 +2167,30 @@ async recentBiasedSearch(query: string) {
 
 | Feature | HazelJS 2.0 | NestJS | Spring Cloud |
 |---------|-------------|--------|--------------|
+| **Core AI Primitives** | | | |
+| Agent Runtime | ✅ Built-in | ❌ | ❌ |
 | RAG & Vector Search | ✅ Built-in | ❌ | ❌ |
+| Memory Management | ✅ Built-in | ❌ | ❌ |
 | Automatic Embeddings | ✅ | ❌ | ❌ |
 | Semantic Search | ✅ | ❌ | ❌ |
+| Tool System | ✅ | ❌ | ❌ |
+| Human-in-the-Loop | ✅ | ❌ | ❌ |
+| **AI-Native Features** | | | |
 | AI-Powered Discovery | ✅ | ❌ | ❌ |
 | Self-Healing | ✅ | ❌ | ❌ |
 | Predictive Scaling | ✅ | ❌ | ❌ |
 | Conversational API | ✅ | ❌ | ❌ |
 | Time-Travel Debugging | ✅ | ❌ | ❌ |
 | Edge Intelligence | ✅ | ❌ | ❌ |
-| Quantum-Ready Crypto | ✅ | ❌ | ❌ |
 | Natural Language Monitoring | ✅ | ❌ | ❌ |
+| **Microservices** | | | |
 | Service Discovery | ✅ | ⚠️ (via external) | ✅ |
 | Circuit Breaker | ✅ | ⚠️ (via external) | ✅ |
 | API Gateway | ✅ | ⚠️ (via external) | ✅ |
+| **Developer Experience** | | | |
 | TypeScript Native | ✅ | ✅ | ❌ |
 | Decorator-Based | ✅ | ✅ | ✅ |
-| Built-in AI | ✅ | ❌ | ❌ |
+| Zero Config | ✅ | ⚠️ | ⚠️ |
 
 ---
 
@@ -2067,22 +2237,27 @@ async recentBiasedSearch(query: string) {
 
 ## 🎨 Innovation Summary
 
-### 14 Unique Features Not Found in NestJS or Spring Cloud
+### Core AI Primitives (Foundation)
 
-1. **RAG & Vector Search Out-of-the-Box** - Automatic embeddings, semantic search, multi-modal
-2. **Self-Healing Microservices** - AI diagnoses and fixes issues automatically
-3. **Conversational API Development** - Build APIs with natural language
-4. **Predictive Auto-Scaling** - ML predicts traffic spikes 30 minutes ahead
-5. **Temporal Debugging** - Time-travel through application state
-6. **Edge Intelligence** - Deploy AI models to edge locations
-7. **Semantic Service Composition** - AI orchestrates microservices
-8. **Autonomous Optimization** - Services self-optimize code and queries
-9. **Zero-Trust Security** - Continuous authentication with AI threat detection
-10. **Natural Language Monitoring** - Ask questions about your system
-11. **Multi-Cloud Orchestration** - Automatic cloud provider selection
-12. **Quantum-Ready Encryption** - Future-proof cryptography today
-13. **Blockchain-Verified Service Mesh** - Immutable audit logs
-14. **AI-Powered Service Discovery** - Intelligent routing with ML
+1. **Agent Runtime** - ✅ Production-ready stateful execution engine with tools, memory, and human-in-the-loop
+2. **RAG & Memory** - ✅ Production-ready vector search, embeddings, and memory management
+
+### 14 Unique AI-Native Features (Built on Primitives)
+
+3. **Self-Healing Microservices** - AI diagnoses and fixes issues automatically
+4. **Conversational API Development** - Build APIs with natural language
+5. **Predictive Auto-Scaling** - ML predicts traffic spikes 30 minutes ahead
+6. **Temporal Debugging** - Time-travel through application state
+7. **Edge Intelligence** - Deploy AI models to edge locations
+8. **Semantic Service Composition** - AI orchestrates microservices
+9. **Autonomous Optimization** - Services self-optimize code and queries
+10. **Zero-Trust Security** - Continuous authentication with AI threat detection
+11. **Natural Language Monitoring** - Ask questions about your system
+12. **Multi-Cloud Orchestration** - Automatic cloud provider selection
+13. **Quantum-Ready Encryption** - Future-proof cryptography today
+14. **Blockchain-Verified Service Mesh** - Immutable audit logs
+15. **AI-Powered Service Discovery** - Intelligent routing with ML
+16. **Multi-Modal RAG** - Search across text, images, and code
 
 ### Why This Matters
 
@@ -2117,7 +2292,35 @@ This roadmap represents an ambitious vision to make HazelJS the premier TypeScri
 
 ---
 
-**Last Updated**: December 11, 2025  
+**Last Updated**: December 13, 2025  
 **Status**: Active Development  
 **Feedback**: Welcome via GitHub Discussions  
 **Contribute**: Join us in building the future of microservices
+
+---
+
+## 🎉 Completed Core Primitives
+
+### ✅ Agent Runtime (@hazeljs/agent)
+**The foundation for AI-native applications**
+
+- Stateful execution engine
+- Tool system with approval workflows
+- Memory integration (conversation, entities, facts)
+- Human-in-the-loop patterns
+- Event system for observability
+- State machine (7 states)
+- Production-ready, tested with OpenAI
+
+### ✅ RAG & Memory (@hazeljs/rag)
+**The foundation for context-aware AI**
+
+- 5 vector databases (Pinecone, Qdrant, Weaviate, ChromaDB, Memory)
+- 2 embedding providers (OpenAI, Cohere)
+- Hybrid search (vector + BM25)
+- Multi-query retrieval
+- Memory types (conversation, entity, fact, working)
+- Decorator API (@Embeddable, @SemanticSearch)
+- Production-ready
+
+These are **not features** - they are **core primitives** that make HazelJS fundamentally different from traditional frameworks.

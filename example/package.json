@@ -30,6 +30,7 @@
     "@hazeljs/prisma": "file:../packages/prisma",
     "@hazeljs/auth": "file:../packages/auth",
     "@hazeljs/ai": "file:../packages/ai",
+    "@hazeljs/agent": "file:../packages/agent",
     "@hazeljs/serverless": "file:../packages/serverless",
     "@hazeljs/swagger": "file:../packages/swagger",
     "@hazeljs/websocket": "file:../packages/websocket",

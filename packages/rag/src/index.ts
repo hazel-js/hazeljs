@@ -43,3 +43,6 @@ export * from './utils/similarity';
 // Memory
 export * from './memory';
 export * from './rag-pipeline-with-memory';
+
+// Agentic RAG - Advanced autonomous retrieval capabilities
+export * from './agentic';
