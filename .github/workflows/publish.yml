@@ -9,6 +9,9 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     environment: production
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -80,7 +83,7 @@ jobs:
               PACKAGE_NAME=$(node -e "console.log(require('./${package}package.json').name)")
               echo "Publishing $PACKAGE_NAME with tag $RELEASE_TAG"
               cd "$package"
-              npm publish --tag "$RELEASE_TAG" --access public
+              npm publish --tag "$RELEASE_TAG" --access public --provenance
               cd - > /dev/null
             fi
           done
