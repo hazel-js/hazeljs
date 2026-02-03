@@ -76,8 +76,8 @@ jobs:
           
           # Publish each package individually with the appropriate tag
           for package in packages/*/; do
-            if [ -f "$package/package.json" ]; then
-              PACKAGE_NAME=$(node -e "console.log(require('$package/package.json').name)")
+            if [ -f "${package}package.json" ]; then
+              PACKAGE_NAME=$(node -e "console.log(require('./${package}package.json').name)")
               echo "Publishing $PACKAGE_NAME with tag $RELEASE_TAG"
               cd "$package"
               npm publish --tag "$RELEASE_TAG" --access public
