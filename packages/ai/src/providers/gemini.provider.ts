@@ -8,27 +8,39 @@ import {
   AIEmbeddingResponse,
 } from '../ai-enhanced.types';
 import logger from '@hazeljs/core';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 /**
  * Google Gemini AI Provider
  *
- * This is a reference implementation that returns mock responses for development.
- * To use real Gemini API:
+ * Production-ready implementation using Google Generative AI SDK.
  *
+ * Setup:
  * 1. Install the SDK: `npm install @google/generative-ai`
  * 2. Set GEMINI_API_KEY environment variable
- * 3. Uncomment the production code below and remove mock responses
+ * 3. Use the provider in your application
  *
- * The interface is production-ready; only the implementation needs the SDK.
+ * Supported models:
+ * - gemini-pro: Text generation
+ * - gemini-pro-vision: Multimodal (text + images)
+ * - gemini-1.5-pro: Latest model with extended context
+ * - text-embedding-004: Text embeddings
  */
 export class GeminiProvider implements IAIProvider {
   readonly name: AIProvider = 'gemini';
   private apiKey: string;
+  private genAI: GoogleGenerativeAI;
   private endpoint: string;
 
   constructor(apiKey?: string, endpoint?: string) {
     this.apiKey = apiKey || process.env.GEMINI_API_KEY || '';
     this.endpoint = endpoint || 'https://generativelanguage.googleapis.com/v1';
+
+    if (!this.apiKey) {
+      logger.warn('Gemini API key not provided. Set GEMINI_API_KEY environment variable.');
+    }
+
+    this.genAI = new GoogleGenerativeAI(this.apiKey);
     logger.info('Gemini provider initialized');
   }
 
@@ -36,132 +48,136 @@ export class GeminiProvider implements IAIProvider {
    * Generate completion
    */
   async complete(request: AICompletionRequest): Promise<AICompletionResponse> {
-    logger.debug(`Gemini completion request for model: ${request.model || 'gemini-pro'}`);
+    const modelName = request.model || 'gemini-pro';
+    logger.debug(`Gemini completion request for model: ${modelName}`);
 
-    // PRODUCTION CODE (uncomment when @google/generative-ai is installed):
-    // import { GoogleGenerativeAI } from '@google/generative-ai';
-    // const genAI = new GoogleGenerativeAI(this.apiKey);
-    // const model = genAI.getGenerativeModel({ model: request.model || 'gemini-pro' });
-    // const prompt = request.messages.map(m => m.content).join('\n');
-    // const result = await model.generateContent(prompt);
-    // const response = await result.response;
-    // return {
-    //   id: `gemini-${Date.now()}`,
-    //   content: response.text(),
-    //   role: 'assistant',
-    //   model: request.model || 'gemini-pro',
-    //   usage: {
-    //     promptTokens: response.usageMetadata?.promptTokenCount || 0,
-    //     completionTokens: response.usageMetadata?.candidatesTokenCount || 0,
-    //     totalTokens: response.usageMetadata?.totalTokenCount || 0,
-    //   },
-    //   finishReason: 'STOP',
-    // };
+    try {
+      const model = this.genAI.getGenerativeModel({ model: modelName });
 
-    // MOCK RESPONSE (for development without SDK):
-    logger.warn('Using mock Gemini response. Install @google/generative-ai for production.');
-    const mockResponse: AICompletionResponse = {
-      id: `gemini-${Date.now()}`,
-      content: `Mock response from Gemini. Install @google/generative-ai and uncomment production code above.`,
-      role: 'assistant',
-      model: request.model || 'gemini-pro',
-      usage: {
-        promptTokens: 12,
-        completionTokens: 25,
-        totalTokens: 37,
-      },
-      finishReason: 'STOP',
-    };
+      // Convert messages to Gemini format
+      const prompt = request.messages
+        .map((m) => {
+          const role = m.role === 'assistant' ? 'model' : m.role;
+          return `${role}: ${m.content}`;
+        })
+        .join('\n\n');
 
-    return mockResponse;
+      // Generate content
+      const result = await model.generateContent(prompt);
+      const response = result.response;
+      const text = response.text();
+
+      return {
+        id: `gemini-${Date.now()}`,
+        content: text,
+        role: 'assistant',
+        model: modelName,
+        usage: {
+          promptTokens: response.usageMetadata?.promptTokenCount || 0,
+          completionTokens: response.usageMetadata?.candidatesTokenCount || 0,
+          totalTokens: response.usageMetadata?.totalTokenCount || 0,
+        },
+        finishReason: response.candidates?.[0]?.finishReason || 'STOP',
+      };
+    } catch (error) {
+      logger.error('Gemini completion error:', error);
+      throw new Error(
+        `Gemini API error: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+    }
   }
 
   /**
    * Generate streaming completion
    */
-  async *streamComplete(_request: AICompletionRequest): AsyncGenerator<AIStreamChunk> {
+  async *streamComplete(request: AICompletionRequest): AsyncGenerator<AIStreamChunk> {
+    const modelName = request.model || 'gemini-pro';
     logger.debug('Gemini streaming completion started');
 
-    // PRODUCTION CODE (uncomment when @google/generative-ai is installed):
-    // const prompt = request.messages.map(m => m.content).join('\n');
-    // const result = await model.generateContentStream(prompt);
-    // let fullContent = '';
-    // for await (const chunk of result.stream) {
-    //   const text = chunk.text();
-    //   fullContent += text;
-    //   yield {
-    //     id: `gemini-${Date.now()}`,
-    //     content: fullContent,
-    //     delta: text,
-    //     done: false,
-    //   };
-    // }
+    try {
+      const model = this.genAI.getGenerativeModel({ model: modelName });
 
-    // MOCK STREAMING (for development without SDK):
-    logger.warn('Using mock Gemini streaming. Install @google/generative-ai for production.');
-    const mockChunks = ['Mock ', 'streaming ', 'from ', 'Gemini. ', 'Install ', 'SDK.'];
+      // Convert messages to Gemini format
+      const prompt = request.messages
+        .map((m) => {
+          const role = m.role === 'assistant' ? 'model' : m.role;
+          return `${role}: ${m.content}`;
+        })
+        .join('\n\n');
 
-    for (let i = 0; i < mockChunks.length; i++) {
-      await new Promise((resolve) => setTimeout(resolve, 80));
+      // Generate streaming content
+      const result = await model.generateContentStream(prompt);
+      let fullContent = '';
+      let chunkCount = 0;
 
-      yield {
-        id: `gemini-stream-${Date.now()}`,
-        content: mockChunks.slice(0, i + 1).join(''),
-        delta: mockChunks[i],
-        done: i === mockChunks.length - 1,
-        usage:
-          i === mockChunks.length - 1
-            ? {
-                promptTokens: 12,
-                completionTokens: 8,
-                totalTokens: 20,
-              }
-            : undefined,
-      };
+      for await (const chunk of result.stream) {
+        const text = chunk.text();
+        fullContent += text;
+        chunkCount++;
+
+        const isLast = chunk.candidates?.[0]?.finishReason !== undefined;
+
+        yield {
+          id: `gemini-stream-${Date.now()}-${chunkCount}`,
+          content: fullContent,
+          delta: text,
+          done: isLast,
+          usage:
+            isLast && chunk.usageMetadata
+              ? {
+                  promptTokens: chunk.usageMetadata.promptTokenCount || 0,
+                  completionTokens: chunk.usageMetadata.candidatesTokenCount || 0,
+                  totalTokens: chunk.usageMetadata.totalTokenCount || 0,
+                }
+              : undefined,
+        };
+      }
+
+      logger.debug('Gemini streaming completed');
+    } catch (error) {
+      logger.error('Gemini streaming error:', error);
+      throw new Error(
+        `Gemini streaming error: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
-
-    logger.debug('Gemini streaming completed');
   }
 
   /**
    * Generate embeddings
    */
   async embed(request: AIEmbeddingRequest): Promise<AIEmbeddingResponse> {
-    logger.debug('Gemini embedding request');
+    const modelName = request.model || 'text-embedding-004';
+    logger.debug(`Gemini embedding request for model: ${modelName}`);
 
-    // PRODUCTION CODE (uncomment when @google/generative-ai is installed):
-    // const model = genAI.getGenerativeModel({ model: request.model || 'embedding-001' });
-    // const inputs = Array.isArray(request.input) ? request.input : [request.input];
-    // const embeddings = await Promise.all(
-    //   inputs.map(async (text) => {
-    //     const result = await model.embedContent(text);
-    //     return result.embedding.values;
-    //   })
-    // );
-    // return {
-    //   embeddings,
-    //   model: request.model || 'embedding-001',
-    //   usage: {
-    //     promptTokens: inputs.length * 10,
-    //     totalTokens: inputs.length * 10,
-    //   },
-    // };
+    try {
+      const model = this.genAI.getGenerativeModel({ model: modelName });
+      const inputs = Array.isArray(request.input) ? request.input : [request.input];
 
-    // MOCK EMBEDDINGS (for development without SDK):
-    logger.warn('Using mock Gemini embeddings. Install @google/generative-ai for production.');
-    const inputs = Array.isArray(request.input) ? request.input : [request.input];
-    const mockEmbeddings = inputs.map(() =>
-      Array.from({ length: 768 }, () => Math.random() * 2 - 1)
-    );
+      // Generate embeddings for each input
+      const embeddings = await Promise.all(
+        inputs.map(async (text) => {
+          const result = await model.embedContent(text);
+          return result.embedding.values;
+        })
+      );
 
-    return {
-      embeddings: mockEmbeddings,
-      model: request.model || 'embedding-001',
-      usage: {
-        promptTokens: inputs.length * 10,
-        totalTokens: inputs.length * 10,
-      },
-    };
+      // Estimate token usage (Gemini doesn't provide exact counts for embeddings)
+      const estimatedTokens = inputs.reduce((sum, text) => sum + Math.ceil(text.length / 4), 0);
+
+      return {
+        embeddings,
+        model: modelName,
+        usage: {
+          promptTokens: estimatedTokens,
+          totalTokens: estimatedTokens,
+        },
+      };
+    } catch (error) {
+      logger.error('Gemini embedding error:', error);
+      throw new Error(
+        `Gemini embedding error: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+    }
   }
 
   /**
@@ -173,24 +189,27 @@ export class GeminiProvider implements IAIProvider {
       return false;
     }
 
-    // PRODUCTION: Uncomment to test API availability
-    // try {
-    //   const genAI = new GoogleGenerativeAI(this.apiKey);
-    //   const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
-    //   await model.generateContent('test');
-    //   return true;
-    // } catch {
-    //   return false;
-    // }
-
-    // Mock: Returns true if API key is set
-    return true;
+    try {
+      // Test with a minimal request
+      const model = this.genAI.getGenerativeModel({ model: 'gemini-pro' });
+      await model.generateContent('test');
+      return true;
+    } catch (error) {
+      logger.error('Gemini availability check failed:', error);
+      return false;
+    }
   }
 
   /**
    * Get supported models
    */
   getSupportedModels(): string[] {
-    return ['gemini-pro', 'gemini-pro-vision', 'gemini-ultra', 'embedding-001'];
+    return [
+      'gemini-pro',
+      'gemini-pro-vision',
+      'gemini-1.5-pro',
+      'gemini-1.5-flash',
+      'text-embedding-004',
+    ];
   }
 }

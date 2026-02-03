@@ -4,7 +4,7 @@
 [![npm version](https://badge.fury.io/js/%40hazeljs%2Fcore.svg)](https://badge.fury.io/js/%40hazeljs%2Fcore)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A modern, lightweight, enterprise-grade Node.js. HazelJS provides a robust architecture for building scalable server-side applications using TypeScript and decorators, with built-in AI capabilities.
+A modern, lightweight, enterprise-grade Node.js framework. HazelJS provides a robust architecture for building scalable server-side applications using TypeScript and decorators, with built-in AI capabilities, agent runtime, and RAG support.
 
 ## ✨ Features
 
@@ -26,13 +26,23 @@ A modern, lightweight, enterprise-grade Node.js. HazelJS provides a robust archi
 - 🔀 **API Versioning** - URI, Header, and Media Type strategies
 - 🌐 **CORS & Logging** - Built-in middleware
 
+### AI & Agent Features
+- 🤖 **AI Service** - OpenAI, Anthropic, Gemini, Cohere, Ollama integration
+- 🧠 **Agent Runtime** - Stateful, long-running AI agents with tools and memory
+- 📚 **RAG System** - Vector search, embeddings, and retrieval-augmented generation
+- 💾 **Memory Management** - Persistent conversation memory with multiple backends
+- 🔧 **Tool System** - Function calling with approval workflows
+
 ### Additional Features
 - 📊 **Swagger Documentation** - Automatic API docs generation
 - 🗄️ **Prisma Integration** - First-class ORM support
 - 📦 **Repository Pattern** - Base repository for data access
-- 🤖 **AI Service** - Built-in OpenAI and Ollama integration
 - ⏰ **Cron Jobs** - Decorator-based scheduled task execution
 - 🔐 **JWT Authentication** - Token-based auth module
+- 🔍 **Service Discovery** - Microservices registry with load balancing
+- 🌐 **WebSocket & SSE** - Real-time communication support
+- ⚡ **Serverless** - AWS Lambda & Google Cloud Functions adapters
+- 💾 **Multi-tier Caching** - Memory, Redis, and CDN caching
 - ✅ **Request Validation** - Automatic validation with class-validator
 - 📝 **Structured Logging** - Winston-based logging
 - 🎭 **Interceptors** - AOP-style request/response transformation
@@ -44,12 +54,17 @@ HazelJS is organized as a monorepo with multiple packages. Install the packages 
 
 ```bash
 # Core framework (required)
-npm install @hazeljs/core reflect-metadata
+npm install @hazeljs/core
 
-# Additional packages (optional)
-npm install @hazeljs/ai @hazeljs/cache @hazeljs/websocket @hazeljs/serverless
-npm install @hazeljs/prisma @hazeljs/auth @hazeljs/config @hazeljs/swagger
-npm install @hazeljs/cron
+# AI & Agent packages
+npm install @hazeljs/ai @hazeljs/agent @hazeljs/rag
+
+# Infrastructure packages
+npm install @hazeljs/cache @hazeljs/websocket @hazeljs/serverless
+npm install @hazeljs/discovery @hazeljs/config @hazeljs/cron
+
+# Data & Auth packages
+npm install @hazeljs/prisma @hazeljs/auth @hazeljs/swagger
 
 # CLI tool for scaffolding
 npm install -D @hazeljs/cli
@@ -58,7 +73,6 @@ npm install -D @hazeljs/cli
 ## Quick Start
 
 ```typescript
-import 'reflect-metadata';
 import { HazelApp, HazelModule, Controller, Get } from '@hazeljs/core';
 
 @Controller({ path: '/hello' })
@@ -133,21 +147,31 @@ npm version minor  # for new features (0.x.0)
 npm version major  # for breaking changes (x.0.0)
 ```
 
-## Package Structure
+## 📦 Package Structure
 
 HazelJS is organized as a monorepo with the following packages:
 
+### Core
 - **@hazeljs/core** - Core framework (DI, routing, decorators, middleware)
-- **@hazeljs/ai** - AI integration (OpenAI, Anthropic, Gemini, Cohere)
+- **@hazeljs/cli** - CLI tool for scaffolding and code generation
+
+### AI & Agents
+- **@hazeljs/ai** - AI integration (OpenAI, Anthropic, Gemini, Cohere, Ollama)
+- **@hazeljs/agent** - AI-native agent runtime with tools, memory, and workflows
+- **@hazeljs/rag** - Vector search, embeddings, and RAG capabilities
+
+### Infrastructure
 - **@hazeljs/cache** - Multi-tier caching (Memory, Redis, CDN)
-- **@hazeljs/websocket** - WebSocket & SSE support
-- **@hazeljs/serverless** - Serverless adapters (Lambda, Cloud Functions)
-- **@hazeljs/prisma** - Prisma ORM integration
-- **@hazeljs/auth** - JWT authentication
-- **@hazeljs/config** - Configuration management
-- **@hazeljs/swagger** - API documentation
-- **@hazeljs/cron** - Scheduled tasks
-- **@hazeljs/cli** - CLI tool for scaffolding
+- **@hazeljs/websocket** - WebSocket & Server-Sent Events support
+- **@hazeljs/serverless** - Serverless adapters (AWS Lambda, Google Cloud Functions)
+- **@hazeljs/discovery** - Service discovery and registry for microservices
+- **@hazeljs/config** - Type-safe configuration management
+- **@hazeljs/cron** - Decorator-based scheduled tasks
+
+### Data & Auth
+- **@hazeljs/prisma** - Prisma ORM integration with repository pattern
+- **@hazeljs/auth** - JWT authentication and authorization
+- **@hazeljs/swagger** - Automatic OpenAPI/Swagger documentation
 
 ## Available Scripts
 
@@ -169,20 +193,33 @@ HazelJS is organized as a monorepo with the following packages:
 
 ## 📚 Documentation
 
+### Getting Started
 - **[Quick Start Guide](./QUICKSTART.md)** - Get started in 5 minutes
-- **[Improvements & Features](./IMPROVEMENTS.md)** - Detailed technical documentation
-- **[Upgrade Summary](./UPGRADE_SUMMARY.md)** - What's new in v0.2.0
-- **[Example Application](./example)** - Full working example
+- **[Troubleshooting](./TROUBLESHOOTING.md)** - Common issues and solutions
+- **[Contributing Guide](./CONTRIBUTING.md)** - How to contribute
+- **[Example Application](./example)** - Full working examples
 
-### Key Guides
+### Package Documentation
+- **[AI Integration](./packages/ai/README.md)** - AI providers and usage
+- **[Agent Runtime](./packages/agent/README.md)** - Building AI agents
+- **[RAG System](./packages/rag/README.md)** - Vector search and embeddings
+- **[Service Discovery](./packages/discovery/README.md)** - Microservices registry
+- **[WebSocket](./packages/websocket/README.md)** - Real-time communication
+- **[Serverless](./packages/serverless/README.md)** - Serverless deployment
+- **[Caching](./packages/cache/README.md)** - Multi-tier caching
+- **[Authentication](./packages/auth/README.md)** - JWT auth
+- **[Swagger](./packages/swagger/README.md)** - API documentation
 
-- [Dependency Injection](./IMPROVEMENTS.md#1-enhanced-dependency-injection-container-)
-- [Exception Filters](./IMPROVEMENTS.md#2-exception-filters-system-)
-- [Configuration Module](./IMPROVEMENTS.md#3-configuration-module-)
-- [Testing](./IMPROVEMENTS.md#4-testing-utilities-)
-- [Advanced Routing](./IMPROVEMENTS.md#5-advanced-routing-)
-- [Middleware](./IMPROVEMENTS.md#6-global-middleware-system-)
-- [File Uploads](./IMPROVEMENTS.md#7-file-upload-support-)
+### Guides
+- [Dependency Injection](./docs/guides/providers.md)
+- [Controllers & Routing](./docs/guides/controllers.md)
+- [Exception Filters](./docs/guides/exception-filters.md)
+- [Guards & Authorization](./docs/guides/guards.md)
+- [Interceptors](./docs/guides/interceptors.md)
+- [Middleware](./docs/guides/middleware.md)
+- [Pipes & Validation](./docs/guides/pipes.md)
+- [Cron Jobs](./docs/guides/cron-jobs.md)
+- [Security](./docs/guides/security.md)
 
 ## 🚀 What's New in v0.2.0
 
@@ -236,19 +273,31 @@ We welcome contributions! Please see our contributing guidelines.
 
 ## 🗺️ Roadmap
 
-### Phase 2 (Planned)
-- WebSocket Gateway
-- GraphQL Integration
-- CLI Tool
-- Platform Abstraction
-- More Examples
+### Completed ✅
+- ✅ Core framework with DI and routing
+- ✅ AI integration (OpenAI, Anthropic, Gemini, Cohere, Ollama)
+- ✅ Agent runtime with tools and memory
+- ✅ RAG and vector search
+- ✅ WebSocket & SSE support
+- ✅ Service discovery for microservices
+- ✅ Serverless adapters
+- ✅ Multi-tier caching
+- ✅ CLI tool for scaffolding
+- ✅ Comprehensive testing utilities
 
-### Phase 3 (Future)
-- Microservices Support
-- Message Queues
-- Caching Layer
+### In Progress 🚧
+- GraphQL Integration
+- Message Queue Support
+- Advanced Metrics & Monitoring
 - Rate Limiting
-- Metrics & Monitoring
+- API Gateway Features
+
+### Planned 📋
+- gRPC Support
+- Event Sourcing
+- CQRS Pattern
+- Distributed Tracing
+- More AI Provider Integrations
 
 ## 📞 Support
 

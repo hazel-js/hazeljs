@@ -86,7 +86,6 @@ export class CreateUserDto {
 
 4. Bootstrap your application:
 ```typescript
-import 'reflect-metadata';
 import { HazelApp } from '@hazeljs/core';
 import { SwaggerModule } from '@hazeljs/swagger';
 import { AppModule } from './app.module';
@@ -192,13 +191,195 @@ export class UserController {
 ```
 example/
   ├── src/
-  │   ├── app.module.ts    # Root module
-  │   ├── index.ts         # Application entry point
-  │   ├── user/            # User module
-  │   ├── auth/            # Authentication module
-  │   └── ...              # Other modules
+  │   ├── app.module.ts       # Root module
+  │   ├── index.ts            # Application entry point
+  │   ├── user/               # User module
+  │   ├── auth/               # Authentication module
+  │   ├── rag/                # RAG (Retrieval-Augmented Generation) examples
+  │   ├── ai/                 # AI integration examples
+  │   ├── microservices/      # Microservices examples
+  │   ├── serverless/         # Serverless examples
+  │   ├── realtime/           # Real-time features (WebSocket, SSE)
+  │   ├── cache/              # Caching examples
+  │   ├── cron/               # Scheduled tasks
+  │   └── demo/               # Feature demonstrations
   ├── package.json
   └── tsconfig.json
+```
+
+## Advanced Features
+
+### RAG (Retrieval-Augmented Generation)
+
+HazelJS includes built-in support for RAG patterns with the `@hazeljs/rag` package.
+
+#### Simple RAG Example
+
+```typescript
+import { RAGService } from '@hazeljs/rag';
+import { Injectable } from '@hazeljs/core';
+
+@Injectable()
+export class KnowledgeService {
+  constructor(private ragService: RAGService) {}
+
+  async indexDocument(content: string, metadata: any) {
+    // Index documents for retrieval
+    return this.ragService.index({
+      content,
+      metadata,
+    });
+  }
+
+  async search(query: string) {
+    // Semantic search
+    return this.ragService.search(query, {
+      topK: 5,
+      minScore: 0.7,
+    });
+  }
+
+  async ask(question: string) {
+    // Full RAG pipeline: retrieve + generate
+    return this.ragService.ask(question, {
+      topK: 3,
+    });
+  }
+}
+```
+
+#### Decorator-Based RAG
+
+```typescript
+import {
+  Embeddable,
+  VectorColumn,
+  SemanticSearch,
+  HybridSearch,
+  AutoEmbed,
+} from '@hazeljs/rag';
+import { Controller, Get, Post, Body, Query } from '@hazeljs/core';
+
+// Embeddable Entity
+@Embeddable({
+  fields: ['title', 'description', 'content'],
+  strategy: 'concat',
+  model: 'text-embedding-3-small',
+})
+class Article {
+  id!: string;
+  title!: string;
+  description!: string;
+  content!: string;
+
+  @VectorColumn()
+  embedding!: number[];
+}
+
+// Controller with RAG
+@Controller('/documents')
+export class DocumentController {
+  constructor(private ragService: RAGService) {}
+
+  @Post()
+  @AutoEmbed()
+  async uploadDocument(@Body() doc: { title: string; content: string }) {
+    // Document automatically chunked and embedded
+    const ids = await this.ragService.index({
+      content: `${doc.title}\n\n${doc.content}`,
+      metadata: { title: doc.title, type: 'document' },
+    });
+    return { success: true, ids };
+  }
+
+  @Get('/search')
+  @SemanticSearch()
+  async search(@Query('q') query: string) {
+    const results = await this.ragService.search(query, {
+      topK: 5,
+      minScore: 0.7,
+      includeMetadata: true,
+    });
+    return { query, results };
+  }
+}
+```
+
+**RAG Features:**
+- Semantic search with vector embeddings
+- Hybrid search (vector + keyword)
+- Multi-query retrieval
+- Contextual compression
+- Self-query with metadata filtering
+- Time-weighted retrieval
+- Automatic document chunking
+- Multiple embedding models support
+
+See `src/rag/` for complete examples.
+
+### AI Integration
+
+HazelJS provides seamless AI integration with popular providers:
+
+```typescript
+import { AITask } from '@hazeljs/ai';
+
+@Injectable()
+export class ContentService {
+  @AITask({
+    name: 'summarize',
+    prompt: 'Summarize the following text: {{text}}',
+    provider: 'openai',
+    model: 'gpt-4',
+    outputType: 'string'
+  })
+  async summarize(text: string): Promise<string> {
+    // AI-powered summarization
+  }
+}
+```
+
+### Microservices
+
+Built-in service discovery and communication:
+
+```typescript
+import { ServiceRegistry, InjectServiceClient } from '@hazeljs/discovery';
+
+@ServiceRegistry({
+  name: 'user-service',
+  port: 3000,
+  healthCheckPath: '/health',
+})
+export class AppModule {}
+
+@Injectable()
+export class OrderService {
+  constructor(
+    @InjectServiceClient('user-service') 
+    private userClient: ServiceClient
+  ) {}
+  
+  async getUser(id: string) {
+    return this.userClient.get(`/users/${id}`);
+  }
+}
+```
+
+### Real-time Features
+
+WebSocket and Server-Sent Events support:
+
+```typescript
+import { WebSocketGateway, SubscribeMessage } from '@hazeljs/websocket';
+
+@WebSocketGateway()
+export class ChatGateway {
+  @SubscribeMessage('message')
+  handleMessage(client: Socket, payload: any) {
+    return { event: 'message', data: payload };
+  }
+}
 ```
 
 ## Testing

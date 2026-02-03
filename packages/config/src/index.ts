@@ -8,4 +8,3 @@ export {
   type ValidationSchema as ConfigValidationSchema,
 } from './config.module';
 export { ConfigService } from './config.service';
-

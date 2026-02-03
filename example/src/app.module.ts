@@ -9,6 +9,7 @@ import { AIModule } from './ai/ai.module';
 import { DemoModule } from './demo/demo.module';
 import { ServerlessModule } from './serverless/serverless.module';
 import { CacheExampleModule } from './cache/cache-example.module';
+import { KnowledgeBaseAgentModule } from './agent/knowledge-base-agent.module';
 
 @HazelModule({
   imports: [
@@ -16,12 +17,12 @@ import { CacheExampleModule } from './cache/cache-example.module';
     ConfigModule.forRoot({
       envFilePath: ['.env', '.env.local'],
       isGlobal: true,
-    }),
+    }) as any,
     // Cache module with memory strategy
     CacheModule.forRoot({
       strategy: 'memory',
       isGlobal: true,
-    }),
+    }) as any,
     PrismaModule,
     UserModule,
     AuthModule,
@@ -29,6 +30,7 @@ import { CacheExampleModule } from './cache/cache-example.module';
     DemoModule,
     ServerlessModule,
     CacheExampleModule,
+    KnowledgeBaseAgentModule,
     SwaggerModule,
   ],
   providers: [ValidationPipe],

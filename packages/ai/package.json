@@ -15,9 +15,12 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@hazeljs/core": "file:../core",
+    "@anthropic-ai/sdk": "^0.71.2",
+    "@google/generative-ai": "^0.24.1",
     "@hazeljs/cache": "file:../cache",
-    "openai": "^4.103.0"
+    "@hazeljs/core": "file:../core",
+    "cohere-ai": "^7.14.0",
+    "openai": "^6.15.0"
   },
   "devDependencies": {
     "@types/node": "^20.17.50",
@@ -33,7 +36,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/hazeljs/hazeljs.git",
+    "url": "git+https://github.com/hazel-js/hazeljs.git",
     "directory": "packages/ai"
   },
   "keywords": [

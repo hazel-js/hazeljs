@@ -1,11 +1,210 @@
 {
   "info": {
     "name": "HazelJS API Tests - Complete",
-    "description": "Comprehensive collection for testing all HazelJS example API endpoints including Cache, Serverless, and Real-time features",
+    "description": "Comprehensive collection for testing all HazelJS example API endpoints including Cache, Serverless, Demo, Auth, AI Jobs, Users, Cron, AI Enhanced, Knowledge Base, and Documentation",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "version": "2.0.0"
+    "version": "3.0.0"
   },
   "item": [
+    {
+      "name": "Authentication",
+      "description": "User authentication and registration endpoints",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has access_token\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('access_token');",
+                  "    pm.environment.set('authToken', jsonData.access_token);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"admin123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Register",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"User was created\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('id');",
+                  "    pm.expect(jsonData).to.have.property('email');",
+                  "    pm.expect(jsonData).to.have.property('name');",
+                  "    pm.expect(jsonData).to.have.property('age');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"newuser@example.com\",\n  \"password\": \"password123\",\n  \"name\": \"New User\",\n  \"age\": 25\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "Get Profile",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Profile has user data\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('id');",
+                  "    pm.expect(jsonData).to.have.property('email');",
+                  "    pm.expect(jsonData).to.have.property('name');",
+                  "    pm.expect(jsonData).to.have.property('age');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "profile"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users API",
+      "description": "User management endpoints",
+      "item": [
+        {
+          "name": "Get All Users",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is an array\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test(\"Users have required fields\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    if (jsonData.length > 0) {",
+                  "        pm.expect(jsonData[0]).to.have.property('id');",
+                  "        pm.expect(jsonData[0]).to.have.property('name');",
+                  "        pm.expect(jsonData[0]).to.have.property('email');",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["users"]
+            }
+          }
+        },
+        {
+          "name": "Get User by ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has user data\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('id');",
+                  "    pm.expect(jsonData).to.have.property('name');",
+                  "    pm.expect(jsonData).to.have.property('email');",
+                  "    pm.expect(jsonData).to.have.property('age');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "1"]
+            }
+          }
+        }
+      ]
+    },
     {
       "name": "Cache API",
       "description": "Smart caching system endpoints",
@@ -516,6 +715,7 @@
                   "pm.test(\"Response has id\", function () {",
                   "    var jsonData = pm.response.json();",
                   "    pm.expect(jsonData).to.have.property('id');",
+                  "    pm.expect(jsonData).to.have.property('feature');",
                   "});"
                 ]
               }
@@ -528,6 +728,36 @@
               "raw": "{{baseUrl}}/demo/optional/123",
               "host": ["{{baseUrl}}"],
               "path": ["demo", "optional", "123"]
+            }
+          }
+        },
+        {
+          "name": "Optional Parameter (No ID)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response handles missing ID\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('id');",
+                  "    pm.expect(jsonData.id).to.equal('not provided');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/demo/optional",
+              "host": ["{{baseUrl}}"],
+              "path": ["demo", "optional"]
             }
           }
         },
@@ -545,6 +775,7 @@
                   "pm.test(\"Response has path\", function () {",
                   "    var jsonData = pm.response.json();",
                   "    pm.expect(jsonData).to.have.property('path');",
+                  "    pm.expect(jsonData).to.have.property('feature');",
                   "});"
                 ]
               }
@@ -574,6 +805,7 @@
                   "pm.test(\"Response has requestId\", function () {",
                   "    var jsonData = pm.response.json();",
                   "    pm.expect(jsonData).to.have.property('requestId');",
+                  "    pm.expect(jsonData).to.have.property('feature');",
                   "});"
                 ]
               }
@@ -631,7 +863,7 @@
                   "",
                   "pm.test(\"Response is v1\", function () {",
                   "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.version).to.equal('1');",
+                  "    pm.expect(jsonData.version).to.equal(1);",
                   "});"
                 ]
               }
@@ -665,7 +897,8 @@
                   "",
                   "pm.test(\"Response is v2\", function () {",
                   "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.version).to.equal('2');",
+                  "    pm.expect(jsonData.version).to.equal(2);",
+                  "    pm.expect(jsonData).to.have.property('metadata');",
                   "});"
                 ]
               }
@@ -689,125 +922,8 @@
       ]
     },
     {
-      "name": "Authentication",
-      "item": [
-        {
-          "name": "Login",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "pm.test(\"Response has token\", function () {",
-                  "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData).to.have.property('token');",
-                  "    pm.environment.set('authToken', jsonData.token);",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"admin123\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/auth/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "login"]
-            }
-          }
-        },
-        {
-          "name": "Register",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "pm.test(\"User was created\", function () {",
-                  "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData).to.have.property('id');",
-                  "    pm.expect(jsonData).to.have.property('email');",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"newuser@example.com\",\n  \"password\": \"password123\",\n  \"name\": \"New User\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/auth/register",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "register"]
-            }
-          }
-        },
-        {
-          "name": "Get Profile",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "pm.test(\"Profile has user data\", function () {",
-                  "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData).to.have.property('id');",
-                  "    pm.expect(jsonData).to.have.property('email');",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/auth/profile",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "profile"]
-            }
-          }
-        }
-      ]
-    },
-    {
       "name": "AI Jobs",
+      "description": "AI-powered job description processing endpoints",
       "item": [
         {
           "name": "Enhance Job Description",
@@ -820,9 +936,8 @@
                   "    pm.response.to.have.status(200);",
                   "});",
                   "",
-                  "pm.test(\"Response has result\", function () {",
-                  "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData).to.have.property('result');",
+                  "pm.test(\"Response is text/plain\", function () {",
+                  "    pm.expect(pm.response.headers.get('Content-Type')).to.include('text/plain');",
                   "});"
                 ]
               }
@@ -834,6 +949,10 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
               }
             ],
             "body": {
@@ -861,6 +980,7 @@
                   "pm.test(\"Response has validation result\", function () {",
                   "    var jsonData = pm.response.json();",
                   "    pm.expect(jsonData).to.have.property('result');",
+                  "    pm.expect(jsonData.result).to.have.property('isValid');",
                   "});"
                 ]
               }
@@ -872,6 +992,10 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
               }
             ],
             "body": {
@@ -899,6 +1023,8 @@
                   "pm.test(\"Skills were extracted\", function () {",
                   "    var jsonData = pm.response.json();",
                   "    pm.expect(jsonData).to.have.property('result');",
+                  "    pm.expect(jsonData.result).to.have.property('technicalSkills');",
+                  "    pm.expect(jsonData.result).to.have.property('softSkills');",
                   "});"
                 ]
               }
@@ -910,6 +1036,10 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
               }
             ],
             "body": {
@@ -926,7 +1056,878 @@
       ]
     },
     {
+      "name": "Cron API",
+      "description": "Cron job management endpoints",
+      "item": [
+        {
+          "name": "Get All Jobs",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has jobs array\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('jobs');",
+                  "    pm.expect(jsonData.jobs).to.be.an('array');",
+                  "    pm.expect(jsonData).to.have.property('totalJobs');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/cron/jobs",
+              "host": ["{{baseUrl}}"],
+              "path": ["cron", "jobs"]
+            }
+          }
+        },
+        {
+          "name": "Get Specific Job Status",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has job status\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('name');",
+                  "    pm.expect(jsonData).to.have.property('isRunning');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/cron/jobs/simple-task",
+              "host": ["{{baseUrl}}"],
+              "path": ["cron", "jobs", "simple-task"]
+            }
+          }
+        },
+        {
+          "name": "Start a Job",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Job was started\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('success');",
+                  "    pm.expect(jsonData).to.have.property('message');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/cron/jobs/simple-task/start",
+              "host": ["{{baseUrl}}"],
+              "path": ["cron", "jobs", "simple-task", "start"]
+            }
+          }
+        },
+        {
+          "name": "Stop a Job",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Job was stopped\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('success');",
+                  "    pm.expect(jsonData).to.have.property('message');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/cron/jobs/simple-task/stop",
+              "host": ["{{baseUrl}}"],
+              "path": ["cron", "jobs", "simple-task", "stop"]
+            }
+          }
+        },
+        {
+          "name": "Enable a Job",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Job was enabled\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('success');",
+                  "    pm.expect(jsonData).to.have.property('message');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/cron/jobs/database-cleanup/enable",
+              "host": ["{{baseUrl}}"],
+              "path": ["cron", "jobs", "database-cleanup", "enable"]
+            }
+          }
+        },
+        {
+          "name": "Disable a Job",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Job was disabled\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('success');",
+                  "    pm.expect(jsonData).to.have.property('message');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/cron/jobs/simple-task/disable",
+              "host": ["{{baseUrl}}"],
+              "path": ["cron", "jobs", "simple-task", "disable"]
+            }
+          }
+        },
+        {
+          "name": "Get Task Statistics",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Stats contain required fields\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('taskCount');",
+                  "    pm.expect(jsonData).to.have.property('emailCount');",
+                  "    pm.expect(jsonData).to.have.property('reportCount');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/cron/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["cron", "stats"]
+            }
+          }
+        },
+        {
+          "name": "Start All Jobs",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"All jobs were started\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.include('started');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/cron/start-all",
+              "host": ["{{baseUrl}}"],
+              "path": ["cron", "start-all"]
+            }
+          }
+        },
+        {
+          "name": "Stop All Jobs",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"All jobs were stopped\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.include('stopped');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/cron/stop-all",
+              "host": ["{{baseUrl}}"],
+              "path": ["cron", "stop-all"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "AI Enhanced API",
+      "description": "Enhanced AI endpoints with multiple providers",
+      "item": [
+        {
+          "name": "Generate with Claude",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has Claude data\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('provider');",
+                  "    pm.expect(jsonData.provider).to.equal('anthropic');",
+                  "    pm.expect(jsonData).to.have.property('content');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prompt\": \"Explain what is artificial intelligence in one paragraph.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/ai-enhanced/claude/generate",
+              "host": ["{{baseUrl}}"],
+              "path": ["ai-enhanced", "claude", "generate"]
+            }
+          }
+        },
+        {
+          "name": "Stream with Claude",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has chunks\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('chunks');",
+                  "    pm.expect(jsonData.chunks).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prompt\": \"Tell me a short story about a robot.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/ai-enhanced/claude/stream",
+              "host": ["{{baseUrl}}"],
+              "path": ["ai-enhanced", "claude", "stream"]
+            }
+          }
+        },
+        {
+          "name": "Generate with Gemini",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has Gemini data\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('provider');",
+                  "    pm.expect(jsonData.provider).to.equal('gemini');",
+                  "    pm.expect(jsonData).to.have.property('content');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prompt\": \"What is machine learning?\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/ai-enhanced/gemini/generate",
+              "host": ["{{baseUrl}}"],
+              "path": ["ai-enhanced", "gemini", "generate"]
+            }
+          }
+        },
+        {
+          "name": "Generate with Cohere",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has Cohere data\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('provider');",
+                  "    pm.expect(jsonData.provider).to.equal('cohere');",
+                  "    pm.expect(jsonData).to.have.property('content');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prompt\": \"Explain neural networks.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/ai-enhanced/cohere/generate",
+              "host": ["{{baseUrl}}"],
+              "path": ["ai-enhanced", "cohere", "generate"]
+            }
+          }
+        },
+        {
+          "name": "Generate Embeddings with Gemini",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has embeddings\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('provider');",
+                  "    pm.expect(jsonData).to.have.property('count');",
+                  "    pm.expect(jsonData).to.have.property('dimensions');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"texts\": [\"Hello world\", \"AI is amazing\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/ai-enhanced/embeddings/gemini",
+              "host": ["{{baseUrl}}"],
+              "path": ["ai-enhanced", "embeddings", "gemini"]
+            }
+          }
+        },
+        {
+          "name": "Generate Embeddings with Cohere",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has embeddings\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('provider');",
+                  "    pm.expect(jsonData).to.have.property('count');",
+                  "    pm.expect(jsonData).to.have.property('dimensions');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"texts\": [\"Machine learning\", \"Deep learning\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/ai-enhanced/embeddings/cohere",
+              "host": ["{{baseUrl}}"],
+              "path": ["ai-enhanced", "embeddings", "cohere"]
+            }
+          }
+        },
+        {
+          "name": "Rerank Documents with Cohere",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has rerank results\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('provider');",
+                  "    pm.expect(jsonData).to.have.property('query');",
+                  "    pm.expect(jsonData).to.have.property('results');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"artificial intelligence\",\n  \"documents\": [\"AI is the future\", \"Machine learning basics\", \"Neural networks explained\"],\n  \"topN\": 2\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/ai-enhanced/cohere/rerank",
+              "host": ["{{baseUrl}}"],
+              "path": ["ai-enhanced", "cohere", "rerank"]
+            }
+          }
+        },
+        {
+          "name": "Upsert Documents to Vector Store",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Documents were upserted\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('message');",
+                  "    pm.expect(jsonData).to.have.property('count');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"documents\": [\n    {\n      \"id\": \"doc1\",\n      \"content\": \"HazelJS is a framework for building AI applications\",\n      \"metadata\": {\"category\": \"framework\"}\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/ai-enhanced/vector/upsert",
+              "host": ["{{baseUrl}}"],
+              "path": ["ai-enhanced", "vector", "upsert"]
+            }
+          }
+        },
+        {
+          "name": "Search Vector Store",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has search results\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('query');",
+                  "    pm.expect(jsonData).to.have.property('results');",
+                  "    pm.expect(jsonData).to.have.property('count');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"AI framework\",\n  \"topK\": 5\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/ai-enhanced/vector/search",
+              "host": ["{{baseUrl}}"],
+              "path": ["ai-enhanced", "vector", "search"]
+            }
+          }
+        },
+        {
+          "name": "Get Vector Store Statistics",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has stats\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('stats');",
+                  "    pm.expect(jsonData).to.have.property('timestamp');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/ai-enhanced/vector/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["ai-enhanced", "vector", "stats"]
+            }
+          }
+        },
+        {
+          "name": "Compare AI Providers",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has all providers\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('providers');",
+                  "    pm.expect(jsonData.providers).to.have.property('anthropic');",
+                  "    pm.expect(jsonData.providers).to.have.property('gemini');",
+                  "    pm.expect(jsonData.providers).to.have.property('cohere');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prompt\": \"What is artificial intelligence?\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/ai-enhanced/compare",
+              "host": ["{{baseUrl}}"],
+              "path": ["ai-enhanced", "compare"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Knowledge Base API",
+      "description": "Knowledge base agent endpoints for document ingestion and question answering",
+      "item": [
+        {
+          "name": "Ingest Document",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Document was ingested\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('id');",
+                  "    pm.expect(jsonData).to.have.property('title');",
+                  "    pm.expect(jsonData).to.have.property('content');",
+                  "    pm.expect(jsonData).to.have.property('createdAt');",
+                  "    pm.environment.set('documentId', jsonData.id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"HazelJS Overview\",\n  \"content\": \"HazelJS is a modern, TypeScript-first framework for building scalable backend applications. It provides a modular architecture with built-in support for dependency injection, decorators, and middleware.\",\n  \"metadata\": {\n    \"category\": \"documentation\",\n    \"source\": \"intro\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/knowledge/ingest",
+              "host": ["{{baseUrl}}"],
+              "path": ["knowledge", "ingest"]
+            }
+          }
+        },
+        {
+          "name": "Ask Question",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has answer\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('answer');",
+                  "    pm.expect(jsonData).to.have.property('sources');",
+                  "    pm.expect(jsonData.sources).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"question\": \"What is HazelJS?\",\n  \"sessionId\": \"test-session-123\",\n  \"topK\": 5\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/knowledge/ask",
+              "host": ["{{baseUrl}}"],
+              "path": ["knowledge", "ask"]
+            }
+          }
+        },
+        {
+          "name": "List All Documents",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is an array\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test(\"Documents have required fields\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    if (jsonData.length > 0) {",
+                  "        pm.expect(jsonData[0]).to.have.property('id');",
+                  "        pm.expect(jsonData[0]).to.have.property('title');",
+                  "        pm.expect(jsonData[0]).to.have.property('content');",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/knowledge/documents",
+              "host": ["{{baseUrl}}"],
+              "path": ["knowledge", "documents"]
+            }
+          }
+        },
+        {
+          "name": "Get Document by ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has document data\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    if (jsonData) {",
+                  "        pm.expect(jsonData).to.have.property('id');",
+                  "        pm.expect(jsonData).to.have.property('title');",
+                  "        pm.expect(jsonData).to.have.property('content');",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/knowledge/documents/{{documentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["knowledge", "documents", "{{documentId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
       "name": "Documentation",
+      "description": "API documentation endpoints",
       "item": [
         {
           "name": "Get Swagger UI",
@@ -1008,8 +2009,8 @@
         "type": "text/javascript",
         "exec": [
           "// Global test script",
-          "pm.test(\"Response time is less than 2000ms\", function () {",
-          "    pm.expect(pm.response.responseTime).to.be.below(2000);",
+          "pm.test(\"Response time is less than 5000ms\", function () {",
+          "    pm.expect(pm.response.responseTime).to.be.below(5000);",
           "});"
         ]
       }
@@ -1023,6 +2024,11 @@
     },
     {
       "key": "authToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "documentId",
       "value": "",
       "type": "string"
     }

@@ -9,6 +9,7 @@ export type { AITaskConfig, AITaskContext, AITaskResult } from './ai.types';
 export { AITask } from './ai.decorator';
 
 // Enhanced AI
+export { OpenAIProvider } from './providers/openai.provider';
 export { AnthropicProvider } from './providers/anthropic.provider';
 export { GeminiProvider } from './providers/gemini.provider';
 export { CohereProvider } from './providers/cohere.provider';

@@ -11,4 +11,3 @@ export {
   type UpdateInput,
 } from './base.repository';
 export { Repository } from './repository.decorator';
-

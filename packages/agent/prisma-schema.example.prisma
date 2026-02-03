@@ -1,0 +1,76 @@
+// Example Prisma schema for Agent State Persistence
+// 
+// INSTRUCTIONS:
+// 1. Copy the models below into your existing prisma/schema.prisma file
+// 2. Run: npx prisma migrate dev --name add_agent_state_models
+// 3. Run: npx prisma generate
+// 4. See PRISMA_INTEGRATION.md for detailed instructions
+//
+// NOTE: This is an example file. You need to add these models to your actual schema.prisma
+
+model AgentContext {
+  id                String   @id @default(uuid())
+  executionId      String   @unique
+  agentId          String
+  sessionId        String
+  userId           String?
+  input            String
+  state            String   // AgentState enum as string
+  steps            Json     // AgentStep[]
+  conversationHistory Json   // ConversationMessage[]
+  workingMemory    Json     // Record<string, unknown>
+  facts            Json     // string[]
+  entities         Json     // Entity[]
+  ragContext       Json?    // string[]
+  metadata         Json     // Record<string, unknown>
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  deletedAt        DateTime? // For soft deletes
+  agentSteps       AgentStep[]? // Optional: relation to steps table
+
+  @@index([sessionId])
+  @@index([userId])
+  @@index([agentId])
+  @@index([state])
+  @@index([createdAt])
+  @@index([deletedAt])
+  @@map("agent_contexts")
+}
+
+// Optional: Separate table for execution steps (for better querying)
+model AgentStep {
+  id            String   @id @default(uuid())
+  executionId   String
+  stepNumber    Int
+  state         String
+  action        Json?
+  result        Json?
+  error         String?
+  timestamp     DateTime @default(now())
+  duration      Int?
+
+  context       AgentContext @relation(fields: [executionId], references: [executionId], onDelete: Cascade)
+  
+  // Note: If you don't want a separate steps table, remove this model
+  // and store steps as JSON in AgentContext.steps field
+
+  @@index([executionId])
+  @@index([timestamp])
+  @@map("agent_steps")
+}
+
+// Optional: Session tracking
+model AgentSession {
+  id            String   @id @default(uuid())
+  sessionId     String   @unique
+  userId        String?
+  agentId       String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  completedAt   DateTime?
+
+  @@index([userId])
+  @@index([agentId])
+  @@index([createdAt])
+  @@map("agent_sessions")
+}

@@ -1,0 +1,58 @@
+{
+  "name": "@hazeljs/agent",
+  "version": "0.1.0",
+  "description": "AI-native Agent Runtime for HazelJS - stateful, long-running agents with tools, memory, and human-in-the-loop",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc --build",
+    "test": "jest --coverage --passWithNoTests",
+    "test:watch": "jest --watch",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix"
+  },
+  "keywords": [
+    "hazeljs",
+    "agent",
+    "ai-agent",
+    "llm",
+    "agentic",
+    "agent-runtime",
+    "tools",
+    "memory",
+    "human-in-the-loop"
+  ],
+  "author": "HazelJS Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hazeljs/hazeljs",
+    "directory": "packages/agent"
+  },
+  "dependencies": {
+    "@hazeljs/core": "file:../core",
+    "@hazeljs/rag": "file:../rag",
+    "reflect-metadata": "^0.2.1"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.11",
+    "@types/node": "^20.10.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.1",
+    "typescript": "^5.3.3"
+  },
+  "peerDependencies": {
+    "@hazeljs/core": ">=0.2.0",
+    "@hazeljs/rag": ">=0.1.0"
+  },
+  "peerDependenciesMeta": {
+    "redis": {
+      "optional": true,
+      "description": "Required for RedisStateManager"
+    },
+    "@prisma/client": {
+      "optional": true,
+      "description": "Required for DatabaseStateManager"
+    }
+  }
+}

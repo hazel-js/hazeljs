@@ -3,7 +3,7 @@
 ## Installation
 
 ```bash
-npm install @hazeljs/core reflect-metadata class-validator class-transformer
+npm install @hazeljs/core class-validator class-transformer
 ```
 
 ## Basic Application
@@ -126,7 +126,6 @@ export class AppModule {}
 
 ```typescript
 // main.ts
-import 'reflect-metadata';
 import { HazelApp } from '@hazeljs/core';
 import { AppModule } from './app.module';
 
@@ -430,7 +429,7 @@ export class LoggingInterceptor implements Interceptor {
 
 1. **Decorators not working**
    - Ensure `experimentalDecorators` and `emitDecoratorMetadata` are enabled in tsconfig.json
-   - Import `reflect-metadata` at the top of your main file
+   - Note: `reflect-metadata` is automatically imported by `@hazeljs/core`
 
 2. **Validation not working**
    - Install `class-validator` and `class-transformer`

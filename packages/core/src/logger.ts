@@ -263,5 +263,15 @@ export const requestLogger = (
   next();
 };
 
+// Add helper method to check if debug is enabled
+const isDebugEnabled = (): boolean => {
+  return logger.isLevelEnabled('debug');
+};
+
+// Extend logger with helper method
+const enhancedLogger = Object.assign(logger, {
+  isDebugEnabled,
+});
+
 // Export logger instance
-export default logger;
+export default enhancedLogger;

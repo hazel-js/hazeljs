@@ -1,9 +1,136 @@
 import { AIEnhancedController } from './ai-enhanced.controller';
+import { AnthropicProvider, GeminiProvider, CohereProvider } from '@hazeljs/ai';
+
+jest.mock('@hazeljs/ai', () => ({
+  AnthropicProvider: jest.fn(),
+  GeminiProvider: jest.fn(),
+  CohereProvider: jest.fn(),
+  VectorService: jest.fn().mockImplementation(() => ({
+    initialize: jest.fn(),
+    upsert: jest.fn().mockImplementation((docs) => Promise.resolve({ count: docs.length })),
+    search: jest.fn().mockResolvedValue([]),
+    getStats: jest.fn().mockResolvedValue({ count: 3, database: 'mock' }),
+  })),
+  AIFunction: jest.fn(),
+  AIPrompt: jest.fn(),
+}));
 
 describe('AIEnhancedController', () => {
   let controller: AIEnhancedController;
+  let mockAnthropicComplete: jest.Mock;
+  let mockAnthropicStreamComplete: jest.Mock;
+  let mockGeminiComplete: jest.Mock;
+  let mockGeminiEmbed: jest.Mock;
+  let mockCohereComplete: jest.Mock;
+  let mockCohereEmbed: jest.Mock;
+  let mockCohereRerank: jest.Mock;
 
   beforeEach(() => {
+    // Mock Anthropic provider
+    mockAnthropicComplete = jest.fn().mockResolvedValue({
+      id: 'claude-123',
+      content: 'Mock response from Claude',
+      role: 'assistant',
+      model: 'claude-3-opus-20240229',
+      usage: {
+        promptTokens: 10,
+        completionTokens: 20,
+        totalTokens: 30,
+      },
+      finishReason: 'end_turn',
+    });
+
+    mockAnthropicStreamComplete = jest.fn().mockImplementation(async function* () {
+      const chunks = ['Mock ', 'streaming ', 'from ', 'Claude'];
+      for (let i = 0; i < chunks.length; i++) {
+        yield {
+          id: 'claude-stream-123',
+          content: chunks.slice(0, i + 1).join(''),
+          delta: chunks[i],
+          done: i === chunks.length - 1,
+          usage: i === chunks.length - 1 ? {
+            promptTokens: 10,
+            completionTokens: 4,
+            totalTokens: 14,
+          } : undefined,
+        };
+      }
+    });
+
+    (AnthropicProvider as jest.Mock).mockImplementation(() => ({
+      complete: mockAnthropicComplete,
+      streamComplete: mockAnthropicStreamComplete,
+      name: 'anthropic',
+    }));
+
+    // Mock Gemini provider
+    mockGeminiComplete = jest.fn().mockResolvedValue({
+      id: 'gemini-123',
+      content: 'Mock response from Gemini',
+      role: 'assistant',
+      model: 'gemini-pro',
+      usage: {
+        promptTokens: 15,
+        completionTokens: 25,
+        totalTokens: 40,
+      },
+      finishReason: 'STOP',
+    });
+
+    mockGeminiEmbed = jest.fn().mockResolvedValue({
+      embeddings: [[0.1, 0.2, 0.3]],
+      model: 'embedding-001',
+      usage: {
+        promptTokens: 10,
+        totalTokens: 10,
+      },
+    });
+
+    (GeminiProvider as jest.Mock).mockImplementation(() => ({
+      complete: mockGeminiComplete,
+      embed: mockGeminiEmbed,
+      name: 'gemini',
+    }));
+
+    // Mock Cohere provider
+    mockCohereComplete = jest.fn().mockResolvedValue({
+      id: 'cohere-123',
+      content: 'Mock response from Cohere',
+      role: 'assistant',
+      model: 'command',
+      usage: {
+        promptTokens: 12,
+        completionTokens: 18,
+        totalTokens: 30,
+      },
+      finishReason: 'COMPLETE',
+    });
+
+    mockCohereEmbed = jest.fn().mockResolvedValue({
+      embeddings: [[0.4, 0.5, 0.6]],
+      model: 'embed-english-v3.0',
+      usage: {
+        promptTokens: 8,
+        totalTokens: 8,
+      },
+    });
+
+    mockCohereRerank = jest.fn().mockImplementation((query, documents, topN) => {
+      const results = documents.map((doc: string, index: number) => ({
+        index,
+        score: 0.9 - index * 0.1,
+        document: doc,
+      }));
+      return Promise.resolve(topN ? results.slice(0, topN) : results);
+    });
+
+    (CohereProvider as jest.Mock).mockImplementation(() => ({
+      complete: mockCohereComplete,
+      embed: mockCohereEmbed,
+      rerank: mockCohereRerank,
+      name: 'cohere',
+    }));
+
     controller = new AIEnhancedController();
   });
 
@@ -89,6 +216,12 @@ describe('AIEnhancedController', () => {
 
   describe('generateEmbeddings', () => {
     it('should generate embeddings with Gemini', async () => {
+      mockGeminiEmbed.mockResolvedValue({
+        embeddings: [new Array(768).fill(0.1), new Array(768).fill(0.2)],
+        model: 'embedding-001',
+        usage: { promptTokens: 20, totalTokens: 20 },
+      });
+
       const result = await controller.generateEmbeddings({
         texts: ['text1', 'text2'],
       });
@@ -100,6 +233,12 @@ describe('AIEnhancedController', () => {
     });
 
     it('should handle single text', async () => {
+      mockGeminiEmbed.mockResolvedValue({
+        embeddings: [new Array(768).fill(0.1)],
+        model: 'embedding-001',
+        usage: { promptTokens: 10, totalTokens: 10 },
+      });
+
       const result = await controller.generateEmbeddings({
         texts: ['single text'],
       });
@@ -110,6 +249,16 @@ describe('AIEnhancedController', () => {
 
   describe('generateCohereEmbeddings', () => {
     it('should generate embeddings with Cohere', async () => {
+      mockCohereEmbed.mockResolvedValue({
+        embeddings: [
+          new Array(1024).fill(0.1),
+          new Array(1024).fill(0.2),
+          new Array(1024).fill(0.3),
+        ],
+        model: 'embed-english-v3.0',
+        usage: { promptTokens: 30, totalTokens: 30 },
+      });
+
       const result = await controller.generateCohereEmbeddings({
         texts: ['text1', 'text2', 'text3'],
       });

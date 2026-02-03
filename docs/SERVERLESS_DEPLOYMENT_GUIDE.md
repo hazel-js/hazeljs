@@ -209,7 +209,6 @@ HazelJS supports multiple deployment strategies:
 Create `lambda.ts` in your project root:
 
 ```typescript
-import 'reflect-metadata';
 import { createLambdaHandler } from '@hazeljs/core';
 import { AppModule } from './src/app.module';
 
@@ -1359,8 +1358,8 @@ Deploying HazelJS serverless applications to production is straightforward with 
 - **HazelJS Documentation:** https://hazeljs.com/docs
 - **AWS Lambda Docs:** https://docs.aws.amazon.com/lambda
 - **Serverless Framework:** https://www.serverless.com/framework/docs
-- **HazelJS Discord:** https://discord.gg/hazeljs
-- **GitHub Repository:** https://github.com/hazeljs/hazeljs
+- **HazelJS Discord:** https://discord.gg/jyP7P7bDA
+- **GitHub Repository:** https://github.com/hazel-js/hazeljs
 
 ---
 

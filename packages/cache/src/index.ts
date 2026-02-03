@@ -27,4 +27,3 @@ export {
 export { MemoryCacheStore } from './strategies/memory.strategy';
 export { RedisCacheStore } from './strategies/redis.strategy';
 export { MultiTierCacheStore } from './strategies/multi-tier.strategy';
-

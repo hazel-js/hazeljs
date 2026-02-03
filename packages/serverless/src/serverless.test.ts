@@ -1,8 +1,4 @@
-import {
-  Serverless,
-  getServerlessMetadata,
-  isServerless,
-} from './serverless.decorator';
+import { Serverless, getServerlessMetadata, isServerless } from './serverless.decorator';
 import { ColdStartOptimizer, OptimizeColdStart, KeepAliveHelper } from './cold-start.optimizer';
 import { LambdaAdapter, createLambdaHandler } from './lambda.adapter';
 import { CloudFunctionAdapter, createCloudFunctionHandler } from './cloud-function.adapter';

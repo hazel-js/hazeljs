@@ -76,15 +76,12 @@ npm run build
 
 ### "reflect-metadata shim is required"
 
-**Problem**: Missing reflect-metadata
+**Problem**: This error should no longer occur as `@hazeljs/core` now imports `reflect-metadata` automatically.
 
-**Solution**: Import at the top of your entry file:
-```typescript
-// src/index.ts (FIRST LINE)
-import 'reflect-metadata';
-import { HazelApp } from '@hazeljs/core';
-// ... rest of your code
-```
+**If you still see this error**:
+- Make sure you're using the latest version of `@hazeljs/core`
+- Ensure `reflect-metadata` is installed: `npm install reflect-metadata`
+- The core package handles the import automatically, so you don't need to import it manually
 
 ### "Circular dependency detected"
 
@@ -160,12 +157,8 @@ export class RequestService implements OnModuleDestroy {
 
 3. Check import order:
    ```typescript
-   // Wrong - decorators not loaded
-   import { MyService } from './my.service';
-   import 'reflect-metadata';
-   
-   // Correct
-   import 'reflect-metadata';
+   // Note: reflect-metadata is now imported automatically by @hazeljs/core
+   // You no longer need to import it manually
    import { MyService } from './my.service';
    ```
 
@@ -430,10 +423,9 @@ If you can't find a solution here:
    - [README.md](README.md)
 
 2. **Search Issues**
-   - GitHub Issues: https://github.com/hazeljs/hazeljs/issues
-
+   - GitHub Issues: https://github.com/hazeljs/hazel-js/issues
 3. **Ask Community**
-   - GitHub Discussions: https://github.com/hazeljs/hazeljs/discussions
+   - GitHub Discussions: https://github.com/hazel-js/hazeljs/discussions
    - Discord: (Coming soon)
 
 4. **Report Bug**

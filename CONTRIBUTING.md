@@ -122,17 +122,25 @@ Fixes #456
 
 ```
 hazeljs/
-├── src/
-│   └── core/           # Core framework code
-│       ├── ai/         # AI integration
-│       ├── cache/      # Caching system
-│       ├── websocket/  # WebSocket support
-│       └── ...
-├── example/            # Example application
 ├── packages/
-│   └── cli/           # CLI tool
-├── tests/             # Test files
-└── docs/              # Documentation
+│   ├── core/          # Core framework (DI, routing, decorators)
+│   ├── ai/            # AI integration (OpenAI, Anthropic, Gemini, Cohere)
+│   ├── agent/         # AI agent runtime with tools and memory
+│   ├── rag/           # Vector search and RAG capabilities
+│   ├── cache/         # Multi-tier caching system
+│   ├── websocket/     # WebSocket & SSE support
+│   ├── serverless/    # Serverless adapters
+│   ├── discovery/     # Service discovery for microservices
+│   ├── prisma/        # Prisma ORM integration
+│   ├── auth/          # JWT authentication
+│   ├── config/        # Configuration management
+│   ├── swagger/       # API documentation
+│   ├── cron/          # Scheduled tasks
+│   └── cli/           # CLI tool for scaffolding
+├── example/           # Example applications
+├── docs/              # Documentation
+│   └── guides/        # Feature guides
+└── .github/           # CI/CD workflows
 ```
 
 ## Coding Guidelines

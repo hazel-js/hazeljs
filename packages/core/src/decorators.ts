@@ -5,7 +5,6 @@ import { PipeTransform, PipeMetadata } from './pipes/pipe';
 import { Interceptor, InterceptorMetadata } from './interceptors/interceptor';
 import { HazelApp } from './hazel-app';
 
-const MODULE_METADATA_KEY = 'hazel:module';
 const CONTROLLER_METADATA_KEY = 'hazel:controller';
 const INJECTABLE_METADATA_KEY = 'hazel:injectable';
 const ROUTE_METADATA_KEY = 'hazel:routes';
@@ -238,6 +237,31 @@ export function Param(paramName: string, pipe?: Type<PipeTransform>): ParameterD
       .constructor;
     const injections = Reflect.getMetadata(INJECT_METADATA_KEY, constructor, propertyKey) || [];
     injections[parameterIndex] = { type: 'param', name: paramName, pipe };
+    Reflect.defineMetadata(INJECT_METADATA_KEY, injections, constructor, propertyKey);
+    logger.debug('Updated injections:', JSON.stringify(injections, null, 2));
+  };
+}
+
+export function Query(paramName?: string, pipe?: Type<PipeTransform>): ParameterDecorator {
+  return (
+    target: object,
+    propertyKey: string | symbol | undefined,
+    parameterIndex: number
+  ): void => {
+    if (!propertyKey) {
+      throw new Error('Query decorator must be used on a method parameter');
+    }
+
+    logger.debug(
+      `Registering query param ${paramName || 'all'} at index ${parameterIndex} in ${target.constructor?.name} with pipe:`,
+      pipe?.name
+    );
+
+    // Get the constructor of the target
+    const constructor = (target as { constructor: { new (...args: unknown[]): object } })
+      .constructor;
+    const injections = Reflect.getMetadata(INJECT_METADATA_KEY, constructor, propertyKey) || [];
+    injections[parameterIndex] = { type: 'query', name: paramName, pipe };
     Reflect.defineMetadata(INJECT_METADATA_KEY, injections, constructor, propertyKey);
     logger.debug('Updated injections:', JSON.stringify(injections, null, 2));
   };

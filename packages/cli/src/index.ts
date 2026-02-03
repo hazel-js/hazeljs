@@ -13,7 +13,15 @@ import { generateExceptionFilter } from './commands/generate-exception-filter';
 import { generatePipe } from './commands/generate-pipe';
 import { generateRepository } from './commands/generate-repository';
 import { generateAIService } from './commands/generate-ai-service';
+import { generateAgent } from './commands/generate-agent';
 import { generateServerlessHandler } from './commands/generate-serverless-handler';
+import { generateCrud } from './commands/generate-crud';
+import { generateMiddleware } from './commands/generate-middleware';
+import { infoCommand } from './commands/info';
+import { addCommand } from './commands/add';
+import { buildCommand } from './commands/build';
+import { startCommand } from './commands/start';
+import { testCommand } from './commands/test';
 
 const program = new Command();
 
@@ -24,6 +32,13 @@ program
 
 // New app command
 generateApp(program);
+
+// Utility commands
+infoCommand(program);
+addCommand(program);
+buildCommand(program);
+startCommand(program);
+testCommand(program);
 
 // Generate command group
 const generateCommand = program
@@ -38,13 +53,16 @@ generateModule(generateCommand);
 generateDto(generateCommand);
 generateGuard(generateCommand);
 generateInterceptor(generateCommand);
+generateMiddleware(generateCommand);
 
-// New features
+// Advanced generators
+generateCrud(generateCommand);
 generateWebSocketGateway(generateCommand);
 generateExceptionFilter(generateCommand);
 generatePipe(generateCommand);
 generateRepository(generateCommand);
 generateAIService(generateCommand);
+generateAgent(generateCommand);
 generateServerlessHandler(generateCommand);
 
 program.parse(process.argv); 

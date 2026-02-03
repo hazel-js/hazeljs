@@ -15,9 +15,11 @@
     "prepare": "npm run build"
   },
   "dependencies": {
+    "chalk": "^4.1.2",
     "commander": "^11.1.0",
     "inquirer": "^8.2.6",
-    "mustache": "^4.2.0"
+    "mustache": "^4.2.0",
+    "ora": "^5.4.1"
   },
   "devDependencies": {
     "@types/inquirer": "^8.2.6",
@@ -51,11 +53,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/hazeljs/hazeljs.git",
+    "url": "git+https://github.com/hazel-js/hazeljs.git",
     "directory": "packages/cli"
   },
   "bugs": {
-    "url": "https://github.com/hazeljs/hazeljs/issues"
+    "url": "https://github.com/hazeljs/hazel-js/issues"
   },
   "homepage": "https://hazeljs.com",
   "funding": {

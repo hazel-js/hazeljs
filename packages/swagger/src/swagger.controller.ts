@@ -91,19 +91,27 @@ export class SwaggerController {
 
         // Add controllers from current module
         if (metadata.controllers) {
-          const validControllers = metadata.controllers.filter((c: unknown) => c && typeof c === 'function');
+          const validControllers = metadata.controllers.filter(
+            (c: unknown) => c && typeof c === 'function'
+          );
           logger.debug(
             `${moduleType.name} controllers:`,
-            validControllers.map((c: Type<unknown>) => (typeof c === 'function' ? c.name : undefined))
+            validControllers.map((c: Type<unknown>) =>
+              typeof c === 'function' ? c.name : undefined
+            )
           );
-          validControllers.forEach((controller: unknown) => controllers.add(controller as Type<unknown>));
+          validControllers.forEach((controller: unknown) =>
+            controllers.add(controller as Type<unknown>)
+          );
         } else {
           logger.debug(`No controllers found in module: ${moduleType.name}`);
         }
 
         // Recursively process imported modules
         if (metadata.imports) {
-          const validModules = metadata.imports.filter((m: unknown) => m && typeof m === 'function');
+          const validModules = metadata.imports.filter(
+            (m: unknown) => m && typeof m === 'function'
+          );
           logger.debug(
             `${moduleType.name} imported modules:`,
             validModules.map((m: Type<unknown>) => (typeof m === 'function' ? m.name : undefined))

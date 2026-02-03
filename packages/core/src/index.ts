@@ -3,10 +3,24 @@
  * A modern, modular Node.js framework with TypeScript support
  */
 
+// Import reflect-metadata to enable decorator metadata
+// Users don't need to import this manually
+import 'reflect-metadata';
+
 // Core exports
 export { HazelApp } from './hazel-app';
 export { HazelModule, Module, HazelModuleInstance, getModuleMetadata } from './hazel-module';
 export type { ModuleOptions } from './hazel-module';
+
+// Shutdown & Health
+export { ShutdownManager } from './shutdown';
+export type { ShutdownHandler } from './shutdown';
+export { HealthCheckManager, BuiltInHealthChecks } from './health';
+export type { HealthCheck, HealthCheckResult, HealthStatus } from './health';
+
+// Timeout Middleware (new)
+export { TimeoutMiddleware } from './middleware/timeout.middleware';
+export type { TimeoutOptions } from './middleware/timeout.middleware';
 
 // Decorators
 export {
@@ -20,6 +34,7 @@ export {
   Patch,
   Body,
   Param,
+  Query,
   Res,
   Inject,
   UsePipes,

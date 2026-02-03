@@ -1,0 +1,7 @@
+src/
+examples/
+*.test.ts
+*.spec.ts
+tsconfig.json
+.gitignore
+ARCHITECTURE.md

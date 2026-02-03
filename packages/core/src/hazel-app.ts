@@ -10,6 +10,10 @@ import { Request, Response } from './types';
 import { HttpError } from './errors/http.error';
 import os from 'os';
 import chalk from 'chalk';
+import { ShutdownManager } from './shutdown';
+import { HealthCheckManager, BuiltInHealthChecks } from './health';
+import { TimeoutMiddleware, TimeoutOptions } from './middleware/timeout.middleware';
+import { CorsOptions } from './middleware/cors.middleware';
 
 const MODULE_METADATA_KEY = 'hazel:module';
 
@@ -61,6 +65,12 @@ export class HazelApp {
   private requestParser: RequestParser;
   private server: Server | null = null;
   private module: HazelModuleInstance;
+  private shutdownManager: ShutdownManager;
+  private healthManager: HealthCheckManager;
+  private requestTimeout: number = 30000; // 30 seconds default
+  private corsEnabled: boolean = false;
+  private corsOptions?: CorsOptions;
+  private timeoutMiddleware?: TimeoutMiddleware;
 
   constructor(private readonly moduleType: Type<unknown>) {
     logger.info('Initializing HazelApp');
@@ -68,6 +78,13 @@ export class HazelApp {
     this.router = new Router(this.container);
     this.requestParser = new RequestParser();
     this.module = new HazelModuleInstance(this.moduleType);
+    this.shutdownManager = new ShutdownManager();
+    this.healthManager = new HealthCheckManager();
+    
+    // Register built-in health checks
+    this.healthManager.registerCheck(BuiltInHealthChecks.memoryCheck());
+    this.healthManager.registerCheck(BuiltInHealthChecks.eventLoopCheck());
+    
     this.initialize();
   }
 
@@ -136,6 +153,29 @@ export class HazelApp {
             logger.warn('Invalid URL received');
             res.writeHead(400);
             res.end(JSON.stringify({ error: 'Invalid URL' }));
+            return;
+          }
+
+          // Health check endpoints
+          if (req.url === '/health' && req.method === 'GET') {
+            const liveness = await this.healthManager.getLiveness();
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify(liveness));
+            return;
+          }
+
+          if (req.url === '/ready' && req.method === 'GET') {
+            const readiness = await this.healthManager.getReadiness();
+            const statusCode = readiness.status === 'healthy' ? 200 : 503;
+            res.writeHead(statusCode, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify(readiness));
+            return;
+          }
+
+          if (req.url === '/startup' && req.method === 'GET') {
+            const startup = await this.healthManager.getStartup();
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify(startup));
             return;
           }
 
@@ -304,6 +344,26 @@ export class HazelApp {
           chalk.green('  → Network:  ') + chalk.cyan.underline(`http://${localIp}:${port}`)
         );
         logger.info('');
+        logger.info(chalk.gray('Health endpoints:'));
+        logger.info(chalk.gray(`  → /health  - Liveness probe`));
+        logger.info(chalk.gray(`  → /ready   - Readiness probe`));
+        logger.info(chalk.gray(`  → /startup - Startup probe`));
+        logger.info('');
+        
+        // Setup graceful shutdown
+        this.shutdownManager.setupSignalHandlers();
+        
+        // Register server shutdown handler
+        this.shutdownManager.registerHandler({
+          name: 'http-server',
+          handler: async () => {
+            logger.info('Closing HTTP server...');
+            await this.close();
+            logger.info('HTTP server closed');
+          },
+          timeout: 10000,
+        });
+        
         resolve();
       });
     });
@@ -316,11 +376,67 @@ export class HazelApp {
           if (err) {
             reject(err);
           } else {
+            logger.info('Server closed successfully');
             resolve();
           }
         });
       });
     }
+  }
+
+  /**
+   * Register a custom shutdown handler
+   */
+  registerShutdownHandler(handler: { name: string; handler: () => Promise<void>; timeout?: number }): void {
+    this.shutdownManager.registerHandler(handler);
+  }
+
+  /**
+   * Register a custom health check
+   */
+  registerHealthCheck(check: { name: string; check: () => Promise<{ status: 'healthy' | 'unhealthy' | 'degraded'; message?: string; details?: Record<string, unknown> }>; critical?: boolean; timeout?: number }): void {
+    this.healthManager.registerCheck(check);
+  }
+
+  /**
+   * Set request timeout
+   */
+  setRequestTimeout(timeout: number, options?: TimeoutOptions): void {
+    this.requestTimeout = timeout;
+    this.timeoutMiddleware = new TimeoutMiddleware({ ...options, timeout });
+    logger.info(`Request timeout set to ${timeout}ms`);
+  }
+
+  /**
+   * Enable CORS
+   */
+  enableCors(options?: CorsOptions): void {
+    this.corsEnabled = true;
+    this.corsOptions = options;
+    logger.info('CORS enabled', options);
+  }
+
+  /**
+   * Disable CORS
+   */
+  disableCors(): void {
+    this.corsEnabled = false;
+    this.corsOptions = undefined;
+    logger.info('CORS disabled');
+  }
+
+  /**
+   * Get health check manager
+   */
+  getHealthManager(): HealthCheckManager {
+    return this.healthManager;
+  }
+
+  /**
+   * Get shutdown manager
+   */
+  getShutdownManager(): ShutdownManager {
+    return this.shutdownManager;
   }
 
   getContainer(): Container {
