@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/discovery",
-  "version": "0.2.0",
+  "version": "0.2.0-beta.1",
   "description": "Service discovery and registry for HazelJS microservices - Eureka-inspired with multiple backend support",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -18,7 +18,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@hazeljs/core": "^0.2.0",
+    "@hazeljs/core": "file:../core",
     "reflect-metadata": "^0.2.2",
     "axios": "^1.6.0"
   },
