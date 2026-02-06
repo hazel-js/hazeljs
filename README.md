@@ -200,15 +200,20 @@ HazelJS is organized as a monorepo with the following packages:
 - **[Example Application](./example)** - Full working examples
 
 ### Package Documentation
+- **[Core Framework](./packages/core/README.md)** - Core framework features and APIs
 - **[AI Integration](./packages/ai/README.md)** - AI providers and usage
-- **[Agent Runtime](./packages/agent/README.md)** - Building AI agents
+- **[Agent Runtime](./packages/agent/README.md)** - Building AI agents with tools and memory
 - **[RAG System](./packages/rag/README.md)** - Vector search and embeddings
+- **[Authentication](./packages/auth/README.md)** - JWT authentication and authorization
+- **[Caching](./packages/cache/README.md)** - Multi-tier caching (Memory, Redis, CDN)
+- **[CLI Tool](./packages/cli/README.md)** - Scaffolding and code generation
+- **[Configuration](./packages/config/README.md)** - Type-safe configuration management
+- **[Cron Jobs](./packages/cron/README.md)** - Scheduled task execution
 - **[Service Discovery](./packages/discovery/README.md)** - Microservices registry
-- **[WebSocket](./packages/websocket/README.md)** - Real-time communication
-- **[Serverless](./packages/serverless/README.md)** - Serverless deployment
-- **[Caching](./packages/cache/README.md)** - Multi-tier caching
-- **[Authentication](./packages/auth/README.md)** - JWT auth
-- **[Swagger](./packages/swagger/README.md)** - API documentation
+- **[Prisma ORM](./packages/prisma/README.md)** - Database integration with repository pattern
+- **[Serverless](./packages/serverless/README.md)** - AWS Lambda & Google Cloud Functions
+- **[Swagger](./packages/swagger/README.md)** - Automatic API documentation
+- **[WebSocket](./packages/websocket/README.md)** - Real-time communication & SSE
 
 ### Guides
 - [Dependency Injection](./docs/guides/providers.md)
@@ -225,6 +230,7 @@ HazelJS is organized as a monorepo with the following packages:
 
 HazelJS has been significantly enhanced with enterprise-grade features:
 
+### Core Framework Enhancements
 - ✅ **Multiple DI Scopes** - Singleton, Transient, Request-scoped providers
 - ✅ **Exception Filters** - Centralized error handling
 - ✅ **Configuration Module** - Type-safe configuration with validation
@@ -232,6 +238,13 @@ HazelJS has been significantly enhanced with enterprise-grade features:
 - ✅ **Advanced Routing** - Wildcards, optional params, API versioning
 - ✅ **Global Middleware** - Apply middleware globally or per-route
 - ✅ **File Upload** - Native multipart form data support
+
+### Production-Ready Package Improvements
+- ✅ **Auth Package** - Configurable JWT with proper secret management, token expiration, and dynamic role verification
+- ✅ **Cron Package** - Real cron expression parsing with `node-cron` for accurate scheduling
+- ✅ **WebSocket Package** - Full WebSocket server integration with HTTP server wiring
+- ✅ **Serverless Package** - Complete request routing through HazelJS router for Lambda & Cloud Functions
+- ✅ **RAG Package** - Proper module configuration with static config pattern
 
 **All improvements are 100% backward compatible!**
 
