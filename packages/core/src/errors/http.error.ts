@@ -50,3 +50,12 @@ export class InternalServerError extends HttpError {
     this.name = 'InternalServerError';
   }
 }
+
+// Aliases using Exception naming convention (matches documentation)
+export const HttpException = HttpError;
+export const BadRequestException = BadRequestError;
+export const UnauthorizedException = UnauthorizedError;
+export const ForbiddenException = ForbiddenError;
+export const NotFoundException = NotFoundError;
+export const ConflictException = ConflictError;
+export const InternalServerErrorException = InternalServerError;

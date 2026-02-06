@@ -35,7 +35,12 @@ export {
   Body,
   Param,
   Query,
+  Req,
   Res,
+  Headers,
+  HttpCode,
+  Header,
+  Redirect,
   Inject,
   UsePipes,
   UseInterceptors,
@@ -68,6 +73,13 @@ export {
   NotFoundError,
   ConflictError,
   InternalServerError,
+  HttpException,
+  BadRequestException,
+  UnauthorizedException,
+  ForbiddenException,
+  NotFoundException,
+  ConflictException,
+  InternalServerErrorException,
 } from './errors/http.error';
 
 // Pipes

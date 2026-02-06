@@ -13,6 +13,9 @@ const INJECT_METADATA_KEY = 'hazel:inject';
 const PIPE_METADATA_KEY = 'hazel:pipe';
 const INTERCEPTOR_METADATA_KEY = 'hazel:interceptor';
 const CLASS_INTERCEPTOR_METADATA_KEY = 'hazel:class-interceptors';
+const HTTP_CODE_METADATA_KEY = 'hazel:http-code';
+const HEADER_METADATA_KEY = 'hazel:headers';
+const REDIRECT_METADATA_KEY = 'hazel:redirect';
 
 export interface ControllerMetadata {
   path: string;
@@ -369,6 +372,78 @@ export function AITask(options: {
     descriptor: PropertyDescriptor
   ): PropertyDescriptor => {
     Reflect.defineMetadata('hazel:ai-task', options, target, propertyKey);
+    return descriptor;
+  };
+}
+
+export function Req(): ParameterDecorator {
+  return (
+    target: object,
+    propertyKey: string | symbol | undefined,
+    parameterIndex: number
+  ): void => {
+    if (!propertyKey) {
+      throw new Error('Req decorator must be used on a method parameter');
+    }
+
+    const constructor = (target as { constructor: { new (...args: unknown[]): object } })
+      .constructor;
+    const injections = Reflect.getMetadata(INJECT_METADATA_KEY, constructor, propertyKey) || [];
+    injections[parameterIndex] = { type: 'request' };
+    Reflect.defineMetadata(INJECT_METADATA_KEY, injections, constructor, propertyKey);
+  };
+}
+
+export function Headers(headerName?: string): ParameterDecorator {
+  return (
+    target: object,
+    propertyKey: string | symbol | undefined,
+    parameterIndex: number
+  ): void => {
+    if (!propertyKey) {
+      throw new Error('Headers decorator must be used on a method parameter');
+    }
+
+    const constructor = (target as { constructor: { new (...args: unknown[]): object } })
+      .constructor;
+    const injections = Reflect.getMetadata(INJECT_METADATA_KEY, constructor, propertyKey) || [];
+    injections[parameterIndex] = { type: 'headers', name: headerName };
+    Reflect.defineMetadata(INJECT_METADATA_KEY, injections, constructor, propertyKey);
+  };
+}
+
+export function HttpCode(statusCode: number): MethodDecorator {
+  return (
+    target: object,
+    propertyKey: string | symbol,
+    descriptor: PropertyDescriptor
+  ): PropertyDescriptor => {
+    Reflect.defineMetadata(HTTP_CODE_METADATA_KEY, statusCode, target, propertyKey);
+    return descriptor;
+  };
+}
+
+export function Header(name: string, value: string): MethodDecorator {
+  return (
+    target: object,
+    propertyKey: string | symbol,
+    descriptor: PropertyDescriptor
+  ): PropertyDescriptor => {
+    const existingHeaders: Array<{ name: string; value: string }> =
+      Reflect.getMetadata(HEADER_METADATA_KEY, target, propertyKey) || [];
+    existingHeaders.push({ name, value });
+    Reflect.defineMetadata(HEADER_METADATA_KEY, existingHeaders, target, propertyKey);
+    return descriptor;
+  };
+}
+
+export function Redirect(url: string, statusCode: number = 302): MethodDecorator {
+  return (
+    target: object,
+    propertyKey: string | symbol,
+    descriptor: PropertyDescriptor
+  ): PropertyDescriptor => {
+    Reflect.defineMetadata(REDIRECT_METADATA_KEY, { url, statusCode }, target, propertyKey);
     return descriptor;
   };
 }

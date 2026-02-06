@@ -13,6 +13,9 @@ import { ValidationPipe } from './pipes/validation.pipe';
 
 const ROUTE_METADATA_KEY = 'hazel:routes';
 const CONTROLLER_METADATA_KEY = 'hazel:controller';
+const HTTP_CODE_METADATA_KEY = 'hazel:http-code';
+const HEADER_METADATA_KEY = 'hazel:headers';
+const REDIRECT_METADATA_KEY = 'hazel:redirect';
 
 interface RouteMatch {
   handler: RouteHandler;
@@ -207,7 +210,15 @@ export class Router {
               args[i] = context.headers;
             }
           } else if (typeof injection === 'object' && injection !== null) {
-            if (injection.type === 'response') {
+            if (injection.type === 'headers') {
+              // Handle @Headers decorator
+              const headerName = injection.name;
+              if (headerName) {
+                args[i] = context.headers[headerName.toLowerCase()];
+              } else {
+                args[i] = context.headers;
+              }
+            } else if (injection.type === 'response') {
               // Handle @Res decorator
               args[i] = new HazelExpressResponse(res);
             } else if (injection.type === 'body') {
@@ -273,8 +284,32 @@ export class Router {
           }
         );
 
+        // Apply @Redirect metadata
+        const redirectMeta = Reflect.getMetadata(REDIRECT_METADATA_KEY, controllerClass.prototype, methodName);
+        if (redirectMeta) {
+          res.status(redirectMeta.statusCode).setHeader('Location', redirectMeta.url);
+          res.end();
+          return;
+        }
+
+        // Apply @Header metadata (response headers)
+        const headersMeta: Array<{ name: string; value: string }> | undefined =
+          Reflect.getMetadata(HEADER_METADATA_KEY, controllerClass.prototype, methodName);
+        if (headersMeta) {
+          for (const h of headersMeta) {
+            res.setHeader(h.name, h.value);
+          }
+        }
+
+        // Apply @HttpCode metadata
+        const httpCode: number | undefined =
+          Reflect.getMetadata(HTTP_CODE_METADATA_KEY, controllerClass.prototype, methodName);
+
         // Handle the response
         if (result !== undefined) {
+          if (httpCode) {
+            res.status(httpCode);
+          }
           if (typeof result === 'string' && result.trim().startsWith('<!DOCTYPE html>')) {
             // Handle HTML response
             res.setHeader('Content-Type', 'text/html');
@@ -283,6 +318,8 @@ export class Router {
             // Handle JSON response
             res.json(result);
           }
+        } else if (httpCode) {
+          res.status(httpCode).end();
         }
       } catch (error) {
         logger.error('Request handler error:', error);
