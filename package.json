@@ -7,8 +7,11 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "npm run build --workspaces",
+    "build": "npm run build:core && npm run build:tier1 && npm run build:tier2 && npm run build:tier3",
     "build:core": "npm run build --workspace=@hazeljs/core",
+    "build:tier1": "npm run build --workspace=@hazeljs/cache --workspace=@hazeljs/config --workspace=@hazeljs/auth --workspace=@hazeljs/cron --workspace=@hazeljs/prisma --workspace=@hazeljs/swagger --workspace=@hazeljs/websocket --workspace=@hazeljs/serverless --workspace=@hazeljs/discovery --workspace=@hazeljs/cli",
+    "build:tier2": "npm run build --workspace=@hazeljs/ai --workspace=@hazeljs/rag",
+    "build:tier3": "npm run build --workspace=@hazeljs/agent",
     "build:packages": "npm run build --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
     "test:ci": "npm run test:ci --workspaces --if-present",
