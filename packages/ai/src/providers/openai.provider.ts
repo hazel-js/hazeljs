@@ -39,20 +39,36 @@ export class OpenAIProvider implements IAIProvider {
 
       const messages = this.transformMessages(request.messages);
 
+      // Build tools array from functions (modern API)
+      const tools = request.functions?.map((fn: { name: string; description?: string; parameters?: Record<string, unknown> }) => ({
+        type: 'function' as const,
+        function: fn,
+      }));
+
       const response = await this.client.chat.completions.create({
         model: request.model || this.defaultModel,
         messages,
         temperature: request.temperature ?? 0.7,
         max_tokens: request.maxTokens,
         top_p: request.topP,
-        functions: request.functions,
-        function_call: request.functionCall,
+        tools: tools && tools.length > 0 ? tools : undefined,
+        tool_choice: request.functionCall === 'auto' ? 'auto' : request.functionCall === 'none' ? 'none' : undefined,
       });
 
       const choice = response.choices[0];
       if (!choice) {
         throw new Error('No completion choice returned');
       }
+
+      // Extract tool calls from the modern tool_calls response
+      // Filter to function-type calls and cast to access .function safely
+      const rawToolCalls = choice.message.tool_calls as Array<{
+        id: string;
+        type: string;
+        function: { name: string; arguments: string };
+      }> | undefined;
+      const functionCalls = rawToolCalls?.filter(tc => tc.type === 'function');
+      const firstToolCall = functionCalls?.[0];
 
       const result: AICompletionResponse = {
         id: response.id,
@@ -66,12 +82,20 @@ export class OpenAIProvider implements IAIProvider {
               totalTokens: response.usage.total_tokens,
             }
           : undefined,
-        functionCall: choice.message.function_call
+        functionCall: firstToolCall
           ? {
-              name: choice.message.function_call.name,
-              arguments: choice.message.function_call.arguments,
+              name: firstToolCall.function.name,
+              arguments: firstToolCall.function.arguments,
             }
           : undefined,
+        toolCalls: functionCalls?.map(tc => ({
+          id: tc.id,
+          type: 'function' as const,
+          function: {
+            name: tc.function.name,
+            arguments: tc.function.arguments,
+          },
+        })),
         finishReason: choice.finish_reason,
       };
 
@@ -226,22 +250,27 @@ export class OpenAIProvider implements IAIProvider {
    */
   private transformMessages(messages: AIMessage[]): ChatCompletionMessageParam[] {
     return messages.map((msg): ChatCompletionMessageParam => {
-      if (msg.role === 'function') {
+      // Map legacy 'function' role to modern 'tool' role
+      if (msg.role === 'function' || msg.role === 'tool') {
         return {
-          role: 'function',
+          role: 'tool' as const,
           content: msg.content,
-          name: msg.name || 'unknown',
+          tool_call_id: msg.toolCallId || msg.name || 'unknown',
         };
       }
 
-      if (msg.role === 'assistant' && msg.functionCall) {
+      if (msg.role === 'assistant' && (msg.functionCall || msg.toolCalls)) {
         return {
           role: 'assistant',
           content: msg.content || null,
-          function_call: {
-            name: msg.functionCall.name,
-            arguments: msg.functionCall.arguments,
-          },
+          tool_calls: msg.toolCalls || (msg.functionCall ? [{
+            id: msg.functionCall.name,
+            type: 'function' as const,
+            function: {
+              name: msg.functionCall.name,
+              arguments: msg.functionCall.arguments,
+            },
+          }] : undefined),
         };
       }
 

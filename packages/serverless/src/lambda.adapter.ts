@@ -166,7 +166,7 @@ export class LambdaAdapter {
   }
 
   /**
-   * Process request through HazelJS
+   * Process request through HazelJS router
    */
   private async processRequest(request: {
     method: string;
@@ -181,23 +181,83 @@ export class LambdaAdapter {
       remainingTime: number;
     };
   }): Promise<ServerlessResponse> {
-    // In a real implementation, this would route through the HazelJS router
-    // For now, return a simple response
-    return {
-      statusCode: 200,
-      body: JSON.stringify({
-        message: 'Hello from HazelJS on Lambda!',
-        request: {
-          method: request.method,
-          url: request.url,
-        },
-        coldStart: this.isColdStart,
-        warmupDuration: this.optimizer.getWarmupDuration(),
-      }),
-      headers: {
-        'Content-Type': 'application/json',
-      },
+    if (!this.app) {
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ message: 'Application not initialized' }),
+        headers: { 'Content-Type': 'application/json' },
+      };
+    }
+
+    const router = this.app.getRouter();
+
+    // Build request context for the router
+    const context = {
+      method: request.method,
+      url: request.url,
+      headers: request.headers,
+      query: request.query,
+      params: request.params,
+      body: request.body,
+      requestId: request.context.requestId,
     };
+
+    try {
+      const route = await router.match(request.method, request.url, context);
+
+      if (!route) {
+        return {
+          statusCode: 404,
+          body: JSON.stringify({ statusCode: 404, message: 'Route not found' }),
+          headers: { 'Content-Type': 'application/json' },
+        };
+      }
+
+      // Create a synthetic request/response to capture the handler output
+      const syntheticReq = {
+        method: request.method,
+        url: request.url,
+        headers: request.headers,
+        query: request.query,
+        params: context.params || {},
+        body: request.body,
+      };
+
+      let responseBody: unknown;
+      let responseStatus = 200;
+      const responseHeaders: Record<string, string> = { 'Content-Type': 'application/json' };
+
+      const syntheticRes = {
+        statusCode: 200,
+        status(code: number) { responseStatus = code; return syntheticRes; },
+        json(data: unknown) { responseBody = data; responseStatus = responseStatus || 200; },
+        send(data: unknown) { responseBody = data; },
+        setHeader(key: string, value: string) { responseHeaders[key] = value; },
+        getHeader(key: string) { return responseHeaders[key]; },
+      };
+
+      const result = await route.handler(syntheticReq as never, syntheticRes as never);
+
+      // If handler returned a value directly, use it
+      if (result !== undefined && responseBody === undefined) {
+        responseBody = result;
+      }
+
+      return {
+        statusCode: responseStatus,
+        body: typeof responseBody === 'string' ? responseBody : JSON.stringify(responseBody),
+        headers: responseHeaders,
+      };
+    } catch (error) {
+      const statusCode = (error as { statusCode?: number }).statusCode || 500;
+      const message = error instanceof Error ? error.message : 'Internal Server Error';
+
+      return {
+        statusCode,
+        body: JSON.stringify({ statusCode, message }),
+        headers: { 'Content-Type': 'application/json' },
+      };
+    }
   }
 
   /**

@@ -6,7 +6,7 @@ import { RequestParser } from './request-parser';
 import { Server, IncomingMessage, ServerResponse } from 'http';
 import logger from './logger';
 import 'reflect-metadata';
-import { Request, Response } from './types';
+import { Request, Response, RequestContext } from './types';
 import { HttpError } from './errors/http.error';
 import os from 'os';
 import chalk from 'chalk';
@@ -93,30 +93,40 @@ export class HazelApp {
     const metadata = Reflect.getMetadata(MODULE_METADATA_KEY, this.moduleType) || {};
     logger.debug('Module metadata:', metadata);
 
-    // Initialize imported modules first
-    if (metadata.imports) {
-      logger.info('Initializing imported modules:', {
-        modules: metadata.imports.map((m: Type<unknown>) => m.name),
-      });
-      metadata.imports.forEach((moduleType: Type<unknown>) => {
-        const importedMetadata = Reflect.getMetadata(MODULE_METADATA_KEY, moduleType) || {};
-        if (importedMetadata.controllers) {
-          importedMetadata.controllers.forEach((controller: Type<unknown>) => {
-            this.router.registerController(controller);
-          });
-        }
-      });
-    }
+    // Collect all controllers from the module tree (root + imports, recursively)
+    const allControllers = this.collectControllers(this.moduleType);
 
-    // Register controllers from the current module
-    if (metadata.controllers) {
+    // Register all controllers with the router
+    if (allControllers.length > 0) {
       logger.info('Registering controllers:', {
-        controllers: metadata.controllers.map((c: Type<unknown>) => c.name),
+        controllers: allControllers.map((c: Type<unknown>) => c.name),
       });
-      metadata.controllers.forEach((controller: Type<unknown>) => {
+      allControllers.forEach((controller: Type<unknown>) => {
         this.router.registerController(controller);
       });
     }
+  }
+
+  private collectControllers(moduleType: Type<unknown>, visited = new Set<Type<unknown>>()): Type<unknown>[] {
+    if (visited.has(moduleType)) return [];
+    visited.add(moduleType);
+
+    const metadata = Reflect.getMetadata(MODULE_METADATA_KEY, moduleType) || {};
+    const controllers: Type<unknown>[] = [];
+
+    // Collect from imported modules first
+    if (metadata.imports) {
+      for (const importedModule of metadata.imports) {
+        controllers.push(...this.collectControllers(importedModule, visited));
+      }
+    }
+
+    // Then collect from this module
+    if (metadata.controllers) {
+      controllers.push(...metadata.controllers);
+    }
+
+    return controllers;
   }
 
   register<T>(component: Type<T>): HazelApp {
@@ -182,9 +192,33 @@ export class HazelApp {
           const { method, url, headers } = req;
           logger.info('Incoming request:', { method, url, headers });
 
-          // Parse request body for POST/PUT requests
+          // Handle CORS
+          if (this.corsEnabled) {
+            const origin = headers['origin'] || '*';
+            const allowedOrigin = this.corsOptions?.origin
+              ? (typeof this.corsOptions.origin === 'string' ? this.corsOptions.origin : origin)
+              : '*';
+            res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
+            res.setHeader('Access-Control-Allow-Methods', this.corsOptions?.methods?.join(', ') || 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+            res.setHeader('Access-Control-Allow-Headers', this.corsOptions?.allowedHeaders?.join(', ') || 'Content-Type, Authorization');
+            if (this.corsOptions?.credentials) {
+              res.setHeader('Access-Control-Allow-Credentials', 'true');
+            }
+            if (this.corsOptions?.maxAge) {
+              res.setHeader('Access-Control-Max-Age', String(this.corsOptions.maxAge));
+            }
+
+            // Handle preflight
+            if (method === 'OPTIONS') {
+              res.writeHead(204);
+              res.end();
+              return;
+            }
+          }
+
+          // Parse request body for POST/PUT/PATCH requests
           let body: unknown = undefined;
-          if (method === 'POST' || method === 'PUT') {
+          if (method === 'POST' || method === 'PUT' || method === 'PATCH') {
             try {
               const chunks: Buffer[] = [];
               req.on('data', (chunk: Buffer) => chunks.push(chunk));
@@ -250,76 +284,28 @@ export class HazelApp {
             throw error;
           }
 
-          let route;
-          try {
-            route = await this.router.match(req.method || 'GET', req.url || '/', context);
-            if (!route) {
-              // Handle Chrome DevTools request gracefully
-              if (req.url === '/.well-known/appspecific/com.chrome.devtools.json') {
-                res.writeHead(404);
-                res.end();
-                return;
+          // Apply timeout middleware if configured
+          if (this.timeoutMiddleware) {
+            const timeoutPromise = new Promise<never>((_, reject) => {
+              setTimeout(() => {
+                reject(new HttpError(408, 'Request Timeout'));
+              }, this.requestTimeout);
+            });
+            // Wrap remaining logic in a race against timeout
+            try {
+              await Promise.race([this.handleRoute(req, res, context), timeoutPromise]);
+            } catch (timeoutError) {
+              if (timeoutError instanceof HttpError && timeoutError.statusCode === 408) {
+                res.writeHead(408, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ statusCode: 408, message: 'Request Timeout' }));
+              } else {
+                throw timeoutError;
               }
-              throw new Error('Route not found');
             }
-          } catch (error: unknown) {
-            const httpError = error as HttpError;
-            logger.error(
-              `[${req.method}] ${req.url} - Route matching error: ${httpError.message} (status: ${httpError.statusCode || 404})`
-            );
-            if (process.env.NODE_ENV === 'development' && httpError.stack) {
-              logger.debug(httpError.stack);
-            }
-            const status = httpError.statusCode || 404;
-            res.writeHead(status, { 'Content-Type': 'application/json' });
-            res.end(
-              JSON.stringify({
-                statusCode: status,
-                message: httpError.message,
-              })
-            );
             return;
           }
 
-          logger.info('Matched route:', {
-            method: req.method,
-            url: req.url,
-            params: context.params,
-          });
-
-          try {
-            const response = new HttpResponse(res);
-            const result = await route.handler(req as Request, response);
-            logger.debug('Request handled successfully:', result);
-
-            if (result !== undefined) {
-              response.json(result);
-            }
-          } catch (error: unknown) {
-            logger.error('Error in route handler:', error instanceof HttpError);
-
-            if (error instanceof HttpError) {
-              logger.error('Error in route handler:', error.message);
-              res.writeHead(error.statusCode, { 'Content-Type': 'application/json' });
-              res.end(
-                JSON.stringify({
-                  statusCode: error.statusCode,
-                  message: error.message,
-                  ...(error.errors && { errors: error.errors }),
-                })
-              );
-              return;
-            }
-
-            // Handle unknown errors
-            res.writeHead(500, { 'Content-Type': 'application/json' });
-            res.end(
-              JSON.stringify({
-                statusCode: 500,
-                message: 'Internal Server Error',
-              })
-            );
-          }
+          await this.handleRoute(req, res, context);
         } catch (error) {
           logger.error('Unhandled error:', error);
 
@@ -367,6 +353,77 @@ export class HazelApp {
         resolve();
       });
     });
+  }
+
+  private async handleRoute(req: IncomingMessage, res: ServerResponse, context: RequestContext): Promise<void> {
+    let route;
+    try {
+      route = await this.router.match(req.method || 'GET', req.url || '/', context);
+      if (!route) {
+        if (req.url === '/.well-known/appspecific/com.chrome.devtools.json') {
+          res.writeHead(404);
+          res.end();
+          return;
+        }
+        throw new Error('Route not found');
+      }
+    } catch (error: unknown) {
+      const httpError = error as HttpError;
+      logger.error(
+        `[${req.method}] ${req.url} - Route matching error: ${httpError.message} (status: ${httpError.statusCode || 404})`
+      );
+      if (process.env.NODE_ENV === 'development' && httpError.stack) {
+        logger.debug(httpError.stack);
+      }
+      const status = httpError.statusCode || 404;
+      res.writeHead(status, { 'Content-Type': 'application/json' });
+      res.end(
+        JSON.stringify({
+          statusCode: status,
+          message: httpError.message,
+        })
+      );
+      return;
+    }
+
+    logger.info('Matched route:', {
+      method: req.method,
+      url: req.url,
+      params: context.params,
+    });
+
+    try {
+      const response = new HttpResponse(res);
+      const result = await route.handler(req as Request, response);
+      logger.debug('Request handled successfully:', result);
+
+      if (result !== undefined) {
+        response.json(result);
+      }
+    } catch (error: unknown) {
+      logger.error('Error in route handler:', error instanceof HttpError);
+
+      if (error instanceof HttpError) {
+        logger.error('Error in route handler:', error.message);
+        res.writeHead(error.statusCode, { 'Content-Type': 'application/json' });
+        res.end(
+          JSON.stringify({
+            statusCode: error.statusCode,
+            message: error.message,
+            ...(error.errors && { errors: error.errors }),
+          })
+        );
+        return;
+      }
+
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(
+        JSON.stringify({
+          statusCode: 500,
+          message: 'Internal Server Error',
+        })
+      );
+    }
   }
 
   async close(): Promise<void> {
@@ -441,6 +498,10 @@ export class HazelApp {
 
   getContainer(): Container {
     return this.container;
+  }
+
+  getRouter(): Router {
+    return this.router;
   }
 }
 

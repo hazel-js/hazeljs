@@ -9,8 +9,9 @@ export interface RequestContext {
   body: unknown;
   dtoType?: Type<unknown>;
   user?: {
-    id: number;
-    username: string;
+    id: string | number;
+    username?: string;
     role: string;
+    [key: string]: unknown;
   };
 }

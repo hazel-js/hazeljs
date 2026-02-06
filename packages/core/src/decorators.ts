@@ -42,12 +42,7 @@ export interface RouteOptions {
   interceptors?: InterceptorMetadata[];
 }
 
-export interface ModuleOptions {
-  controllers?: Type[];
-  providers?: Type[];
-  exports?: Type[];
-  imports?: Type[];
-}
+// ModuleOptions is defined in hazel-module.ts — import from there if needed
 
 export interface ServiceOptions {
   scope?: 'singleton' | 'transient' | 'request';

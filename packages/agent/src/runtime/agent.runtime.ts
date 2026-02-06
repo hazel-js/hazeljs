@@ -253,7 +253,11 @@ export class AgentRuntime {
         sessionId,
         input,
         options.userId,
-        options.metadata
+        {
+          ...options.metadata,
+          systemPrompt: agent.systemPrompt,
+          agentDescription: agent.description,
+        }
       );
       const context = contextResult instanceof Promise ? await contextResult : contextResult;
 

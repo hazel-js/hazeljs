@@ -3,7 +3,7 @@
  * HazelJS module for Agent Runtime
  */
 
-import { Injectable } from '@hazeljs/core';
+import { Injectable, HazelModule } from '@hazeljs/core';
 import { AgentRuntime, AgentRuntimeConfig } from './runtime/agent.runtime';
 import { AgentEventType } from './types/event.types';
 
@@ -26,7 +26,16 @@ export class AgentService {
   private runtime: AgentRuntime;
 
   constructor(config: AgentRuntimeConfig = {}) {
-    this.runtime = new AgentRuntime(config);
+    const moduleOpts = AgentModule.getOptions();
+    const runtimeConfig = moduleOpts.runtime || config;
+    this.runtime = new AgentRuntime(runtimeConfig);
+
+    // Register agents from module options
+    if (moduleOpts.agents) {
+      for (const agentClass of moduleOpts.agents) {
+        this.runtime.registerAgent(agentClass);
+      }
+    }
   }
 
   getRuntime(): AgentRuntime {
@@ -71,33 +80,22 @@ export class AgentService {
 }
 
 /**
- * Agent Module Factory
+ * Agent Module
+ * Uses static configuration pattern compatible with HazelJS DI
  */
+@HazelModule({
+  providers: [AgentService],
+  exports: [AgentService],
+})
 export class AgentModule {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  static forRoot(options: AgentModuleOptions = {}): any {
-    const agentService = new AgentService(options.runtime);
-    const runtime = agentService.getRuntime();
+  private static options: AgentModuleOptions = {};
 
-    if (options.agents) {
-      for (const agentClass of options.agents) {
-        runtime.registerAgent(agentClass);
-      }
-    }
+  static forRoot(options: AgentModuleOptions = {}): typeof AgentModule {
+    AgentModule.options = options;
+    return AgentModule;
+  }
 
-    return {
-      module: AgentModule,
-      providers: [
-        {
-          provide: AgentService,
-          useValue: agentService,
-        },
-        {
-          provide: AgentRuntime,
-          useValue: runtime,
-        },
-      ],
-      exports: [AgentService, AgentRuntime],
-    };
+  static getOptions(): AgentModuleOptions {
+    return AgentModule.options;
   }
 }

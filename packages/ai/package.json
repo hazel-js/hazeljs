@@ -8,7 +8,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc --skipLibCheck 2>&1 | (grep -v 'node_modules/openai/src/core.ts' || true) && exit 0",
+    "build": "tsc --skipLibCheck",
     "test": "jest --coverage",
     "lint": "eslint \"src/**/*.ts\"",
     "lint:fix": "eslint \"src/**/*.ts\" --fix",

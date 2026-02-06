@@ -1,18 +1,17 @@
+import { describe, it, expect, beforeEach } from 'node:test';
 import { AgentModule, AgentService } from '../../src/agent.module';
 import { Agent } from '../../src/decorators/agent.decorator';
 
 describe('AgentModule', () => {
   describe('forRoot', () => {
-    it('should create module with default config', () => {
+    it('should return module class with default config', () => {
       const module = AgentModule.forRoot();
 
-      expect(module).toBeDefined();
-      expect(module.module).toBe(AgentModule);
-      expect(module.providers).toBeDefined();
-      expect(module.exports).toContain(AgentService);
+      expect(module).toBe(AgentModule);
+      expect(AgentModule.getOptions()).toEqual({});
     });
 
-    it('should register agents if provided', () => {
+    it('should store agents config if provided', () => {
       @Agent({ name: 'test-agent', description: 'Test agent' })
       class TestAgent {}
 
@@ -20,17 +19,19 @@ describe('AgentModule', () => {
         agents: [TestAgent],
       });
 
-      expect(module).toBeDefined();
+      expect(module).toBe(AgentModule);
+      expect(AgentModule.getOptions().agents).toContain(TestAgent);
     });
 
-    it('should use custom runtime config', () => {
+    it('should store custom runtime config', () => {
       const module = AgentModule.forRoot({
         runtime: {
           defaultMaxSteps: 20,
         },
       });
 
-      expect(module).toBeDefined();
+      expect(module).toBe(AgentModule);
+      expect(AgentModule.getOptions().runtime?.defaultMaxSteps).toBe(20);
     });
   });
 });

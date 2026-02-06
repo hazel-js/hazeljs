@@ -211,11 +211,29 @@ export class ToolExecutor {
         const req = this.pendingApprovals.get(requestId);
 
         if (!req) {
+          // Request was removed unexpectedly
           clearInterval(checkInterval);
           resolve(false);
           return;
         }
 
+        // Check if approved
+        if ((req as ToolApprovalRequest & { status?: string }).status === 'approved') {
+          this.pendingApprovals.delete(requestId);
+          clearInterval(checkInterval);
+          resolve(true);
+          return;
+        }
+
+        // Check if rejected
+        if ((req as ToolApprovalRequest & { status?: string }).status === 'rejected') {
+          this.pendingApprovals.delete(requestId);
+          clearInterval(checkInterval);
+          resolve(false);
+          return;
+        }
+
+        // Check if expired
         if (req.expiresAt && req.expiresAt < new Date()) {
           this.pendingApprovals.delete(requestId);
           clearInterval(checkInterval);
@@ -228,10 +246,11 @@ export class ToolExecutor {
   /**
    * Approve a tool execution
    */
-  approveExecution(requestId: string, _approvedBy: string): void {
+  approveExecution(requestId: string, approvedBy: string): void {
     const request = this.pendingApprovals.get(requestId);
     if (request) {
-      this.pendingApprovals.delete(requestId);
+      (request as ToolApprovalRequest & { status?: string; approvedBy?: string }).status = 'approved';
+      (request as ToolApprovalRequest & { approvedBy?: string }).approvedBy = approvedBy;
     }
   }
 
@@ -239,7 +258,10 @@ export class ToolExecutor {
    * Reject a tool execution
    */
   rejectExecution(requestId: string): void {
-    this.pendingApprovals.delete(requestId);
+    const request = this.pendingApprovals.get(requestId);
+    if (request) {
+      (request as ToolApprovalRequest & { status?: string }).status = 'rejected';
+    }
   }
 
   /**

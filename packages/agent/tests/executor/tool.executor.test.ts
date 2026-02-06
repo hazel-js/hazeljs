@@ -206,7 +206,7 @@ describe('ToolExecutor', () => {
   });
 
   describe('approveExecution', () => {
-    it('should approve pending execution', () => {
+    it('should approve pending execution', async () => {
       const tool: ToolMetadata = {
         name: 'testTool',
         description: 'Test tool',
@@ -218,17 +218,22 @@ describe('ToolExecutor', () => {
         agentClass: class {},
       };
 
-      executor.execute(tool, {}, 'agent-1', 'session-1');
+      const promise = executor.execute(tool, {}, 'agent-1', 'session-1');
       const approvals = executor.getPendingApprovals();
       expect(approvals.length).toBeGreaterThan(0);
 
       executor.approveExecution(approvals[0].requestId, 'user-1');
+      
+      // Advance timers to let the polling loop process the approval
+      jest.advanceTimersByTime(1000);
+      await promise;
+      
       expect(executor.getPendingApprovals().length).toBeLessThan(approvals.length);
     });
   });
 
   describe('rejectExecution', () => {
-    it('should reject pending execution', () => {
+    it('should reject pending execution', async () => {
       const tool: ToolMetadata = {
         name: 'testTool',
         description: 'Test tool',
@@ -240,11 +245,16 @@ describe('ToolExecutor', () => {
         agentClass: class {},
       };
 
-      executor.execute(tool, {}, 'agent-1', 'session-1');
+      const promise = executor.execute(tool, {}, 'agent-1', 'session-1');
       const approvals = executor.getPendingApprovals();
       expect(approvals.length).toBeGreaterThan(0);
 
       executor.rejectExecution(approvals[0].requestId);
+      
+      // Advance timers to let the polling loop process the rejection
+      jest.advanceTimersByTime(1000);
+      await promise;
+      
       expect(executor.getPendingApprovals().length).toBeLessThan(approvals.length);
     });
   });

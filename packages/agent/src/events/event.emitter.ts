@@ -4,6 +4,7 @@
  */
 
 import { AgentEvent, AgentEventType } from '../types/event.types';
+import { Logger, LogLevel } from '../utils/logger';
 
 type EventHandler<T = unknown> = (event: AgentEvent<T>) => void | Promise<void>;
 
@@ -14,6 +15,7 @@ type EventHandler<T = unknown> = (event: AgentEvent<T>) => void | Promise<void>;
 export class AgentEventEmitter {
   private handlers: Map<AgentEventType, Set<EventHandler>> = new Map();
   private wildcardHandlers: Set<EventHandler> = new Set();
+  private logger = new Logger({ level: LogLevel.WARN });
 
   /**
    * Subscribe to an event type
@@ -73,8 +75,12 @@ export class AgentEventEmitter {
       for (const handler of handlers) {
         try {
           await handler(event);
-        } catch {
-          // Silently handle errors in event handlers
+        } catch (error) {
+          this.logger.error(
+            `Error in event handler for ${type}`,
+            error instanceof Error ? error : new Error(String(error)),
+            { executionId }
+          );
         }
       }
     }
@@ -82,8 +88,12 @@ export class AgentEventEmitter {
     for (const handler of this.wildcardHandlers) {
       try {
         await handler(event);
-      } catch {
-        // Silently handle errors in event handlers
+      } catch (error) {
+        this.logger.error(
+          `Error in wildcard event handler for ${type}`,
+          error instanceof Error ? error : new Error(String(error)),
+          { executionId }
+        );
       }
     }
   }

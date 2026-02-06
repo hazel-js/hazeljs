@@ -51,19 +51,30 @@ export interface AIModelConfig {
 /**
  * AI message role
  */
-export type AIMessageRole = 'system' | 'user' | 'assistant' | 'function';
+export type AIMessageRole = 'system' | 'user' | 'assistant' | 'function' | 'tool';
 
 /**
  * AI message
  */
+export interface AIToolCall {
+  id: string;
+  type: 'function';
+  function: {
+    name: string;
+    arguments: string;
+  };
+}
+
 export interface AIMessage {
   role: AIMessageRole;
   content: string;
   name?: string;
+  toolCallId?: string;
   functionCall?: {
     name: string;
     arguments: string;
   };
+  toolCalls?: AIToolCall[];
 }
 
 /**
@@ -97,6 +108,7 @@ export interface AICompletionResponse {
     name: string;
     arguments: string;
   };
+  toolCalls?: AIToolCall[];
   finishReason?: string;
 }
 

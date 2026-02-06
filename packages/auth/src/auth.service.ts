@@ -1,23 +1,25 @@
 import { Injectable } from '@hazeljs/core';
-import { JwtService } from './jwt/jwt.service';
+import { JwtService, JwtPayload } from './jwt/jwt.service';
 
-interface User {
-  id: number;
-  username: string;
+export interface AuthUser {
+  id: string;
+  username?: string;
   role: string;
+  [key: string]: unknown;
 }
 
 @Injectable()
 export class AuthService {
   constructor(private readonly jwtService: JwtService) {}
 
-  async verifyToken(token: string): Promise<User | null> {
+  async verifyToken(token: string): Promise<AuthUser | null> {
     try {
-      const payload = await this.jwtService.verifyAsync(token);
+      const payload: JwtPayload = this.jwtService.verify(token);
       return {
         id: payload.sub,
-        username: payload.email,
-        role: 'user',
+        username: (payload.username as string) || (payload.email as string),
+        role: (payload.role as string) || 'user',
+        ...payload,
       };
     } catch {
       return null;

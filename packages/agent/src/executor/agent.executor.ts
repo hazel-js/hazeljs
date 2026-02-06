@@ -330,7 +330,11 @@ export class AgentExecutor {
     system: string;
     messages: Array<{ role: 'system' | 'user' | 'assistant' | 'tool'; content: string }>;
   } {
-    let systemPrompt = 'You are a helpful AI agent.';
+    let systemPrompt = (context.metadata?.systemPrompt as string) || 'You are a helpful AI agent.';
+
+    if (context.metadata?.agentDescription) {
+      systemPrompt += `\n\nAgent description: ${context.metadata.agentDescription}`;
+    }
 
     if (context.ragContext && context.ragContext.length > 0) {
       systemPrompt += '\n\nRelevant context:\n' + context.ragContext.join('\n\n');

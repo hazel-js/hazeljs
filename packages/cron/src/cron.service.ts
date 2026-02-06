@@ -1,12 +1,14 @@
 import { Injectable } from '@hazeljs/core';
 import { CronOptions, CronJobStatus } from './cron.types';
 import logger from '@hazeljs/core';
+import cron from 'node-cron';
 
 /**
  * Represents a scheduled cron job
+ * Uses node-cron for proper cron expression parsing and scheduling
  */
 class CronJob {
-  private timer: NodeJS.Timeout | null = null;
+  private task: cron.ScheduledTask | null = null;
   private _isRunning = false;
   private _lastExecution?: Date;
   private _nextExecution?: Date;
@@ -20,13 +22,31 @@ class CronJob {
     private readonly options: CronOptions
   ) {
     this._enabled = options.enabled !== false;
+
+    // node-cron uses 5-field (minute-level) or 6-field (second-level) expressions
+    // Validate the expression upfront
+    const expr = this.normalizeExpression(this.cronExpression);
+    if (!cron.validate(expr)) {
+      throw new Error(
+        `Invalid cron expression: ${this.cronExpression}. ` +
+        `Format: second minute hour day-of-month month day-of-week`
+      );
+    }
+  }
+
+  /**
+   * Normalize expression for node-cron compatibility
+   * node-cron supports both 5-field (no seconds) and 6-field (with seconds)
+   */
+  private normalizeExpression(expression: string): string {
+    return expression;
   }
 
   /**
    * Start the cron job
    */
   start(): void {
-    if (this.timer) {
+    if (this.task) {
       logger.warn(`Cron job "${this.name}" is already running`);
       return;
     }
@@ -36,12 +56,14 @@ class CronJob {
       return;
     }
 
-    const interval = this.parseExpression(this.cronExpression);
-    this._nextExecution = new Date(Date.now() + interval);
+    const expr = this.normalizeExpression(this.cronExpression);
 
-    this.timer = setInterval(async () => {
+    this.task = cron.schedule(expr, async () => {
       await this.execute();
-    }, interval);
+    }, {
+      scheduled: true,
+      timezone: this.options.timeZone,
+    });
 
     // Run on init if specified
     if (this.options.runOnInit) {
@@ -55,9 +77,9 @@ class CronJob {
    * Stop the cron job
    */
   stop(): void {
-    if (this.timer) {
-      clearInterval(this.timer);
-      this.timer = null;
+    if (this.task) {
+      this.task.stop();
+      this.task = null;
       this._nextExecution = undefined;
       logger.info(`Cron job "${this.name}" stopped`);
     }
@@ -98,74 +120,7 @@ class CronJob {
       }
     } finally {
       this._isRunning = false;
-
-      // Calculate next execution
-      const interval = this.parseExpression(this.cronExpression);
-      this._nextExecution = new Date(Date.now() + interval);
     }
-  }
-
-  /**
-   * Parse cron expression to milliseconds
-   * Format: second minute hour day-of-month month day-of-week
-   */
-  private parseExpression(expression: string): number {
-    const parts = expression.split(' ');
-
-    if (parts.length !== 6) {
-      throw new Error(
-        `Invalid cron expression: ${expression}. Expected 6 parts (second minute hour day month weekday)`
-      );
-    }
-
-    const [second, minute, hour, , ,] = parts;
-
-    // Simple parser for common patterns
-    // For production, consider using a library like 'cron-parser'
-
-    // Every second
-    if (expression === '* * * * * *') {
-      return 1000;
-    }
-
-    // Every N seconds
-    const secondMatch = second.match(/^\*\/(\d+)$/);
-    if (secondMatch && minute === '*' && hour === '*') {
-      return parseInt(secondMatch[1]) * 1000;
-    }
-
-    // Every minute
-    if (second === '0' && minute === '*' && hour === '*') {
-      return 60 * 1000;
-    }
-
-    // Every N minutes
-    const minuteMatch = minute.match(/^\*\/(\d+)$/);
-    if (second === '0' && minuteMatch && hour === '*') {
-      return parseInt(minuteMatch[1]) * 60 * 1000;
-    }
-
-    // Every hour
-    if (second === '0' && minute === '0' && hour === '*') {
-      return 60 * 60 * 1000;
-    }
-
-    // Every N hours
-    const hourMatch = hour.match(/^\*\/(\d+)$/);
-    if (second === '0' && minute === '0' && hourMatch) {
-      return parseInt(hourMatch[1]) * 60 * 60 * 1000;
-    }
-
-    // Every day (24 hours)
-    if (second === '0' && minute === '0' && hour === '0') {
-      return 24 * 60 * 60 * 1000;
-    }
-
-    // Default to 1 minute for unsupported patterns
-    logger.warn(
-      `Cron expression "${expression}" uses advanced features. Defaulting to 1 minute interval. Consider using a cron parser library for complex expressions.`
-    );
-    return 60 * 1000;
   }
 
   /**

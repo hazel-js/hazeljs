@@ -4,45 +4,37 @@
  */
 
 import { HazelModule } from '@hazeljs/core';
-import { RAGService } from './rag.service';
+import { RAGService, RAGServiceConfig } from './rag.service';
 import { RAGModuleOptions } from './decorators/rag.decorator';
 
 export interface RAGModuleConfig extends RAGModuleOptions {
   isGlobal?: boolean;
+  vectorStore?: RAGServiceConfig['vectorStore'];
+  embeddingProvider?: RAGServiceConfig['embeddingProvider'];
+  textSplitter?: RAGServiceConfig['textSplitter'];
+  llmFunction?: RAGServiceConfig['llmFunction'];
+  topK?: number;
 }
 
+@HazelModule({
+  providers: [RAGService],
+  exports: [RAGService],
+})
 export class RAGModule {
+  private static config: RAGModuleConfig = {};
+
   /**
    * Configure RAG module with options
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  static forRoot(_config: RAGModuleConfig = {}): any {
-    // TODO: Use config to initialize RAG service with proper providers
-    // For now, RAGService will need to be configured separately
-
-    @HazelModule({
-      providers: [RAGService],
-      exports: [RAGService],
-    })
-    class ConfiguredRAGModule {}
-
-    return ConfiguredRAGModule;
+  static forRoot(config: RAGModuleConfig = {}): typeof RAGModule {
+    RAGModule.config = config;
+    return RAGModule;
   }
 
   /**
-   * Configure RAG module asynchronously
+   * Get the stored configuration
    */
-  static forRootAsync(_options: {
-    useFactory: (...args: unknown[]) => Promise<RAGModuleConfig> | RAGModuleConfig;
-    inject?: unknown[];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  }): any {
-    @HazelModule({
-      providers: [RAGService],
-      exports: [RAGService],
-    })
-    class AsyncConfiguredRAGModule {}
-
-    return AsyncConfiguredRAGModule;
+  static getConfig(): RAGModuleConfig {
+    return RAGModule.config;
   }
 }

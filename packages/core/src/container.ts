@@ -30,7 +30,7 @@ export class Container {
   private static instance: Container;
   private providers: Map<InjectionToken, ProviderMetadata> = new Map();
   private requestScopedProviders: Map<string, Map<InjectionToken, unknown>> = new Map();
-  private resolutionStack: Set<InjectionToken> = new Set();
+  // Note: resolutionStack is used per-resolve chain via parameter threading, not shared state
 
   private constructor() {
     logger.info('Container initialized');
@@ -99,7 +99,7 @@ export class Container {
   /**
    * Resolve a dependency from the container
    */
-  resolve<T>(token: InjectionToken<T>, requestId?: string): T {
+  resolve<T>(token: InjectionToken<T>, requestId?: string, resolutionStack?: Set<InjectionToken>): T {
     if (!token) {
       if (logger.isDebugEnabled()) {
         logger.debug('No token provided for resolution');
@@ -116,12 +116,12 @@ export class Container {
     const metadata = this.providers.get(token);
 
     if (metadata) {
-      return this.resolveFromMetadata(token, metadata, requestId) as T;
+      return this.resolveFromMetadata(token, metadata, requestId, resolutionStack) as T;
     }
 
     // If token is a class, try to auto-resolve
     if (typeof token === 'function' && token.prototype) {
-      return this.autoResolve(token as Type<T>, requestId);
+      return this.autoResolve(token as Type<T>, requestId, resolutionStack);
     }
 
     if (logger.isDebugEnabled()) {
@@ -136,19 +136,20 @@ export class Container {
   private resolveFromMetadata(
     token: InjectionToken,
     metadata: ProviderMetadata,
-    requestId?: string
+    requestId?: string,
+    resolutionStack?: Set<InjectionToken>
   ): unknown {
     const tokenName = this.getTokenName(token);
 
-    // Check for circular dependencies using resolution stack
-    if (this.resolutionStack.has(token)) {
-      const chain = Array.from(this.resolutionStack).map(t => this.getTokenName(t));
+    // Use per-chain resolution stack to detect circular deps (thread-safe)
+    const stack = resolutionStack || new Set<InjectionToken>();
+    if (stack.has(token)) {
+      const chain = Array.from(stack).map(t => this.getTokenName(t));
       chain.push(tokenName);
       throw new Error(`Circular dependency detected: ${chain.join(' → ')}`);
     }
 
-    // Add to resolution stack
-    this.resolutionStack.add(token);
+    stack.add(token);
 
     try {
       // Handle different scopes
@@ -157,22 +158,25 @@ export class Container {
           if (metadata.instance !== undefined) {
             return metadata.instance;
           }
+          if (metadata.isResolving) {
+            // Another resolve is already creating this singleton — wait would deadlock in sync, so error
+            throw new Error(`Singleton ${tokenName} is already being resolved (possible async race)`);
+          }
           if (metadata.factory) {
-            const result = metadata.factory(requestId);
-            // Handle async factories
-            metadata.instance = result instanceof Promise ? Promise.resolve(result).then(r => {
-              metadata.instance = r;
-              return r;
-            }) : result;
-            return metadata.instance;
+            metadata.isResolving = true;
+            try {
+              const result = metadata.factory(requestId);
+              metadata.instance = result;
+              return metadata.instance;
+            } finally {
+              metadata.isResolving = false;
+            }
           }
           break;
 
         case Scope.TRANSIENT:
           if (metadata.factory) {
-            const result = metadata.factory(requestId);
-            // Handle async factories for transient scope
-            return result instanceof Promise ? Promise.resolve(result) : result;
+            return metadata.factory(requestId);
           }
           break;
 
@@ -185,8 +189,7 @@ export class Container {
 
       return undefined;
     } finally {
-      // Always remove from resolution stack
-      this.resolutionStack.delete(token);
+      stack.delete(token);
     }
   }
 
@@ -221,31 +224,31 @@ export class Container {
   /**
    * Auto-resolve a class without explicit registration
    */
-  private autoResolve<T>(token: Type<T>, requestId?: string): T {
+  private autoResolve<T>(token: Type<T>, requestId?: string, resolutionStack?: Set<InjectionToken>): T {
     if (logger.isDebugEnabled()) {
       logger.debug(`Auto-resolving: ${token.name}`);
     }
 
     // Check if already registered
     if (this.providers.has(token)) {
-      return this.resolve(token, requestId);
+      return this.resolve(token, requestId, resolutionStack);
     }
 
     // Get scope from metadata
     const scope = Reflect.getMetadata('hazel:scope', token) || Scope.SINGLETON;
 
     // Create factory for the class
-    const factory = (requestId?: string): T => this.createInstance(token, requestId);
+    const factory = (reqId?: string): T => this.createInstance(token, reqId, resolutionStack);
 
     this.providers.set(token, { scope, factory });
 
-    return this.resolve(token, requestId);
+    return this.resolve(token, requestId, resolutionStack);
   }
 
   /**
    * Create instance of a class with dependency injection
    */
-  private createInstance<T>(token: Type<T>, requestId?: string): T {
+  private createInstance<T>(token: Type<T>, requestId?: string, resolutionStack?: Set<InjectionToken>): T {
     // Get constructor parameters
     const params = Reflect.getMetadata('design:paramtypes', token) || [];
     if (logger.isDebugEnabled()) {
@@ -272,7 +275,7 @@ export class Container {
       if (logger.isDebugEnabled()) {
         logger.debug(`Resolving dependency for: ${this.getTokenName(tokenToResolve)}`);
       }
-      return this.resolve(tokenToResolve, requestId);
+      return this.resolve(tokenToResolve, requestId, resolutionStack);
     });
 
     // Create instance with dependencies

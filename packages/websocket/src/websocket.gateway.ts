@@ -1,6 +1,9 @@
-import { WebSocketClient, WebSocketMessage, WebSocketStats } from './websocket.types';
+import { WebSocketClient, WebSocketMessage, WebSocketStats, WebSocketServerOptions } from './websocket.types';
 import { RoomManager } from './room/room.manager';
 import logger from '@hazeljs/core';
+import { Server as HttpServer, IncomingMessage } from 'http';
+import WebSocket, { WebSocketServer } from 'ws';
+import { randomUUID } from 'crypto';
 
 /**
  * Base WebSocket Gateway class
@@ -8,6 +11,7 @@ import logger from '@hazeljs/core';
 export class WebSocketGateway {
   protected clients: Map<string, WebSocketClient> = new Map();
   protected roomManager: RoomManager = new RoomManager();
+  protected wss: WebSocketServer | null = null;
   protected stats: WebSocketStats = {
     connectedClients: 0,
     totalRooms: 0,
@@ -17,6 +21,111 @@ export class WebSocketGateway {
     bytesReceived: 0,
     uptime: Date.now(),
   };
+
+  /**
+   * Attach WebSocket server to an existing HTTP server
+   */
+  attachToServer(server: HttpServer, options: WebSocketServerOptions = {}): WebSocketServer {
+    this.wss = new WebSocketServer({
+      server,
+      path: options.path || '/ws',
+      perMessageDeflate: options.perMessageDeflate ?? false,
+      maxPayload: options.maxPayload || 1048576, // 1MB default
+      clientTracking: options.clientTracking ?? true,
+    });
+
+    this.wss.on('connection', (socket: WebSocket, request: IncomingMessage) => {
+      const clientId = randomUUID();
+      const client = createWebSocketClient(socket, clientId);
+
+      this.handleConnection(client);
+
+      socket.on('message', (data: WebSocket.RawData) => {
+        try {
+          const parsed = JSON.parse(data.toString()) as WebSocketMessage;
+          this.handleMessage(clientId, parsed);
+        } catch {
+          logger.warn(`Invalid WebSocket message from ${clientId}`);
+        }
+      });
+
+      socket.on('close', () => {
+        this.handleDisconnection(clientId);
+      });
+
+      socket.on('error', (error: Error) => {
+        logger.error(`WebSocket error for client ${clientId}:`, error);
+      });
+    });
+
+    this.wss.on('error', (error: Error) => {
+      logger.error('WebSocket server error:', error);
+    });
+
+    logger.info(`WebSocket server attached at path: ${options.path || '/ws'}`);
+    return this.wss;
+  }
+
+  /**
+   * Create a standalone WebSocket server (without HTTP server)
+   */
+  listen(port: number, options: WebSocketServerOptions = {}): WebSocketServer {
+    this.wss = new WebSocketServer({
+      port,
+      path: options.path,
+      perMessageDeflate: options.perMessageDeflate ?? false,
+      maxPayload: options.maxPayload || 1048576,
+      clientTracking: options.clientTracking ?? true,
+    });
+
+    this.wss.on('connection', (socket: WebSocket, request: IncomingMessage) => {
+      const clientId = randomUUID();
+      const client = createWebSocketClient(socket, clientId);
+
+      this.handleConnection(client);
+
+      socket.on('message', (data: WebSocket.RawData) => {
+        try {
+          const parsed = JSON.parse(data.toString()) as WebSocketMessage;
+          this.handleMessage(clientId, parsed);
+        } catch {
+          logger.warn(`Invalid WebSocket message from ${clientId}`);
+        }
+      });
+
+      socket.on('close', () => {
+        this.handleDisconnection(clientId);
+      });
+
+      socket.on('error', (error: Error) => {
+        logger.error(`WebSocket error for client ${clientId}:`, error);
+      });
+    });
+
+    logger.info(`WebSocket server listening on port ${port}`);
+    return this.wss;
+  }
+
+  /**
+   * Close the WebSocket server
+   */
+  close(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if (!this.wss) {
+        resolve();
+        return;
+      }
+      this.disconnectAll();
+      this.wss.close((err) => {
+        if (err) reject(err);
+        else {
+          this.wss = null;
+          logger.info('WebSocket server closed');
+          resolve();
+        }
+      });
+    });
+  }
 
   /**
    * Handle client connection
