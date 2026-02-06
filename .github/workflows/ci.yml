@@ -26,19 +26,8 @@ jobs:
     - name: Install dependencies
       run: npm install
 
-    - name: Build packages in order
-      run: |
-        # Build core first (it's a dependency for other packages)
-        npm run build:core
-        
-        # Build AI package (dependency for rag)
-        npm run build --workspace=@hazeljs/ai
-        
-        # Build rag package (dependency for agent)
-        npm run build --workspace=@hazeljs/rag
-        
-        # Then build all other packages
-        npm run build:packages
+    - name: Build packages in dependency order
+      run: npm run build
 
     - name: Run tests
       run: npm run test
