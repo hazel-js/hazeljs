@@ -9,7 +9,7 @@
   ],
   "scripts": {
     "build": "tsc",
-    "test": "jest --coverage --forceExit",
+    "test": "jest --coverage --maxWorkers=1 --detectOpenHandles=false",
     "lint": "eslint \"src/**/*.ts\"",
     "lint:fix": "eslint \"src/**/*.ts\" --fix",
     "clean": "rm -rf dist"
