@@ -9,7 +9,7 @@
   ],
   "scripts": {
     "build": "tsc",
-    "test": "jest --coverage",
+    "test": "jest --coverage --forceExit",
     "lint": "eslint \"src/**/*.ts\"",
     "lint:fix": "eslint \"src/**/*.ts\" --fix",
     "clean": "rm -rf dist"
