@@ -29,7 +29,7 @@ class CronJob {
     if (!cron.validate(expr)) {
       throw new Error(
         `Invalid cron expression: ${this.cronExpression}. ` +
-        `Format: second minute hour day-of-month month day-of-week`
+          `Format: second minute hour day-of-month month day-of-week`
       );
     }
   }
@@ -58,12 +58,16 @@ class CronJob {
 
     const expr = this.normalizeExpression(this.cronExpression);
 
-    this.task = cron.schedule(expr, async () => {
-      await this.execute();
-    }, {
-      scheduled: true,
-      timezone: this.options.timeZone,
-    });
+    this.task = cron.schedule(
+      expr,
+      async () => {
+        await this.execute();
+      },
+      {
+        scheduled: true,
+        timezone: this.options.timeZone,
+      }
+    );
 
     // Run on init if specified
     if (this.options.runOnInit) {

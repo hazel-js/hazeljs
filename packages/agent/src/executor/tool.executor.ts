@@ -249,7 +249,8 @@ export class ToolExecutor {
   approveExecution(requestId: string, approvedBy: string): void {
     const request = this.pendingApprovals.get(requestId);
     if (request) {
-      (request as ToolApprovalRequest & { status?: string; approvedBy?: string }).status = 'approved';
+      (request as ToolApprovalRequest & { status?: string; approvedBy?: string }).status =
+        'approved';
       (request as ToolApprovalRequest & { approvedBy?: string }).approvedBy = approvedBy;
     }
   }

@@ -40,10 +40,12 @@ export class OpenAIProvider implements IAIProvider {
       const messages = this.transformMessages(request.messages);
 
       // Build tools array from functions (modern API)
-      const tools = request.functions?.map((fn: { name: string; description?: string; parameters?: Record<string, unknown> }) => ({
-        type: 'function' as const,
-        function: fn,
-      }));
+      const tools = request.functions?.map(
+        (fn: { name: string; description?: string; parameters?: Record<string, unknown> }) => ({
+          type: 'function' as const,
+          function: fn,
+        })
+      );
 
       const response = await this.client.chat.completions.create({
         model: request.model || this.defaultModel,
@@ -52,7 +54,12 @@ export class OpenAIProvider implements IAIProvider {
         max_tokens: request.maxTokens,
         top_p: request.topP,
         tools: tools && tools.length > 0 ? tools : undefined,
-        tool_choice: request.functionCall === 'auto' ? 'auto' : request.functionCall === 'none' ? 'none' : undefined,
+        tool_choice:
+          request.functionCall === 'auto'
+            ? 'auto'
+            : request.functionCall === 'none'
+              ? 'none'
+              : undefined,
       });
 
       const choice = response.choices[0];
@@ -62,12 +69,14 @@ export class OpenAIProvider implements IAIProvider {
 
       // Extract tool calls from the modern tool_calls response
       // Filter to function-type calls and cast to access .function safely
-      const rawToolCalls = choice.message.tool_calls as Array<{
-        id: string;
-        type: string;
-        function: { name: string; arguments: string };
-      }> | undefined;
-      const functionCalls = rawToolCalls?.filter(tc => tc.type === 'function');
+      const rawToolCalls = choice.message.tool_calls as
+        | Array<{
+            id: string;
+            type: string;
+            function: { name: string; arguments: string };
+          }>
+        | undefined;
+      const functionCalls = rawToolCalls?.filter((tc) => tc.type === 'function');
       const firstToolCall = functionCalls?.[0];
 
       const result: AICompletionResponse = {
@@ -88,7 +97,7 @@ export class OpenAIProvider implements IAIProvider {
               arguments: firstToolCall.function.arguments,
             }
           : undefined,
-        toolCalls: functionCalls?.map(tc => ({
+        toolCalls: functionCalls?.map((tc) => ({
           id: tc.id,
           type: 'function' as const,
           function: {
@@ -263,14 +272,20 @@ export class OpenAIProvider implements IAIProvider {
         return {
           role: 'assistant',
           content: msg.content || null,
-          tool_calls: msg.toolCalls || (msg.functionCall ? [{
-            id: msg.functionCall.name,
-            type: 'function' as const,
-            function: {
-              name: msg.functionCall.name,
-              arguments: msg.functionCall.arguments,
-            },
-          }] : undefined),
+          tool_calls:
+            msg.toolCalls ||
+            (msg.functionCall
+              ? [
+                  {
+                    id: msg.functionCall.name,
+                    type: 'function' as const,
+                    function: {
+                      name: msg.functionCall.name,
+                      arguments: msg.functionCall.arguments,
+                    },
+                  },
+                ]
+              : undefined),
         };
       }
 

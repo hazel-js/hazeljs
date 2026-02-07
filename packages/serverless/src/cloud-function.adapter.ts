@@ -243,11 +243,23 @@ export class CloudFunctionAdapter {
 
       const syntheticRes = {
         statusCode: 200,
-        status(code: number) { responseStatus = code; return syntheticRes; },
-        json(data: unknown) { responseBody = data; responseStatus = responseStatus || 200; },
-        send(data: unknown) { responseBody = data; },
-        setHeader(key: string, value: string) { responseHeaders[key] = value; },
-        getHeader(key: string) { return responseHeaders[key]; },
+        status(code: number): any {
+          responseStatus = code;
+          return syntheticRes;
+        },
+        json(data: unknown): void {
+          responseBody = data;
+          responseStatus = responseStatus || 200;
+        },
+        send(data: unknown): void {
+          responseBody = data;
+        },
+        setHeader(key: string, value: string): void {
+          responseHeaders[key] = value;
+        },
+        getHeader(key: string): string | undefined {
+          return responseHeaders[key];
+        },
       };
 
       const result = await route.handler(syntheticReq as never, syntheticRes as never);

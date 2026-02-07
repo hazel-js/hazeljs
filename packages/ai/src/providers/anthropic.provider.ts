@@ -74,8 +74,8 @@ export class AnthropicProvider implements IAIProvider {
 
       // Extract text content
       const textContent = response.content
-        .filter((block: any) => block.type === 'text')
-        .map((block: any) => block.text)
+        .filter((block: { type: string; text?: string }) => block.type === 'text')
+        .map((block: { type: string; text?: string }) => block.text || '')
         .join('');
 
       return {
