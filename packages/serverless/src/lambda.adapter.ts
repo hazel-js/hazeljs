@@ -227,9 +227,18 @@ export class LambdaAdapter {
       let responseStatus = 200;
       const responseHeaders: Record<string, string> = { 'Content-Type': 'application/json' };
 
-      const syntheticRes = {
+      interface SyntheticResponse {
+        statusCode: number;
+        status(code: number): SyntheticResponse;
+        json(data: unknown): void;
+        send(data: unknown): void;
+        setHeader(key: string, value: string): void;
+        getHeader(key: string): string | undefined;
+      }
+
+      const syntheticRes: SyntheticResponse = {
         statusCode: 200,
-        status(code: number): any {
+        status(code: number): SyntheticResponse {
           responseStatus = code;
           return syntheticRes;
         },
