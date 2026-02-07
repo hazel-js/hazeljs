@@ -13,6 +13,10 @@ module.exports = {
       },
     }],
   },
+  moduleNameMapper: {
+    '^@hazeljs/cache$': '<rootDir>/../cache/src/index.ts',
+    '^@hazeljs/core$': '<rootDir>/../core/src/index.ts',
+  },
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
   collectCoverageFrom: [
     'src/**/*.ts',
