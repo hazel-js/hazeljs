@@ -9,7 +9,7 @@
   ],
   "scripts": {
     "build": "tsc --skipLibCheck",
-    "test": "jest --coverage",
+    "test": "jest --coverage --maxWorkers=1",
     "lint": "eslint \"src/**/*.ts\"",
     "lint:fix": "eslint \"src/**/*.ts\" --fix",
     "clean": "rm -rf dist"

@@ -27,5 +27,8 @@ module.exports = {
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'clover'],
   verbose: true,
+  forceExit: true,
+  detectOpenHandles: false,
+  testTimeout: 10000,
 };
 
