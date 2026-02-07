@@ -268,7 +268,7 @@ describe('Container', () => {
       container.registerProvider({ token: ServiceA, useClass: ServiceA });
       container.registerProvider({ token: ServiceB, useClass: ServiceB });
 
-      expect(() => container.resolve(ServiceA)).toThrow(/Circular dependency/);
+      expect(() => container.resolve(ServiceA)).toThrow(/already being resolved/);
     });
   });
 
