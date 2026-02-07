@@ -618,6 +618,12 @@ describe('WebSocketGateway', () => {
     gateway = new WebSocketGateway();
   });
 
+  afterEach(() => {
+    // Clean up all clients to prevent open handles
+    gateway.disconnectAll();
+    jest.clearAllMocks();
+  });
+
   describe('client management', () => {
     it('should get client count', () => {
       expect(gateway.getClientCount()).toBe(0);
