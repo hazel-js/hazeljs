@@ -6,7 +6,6 @@ dist/
 
 # Environment variables
 .env
-.env.*
 
 # IDE files
 .vscode/
