@@ -1,6 +1,5 @@
 import { Injectable } from '@hazeljs/core';
 import jwt from 'jsonwebtoken';
-import logger from '@hazeljs/core';
 
 export interface JwtPayload {
   sub: string;

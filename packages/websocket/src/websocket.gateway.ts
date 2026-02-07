@@ -1,4 +1,9 @@
-import { WebSocketClient, WebSocketMessage, WebSocketStats, WebSocketServerOptions } from './websocket.types';
+import {
+  WebSocketClient,
+  WebSocketMessage,
+  WebSocketStats,
+  WebSocketServerOptions,
+} from './websocket.types';
 import { RoomManager } from './room/room.manager';
 import logger from '@hazeljs/core';
 import { Server as HttpServer, IncomingMessage } from 'http';
@@ -34,7 +39,7 @@ export class WebSocketGateway {
       clientTracking: options.clientTracking ?? true,
     });
 
-    this.wss.on('connection', (socket: WebSocket, request: IncomingMessage) => {
+    this.wss.on('connection', (socket: WebSocket, _request: IncomingMessage) => {
       const clientId = randomUUID();
       const client = createWebSocketClient(socket, clientId);
 
@@ -78,7 +83,7 @@ export class WebSocketGateway {
       clientTracking: options.clientTracking ?? true,
     });
 
-    this.wss.on('connection', (socket: WebSocket, request: IncomingMessage) => {
+    this.wss.on('connection', (socket: WebSocket, _request: IncomingMessage) => {
       const clientId = randomUUID();
       const client = createWebSocketClient(socket, clientId);
 

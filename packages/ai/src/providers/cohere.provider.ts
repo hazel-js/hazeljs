@@ -124,7 +124,11 @@ export class CohereProvider implements IAIProvider {
             done: false,
           };
         } else if (chunk.eventType === 'stream-end') {
-          const response = chunk as any;
+          const response = chunk as {
+            response?: {
+              meta?: { billedUnits?: { inputTokens?: number; outputTokens?: number } };
+            };
+          };
           yield {
             id: streamId,
             content: fullContent,
@@ -175,7 +179,7 @@ export class CohereProvider implements IAIProvider {
       // Handle different response formats
       const embeddings = Array.isArray(response.embeddings)
         ? response.embeddings
-        : (response.embeddings as any).float || [];
+        : (response.embeddings as { float?: number[][] }).float || [];
 
       return {
         embeddings,
@@ -256,7 +260,7 @@ export class CohereProvider implements IAIProvider {
         model: modelName,
       });
 
-      return response.results.map((r: any) => ({
+      return response.results.map((r: { index: number; relevanceScore: number }) => ({
         index: r.index,
         score: r.relevanceScore,
         document: documents[r.index],

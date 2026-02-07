@@ -241,13 +241,34 @@ export class CloudFunctionAdapter {
       let responseStatus = 200;
       const responseHeaders: Record<string, string> = { 'Content-Type': 'application/json' };
 
-      const syntheticRes = {
+      interface SyntheticResponse {
+        statusCode: number;
+        status(code: number): SyntheticResponse;
+        json(data: unknown): void;
+        send(data: unknown): void;
+        setHeader(key: string, value: string): void;
+        getHeader(key: string): string | undefined;
+      }
+
+      const syntheticRes: SyntheticResponse = {
         statusCode: 200,
-        status(code: number) { responseStatus = code; return syntheticRes; },
-        json(data: unknown) { responseBody = data; responseStatus = responseStatus || 200; },
-        send(data: unknown) { responseBody = data; },
-        setHeader(key: string, value: string) { responseHeaders[key] = value; },
-        getHeader(key: string) { return responseHeaders[key]; },
+        status(code: number): SyntheticResponse {
+          responseStatus = code;
+          return syntheticRes;
+        },
+        json(data: unknown): void {
+          responseBody = data;
+          responseStatus = responseStatus || 200;
+        },
+        send(data: unknown): void {
+          responseBody = data;
+        },
+        setHeader(key: string, value: string): void {
+          responseHeaders[key] = value;
+        },
+        getHeader(key: string): string | undefined {
+          return responseHeaders[key];
+        },
       };
 
       const result = await route.handler(syntheticReq as never, syntheticRes as never);
