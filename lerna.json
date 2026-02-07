@@ -1,0 +1,22 @@
+{
+  "$schema": "node_modules/lerna/schemas/lerna-schema.json",
+  "version": "0.2.0-beta.1",
+  "npmClient": "npm",
+  "command": {
+    "publish": {
+      "conventionalCommits": false,
+      "message": "chore(release): publish %s",
+      "registry": "https://registry.npmjs.org/",
+      "ignoreChanges": [
+        "**/__tests__/**",
+        "**/*.test.ts",
+        "**/*.md"
+      ]
+    },
+    "version": {
+      "allowBranch": ["main", "master"],
+      "conventionalCommits": false,
+      "message": "chore(release): version %s"
+    }
+  }
+}

@@ -67,26 +67,19 @@ jobs:
           git diff --name-only
       
       - name: Install dependencies
-        run: npm install
+        run: npm ci
       
-      - name: Build all packages
+      - name: Build packages in dependency order
         run: npm run build
       
-      - name: Publish packages to NPM
+      - name: Run tests
+        run: npm run test
+      
+      - name: Publish packages to NPM with Lerna
         run: |
           RELEASE_TAG="${{ steps.release-tag.outputs.tag }}"
-          echo "Publishing with tag: $RELEASE_TAG"
-          
-          # Publish each package individually with the appropriate tag
-          for package in packages/*/; do
-            if [ -f "${package}package.json" ]; then
-              PACKAGE_NAME=$(node -e "console.log(require('./${package}package.json').name)")
-              echo "Publishing $PACKAGE_NAME with tag $RELEASE_TAG"
-              cd "$package"
-              npm publish --tag "$RELEASE_TAG" --access public --provenance
-              cd - > /dev/null
-            fi
-          done
+          echo "Publishing with tag: $RELEASE_TAG using Lerna"
+          npx lerna publish from-package --yes --dist-tag "$RELEASE_TAG" --no-git-reset --no-git-tag-version
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       

@@ -191,7 +191,72 @@ HazelJS is organized as a monorepo with the following packages:
 - `npm run db:down` - Stop database
 - `npm run db:logs` - View database logs
 
-## 📚 Documentation
+## � Release Process
+
+HazelJS uses automated releases through GitHub Actions with Lerna for monorepo management.
+
+### Automated Release (Recommended)
+
+**Option 1: Manual Workflow Trigger**
+
+1. Go to **Actions** → **Release** in GitHub
+2. Click **Run workflow**
+3. Select version bump type: `patch`, `minor`, `major`, or `prerelease`
+4. Select npm dist-tag: `beta` or `latest`
+5. Click **Run workflow**
+
+The workflow will automatically:
+- Bump versions across all packages
+- Build and test all packages
+- Publish to npm with the selected tag
+- Create a GitHub release
+- Push version changes and tags
+
+**Option 2: Tag-Based Release**
+
+1. Create and push a version tag:
+   ```bash
+   git tag v0.2.1
+   git push origin v0.2.1
+   ```
+
+2. GitHub Actions will automatically:
+   - Detect the version from the tag
+   - Update all package.json files
+   - Build and test packages
+   - Publish to npm (beta tag for prerelease versions, latest for stable)
+   - Create a GitHub release
+
+### Version Bump Types
+
+- **patch**: `0.2.0-beta.1` → `0.2.1` (bug fixes)
+- **minor**: `0.2.0-beta.1` → `0.3.0` (new features, backward compatible)
+- **major**: `0.2.0-beta.1` → `1.0.0` (breaking changes)
+- **prerelease**: `0.2.0` → `0.2.1-beta.0` (beta releases)
+
+### Local Development (Not Recommended for Production)
+
+For testing releases locally:
+
+```bash
+# Bump version
+npm run version:patch   # or version:minor, version:major
+
+# Build packages
+npm run build
+
+# Publish with Lerna
+npm run lerna:publish        # Publish with beta tag
+npm run lerna:publish:latest # Publish with latest tag
+```
+
+### Requirements
+
+- **NPM_TOKEN**: Set as a GitHub secret for npm authentication
+- **Lerna**: Installed as a dev dependency for monorepo management
+- **GitHub Actions**: Enabled in repository settings
+
+## �📚 Documentation
 
 ### Getting Started
 - **[Quick Start Guide](./QUICKSTART.md)** - Get started in 5 minutes
