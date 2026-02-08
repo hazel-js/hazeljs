@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: prod
     permissions:
-      contents: read
+      contents: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -74,12 +74,18 @@ jobs:
       - name: Run tests
         run: npm run test
         
-      - name: Commit version updates
+      - name: Commit and push version updates
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Tag triggers leave us on detached HEAD, so checkout the branch the tag points to
+          DEFAULT_BRANCH=$(git remote show origin | grep 'HEAD branch' | awk '{print $NF}')
+          git checkout "$DEFAULT_BRANCH"
+          
           git add -A
           git commit -m "chore(release): bump versions to ${{ steps.version.outputs.version }}" --allow-empty
+          git push origin "$DEFAULT_BRANCH"
 
       - name: Verify npm authentication
         run: npm whoami
