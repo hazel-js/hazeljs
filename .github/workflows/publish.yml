@@ -11,7 +11,6 @@ jobs:
     environment: prod
     permissions:
       contents: read
-      id-token: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -82,13 +81,17 @@ jobs:
           git add -A
           git commit -m "chore(release): bump versions to ${{ steps.version.outputs.version }}" --allow-empty
 
+      - name: Verify npm authentication
+        run: npm whoami
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
       - name: Publish packages to NPM with Lerna
         run: |
           RELEASE_TAG="${{ steps.release-tag.outputs.tag }}"
           echo "Publishing with tag: $RELEASE_TAG using Lerna"
-          npx lerna publish from-package --yes --dist-tag "$RELEASE_TAG" --no-git-reset --no-git-tag-version
+          npx lerna publish from-package --yes --dist-tag "$RELEASE_TAG" --no-git-reset --no-git-tag-version --no-verify-access
         env:
-          NPM_CONFIG_PROVENANCE: true
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       
       - name: Create GitHub Release
