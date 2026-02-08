@@ -75,19 +75,6 @@ jobs:
       - name: Run tests
         run: npm run test
         
-      - name: Commit and push version updates
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          
-          # Tag triggers leave us on detached HEAD, so checkout the branch the tag points to
-          DEFAULT_BRANCH=$(git remote show origin | grep 'HEAD branch' | awk '{print $NF}')
-          git checkout "$DEFAULT_BRANCH"
-          
-          git add -A
-          git commit -m "chore(release): bump versions to ${{ steps.version.outputs.version }}" --allow-empty
-          git push origin "$DEFAULT_BRANCH"
-
       - name: Verify npm authentication
         run: npm whoami
         env:
@@ -100,6 +87,28 @@ jobs:
           npx lerna publish from-package --yes --dist-tag "$RELEASE_TAG" --no-git-reset --no-git-tag-version --no-verify-access
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Push version updates to main
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          DEFAULT_BRANCH=$(git remote show origin | grep 'HEAD branch' | awk '{print $NF}')
+          
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Switch to main (clean checkout, discards detached HEAD state)
+          git checkout "$DEFAULT_BRANCH"
+          
+          # Re-apply version bumps on main (checkout wiped the earlier changes)
+          node -e "const fs=require('fs');const pkg=JSON.parse(fs.readFileSync('package.json'));pkg.version='$VERSION';fs.writeFileSync('package.json',JSON.stringify(pkg,null,2)+'\n')"
+          find packages -name "package.json" -not -path "*/node_modules/*" -type f | while read -r file; do
+            node -e "const fs=require('fs');const pkg=JSON.parse(fs.readFileSync('$file'));pkg.version='$VERSION';fs.writeFileSync('$file',JSON.stringify(pkg,null,2)+'\n')"
+          done
+          
+          git add package.json packages/*/package.json
+          git diff --cached --stat
+          git commit -m "chore(release): bump versions to $VERSION"
+          git push origin "$DEFAULT_BRANCH"
       
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
