@@ -87,7 +87,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           
-          git add package.json packages/*/package.json
+          git add package.json packages/*/package.json packages/*/*/package.json 2>/dev/null || true
           git diff --cached --stat
           git commit -m "chore(release): bump versions to ${{ steps.version.outputs.version }}"
           git pull --rebase --autostash origin "${{ steps.checkout.outputs.default_branch }}"
@@ -105,6 +105,17 @@ jobs:
           npx lerna publish from-package --yes --dist-tag "$RELEASE_TAG" --no-git-reset --no-git-tag-version --no-verify-access
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Update latest dist-tag to current version
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          echo "Updating latest dist-tag to $VERSION for all packages"
+          for pkg in core cli ai agent auth cache config cron discovery prisma rag serverless swagger websocket; do
+            echo "  @hazeljs/$pkg@$VERSION -> latest"
+            npm dist-tag add "@hazeljs/$pkg@$VERSION" latest || true
+          done
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}    
       
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
