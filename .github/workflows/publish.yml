@@ -8,7 +8,7 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
-    environment: production
+    environment: prod
     permissions:
       contents: read
       id-token: write
@@ -88,6 +88,7 @@ jobs:
           echo "Publishing with tag: $RELEASE_TAG using Lerna"
           npx lerna publish from-package --yes --dist-tag "$RELEASE_TAG" --no-git-reset --no-git-tag-version
         env:
+          NPM_CONFIG_PROVENANCE: true
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       
       - name: Create GitHub Release
