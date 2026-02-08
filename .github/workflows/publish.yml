@@ -90,6 +90,7 @@ jobs:
           git add package.json packages/*/package.json
           git diff --cached --stat
           git commit -m "chore(release): bump versions to ${{ steps.version.outputs.version }}"
+          git pull --rebase origin "${{ steps.checkout.outputs.default_branch }}"
           git push origin "${{ steps.checkout.outputs.default_branch }}"
         
       - name: Verify npm authentication
