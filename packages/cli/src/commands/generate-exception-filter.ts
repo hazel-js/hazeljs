@@ -1,8 +1,7 @@
 import { Command } from 'commander';
-import { Generator, GeneratorOptions } from '../utils/generator';
+import { Generator } from '../utils/generator';
 
-const EXCEPTION_FILTER_TEMPLATE = `import { Catch, ExceptionFilter, ArgumentsHost, HttpError } from '@hazeljs/core';
-import logger from '@hazeljs/core';
+const EXCEPTION_FILTER_TEMPLATE = `import { Catch, type ExceptionFilter, type ArgumentsHost, HttpError, logger } from '@hazeljs/core';
 
 @Catch(HttpError)
 export class {{className}}ExceptionFilter implements ExceptionFilter<HttpError> {
@@ -21,13 +20,14 @@ export class {{className}}ExceptionFilter implements ExceptionFilter<HttpError> 
       message,
       timestamp: new Date().toISOString(),
       path: request.url,
-      ...(exception.errors && { errors: exception.errors }),
     });
   }
 }
 `;
 
 class ExceptionFilterGenerator extends Generator {
+  protected suffix = 'filter';
+
   protected getDefaultTemplate(): string {
     return EXCEPTION_FILTER_TEMPLATE;
   }
@@ -39,15 +39,9 @@ export function generateExceptionFilter(program: Command): void {
     .description('Generate a new exception filter')
     .alias('f')
     .option('-p, --path <path>', 'Path where the filter should be generated')
-    .action(async (name: string, options: { path?: string }) => {
+    .option('--dry-run', 'Preview files without writing them')
+    .action(async (name: string, options: { path?: string; dryRun?: boolean }) => {
       const generator = new ExceptionFilterGenerator();
-      const generatorOptions: Partial<GeneratorOptions> = {
-        name,
-        path: options.path,
-      };
-
-      const finalOptions = await generator.promptForOptions(generatorOptions);
-      await generator.generate(finalOptions);
+      await generator.generate({ name, path: options.path, dryRun: options.dryRun });
     });
 }
-

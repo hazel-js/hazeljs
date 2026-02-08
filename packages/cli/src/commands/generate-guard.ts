@@ -1,7 +1,7 @@
 import { Command } from 'commander';
-import { Generator, GeneratorOptions } from '../utils/generator';
+import { Generator } from '../utils/generator';
 
-const GUARD_TEMPLATE = `import { Injectable, CanActivate, ExecutionContext } from '@hazeljs/core';
+const GUARD_TEMPLATE = `import { Injectable, type CanActivate, type ExecutionContext } from '@hazeljs/core';
 
 @Injectable()
 export class {{className}}Guard implements CanActivate {
@@ -14,6 +14,8 @@ export class {{className}}Guard implements CanActivate {
 `;
 
 class GuardGenerator extends Generator {
+  protected suffix = 'guard';
+
   protected getDefaultTemplate(): string {
     return GUARD_TEMPLATE;
   }
@@ -23,15 +25,11 @@ export function generateGuard(program: Command): void {
   program
     .command('guard <name>')
     .description('Generate a new guard')
+    .alias('gu')
     .option('-p, --path <path>', 'Path where the guard should be generated')
-    .action(async (name: string, options: { path?: string }) => {
+    .option('--dry-run', 'Preview files without writing them')
+    .action(async (name: string, options: { path?: string; dryRun?: boolean }) => {
       const generator = new GuardGenerator();
-      const generatorOptions: Partial<GeneratorOptions> = {
-        name,
-        path: options.path,
-      };
-
-      const finalOptions = await generator.promptForOptions(generatorOptions);
-      await generator.generate(finalOptions);
+      await generator.generate({ name, path: options.path, dryRun: options.dryRun });
     });
-} 
+}

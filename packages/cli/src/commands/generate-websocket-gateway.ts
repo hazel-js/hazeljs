@@ -1,5 +1,5 @@
 import { Command } from 'commander';
-import { Generator, GeneratorOptions } from '../utils/generator';
+import { Generator } from '../utils/generator';
 
 const WEBSOCKET_GATEWAY_TEMPLATE = `import { Realtime, OnConnect, OnDisconnect, OnMessage, Subscribe, Client, Data, WebSocketClient } from '@hazeljs/websocket';
 
@@ -25,6 +25,8 @@ export class {{className}}Gateway {
 `;
 
 class WebSocketGatewayGenerator extends Generator {
+  protected suffix = 'gateway';
+
   protected getDefaultTemplate(): string {
     return WEBSOCKET_GATEWAY_TEMPLATE;
   }
@@ -36,15 +38,9 @@ export function generateWebSocketGateway(program: Command): void {
     .description('Generate a new WebSocket gateway')
     .alias('ws')
     .option('-p, --path <path>', 'Path where the gateway should be generated')
-    .action(async (name: string, options: { path?: string }) => {
+    .option('--dry-run', 'Preview files without writing them')
+    .action(async (name: string, options: { path?: string; dryRun?: boolean }) => {
       const generator = new WebSocketGatewayGenerator();
-      const generatorOptions: Partial<GeneratorOptions> = {
-        name,
-        path: options.path,
-      };
-
-      const finalOptions = await generator.promptForOptions(generatorOptions);
-      await generator.generate(finalOptions);
+      await generator.generate({ name, path: options.path, dryRun: options.dryRun });
     });
 }
-

@@ -1,88 +1,61 @@
 import fs from 'fs';
 import { Command } from 'commander';
 import { generateModule } from './generate-module';
-import { Generator } from '../utils/generator';
 
 jest.mock('fs');
-jest.mock('../utils/generator');
 
 describe('generateModule', () => {
+  const mockFs = fs as jest.Mocked<typeof fs>;
   let program: Command;
-  let mockAction: jest.Mock;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    (fs.existsSync as jest.Mock).mockReturnValue(false);
-    (fs.writeFileSync as jest.Mock).mockImplementation(() => {});
+    mockFs.existsSync.mockReturnValue(false);
+    mockFs.mkdirSync.mockImplementation(() => undefined as any);
+    mockFs.writeFileSync.mockImplementation(() => {});
+    jest.spyOn(console, 'log').mockImplementation();
     program = new Command();
-    mockAction = jest.fn();
-    program.action(mockAction);
   });
 
-  it('should register module command', () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('should register the module command with alias', () => {
     generateModule(program);
-    const command = program.commands.find(cmd => cmd.name() === 'module');
-    expect(command).toBeDefined();
-    expect(command?.description()).toBe('Generate a new module (with controller, service, DTOs)');
+    const cmd = program.commands.find(c => c.name() === 'module');
+    expect(cmd).toBeDefined();
+    expect(cmd?.alias()).toBe('m');
   });
 
-  it('should generate module file', async () => {
-    const name = 'test';
-    const path = 'src/test';
-    const mockGenerator = {
-      generate: jest.fn(),
-      promptForOptions: jest.fn().mockResolvedValue({ name, path }),
-    };
-    (Generator as jest.Mock).mockImplementation(() => mockGenerator);
+  it('should generate all module files', async () => {
+    generateModule(program);
+    await program.parseAsync(['node', 'test', 'module', 'user']);
 
-    const handler = async (name: string, options: { path?: string }) => {
-      const generator = new (Generator as any)();
-      const generatorOptions = { name, path: options.path };
-      const finalOptions = await generator.promptForOptions(generatorOptions);
-      await generator.generate(finalOptions);
-    };
-
-    await handler(name, { path });
-    expect(mockGenerator.generate).toHaveBeenCalledWith({ name, path });
+    const writtenFiles = mockFs.writeFileSync.mock.calls.map(call => call[0] as string);
+    expect(writtenFiles.some(f => f.includes('user.module.ts'))).toBe(true);
+    expect(writtenFiles.some(f => f.includes('user.controller.ts'))).toBe(true);
+    expect(writtenFiles.some(f => f.includes('user.service.ts'))).toBe(true);
+    expect(writtenFiles.some(f => f.includes('create-user.dto.ts'))).toBe(true);
+    expect(writtenFiles.some(f => f.includes('update-user.dto.ts'))).toBe(true);
   });
 
-  it('should include controller and service imports', async () => {
-    const name = 'test';
-    const path = 'src/test';
-    const mockGenerator = {
-      generate: jest.fn(),
-      promptForOptions: jest.fn().mockResolvedValue({ name, path }),
-    };
-    (Generator as jest.Mock).mockImplementation(() => mockGenerator);
+  it('should use @hazeljs/core imports in all generated files', async () => {
+    generateModule(program);
+    await program.parseAsync(['node', 'test', 'module', 'user']);
 
-    const handler = async (name: string, options: { path?: string }) => {
-      const generator = new (Generator as any)();
-      const generatorOptions = { name, path: options.path };
-      const finalOptions = await generator.promptForOptions(generatorOptions);
-      await generator.generate(finalOptions);
-    };
-
-    await handler(name, { path });
-    expect(mockGenerator.generate).toHaveBeenCalledWith({ name, path });
+    const writtenContents = mockFs.writeFileSync.mock.calls.map(call => call[1] as string);
+    const moduleContent = writtenContents.find(c => c.includes('HazelModule'));
+    expect(moduleContent).toContain("from '@hazeljs/core'");
+    
+    const controllerContent = writtenContents.find(c => c.includes('Controller'));
+    expect(controllerContent).toContain("from '@hazeljs/core'");
   });
 
-  it('should include module configuration', async () => {
-    const name = 'test';
-    const path = 'src/test';
-    const mockGenerator = {
-      generate: jest.fn(),
-      promptForOptions: jest.fn().mockResolvedValue({ name, path }),
-    };
-    (Generator as jest.Mock).mockImplementation(() => mockGenerator);
+  it('should support --dry-run flag', async () => {
+    generateModule(program);
+    await program.parseAsync(['node', 'test', 'module', 'user', '--dry-run']);
 
-    const handler = async (name: string, options: { path?: string }) => {
-      const generator = new (Generator as any)();
-      const generatorOptions = { name, path: options.path };
-      const finalOptions = await generator.promptForOptions(generatorOptions);
-      await generator.generate(finalOptions);
-    };
-
-    await handler(name, { path });
-    expect(mockGenerator.generate).toHaveBeenCalledWith({ name, path });
+    expect(mockFs.writeFileSync).not.toHaveBeenCalled();
   });
-}); 
+});

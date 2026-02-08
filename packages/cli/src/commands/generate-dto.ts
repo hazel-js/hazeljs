@@ -13,33 +13,47 @@ export class Create{{className}}Dto {
 }
 `;
 
-const UPDATE_DTO_TEMPLATE = `import { PartialType } from '@hazeljs/core';
-import { Create{{className}}Dto } from './create-{{fileName}}.dto';
+const UPDATE_DTO_TEMPLATE = `import { IsString, IsOptional } from 'class-validator';
 
-export class Update{{className}}Dto extends PartialType(Create{{className}}Dto) {}
+export class Update{{className}}Dto {
+  @IsString()
+  @IsOptional()
+  name?: string;
+
+  @IsString()
+  @IsOptional()
+  description?: string;
+}
 `;
 
 class DtoGenerator extends Generator {
+  protected suffix = 'dto';
+
   protected getDefaultTemplate(): string {
     return CREATE_DTO_TEMPLATE;
   }
 
   public async generate(options: GeneratorOptions): Promise<void> {
     // Generate create DTO
-    const createDtoOptions = {
+    await super.generate({
       ...options,
       template: CREATE_DTO_TEMPLATE,
       path: options.path ? `${options.path}/dto` : 'src/dto',
-    };
-    await super.generate(createDtoOptions);
+    });
 
-    // Generate update DTO
-    const updateDtoOptions = {
+    // Generate update DTO — use a different file name
+    const origSuffix = this.suffix;
+    this.suffix = 'dto';
+    const updateOptions = {
       ...options,
+      name: `update-${options.name}`,
       template: UPDATE_DTO_TEMPLATE,
       path: options.path ? `${options.path}/dto` : 'src/dto',
     };
-    await super.generate(updateDtoOptions);
+    // Override suffix for the update variant — we prepend "update-" to the name
+    // so the file is update-<name>.dto.ts rather than <name>.dto.ts (which would conflict)
+    await super.generate(updateOptions);
+    this.suffix = origSuffix;
   }
 }
 
@@ -47,15 +61,11 @@ export function generateDto(program: Command): void {
   program
     .command('dto <name>')
     .description('Generate create and update DTOs')
+    .alias('d')
     .option('-p, --path <path>', 'Path where the DTOs should be generated')
-    .action(async (name: string, options: { path?: string }) => {
+    .option('--dry-run', 'Preview files without writing them')
+    .action(async (name: string, options: { path?: string; dryRun?: boolean }) => {
       const generator = new DtoGenerator();
-      const generatorOptions: Partial<GeneratorOptions> = {
-        name,
-        path: options.path,
-      };
-
-      const finalOptions = await generator.promptForOptions(generatorOptions);
-      await generator.generate(finalOptions);
+      await generator.generate({ name, path: options.path, dryRun: options.dryRun });
     });
-} 
+}

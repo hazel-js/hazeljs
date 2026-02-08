@@ -1,48 +1,30 @@
 {
-  "name": "hazeljs-example",
-  "version": "0.2.0-beta.8",
-  "description": "Example application using HazelJS",
+  "name": "hazeljs-app",
+  "version": "0.1.0",
+  "description": "A HazelJS application",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
     "test": "jest",
-    "test:ci": "jest --coverage --coverageReporters=text --coverageReporters=lcov --coverageReporters=clover --no-coverage-threshold",
-    "lint": "eslint \"src/**/*.ts\" --max-warnings 0",
-    "lint:fix": "eslint \"src/**/*.ts\" --fix --max-warnings 0",
+    "lint": "eslint \"src/**/*.ts\"",
+    "lint:fix": "eslint \"src/**/*.ts\" --fix",
     "format": "prettier --write \"src/**/*.ts\""
   },
   "dependencies": {
-    "@hazeljs/core": "file:..",
-    "bcryptjs": "^2.4.3",
-    "class-transformer": "^0.5.1",
-    "class-validator": "^0.14.1",
-    "dotenv": "^16.4.5",
-    "jsonwebtoken": "^9.0.2",
-    "reflect-metadata": "^0.2.1",
-    "winston": "^3.12.0"
+    "@hazeljs/core": "^0.2.0",
+    "reflect-metadata": "^0.2.2"
   },
   "devDependencies": {
-    "@types/axios": "^0.9.36",
-    "@types/bcryptjs": "^2.4.6",
-    "@types/express": "^4.17.21",
-    "@types/jest": "^29.5.12",
-    "@types/jsonwebtoken": "^9.0.6",
-    "@types/node": "^20.11.24",
-    "@types/swagger-ui-express": "^4.1.6",
-    "@typescript-eslint/eslint-plugin": "^7.0.0",
-    "@typescript-eslint/parser": "^7.0.0",
-    "axios": "^1.9.0",
-    "eslint": "^8.0.0",
-    "eslint-config-prettier": "^9.0.0",
-    "eslint-plugin-jest": "^27.0.0",
-    "eslint-plugin-prettier": "^5.0.0",
-    "jest": "^29.7.0",
-    "prettier": "^3.0.0",
-    "ts-jest": "^29.1.2",
-    "ts-node": "^10.9.2",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.3.3",
     "ts-node-dev": "^2.0.0",
-    "typescript": "^5.3.3"
-  }
+    "@types/jest": "^29.5.12",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.2",
+    "prettier": "^3.2.5"
+  },
+  "author": "",
+  "license": "MIT"
 }

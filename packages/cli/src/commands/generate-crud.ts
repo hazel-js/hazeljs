@@ -2,12 +2,13 @@ import { Command } from 'commander';
 import fs from 'fs';
 import path from 'path';
 import chalk from 'chalk';
+import { toPascalCase, toKebabCase, toCamelCase, renderTemplate } from '../utils/generator';
 
 const controllerTemplate = `import { Controller, Get, Post, Put, Delete, Body, Param } from '@hazeljs/core';
 import { {{className}}Service } from './{{fileName}}.service';
 import { Create{{className}}Dto, Update{{className}}Dto } from './dto/{{fileName}}.dto';
 
-@Controller('/{{routePath}}')
+@Controller('/{{{routePath}}}')
 export class {{className}}Controller {
   constructor(private {{camelName}}Service: {{className}}Service) {}
 
@@ -126,86 +127,53 @@ import { {{className}}Service } from './{{fileName}}.service';
 export class {{className}}Module {}
 `;
 
-function toPascalCase(str: string): string {
-  return str
-    .split(/[-_]/)
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join('');
-}
-
-function toKebabCase(str: string): string {
-  return str
-    .replace(/([a-z])([A-Z])/g, '$1-$2')
-    .replace(/[\s_]+/g, '-')
-    .toLowerCase();
-}
-
-function toCamelCase(str: string): string {
-  const pascal = toPascalCase(str);
-  return pascal.charAt(0).toLowerCase() + pascal.slice(1);
-}
-
-function renderTemplate(template: string, data: Record<string, string>): string {
-  return template.replace(/\{\{(\w+)\}\}/g, (_, key) => data[key] || '');
-}
-
 export function generateCrud(command: Command) {
   command
     .command('crud <name>')
     .description('Generate a complete CRUD resource (controller, service, module, DTOs)')
     .option('-p, --path <path>', 'Specify the path', 'src')
     .option('-r, --route <route>', 'Specify the route path')
-    .action((name: string, options: { path?: string; route?: string }) => {
+    .option('--dry-run', 'Preview files without writing them')
+    .action((name: string, options: { path?: string; route?: string; dryRun?: boolean }) => {
       const className = toPascalCase(name);
       const fileName = toKebabCase(name);
       const camelName = toCamelCase(name);
       const routePath = options.route || fileName;
       const basePath = path.join(process.cwd(), options.path || 'src', fileName);
 
-      const data = {
-        className,
-        fileName,
-        camelName,
-        routePath,
-      };
+      const data = { className, fileName, camelName, routePath };
+
+      const files = [
+        { file: `${fileName}.controller.ts`, template: controllerTemplate },
+        { file: `${fileName}.service.ts`, template: serviceTemplate },
+        { file: `dto/${fileName}.dto.ts`, template: dtoTemplate },
+        { file: `${fileName}.module.ts`, template: moduleTemplate },
+      ];
 
       try {
-        // Create directory
-        if (!fs.existsSync(basePath)) {
-          fs.mkdirSync(basePath, { recursive: true });
+        for (const { file, template } of files) {
+          const filePath = path.join(basePath, file);
+
+          if (options.dryRun) {
+            console.log(chalk.blue(`[dry-run] Would create ${filePath}`));
+            continue;
+          }
+
+          const dir = path.dirname(filePath);
+          if (!fs.existsSync(dir)) {
+            fs.mkdirSync(dir, { recursive: true });
+          }
+          fs.writeFileSync(filePath, renderTemplate(template, data));
+          console.log(chalk.green(`\u2713 Generated ${filePath}`));
         }
 
-        // Create DTO directory
-        const dtoPath = path.join(basePath, 'dto');
-        if (!fs.existsSync(dtoPath)) {
-          fs.mkdirSync(dtoPath, { recursive: true });
+        if (!options.dryRun) {
+          console.log(chalk.blue('\n\uD83D\uDCE6 CRUD resource generated successfully!'));
+          console.log(chalk.gray(`\nNext steps:`));
+          console.log(chalk.gray(`1. Import ${className}Module in your app module`));
+          console.log(chalk.gray(`2. Customize the DTOs`));
+          console.log(chalk.gray(`3. Implement your business logic in the service`));
         }
-
-        // Generate controller
-        const controllerPath = path.join(basePath, `${fileName}.controller.ts`);
-        fs.writeFileSync(controllerPath, renderTemplate(controllerTemplate, data));
-        console.log(chalk.green(`✓ Generated ${controllerPath}`));
-
-        // Generate service
-        const servicePath = path.join(basePath, `${fileName}.service.ts`);
-        fs.writeFileSync(servicePath, renderTemplate(serviceTemplate, data));
-        console.log(chalk.green(`✓ Generated ${servicePath}`));
-
-        // Generate DTOs
-        const dtoFilePath = path.join(dtoPath, `${fileName}.dto.ts`);
-        fs.writeFileSync(dtoFilePath, renderTemplate(dtoTemplate, data));
-        console.log(chalk.green(`✓ Generated ${dtoFilePath}`));
-
-        // Generate module
-        const modulePath = path.join(basePath, `${fileName}.module.ts`);
-        fs.writeFileSync(modulePath, renderTemplate(moduleTemplate, data));
-        console.log(chalk.green(`✓ Generated ${modulePath}`));
-
-        console.log(chalk.blue('\n📦 CRUD resource generated successfully!'));
-        console.log(chalk.gray(`\nNext steps:`));
-        console.log(chalk.gray(`1. Import ${className}Module in your app module`));
-        console.log(chalk.gray(`2. Customize the DTOs in ${dtoFilePath}`));
-        console.log(chalk.gray(`3. Implement your business logic in ${servicePath}`));
       } catch (error) {
         console.error(chalk.red('Error generating CRUD resource:'), error);
         process.exit(1);

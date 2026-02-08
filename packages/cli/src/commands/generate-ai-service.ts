@@ -1,9 +1,8 @@
 import { Command } from 'commander';
-import { Generator, GeneratorOptions } from '../utils/generator';
+import { Generator } from '../utils/generator';
 
 const AI_SERVICE_TEMPLATE = `import { Injectable } from '@hazeljs/core';
-import { AIService } from '@hazeljs/ai';
-import { AIFunction, AIPrompt } from '@hazeljs/ai';
+import { AIService, AIFunction, AIPrompt } from '@hazeljs/ai';
 
 @Injectable()
 export class {{className}}AIService {
@@ -14,7 +13,7 @@ export class {{className}}AIService {
     model: 'gpt-4',
     streaming: false,
   })
-  async {{fileName}}Task(@AIPrompt() prompt: string): Promise<unknown> {
+  async {{camelName}}Task(@AIPrompt() prompt: string): Promise<unknown> {
     const result = await this.aiService.complete({
       provider: 'openai',
       model: 'gpt-4',
@@ -27,6 +26,8 @@ export class {{className}}AIService {
 `;
 
 class AIServiceGenerator extends Generator {
+  protected suffix = 'ai-service';
+
   protected getDefaultTemplate(): string {
     return AI_SERVICE_TEMPLATE;
   }
@@ -38,15 +39,9 @@ export function generateAIService(program: Command): void {
     .description('Generate a new AI service with decorators')
     .alias('ai')
     .option('-p, --path <path>', 'Path where the AI service should be generated')
-    .action(async (name: string, options: { path?: string }) => {
+    .option('--dry-run', 'Preview files without writing them')
+    .action(async (name: string, options: { path?: string; dryRun?: boolean }) => {
       const generator = new AIServiceGenerator();
-      const generatorOptions: Partial<GeneratorOptions> = {
-        name,
-        path: options.path,
-      };
-
-      const finalOptions = await generator.promptForOptions(generatorOptions);
-      await generator.generate(finalOptions);
+      await generator.generate({ name, path: options.path, dryRun: options.dryRun });
     });
 }
-

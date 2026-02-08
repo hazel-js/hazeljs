@@ -4,6 +4,10 @@
   "description": "Command-line interface for scaffolding and generating HazelJS applications and components",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "@template"
+  ],
   "bin": {
     "hazel": "./dist/index.js"
   },

@@ -1,5 +1,5 @@
 import { Command } from 'commander';
-import { Generator, GeneratorOptions } from '../utils/generator';
+import { Generator } from '../utils/generator';
 
 const AGENT_TEMPLATE = `import { Agent, Tool } from '@hazeljs/agent';
 
@@ -32,6 +32,8 @@ export class {{className}}Agent {
 `;
 
 class AgentGenerator extends Generator {
+  protected suffix = 'agent';
+
   protected getDefaultTemplate(): string {
     return AGENT_TEMPLATE;
   }
@@ -42,17 +44,14 @@ export function generateAgent(program: Command): void {
     .command('agent <name>')
     .description('Generate a new AI agent with @Agent and @Tool decorators')
     .option('-p, --path <path>', 'Path where the agent should be generated')
-    .action(async (name: string, options: { path?: string }) => {
+    .option('--dry-run', 'Preview files without writing them')
+    .action(async (name: string, options: { path?: string; dryRun?: boolean }) => {
       const generator = new AgentGenerator();
-      const generatorOptions: Partial<GeneratorOptions> = {
+      await generator.generate({
         name,
         path: options.path,
-        data: {
-          description: `A ${name} agent`,
-        },
-      };
-
-      const finalOptions = await generator.promptForOptions(generatorOptions);
-      await generator.generate(finalOptions);
+        dryRun: options.dryRun,
+        data: { description: `A ${name} agent` },
+      });
     });
 }

@@ -1,7 +1,7 @@
 import { Command } from 'commander';
-import { Generator, GeneratorOptions } from '../utils/generator';
+import { Generator } from '../utils/generator';
 
-const INTERCEPTOR_TEMPLATE = `import { Injectable, Interceptor, ExecutionContext } from '@hazeljs/core';
+const INTERCEPTOR_TEMPLATE = `import { Injectable, Interceptor, type ExecutionContext } from '@hazeljs/core';
 
 @Injectable()
 export class {{className}}Interceptor implements Interceptor {
@@ -9,13 +9,14 @@ export class {{className}}Interceptor implements Interceptor {
     // Pre-processing logic here (before handler execution)
     const result = await next();
     // Post-processing logic here (after handler execution)
-    // Transform the response data here
     return result;
   }
 }
 `;
 
 class InterceptorGenerator extends Generator {
+  protected suffix = 'interceptor';
+
   protected getDefaultTemplate(): string {
     return INTERCEPTOR_TEMPLATE;
   }
@@ -25,15 +26,11 @@ export function generateInterceptor(program: Command): void {
   program
     .command('interceptor <name>')
     .description('Generate a new interceptor')
+    .alias('i')
     .option('-p, --path <path>', 'Path where the interceptor should be generated')
-    .action(async (name: string, options: { path?: string }) => {
+    .option('--dry-run', 'Preview files without writing them')
+    .action(async (name: string, options: { path?: string; dryRun?: boolean }) => {
       const generator = new InterceptorGenerator();
-      const generatorOptions: Partial<GeneratorOptions> = {
-        name,
-        path: options.path,
-      };
-
-      const finalOptions = await generator.promptForOptions(generatorOptions);
-      await generator.generate(finalOptions);
+      await generator.generate({ name, path: options.path, dryRun: options.dryRun });
     });
-} 
+}

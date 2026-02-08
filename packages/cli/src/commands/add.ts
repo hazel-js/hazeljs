@@ -3,18 +3,55 @@ import { execSync } from 'child_process';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
 
-const HAZEL_PACKAGES = {
-  ai: '@hazeljs/ai',
-  auth: '@hazeljs/auth',
-  cache: '@hazeljs/cache',
-  config: '@hazeljs/config',
-  cron: '@hazeljs/cron',
-  prisma: '@hazeljs/prisma',
-  rag: '@hazeljs/rag',
-  serverless: '@hazeljs/serverless',
-  swagger: '@hazeljs/swagger',
-  websocket: '@hazeljs/websocket',
-  discovery: '@hazeljs/discovery',
+const HAZEL_PACKAGES: Record<string, { npm: string; hint: string }> = {
+  ai: {
+    npm: '@hazeljs/ai',
+    hint: 'import { AIModule } from "@hazeljs/ai";',
+  },
+  agent: {
+    npm: '@hazeljs/agent',
+    hint: 'import { AgentModule } from "@hazeljs/agent";',
+  },
+  auth: {
+    npm: '@hazeljs/auth',
+    hint: 'import { JwtModule } from "@hazeljs/auth";\n  // JwtModule.forRoot({ secret: "your-secret", expiresIn: "1d" })',
+  },
+  cache: {
+    npm: '@hazeljs/cache',
+    hint: 'import { CacheModule } from "@hazeljs/cache";',
+  },
+  config: {
+    npm: '@hazeljs/config',
+    hint: 'import { ConfigModule } from "@hazeljs/config";\n  // ConfigModule.forRoot({ envFilePath: ".env" })',
+  },
+  cron: {
+    npm: '@hazeljs/cron',
+    hint: 'import { CronModule } from "@hazeljs/cron";',
+  },
+  discovery: {
+    npm: '@hazeljs/discovery',
+    hint: 'import { ServiceRegistry, DiscoveryClient } from "@hazeljs/discovery";',
+  },
+  prisma: {
+    npm: '@hazeljs/prisma',
+    hint: 'import { PrismaModule } from "@hazeljs/prisma";',
+  },
+  rag: {
+    npm: '@hazeljs/rag',
+    hint: 'import { RAGPipeline } from "@hazeljs/rag";',
+  },
+  serverless: {
+    npm: '@hazeljs/serverless',
+    hint: 'import { createLambdaHandler } from "@hazeljs/serverless";',
+  },
+  swagger: {
+    npm: '@hazeljs/swagger',
+    hint: 'import { SwaggerModule } from "@hazeljs/swagger";',
+  },
+  websocket: {
+    npm: '@hazeljs/websocket',
+    hint: 'import { WebSocketModule } from "@hazeljs/websocket";',
+  },
 };
 
 export function addCommand(program: Command) {
@@ -34,7 +71,7 @@ export function addCommand(program: Command) {
               name: 'package',
               message: 'Which HazelJS package would you like to add?',
               choices: Object.keys(HAZEL_PACKAGES).map((key) => ({
-                name: `${key} - ${HAZEL_PACKAGES[key as keyof typeof HAZEL_PACKAGES]}`,
+                name: `${key} - ${HAZEL_PACKAGES[key].npm}`,
                 value: key,
               })),
             },
@@ -42,54 +79,30 @@ export function addCommand(program: Command) {
           selectedPackage = pkg;
         }
 
-        // Get the full package name
-        const fullPackageName =
-          HAZEL_PACKAGES[selectedPackage as keyof typeof HAZEL_PACKAGES];
+        // Get the package info
+        const pkgInfo = HAZEL_PACKAGES[selectedPackage as string];
 
-        if (!fullPackageName) {
+        if (!pkgInfo) {
           console.log(chalk.yellow(`Unknown package: ${selectedPackage}`));
           console.log(chalk.gray('\nAvailable packages:'));
           Object.keys(HAZEL_PACKAGES).forEach((key) => {
-            console.log(
-              chalk.gray(`  - ${key}: ${HAZEL_PACKAGES[key as keyof typeof HAZEL_PACKAGES]}`)
-            );
+            console.log(chalk.gray(`  - ${key}: ${HAZEL_PACKAGES[key].npm}`));
           });
           return;
         }
 
-        console.log(
-          chalk.blue(`\n📦 Installing ${fullPackageName}...`)
-        );
+        console.log(chalk.blue(`\n\uD83D\uDCE6 Installing ${pkgInfo.npm}...`));
 
         const devFlag = options?.dev ? '--save-dev' : '';
-        const command = `npm install ${fullPackageName} ${devFlag}`.trim();
+        const command = `npm install ${pkgInfo.npm} ${devFlag}`.trim();
 
         execSync(command, { stdio: 'inherit' });
 
-        console.log(chalk.green(`\n✓ Successfully installed ${fullPackageName}`));
+        console.log(chalk.green(`\n\u2713 Successfully installed ${pkgInfo.npm}`));
 
         // Show usage hints
-        console.log(chalk.gray('\nNext steps:'));
-        switch (selectedPackage) {
-          case 'ai':
-            console.log(chalk.gray('  import { AIModule } from "@hazeljs/ai";'));
-            break;
-          case 'auth':
-            console.log(chalk.gray('  import { AuthModule } from "@hazeljs/auth";'));
-            break;
-          case 'cache':
-            console.log(chalk.gray('  import { CacheModule } from "@hazeljs/cache";'));
-            break;
-          case 'prisma':
-            console.log(chalk.gray('  import { PrismaModule } from "@hazeljs/prisma";'));
-            break;
-          case 'swagger':
-            console.log(chalk.gray('  import { SwaggerModule } from "@hazeljs/swagger";'));
-            break;
-          case 'websocket':
-            console.log(chalk.gray('  import { WebSocketModule } from "@hazeljs/websocket";'));
-            break;
-        }
+        console.log(chalk.gray('\nUsage:'));
+        console.log(chalk.gray(`  ${pkgInfo.hint}`));
         console.log(
           chalk.gray(`\nDocumentation: https://hazeljs.com/docs/packages/${selectedPackage}`)
         );

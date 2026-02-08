@@ -17,6 +17,12 @@ import { generateAgent } from './commands/generate-agent';
 import { generateServerlessHandler } from './commands/generate-serverless-handler';
 import { generateCrud } from './commands/generate-crud';
 import { generateMiddleware } from './commands/generate-middleware';
+import { generateAuth } from './commands/generate-auth';
+import { generateConfig } from './commands/generate-config';
+import { generateCache } from './commands/generate-cache';
+import { generateCron } from './commands/generate-cron';
+import { generateRag } from './commands/generate-rag';
+import { generateDiscovery } from './commands/generate-discovery';
 import { infoCommand } from './commands/info';
 import { addCommand } from './commands/add';
 import { buildCommand } from './commands/build';
@@ -57,6 +63,7 @@ generateMiddleware(generateCommand);
 
 // Advanced generators
 generateCrud(generateCommand);
+generateAuth(generateCommand);
 generateWebSocketGateway(generateCommand);
 generateExceptionFilter(generateCommand);
 generatePipe(generateCommand);
@@ -64,5 +71,10 @@ generateRepository(generateCommand);
 generateAIService(generateCommand);
 generateAgent(generateCommand);
 generateServerlessHandler(generateCommand);
+generateConfig(generateCommand);
+generateCache(generateCommand);
+generateCron(generateCommand);
+generateRag(generateCommand);
+generateDiscovery(generateCommand);
 
-program.parse(process.argv); 
+program.parse(process.argv);

@@ -1,57 +1,48 @@
 import fs from 'fs';
+import { Command } from 'commander';
 import { generateInterceptor } from './generate-interceptor';
-import { Generator } from '../utils/generator';
 
 jest.mock('fs');
-jest.mock('../utils/generator');
 
 describe('generateInterceptor', () => {
+  const mockFs = fs as jest.Mocked<typeof fs>;
+  let program: Command;
+
   beforeEach(() => {
     jest.clearAllMocks();
-    (fs.existsSync as jest.Mock).mockReturnValue(false);
-    (fs.writeFileSync as jest.Mock).mockImplementation(() => {});
+    mockFs.existsSync.mockReturnValue(true);
+    mockFs.writeFileSync.mockImplementation(() => {});
+    jest.spyOn(console, 'log').mockImplementation();
+    program = new Command();
   });
 
-  it('should register interceptor command', () => {
-    const program: any = { command: jest.fn().mockReturnThis(), description: jest.fn().mockReturnThis(), option: jest.fn().mockReturnThis(), action: jest.fn() };
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('should register the interceptor command with alias', () => {
     generateInterceptor(program);
-    expect(program.command).toHaveBeenCalledWith('interceptor <name>');
-    expect(program.description).toHaveBeenCalledWith('Generate a new interceptor');
+    const cmd = program.commands.find(c => c.name() === 'interceptor');
+    expect(cmd).toBeDefined();
+    expect(cmd?.alias()).toBe('i');
   });
 
-  it('should generate interceptor file', async () => {
-    const name = 'test';
-    const path = 'src/test';
-    const mockGenerator = {
-      generate: jest.fn(),
-      promptForOptions: jest.fn().mockResolvedValue({ name, path }),
-    };
-    (Generator as jest.Mock).mockImplementation(() => mockGenerator);
-    const handler = async (name: string, options: { path?: string }) => {
-      const generator = new (Generator as any)();
-      const generatorOptions = { name, path: options.path };
-      const finalOptions = await generator.promptForOptions(generatorOptions);
-      await generator.generate(finalOptions);
-    };
-    await handler(name, { path });
-    expect(mockGenerator.generate).toHaveBeenCalledWith({ name, path });
+  it('should generate an interceptor file with correct suffix', async () => {
+    generateInterceptor(program);
+    await program.parseAsync(['node', 'test', 'interceptor', 'logging']);
+
+    expect(mockFs.writeFileSync).toHaveBeenCalledWith(
+      expect.stringContaining('logging.interceptor.ts'),
+      expect.stringContaining('LoggingInterceptor'),
+    );
   });
 
-  it('should include intercept method', async () => {
-    const name = 'test';
-    const path = 'src/test';
-    const mockGenerator = {
-      generate: jest.fn(),
-      promptForOptions: jest.fn().mockResolvedValue({ name, path }),
-    };
-    (Generator as jest.Mock).mockImplementation(() => mockGenerator);
-    const handler = async (name: string, options: { path?: string }) => {
-      const generator = new (Generator as any)();
-      const generatorOptions = { name, path: options.path };
-      const finalOptions = await generator.promptForOptions(generatorOptions);
-      await generator.generate(finalOptions);
-    };
-    await handler(name, { path });
-    expect(mockGenerator.generate).toHaveBeenCalledWith({ name, path });
+  it('should implement the Interceptor interface', async () => {
+    generateInterceptor(program);
+    await program.parseAsync(['node', 'test', 'interceptor', 'logging']);
+
+    const writtenContent = mockFs.writeFileSync.mock.calls[0][1] as string;
+    expect(writtenContent).toContain('implements Interceptor');
+    expect(writtenContent).toContain('intercept');
   });
-}); 
+});

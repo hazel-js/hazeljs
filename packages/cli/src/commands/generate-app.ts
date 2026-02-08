@@ -31,6 +31,105 @@ function updatePackageJson(destPath: string, appName: string, description: strin
   }
 }
 
+function scaffoldPackageBoilerplate(destPath: string, packages: string[]) {
+  const srcPath = path.join(destPath, 'src');
+
+  // Build up enhanced app.module.ts imports based on selected packages
+  const imports: string[] = ["import { HazelModule } from '@hazeljs/core';"];
+  const moduleImports: string[] = [];
+  const controllers: string[] = [];
+  const fileImports: string[] = [];
+
+  // Always include the default HelloController
+  imports.push("import { HelloController } from './hello.controller';");
+  controllers.push('HelloController');
+
+  if (packages.includes('@hazeljs/config')) {
+    imports.push("import { ConfigModule } from '@hazeljs/config';");
+    moduleImports.push("ConfigModule.forRoot({ envFilePath: '.env' })");
+
+    // Create .env file
+    fs.writeFileSync(path.join(destPath, '.env'), 'PORT=3000\nNODE_ENV=development\n');
+    fs.writeFileSync(path.join(destPath, '.env.example'), 'PORT=3000\nNODE_ENV=development\n');
+    console.log(chalk.green('  ✓ Created .env and .env.example'));
+  }
+
+  if (packages.includes('@hazeljs/swagger')) {
+    imports.push("import { SwaggerModule } from '@hazeljs/swagger';");
+    moduleImports.push('SwaggerModule');
+  }
+
+  if (packages.includes('@hazeljs/prisma')) {
+    imports.push("import { PrismaModule } from '@hazeljs/prisma';");
+    moduleImports.push('PrismaModule');
+  }
+
+  if (packages.includes('@hazeljs/auth')) {
+    imports.push("import { JwtModule } from '@hazeljs/auth';");
+    moduleImports.push("JwtModule.forRoot({ secret: process.env.JWT_SECRET || 'change-me', expiresIn: '1d' })");
+  }
+
+  if (packages.includes('@hazeljs/cache')) {
+    imports.push("import { CacheModule } from '@hazeljs/cache';");
+    moduleImports.push('CacheModule');
+  }
+
+  if (packages.includes('@hazeljs/cron')) {
+    imports.push("import { CronModule } from '@hazeljs/cron';");
+    moduleImports.push('CronModule');
+  }
+
+  if (packages.includes('@hazeljs/websocket')) {
+    imports.push("import { WebSocketModule } from '@hazeljs/websocket';");
+    moduleImports.push('WebSocketModule');
+  }
+
+  // Generate the enhanced app.module.ts
+  const importsSection = moduleImports.length > 0
+    ? `\n  imports: [\n    ${moduleImports.join(',\n    ')},\n  ],`
+    : '';
+
+  const appModule = `${imports.join('\n')}
+
+@HazelModule({${importsSection}
+  controllers: [${controllers.join(', ')}],
+})
+export class AppModule {}
+`;
+
+  fs.writeFileSync(path.join(srcPath, 'app.module.ts'), appModule);
+  console.log(chalk.green('  ✓ Updated app.module.ts with package imports'));
+
+  // Update index.ts / main.ts if swagger is selected
+  if (packages.includes('@hazeljs/swagger')) {
+    const mainContent = `import 'reflect-metadata';
+import { HazelApp } from '@hazeljs/core';
+import { SwaggerModule } from '@hazeljs/swagger';
+import { AppModule } from './app.module';
+
+async function bootstrap(): Promise<void> {
+  // Setup Swagger documentation (must be called before app creation)
+  SwaggerModule.setRootModule(AppModule);
+
+  const app = new HazelApp(AppModule);
+
+  // Enable CORS
+  app.enableCors({
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+  });
+
+  const port = parseInt(process.env.PORT || '3000', 10);
+  await app.listen(port);
+}
+
+bootstrap();
+`;
+    fs.writeFileSync(path.join(srcPath, 'index.ts'), mainContent);
+    console.log(chalk.green('  ✓ Updated index.ts with Swagger setup'));
+  }
+}
+
 export function generateApp(program: Command) {
   program
     .command('new <appName>')
@@ -77,16 +176,18 @@ export function generateApp(program: Command) {
               name: 'packages',
               message: 'Select additional HazelJS packages to install:',
               choices: [
-                { name: 'AI Integration (@hazeljs/ai)', value: '@hazeljs/ai' },
                 { name: 'Authentication (@hazeljs/auth)', value: '@hazeljs/auth' },
-                { name: 'Caching (@hazeljs/cache)', value: '@hazeljs/cache' },
                 { name: 'Configuration (@hazeljs/config)', value: '@hazeljs/config' },
-                { name: 'Cron Jobs (@hazeljs/cron)', value: '@hazeljs/cron' },
+                { name: 'Swagger/OpenAPI (@hazeljs/swagger)', value: '@hazeljs/swagger' },
                 { name: 'Prisma ORM (@hazeljs/prisma)', value: '@hazeljs/prisma' },
+                { name: 'Caching (@hazeljs/cache)', value: '@hazeljs/cache' },
+                { name: 'Cron Jobs (@hazeljs/cron)', value: '@hazeljs/cron' },
+                { name: 'WebSocket (@hazeljs/websocket)', value: '@hazeljs/websocket' },
+                { name: 'AI Integration (@hazeljs/ai)', value: '@hazeljs/ai' },
+                { name: 'AI Agents (@hazeljs/agent)', value: '@hazeljs/agent' },
                 { name: 'RAG/Vector Search (@hazeljs/rag)', value: '@hazeljs/rag' },
                 { name: 'Serverless (@hazeljs/serverless)', value: '@hazeljs/serverless' },
-                { name: 'Swagger/OpenAPI (@hazeljs/swagger)', value: '@hazeljs/swagger' },
-                { name: 'WebSocket (@hazeljs/websocket)', value: '@hazeljs/websocket' },
+                { name: 'Service Discovery (@hazeljs/discovery)', value: '@hazeljs/discovery' },
               ],
             },
           ]);
@@ -136,14 +237,21 @@ export function generateApp(program: Command) {
               dev: 'ts-node-dev --respawn --transpile-only src/index.ts',
               test: 'jest',
               lint: 'eslint "src/**/*.ts"',
+              'lint:fix': 'eslint "src/**/*.ts" --fix',
+              format: 'prettier --write "src/**/*.ts"',
             },
             dependencies: {
               '@hazeljs/core': '^0.2.0',
+              'reflect-metadata': '^0.2.2',
             },
             devDependencies: {
               '@types/node': '^20.0.0',
-              'typescript': '^5.0.0',
+              'typescript': '^5.3.3',
               'ts-node-dev': '^2.0.0',
+              '@types/jest': '^29.5.12',
+              'jest': '^29.7.0',
+              'ts-jest': '^29.1.2',
+              'prettier': '^3.2.5',
             },
             author: projectConfig.author,
             license: projectConfig.license,
@@ -155,7 +263,8 @@ export function generateApp(program: Command) {
           );
           
           // Create basic index.ts
-          const indexContent = `import { HazelApp, HazelModule, Controller, Get } from '@hazeljs/core';
+          const indexContent = `import 'reflect-metadata';
+import { HazelApp, HazelModule, Controller, Get } from '@hazeljs/core';
 
 @Controller('/')
 export class AppController {
@@ -171,9 +280,15 @@ export class AppController {
 export class AppModule {}
 
 async function bootstrap() {
-  const app = await HazelApp.create(AppModule);
-  await app.listen(3000);
-  console.log('🚀 Server running on http://localhost:3000');
+  const app = new HazelApp(AppModule);
+
+  app.enableCors({
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+  });
+
+  const port = parseInt(process.env.PORT || '3000', 10);
+  await app.listen(port);
 }
 
 bootstrap();
@@ -249,6 +364,12 @@ coverage/
             console.log(chalk.yellow('\n⚠ Dependency installation failed'));
             console.log(chalk.gray('You can install them manually with: npm install'));
           }
+        }
+
+        // Scaffold boilerplate for selected packages
+        if (projectConfig.packages.length > 0) {
+          console.log(chalk.blue('\n📝 Scaffolding boilerplate for selected packages...\n'));
+          scaffoldPackageBoilerplate(destPath, projectConfig.packages);
         }
 
         // Success message

@@ -1,5 +1,5 @@
 import { Command } from 'commander';
-import { Generator, GeneratorOptions } from '../utils/generator';
+import { Generator } from '../utils/generator';
 
 const SERVICE_TEMPLATE = `import { Injectable } from '@hazeljs/core';
 
@@ -15,12 +15,12 @@ export class {{className}}Service {
     return { id };
   }
 
-  async create(create{{className}}Dto: any) {
-    return create{{className}}Dto;
+  async create(createDto: any) {
+    return createDto;
   }
 
-  async update(id: string, update{{className}}Dto: any) {
-    return { id, ...update{{className}}Dto };
+  async update(id: string, updateDto: any) {
+    return { id, ...updateDto };
   }
 
   async remove(id: string) {
@@ -30,6 +30,8 @@ export class {{className}}Service {
 `;
 
 class ServiceGenerator extends Generator {
+  protected suffix = 'service';
+
   protected getDefaultTemplate(): string {
     return SERVICE_TEMPLATE;
   }
@@ -39,15 +41,11 @@ export function generateService(program: Command): void {
   program
     .command('service <name>')
     .description('Generate a new service')
+    .alias('s')
     .option('-p, --path <path>', 'Path where the service should be generated')
-    .action(async (name: string, options: { path?: string }) => {
+    .option('--dry-run', 'Preview files without writing them')
+    .action(async (name: string, options: { path?: string; dryRun?: boolean }) => {
       const generator = new ServiceGenerator();
-      const generatorOptions: Partial<GeneratorOptions> = {
-        name,
-        path: options.path,
-      };
-
-      const finalOptions = await generator.promptForOptions(generatorOptions);
-      await generator.generate(finalOptions);
+      await generator.generate({ name, path: options.path, dryRun: options.dryRun });
     });
-} 
+}
