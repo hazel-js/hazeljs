@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/agent",
-  "version": "0.2.0-beta.15",
+  "version": "0.2.0-beta.16",
   "description": "AI-native Agent Runtime for HazelJS - stateful, long-running agents with tools, memory, and human-in-the-loop",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
