@@ -5,7 +5,10 @@
 
 import { DiscoveryClient } from './discovery-client';
 import { ServiceFilter } from '../types';
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
+import { LeastConnectionsStrategy } from '../load-balancer/strategies';
+import { DiscoveryLogger } from '../utils/logger';
+import { validateServiceClientConfig } from '../utils/validation';
+import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 
 export interface ServiceClientConfig {
   serviceName: string;
@@ -14,6 +17,25 @@ export interface ServiceClientConfig {
   timeout?: number;
   retries?: number;
   retryDelay?: number;
+}
+
+/** HTTP status codes that are safe to retry */
+const RETRYABLE_STATUS_CODES = new Set([502, 503, 504, 408, 429]);
+
+/**
+ * Determine whether an error is transient and worth retrying.
+ * Client errors (4xx except 408/429) are NOT retried.
+ */
+function isRetryableError(error: unknown): boolean {
+  if (error instanceof AxiosError) {
+    // Network / timeout errors are always retryable
+    if (!error.response) return true;
+
+    return RETRYABLE_STATUS_CODES.has(error.response.status);
+  }
+
+  // Non-Axios errors (e.g. "no instances available") are retryable
+  return true;
 }
 
 export class ServiceClient {
@@ -25,8 +47,10 @@ export class ServiceClient {
     private discoveryClient: DiscoveryClient,
     private config: ServiceClientConfig
   ) {
-    this.retries = config.retries || 3;
-    this.retryDelay = config.retryDelay || 1000;
+    validateServiceClientConfig(config);
+
+    this.retries = config.retries ?? 3;
+    this.retryDelay = config.retryDelay ?? 1000;
 
     this.axiosInstance = axios.create({
       timeout: config.timeout || 5000,
@@ -84,21 +108,32 @@ export class ServiceClient {
    * Generic request with service discovery
    */
   private async request<T = unknown>(config: AxiosRequestConfig): Promise<AxiosResponse<T>> {
+    const logger = DiscoveryLogger.getLogger();
     let lastError: Error | null = null;
 
     for (let attempt = 0; attempt < this.retries; attempt++) {
+      // Discover service instance
+      const instance = await this.discoveryClient.getInstance(
+        this.config.serviceName,
+        this.config.loadBalancingStrategy,
+        this.config.filter
+      );
+
+      if (!instance) {
+        throw new Error(`No instances available for service: ${this.config.serviceName}`);
+      }
+
+      // Track active connections for least-connections strategy
+      const lbStrategy = this.discoveryClient
+        .getLoadBalancerFactory()
+        .get(this.config.loadBalancingStrategy || 'round-robin');
+      const isLeastConn = lbStrategy instanceof LeastConnectionsStrategy;
+
+      if (isLeastConn) {
+        (lbStrategy as LeastConnectionsStrategy).incrementConnections(instance.id);
+      }
+
       try {
-        // Discover service instance
-        const instance = await this.discoveryClient.getInstance(
-          this.config.serviceName,
-          this.config.loadBalancingStrategy,
-          this.config.filter
-        );
-
-        if (!instance) {
-          throw new Error(`No instances available for service: ${this.config.serviceName}`);
-        }
-
         // Build full URL
         const baseURL = `${instance.protocol}://${instance.host}:${instance.port}`;
         const fullConfig = {
@@ -107,18 +142,28 @@ export class ServiceClient {
         };
 
         // Make request
-        return await this.axiosInstance.request<T>(fullConfig);
+        const response = await this.axiosInstance.request<T>(fullConfig);
+        return response;
       } catch (error) {
         lastError = error as Error;
-        // Log error only in development
-        if (process.env.NODE_ENV === 'development') {
-          // eslint-disable-next-line no-console
-          console.error(`Request failed (attempt ${attempt + 1}/${this.retries}):`, error);
+
+        logger.warn(
+          `Request to ${this.config.serviceName} failed (attempt ${attempt + 1}/${this.retries})`,
+          error
+        );
+
+        // Only retry on transient / network errors
+        if (!isRetryableError(error)) {
+          throw error;
         }
 
-        // Wait before retry
+        // Wait before retry (skip delay on last attempt since we'll throw)
         if (attempt < this.retries - 1) {
           await this.sleep(this.retryDelay);
+        }
+      } finally {
+        if (isLeastConn) {
+          (lbStrategy as LeastConnectionsStrategy).decrementConnections(instance.id);
         }
       }
     }

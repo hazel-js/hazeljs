@@ -7,16 +7,22 @@ import { ServiceInstance, DiscoveryClientConfig, ServiceFilter } from '../types'
 import { RegistryBackend } from '../backends/registry-backend';
 import { MemoryRegistryBackend } from '../backends/memory-backend';
 import { LoadBalancerFactory } from '../load-balancer/strategies';
+import { applyServiceFilter } from '../utils/filter';
+import { DiscoveryLogger } from '../utils/logger';
+import { validateDiscoveryClientConfig } from '../utils/validation';
 
 export class DiscoveryClient {
   private backend: RegistryBackend;
   private cache = new Map<string, { instances: ServiceInstance[]; timestamp: number }>();
   private loadBalancerFactory: LoadBalancerFactory;
+  private refreshIntervalHandle: NodeJS.Timeout | null = null;
 
   constructor(
     private config: DiscoveryClientConfig = {},
     backend?: RegistryBackend
   ) {
+    validateDiscoveryClientConfig(config);
+
     this.backend = backend || new MemoryRegistryBackend();
     this.loadBalancerFactory = new LoadBalancerFactory();
 
@@ -36,7 +42,7 @@ export class DiscoveryClient {
         const age = Date.now() - cached.timestamp;
         const ttl = this.config.cacheTTL || 30000;
         if (age < ttl) {
-          return this.applyFilter(cached.instances, filter);
+          return applyServiceFilter(cached.instances, filter);
         }
       }
     }
@@ -103,37 +109,36 @@ export class DiscoveryClient {
   }
 
   /**
-   * Start cache refresh interval
+   * Close the discovery client and release all resources.
+   * Stops the cache refresh interval and clears the cache.
    */
-  private startRefreshInterval(): void {
-    setInterval(async () => {
-      const services = await this.getAllServices();
-      for (const service of services) {
-        const instances = await this.backend.getInstances(service);
-        this.cache.set(service, {
-          instances,
-          timestamp: Date.now(),
-        });
-      }
-    }, this.config.refreshInterval);
+  close(): void {
+    if (this.refreshIntervalHandle) {
+      clearInterval(this.refreshIntervalHandle);
+      this.refreshIntervalHandle = null;
+    }
+    this.cache.clear();
   }
 
   /**
-   * Apply filter to instances
+   * Start cache refresh interval
    */
-  private applyFilter(instances: ServiceInstance[], filter?: ServiceFilter): ServiceInstance[] {
-    if (!filter) return instances;
+  private startRefreshInterval(): void {
+    const logger = DiscoveryLogger.getLogger();
 
-    return instances.filter((instance) => {
-      if (filter.zone && instance.zone !== filter.zone) return false;
-      if (filter.status && instance.status !== filter.status) return false;
-      if (filter.tags && !filter.tags.every((tag) => instance.tags?.includes(tag))) return false;
-      if (filter.metadata) {
-        for (const [key, value] of Object.entries(filter.metadata)) {
-          if (instance.metadata?.[key] !== value) return false;
+    this.refreshIntervalHandle = setInterval(async () => {
+      try {
+        const services = await this.getAllServices();
+        for (const service of services) {
+          const instances = await this.backend.getInstances(service);
+          this.cache.set(service, {
+            instances,
+            timestamp: Date.now(),
+          });
         }
+      } catch (error) {
+        logger.error('Failed to refresh service cache', error);
       }
-      return true;
-    });
+    }, this.config.refreshInterval);
   }
 }

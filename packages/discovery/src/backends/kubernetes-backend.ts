@@ -5,12 +5,66 @@
 
 import { RegistryBackend } from './registry-backend';
 import { ServiceInstance, ServiceFilter, ServiceStatus } from '../types';
+import { applyServiceFilter } from '../utils/filter';
+import { DiscoveryLogger } from '../utils/logger';
+import { validateKubernetesBackendConfig } from '../utils/validation';
 
-// Type definitions for Kubernetes (optional peer dependency)
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type KubeConfig = any;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type CoreV1Api = any;
+/**
+ * Minimal type definitions for the Kubernetes client API surface we use.
+ * These mirror the shapes exposed by `@kubernetes/client-node`.
+ */
+export interface KubeConfig {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  makeApiClient(apiClass: new () => any): any;
+}
+
+export interface K8sEndpointAddress {
+  ip: string;
+  targetRef?: { name?: string };
+  nodeName?: string;
+}
+
+export interface K8sEndpointPort {
+  port: number;
+}
+
+export interface K8sEndpointSubset {
+  ports?: K8sEndpointPort[];
+  addresses?: K8sEndpointAddress[];
+  notReadyAddresses?: K8sEndpointAddress[];
+}
+
+export interface K8sObjectMeta {
+  name?: string;
+  annotations?: Record<string, string>;
+  labels?: Record<string, string>;
+  creationTimestamp?: string;
+}
+
+export interface K8sEndpoints {
+  metadata?: K8sObjectMeta;
+  subsets?: K8sEndpointSubset[];
+}
+
+export interface K8sService {
+  metadata?: K8sObjectMeta;
+}
+
+export interface K8sApiResponse<T> {
+  body: T;
+}
+
+export interface CoreV1ApiLike {
+  readNamespacedEndpoints(name: string, namespace: string): Promise<K8sApiResponse<K8sEndpoints>>;
+  listNamespacedService(
+    namespace: string,
+    pretty?: string,
+    allowWatchBookmarks?: boolean,
+    _continue?: string,
+    fieldSelector?: string,
+    labelSelector?: string
+  ): Promise<K8sApiResponse<{ items: K8sService[] }>>;
+}
 
 export interface KubernetesBackendConfig {
   namespace?: string;
@@ -18,11 +72,13 @@ export interface KubernetesBackendConfig {
 }
 
 export class KubernetesRegistryBackend implements RegistryBackend {
-  private k8sApi: CoreV1Api;
+  private k8sApi: CoreV1ApiLike;
   private readonly namespace: string;
   private readonly labelSelector: string;
 
   constructor(kubeConfig: KubeConfig, config: KubernetesBackendConfig = {}) {
+    validateKubernetesBackendConfig(config);
+
     // Import CoreV1Api dynamically to avoid build errors when @kubernetes/client-node is not installed
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { CoreV1Api: CoreV1ApiClass } = require('@kubernetes/client-node');
@@ -63,6 +119,8 @@ export class KubernetesRegistryBackend implements RegistryBackend {
    * Get all instances of a service from Kubernetes Endpoints
    */
   async getInstances(serviceName: string, filter?: ServiceFilter): Promise<ServiceInstance[]> {
+    const logger = DiscoveryLogger.getLogger();
+
     try {
       // Get service endpoints
       const endpointsResponse = await this.k8sApi.readNamespacedEndpoints(
@@ -113,12 +171,9 @@ export class KubernetesRegistryBackend implements RegistryBackend {
       }
 
       // Apply filters
-      if (filter) {
-        return this.applyFilter(instances, filter);
-      }
-
-      return instances;
-    } catch {
+      return applyServiceFilter(instances, filter);
+    } catch (error) {
+      logger.error(`Failed to get instances for service "${serviceName}" from Kubernetes`, error);
       return [];
     }
   }
@@ -138,6 +193,8 @@ export class KubernetesRegistryBackend implements RegistryBackend {
    * Get all registered services in the namespace
    */
   async getAllServices(): Promise<string[]> {
+    const logger = DiscoveryLogger.getLogger();
+
     try {
       const servicesResponse = await this.k8sApi.listNamespacedService(
         this.namespace,
@@ -148,10 +205,9 @@ export class KubernetesRegistryBackend implements RegistryBackend {
         this.labelSelector
       );
 
-      return servicesResponse.body.items.map(
-        (service: { metadata?: { name?: string } }) => service.metadata?.name || ''
-      );
-    } catch {
+      return servicesResponse.body.items.map((service: K8sService) => service.metadata?.name || '');
+    } catch (error) {
+      logger.error('Failed to list services from Kubernetes', error);
       return [];
     }
   }
@@ -177,14 +233,10 @@ export class KubernetesRegistryBackend implements RegistryBackend {
    */
   private createServiceInstance(
     serviceName: string,
-    address: { ip: string; targetRef?: { name?: string }; nodeName?: string },
-    port: { port: number },
+    address: K8sEndpointAddress,
+    port: K8sEndpointPort,
     status: ServiceStatus,
-    metadata: {
-      annotations?: Record<string, string>;
-      labels?: Record<string, string>;
-      creationTimestamp?: string;
-    }
+    metadata?: K8sObjectMeta
   ): ServiceInstance {
     const host = address.ip;
     const portNumber = port.port;
@@ -211,36 +263,5 @@ export class KubernetesRegistryBackend implements RegistryBackend {
       lastHeartbeat: new Date(),
       registeredAt: new Date(metadata?.creationTimestamp || Date.now()),
     };
-  }
-
-  /**
-   * Apply filter to instances
-   */
-  private applyFilter(instances: ServiceInstance[], filter: ServiceFilter): ServiceInstance[] {
-    return instances.filter((instance) => {
-      if (filter.zone && instance.zone !== filter.zone) {
-        return false;
-      }
-
-      if (filter.status && instance.status !== filter.status) {
-        return false;
-      }
-
-      if (filter.tags && filter.tags.length > 0) {
-        if (!instance.tags || !filter.tags.every((tag) => instance.tags!.includes(tag))) {
-          return false;
-        }
-      }
-
-      if (filter.metadata) {
-        for (const [key, value] of Object.entries(filter.metadata)) {
-          if (!instance.metadata || instance.metadata[key] !== value) {
-            return false;
-          }
-        }
-      }
-
-      return true;
-    });
   }
 }

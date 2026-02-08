@@ -5,6 +5,7 @@
 
 import { RegistryBackend } from './registry-backend';
 import { ServiceInstance, ServiceFilter, ServiceStatus } from '../types';
+import { applyServiceFilter } from '../utils/filter';
 
 export class MemoryRegistryBackend implements RegistryBackend {
   private instances = new Map<string, ServiceInstance>();
@@ -54,7 +55,7 @@ export class MemoryRegistryBackend implements RegistryBackend {
     const instanceIds = this.serviceIndex.get(serviceName);
     if (!instanceIds) return [];
 
-    let instances: ServiceInstance[] = [];
+    const instances: ServiceInstance[] = [];
     for (const id of instanceIds) {
       const instance = this.instances.get(id);
       if (instance) {
@@ -63,11 +64,7 @@ export class MemoryRegistryBackend implements RegistryBackend {
     }
 
     // Apply filters
-    if (filter) {
-      instances = this.applyFilter(instances, filter);
-    }
-
-    return instances;
+    return applyServiceFilter(instances, filter);
   }
 
   async getInstance(instanceId: string): Promise<ServiceInstance | null> {
@@ -99,37 +96,5 @@ export class MemoryRegistryBackend implements RegistryBackend {
     for (const id of expiredIds) {
       await this.deregister(id);
     }
-  }
-
-  private applyFilter(instances: ServiceInstance[], filter: ServiceFilter): ServiceInstance[] {
-    return instances.filter((instance) => {
-      // Filter by zone
-      if (filter.zone && instance.zone !== filter.zone) {
-        return false;
-      }
-
-      // Filter by status
-      if (filter.status && instance.status !== filter.status) {
-        return false;
-      }
-
-      // Filter by tags
-      if (filter.tags && filter.tags.length > 0) {
-        if (!instance.tags || !filter.tags.every((tag) => instance.tags!.includes(tag))) {
-          return false;
-        }
-      }
-
-      // Filter by metadata
-      if (filter.metadata) {
-        for (const [key, value] of Object.entries(filter.metadata)) {
-          if (!instance.metadata || instance.metadata[key] !== value) {
-            return false;
-          }
-        }
-      }
-
-      return true;
-    });
   }
 }

@@ -6,6 +6,8 @@
 import { ServiceInstance, ServiceRegistryConfig, ServiceStatus } from '../types';
 import { RegistryBackend } from '../backends/registry-backend';
 import { MemoryRegistryBackend } from '../backends/memory-backend';
+import { DiscoveryLogger } from '../utils/logger';
+import { validateServiceRegistryConfig } from '../utils/validation';
 import axios from 'axios';
 
 export class ServiceRegistry {
@@ -18,6 +20,8 @@ export class ServiceRegistry {
     private config: ServiceRegistryConfig,
     backend?: RegistryBackend
   ) {
+    validateServiceRegistryConfig(config);
+
     this.backend = backend || new MemoryRegistryBackend();
   }
 
@@ -110,7 +114,12 @@ export class ServiceRegistry {
    */
   private startCleanup(): void {
     this.cleanupInterval = setInterval(async () => {
-      await this.backend.cleanup();
+      try {
+        await this.backend.cleanup();
+      } catch (error) {
+        const logger = DiscoveryLogger.getLogger();
+        logger.error('Cleanup task failed', error);
+      }
     }, 60000); // Run every minute
   }
 
@@ -119,6 +128,8 @@ export class ServiceRegistry {
    */
   private async performHealthCheck(): Promise<void> {
     if (!this.instance) return;
+
+    const logger = DiscoveryLogger.getLogger();
 
     try {
       const url = `${this.instance.protocol}://${this.instance.host}:${this.instance.port}${this.instance.healthCheckPath}`;
@@ -131,9 +142,13 @@ export class ServiceRegistry {
         this.instance.status = ServiceStatus.DOWN;
         await this.backend.updateStatus(this.instance.id, ServiceStatus.DOWN);
       }
-    } catch {
+    } catch (error) {
       this.instance.status = ServiceStatus.DOWN;
       await this.backend.updateStatus(this.instance.id, ServiceStatus.DOWN);
+      logger.warn(
+        `Health check failed for ${this.instance.name} (${this.instance.id}), marking as DOWN`,
+        error
+      );
     }
   }
 

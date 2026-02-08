@@ -5,10 +5,55 @@
 
 import { RegistryBackend } from './registry-backend';
 import { ServiceInstance, ServiceFilter, ServiceStatus } from '../types';
+import { applyServiceFilter } from '../utils/filter';
+import { DiscoveryLogger } from '../utils/logger';
+import { validateConsulBackendConfig } from '../utils/validation';
 
-// Type definition for Consul (optional peer dependency)
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type Consul = any;
+/**
+ * Minimal type definitions for the Consul client API surface we use.
+ * These mirror the shapes exposed by the `consul` npm package.
+ */
+export interface ConsulClient {
+  agent: {
+    service: {
+      register(opts: Record<string, unknown>): Promise<void>;
+      deregister(serviceId: string): Promise<void>;
+      list(): Promise<Record<string, ConsulServiceEntry>>;
+    };
+    check: {
+      pass(checkId: string): Promise<void>;
+      fail(checkId: string): Promise<void>;
+      warn(checkId: string): Promise<void>;
+      list(): Promise<Record<string, ConsulCheckEntry>>;
+    };
+  };
+  health: {
+    service(opts: { service: string; passing?: boolean }): Promise<ConsulHealthEntry[]>;
+  };
+  catalog: {
+    service: {
+      list(): Promise<Record<string, string[]>>;
+    };
+  };
+}
+
+export interface ConsulServiceEntry {
+  ID: string;
+  Service: string;
+  Address: string;
+  Port: number;
+  Meta?: Record<string, string>;
+  Tags?: string[];
+}
+
+export interface ConsulCheckEntry {
+  Status: string;
+}
+
+export interface ConsulHealthEntry {
+  Service: ConsulServiceEntry;
+  Checks?: ConsulCheckEntry[];
+}
 
 export interface ConsulBackendConfig {
   host?: string;
@@ -20,11 +65,13 @@ export interface ConsulBackendConfig {
 }
 
 export class ConsulRegistryBackend implements RegistryBackend {
-  private consul: Consul;
+  private consul: ConsulClient;
   private readonly ttl: string;
   private checkIntervals: Map<string, NodeJS.Timeout> = new Map();
 
-  constructor(consul: Consul, config: ConsulBackendConfig = {}) {
+  constructor(consul: ConsulClient, config: ConsulBackendConfig = {}) {
+    validateConsulBackendConfig(config);
+
     this.consul = consul;
     this.ttl = config.ttl || '30s';
   }
@@ -73,13 +120,14 @@ export class ConsulRegistryBackend implements RegistryBackend {
    * Update service instance heartbeat
    */
   async heartbeat(instanceId: string): Promise<void> {
+    const logger = DiscoveryLogger.getLogger();
     const checkId = `service:${instanceId}`;
 
     try {
       // Pass TTL check
       await this.consul.agent.check.pass(checkId);
-    } catch {
-      // Silently fail - will be retried on next heartbeat
+    } catch (error) {
+      logger.warn(`Consul heartbeat failed for ${instanceId}, will retry on next heartbeat`, error);
     }
   }
 
@@ -87,62 +135,49 @@ export class ConsulRegistryBackend implements RegistryBackend {
    * Get all instances of a service
    */
   async getInstances(serviceName: string, filter?: ServiceFilter): Promise<ServiceInstance[]> {
+    const logger = DiscoveryLogger.getLogger();
+
     try {
       const result = await this.consul.health.service({
         service: serviceName,
         passing: filter?.status === ServiceStatus.UP,
       });
 
-      const instances: ServiceInstance[] = result.map(
-        (entry: {
-          Service: {
-            ID: string;
-            Service: string;
-            Address: string;
-            Port: number;
-            Meta?: Record<string, string>;
-            Tags?: string[];
-          };
-          Checks?: Array<{ Status: string }>;
-        }) => {
-          const service = entry.Service;
-          const checks = entry.Checks || [];
+      const instances: ServiceInstance[] = result.map((entry: ConsulHealthEntry) => {
+        const service = entry.Service;
+        const checks = entry.Checks || [];
 
-          // Determine status from checks
-          let status = ServiceStatus.UP;
-          for (const check of checks) {
-            if (check.Status === 'critical') {
-              status = ServiceStatus.DOWN;
-              break;
-            } else if (check.Status === 'warning') {
-              status = ServiceStatus.STARTING;
-            }
+        // Determine status from checks
+        let status = ServiceStatus.UP;
+        for (const check of checks) {
+          if (check.Status === 'critical') {
+            status = ServiceStatus.DOWN;
+            break;
+          } else if (check.Status === 'warning') {
+            status = ServiceStatus.STARTING;
           }
-
-          return {
-            id: service.ID,
-            name: service.Service,
-            host: service.Address,
-            port: service.Port,
-            status,
-            metadata: service.Meta || {},
-            tags: service.Tags || [],
-            zone: service.Meta?.zone || undefined,
-            lastHeartbeat: new Date(),
-            registeredAt: service.Meta?.registeredAt
-              ? new Date(service.Meta.registeredAt)
-              : new Date(),
-          };
         }
-      );
+
+        return {
+          id: service.ID,
+          name: service.Service,
+          host: service.Address,
+          port: service.Port,
+          status,
+          metadata: service.Meta || {},
+          tags: service.Tags || [],
+          zone: service.Meta?.zone || undefined,
+          lastHeartbeat: new Date(),
+          registeredAt: service.Meta?.registeredAt
+            ? new Date(service.Meta.registeredAt)
+            : new Date(),
+        };
+      });
 
       // Apply additional filters
-      if (filter) {
-        return this.applyFilter(instances, filter);
-      }
-
-      return instances;
-    } catch {
+      return applyServiceFilter(instances, filter);
+    } catch (error) {
+      logger.error(`Failed to get instances for service "${serviceName}" from Consul`, error);
       return [];
     }
   }
@@ -151,6 +186,8 @@ export class ConsulRegistryBackend implements RegistryBackend {
    * Get a specific service instance
    */
   async getInstance(instanceId: string): Promise<ServiceInstance | null> {
+    const logger = DiscoveryLogger.getLogger();
+
     try {
       const services = await this.consul.agent.service.list();
       const service = services[instanceId];
@@ -185,7 +222,8 @@ export class ConsulRegistryBackend implements RegistryBackend {
         lastHeartbeat: new Date(),
         registeredAt: service.Meta?.registeredAt ? new Date(service.Meta.registeredAt) : new Date(),
       };
-    } catch {
+    } catch (error) {
+      logger.error(`Failed to get instance "${instanceId}" from Consul`, error);
       return null;
     }
   }
@@ -194,10 +232,13 @@ export class ConsulRegistryBackend implements RegistryBackend {
    * Get all registered services
    */
   async getAllServices(): Promise<string[]> {
+    const logger = DiscoveryLogger.getLogger();
+
     try {
       const services = await this.consul.catalog.service.list();
       return Object.keys(services);
-    } catch {
+    } catch (error) {
+      logger.error('Failed to list services from Consul', error);
       return [];
     }
   }
@@ -206,6 +247,7 @@ export class ConsulRegistryBackend implements RegistryBackend {
    * Update service instance status
    */
   async updateStatus(instanceId: string, status: string): Promise<void> {
+    const logger = DiscoveryLogger.getLogger();
     const checkId = `service:${instanceId}`;
 
     try {
@@ -216,8 +258,8 @@ export class ConsulRegistryBackend implements RegistryBackend {
       } else if (status === ServiceStatus.STARTING) {
         await this.consul.agent.check.warn(checkId);
       }
-    } catch {
-      // Silently fail - status will be updated on next heartbeat
+    } catch (error) {
+      logger.warn(`Failed to update status for ${instanceId} in Consul`, error);
     }
   }
 
@@ -244,6 +286,8 @@ export class ConsulRegistryBackend implements RegistryBackend {
    * Start TTL check updates for a service
    */
   private startTTLCheck(instanceId: string, checkId: string): void {
+    const logger = DiscoveryLogger.getLogger();
+
     // Parse TTL to get interval (update at 2/3 of TTL)
     const ttlSeconds = this.parseTTL(this.ttl);
     const intervalMs = (ttlSeconds * 1000 * 2) / 3;
@@ -251,8 +295,8 @@ export class ConsulRegistryBackend implements RegistryBackend {
     const interval = setInterval(async () => {
       try {
         await this.consul.agent.check.pass(checkId);
-      } catch {
-        // Silently fail - will be retried on next interval
+      } catch (error) {
+        logger.warn(`TTL check pass failed for ${instanceId}`, error);
       }
     }, intervalMs);
 
@@ -292,36 +336,5 @@ export class ConsulRegistryBackend implements RegistryBackend {
       default:
         return 30;
     }
-  }
-
-  /**
-   * Apply filter to instances
-   */
-  private applyFilter(instances: ServiceInstance[], filter: ServiceFilter): ServiceInstance[] {
-    return instances.filter((instance) => {
-      if (filter.zone && instance.zone !== filter.zone) {
-        return false;
-      }
-
-      if (filter.status && instance.status !== filter.status) {
-        return false;
-      }
-
-      if (filter.tags && filter.tags.length > 0) {
-        if (!instance.tags || !filter.tags.every((tag) => instance.tags!.includes(tag))) {
-          return false;
-        }
-      }
-
-      if (filter.metadata) {
-        for (const [key, value] of Object.entries(filter.metadata)) {
-          if (!instance.metadata || instance.metadata[key] !== value) {
-            return false;
-          }
-        }
-      }
-
-      return true;
-    });
   }
 }

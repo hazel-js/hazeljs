@@ -5,6 +5,9 @@
 
 import { RegistryBackend } from './registry-backend';
 import { ServiceInstance, ServiceFilter, ServiceStatus } from '../types';
+import { applyServiceFilter } from '../utils/filter';
+import { DiscoveryLogger } from '../utils/logger';
+import { validateRedisBackendConfig } from '../utils/validation';
 import type { Redis } from 'ioredis';
 
 export interface RedisBackendConfig {
@@ -20,17 +23,59 @@ export class RedisRegistryBackend implements RegistryBackend {
   private redis: Redis;
   private readonly keyPrefix: string;
   private readonly ttl: number;
+  private connected = true;
 
   constructor(redis: Redis, config: RedisBackendConfig = {}) {
+    validateRedisBackendConfig(config);
+
     this.redis = redis;
     this.keyPrefix = config.keyPrefix || 'hazeljs:discovery:';
     this.ttl = config.ttl || 90; // 90 seconds default
+
+    this.setupConnectionHandlers();
+  }
+
+  /**
+   * Set up Redis connection event handlers for resilience
+   */
+  private setupConnectionHandlers(): void {
+    const logger = DiscoveryLogger.getLogger();
+
+    this.redis.on('error', (err: Error) => {
+      this.connected = false;
+      logger.error('Redis connection error', err);
+    });
+
+    this.redis.on('connect', () => {
+      this.connected = true;
+      logger.info('Redis connected');
+    });
+
+    this.redis.on('reconnecting', () => {
+      logger.warn('Redis reconnecting...');
+    });
+
+    this.redis.on('close', () => {
+      this.connected = false;
+      logger.warn('Redis connection closed');
+    });
+  }
+
+  /**
+   * Check Redis connectivity before operations
+   */
+  private ensureConnected(): void {
+    if (!this.connected) {
+      throw new Error('Redis backend is not connected');
+    }
   }
 
   /**
    * Register a service instance
    */
   async register(instance: ServiceInstance): Promise<void> {
+    this.ensureConnected();
+
     const key = this.getInstanceKey(instance.id);
     const serviceSetKey = this.getServiceSetKey(instance.name);
 
@@ -48,6 +93,8 @@ export class RedisRegistryBackend implements RegistryBackend {
    * Deregister a service instance
    */
   async deregister(instanceId: string): Promise<void> {
+    this.ensureConnected();
+
     const key = this.getInstanceKey(instanceId);
 
     // Get instance to find service name
@@ -68,6 +115,8 @@ export class RedisRegistryBackend implements RegistryBackend {
    * Update service instance heartbeat
    */
   async heartbeat(instanceId: string): Promise<void> {
+    this.ensureConnected();
+
     const key = this.getInstanceKey(instanceId);
 
     // Get current instance
@@ -89,9 +138,11 @@ export class RedisRegistryBackend implements RegistryBackend {
   }
 
   /**
-   * Get all instances of a service
+   * Get all instances of a service (uses MGET for efficiency)
    */
   async getInstances(serviceName: string, filter?: ServiceFilter): Promise<ServiceInstance[]> {
+    this.ensureConnected();
+
     const serviceSetKey = this.getServiceSetKey(serviceName);
 
     // Get all instance IDs for this service
@@ -101,27 +152,30 @@ export class RedisRegistryBackend implements RegistryBackend {
       return [];
     }
 
-    // Get all instance data
+    // Batch-fetch all instances with MGET
+    const keys = instanceIds.map((id) => this.getInstanceKey(id));
+    const results = await this.redis.mget(...keys);
+
     const instances: ServiceInstance[] = [];
-    for (const id of instanceIds) {
-      const instance = await this.getInstance(id);
-      if (instance) {
+    for (const data of results) {
+      if (data) {
+        const instance: ServiceInstance = JSON.parse(data);
+        instance.lastHeartbeat = new Date(instance.lastHeartbeat);
+        instance.registeredAt = new Date(instance.registeredAt);
         instances.push(instance);
       }
     }
 
     // Apply filters
-    if (filter) {
-      return this.applyFilter(instances, filter);
-    }
-
-    return instances;
+    return applyServiceFilter(instances, filter);
   }
 
   /**
    * Get a specific service instance
    */
   async getInstance(instanceId: string): Promise<ServiceInstance | null> {
+    this.ensureConnected();
+
     const key = this.getInstanceKey(instanceId);
     const data = await this.redis.get(key);
 
@@ -139,22 +193,34 @@ export class RedisRegistryBackend implements RegistryBackend {
   }
 
   /**
-   * Get all registered services
+   * Get all registered services using SCAN (safe for production)
    */
   async getAllServices(): Promise<string[]> {
-    const pattern = `${this.keyPrefix}service:*`;
-    const keys = await this.redis.keys(pattern);
+    this.ensureConnected();
 
-    return keys.map((key) => {
-      const serviceName = key.replace(`${this.keyPrefix}service:`, '');
-      return serviceName;
-    });
+    const pattern = `${this.keyPrefix}service:*`;
+    const prefixLen = `${this.keyPrefix}service:`.length;
+    const services: string[] = [];
+
+    let cursor = '0';
+    do {
+      const [nextCursor, keys] = await this.redis.scan(cursor, 'MATCH', pattern, 'COUNT', 100);
+      cursor = nextCursor;
+
+      for (const key of keys) {
+        services.push(key.substring(prefixLen));
+      }
+    } while (cursor !== '0');
+
+    return services;
   }
 
   /**
    * Update service instance status
    */
   async updateStatus(instanceId: string, status: string): Promise<void> {
+    this.ensureConnected();
+
     const key = this.getInstanceKey(instanceId);
     const data = await this.redis.get(key);
 
@@ -171,8 +237,10 @@ export class RedisRegistryBackend implements RegistryBackend {
    * Note: Redis handles expiration automatically via TTL
    */
   async cleanup(): Promise<void> {
+    this.ensureConnected();
+
     // Redis automatically removes expired keys
-    // This method can be used for additional cleanup if needed
+    // This method cleans up stale entries in service sets
 
     const services = await this.getAllServices();
 
@@ -216,40 +284,5 @@ export class RedisRegistryBackend implements RegistryBackend {
    */
   private getServiceSetKey(serviceName: string): string {
     return `${this.keyPrefix}service:${serviceName}`;
-  }
-
-  /**
-   * Apply filter to instances
-   */
-  private applyFilter(instances: ServiceInstance[], filter: ServiceFilter): ServiceInstance[] {
-    return instances.filter((instance) => {
-      // Filter by zone
-      if (filter.zone && instance.zone !== filter.zone) {
-        return false;
-      }
-
-      // Filter by status
-      if (filter.status && instance.status !== filter.status) {
-        return false;
-      }
-
-      // Filter by tags
-      if (filter.tags && filter.tags.length > 0) {
-        if (!instance.tags || !filter.tags.every((tag) => instance.tags!.includes(tag))) {
-          return false;
-        }
-      }
-
-      // Filter by metadata
-      if (filter.metadata) {
-        for (const [key, value] of Object.entries(filter.metadata)) {
-          if (!instance.metadata || instance.metadata[key] !== value) {
-            return false;
-          }
-        }
-      }
-
-      return true;
-    });
   }
 }
