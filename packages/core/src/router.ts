@@ -4,7 +4,8 @@ import { Container } from './container';
 import { MiddlewareHandler } from './middleware';
 import { PipeTransform, ValidationError } from './pipes/pipe';
 import { Interceptor } from './interceptors/interceptor';
-import { HttpError } from './errors/http.error';
+import { HttpError, UnauthorizedError } from './errors/http.error';
+import { CanActivate, ExecutionContext } from './decorators';
 import 'reflect-metadata';
 import logger from './logger';
 import { RequestParser } from './request-parser';
@@ -183,6 +184,35 @@ export class Router {
           url: req.url || '/',
         };
 
+        // Execute guards (class-level + method-level)
+        const classGuards: Type<CanActivate>[] =
+          Reflect.getMetadata('hazel:guards', controllerClass) || [];
+        const methodGuards: Type<CanActivate>[] =
+          Reflect.getMetadata('hazel:guards', controllerClass.prototype, methodName) || [];
+        const allGuards = [...classGuards, ...methodGuards];
+
+        if (allGuards.length > 0) {
+          const executionContext: ExecutionContext = {
+            switchToHttp: () => ({
+              getRequest: () => req,
+              getResponse: () => res,
+            }),
+          };
+
+          for (const guardType of allGuards) {
+            const guard = this.container.resolve(guardType) as CanActivate;
+            const result = await guard.canActivate(executionContext);
+            if (!result) {
+              throw new UnauthorizedError('Unauthorized');
+            }
+          }
+
+          // Propagate user set by guard to context
+          if ((req as Record<string, unknown>).user) {
+            context.user = (req as Record<string, unknown>).user as RequestContext['user'];
+          }
+        }
+
         // Set DTO type from the first parameter that has a DTO type
         for (const injection of injections) {
           if (injection?.dtoType) {
@@ -249,6 +279,15 @@ export class Router {
                 args[i] = queryValue;
               }
             }
+          }
+        }
+
+        // Auto-inject RequestContext for undecorated parameters
+        const paramTypes =
+          Reflect.getMetadata('design:paramtypes', controllerClass.prototype, methodName) || [];
+        for (let i = 0; i < paramTypes.length; i++) {
+          if (args[i] === undefined && !injections[i]) {
+            args[i] = context;
           }
         }
 
