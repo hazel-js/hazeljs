@@ -1,6 +1,6 @@
 {
   "name": "hazeljs-example",
-  "version": "1.0.0",
+  "version": "0.2.0-beta.8",
   "description": "Example application using HazelJS",
   "main": "dist/index.js",
   "scripts": {
