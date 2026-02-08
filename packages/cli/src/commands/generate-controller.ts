@@ -1,5 +1,5 @@
 import { Command } from 'commander';
-import { Generator, GeneratorOptions } from '../utils/generator';
+import { Generator } from '../utils/generator';
 
 const CONTROLLER_TEMPLATE = `import { Controller, Get, Post, Body, Param, Delete, Put } from '@hazeljs/core';
 import { {{className}}Service } from './{{fileName}}.service';

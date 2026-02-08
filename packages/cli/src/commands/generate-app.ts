@@ -38,7 +38,6 @@ function scaffoldPackageBoilerplate(destPath: string, packages: string[]) {
   const imports: string[] = ["import { HazelModule } from '@hazeljs/core';"];
   const moduleImports: string[] = [];
   const controllers: string[] = [];
-  const fileImports: string[] = [];
 
   // Always include the default HelloController
   imports.push("import { HelloController } from './hello.controller';");
