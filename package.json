@@ -1,6 +1,6 @@
 {
   "name": "hazeljs",
-  "version": "0.2.0-beta.8",
+  "version": "0.2.0-beta.12",
   "private": true,
   "description": "HazelJS monorepo - A modern, TypeScript-first Node.js framework",
   "workspaces": [
