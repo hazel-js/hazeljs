@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/ai",
-  "version": "0.2.0-beta.14",
+  "version": "0.2.0-beta.15",
   "description": "AI integration module for HazelJS framework",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
