@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/config",
-  "version": "0.2.0-beta.13",
+  "version": "0.2.0-beta.14",
   "description": "Configuration module for HazelJS framework",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
