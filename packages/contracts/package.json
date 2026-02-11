@@ -1,0 +1,22 @@
+{
+  "name": "@hazeljs/contracts",
+  "version": "0.2.0-beta.17",
+  "description": "Shared event contracts and context types for HazelJS modules",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.50",
+    "typescript": "^5.3.3"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": ["hazeljs", "contracts", "events", "context"],
+  "author": "Muhammad Arslan <marslan@hazeljs.com>",
+  "license": "MIT"
+}

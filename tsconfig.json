@@ -20,6 +20,7 @@
   "exclude": ["node_modules", "dist", "**/dist", "**/node_modules", "packages", "example"],
   "references": [
     { "path": "./packages/core" },
+    { "path": "./packages/contracts" },
     { "path": "./packages/ai" },
     { "path": "./packages/cache" },
     { "path": "./packages/websocket" },
@@ -31,7 +32,8 @@
     { "path": "./packages/cron" },
     { "path": "./packages/cli" },
     { "path": "./packages/rag" },
-    { "path": "./packages/agent" }
+    { "path": "./packages/agent" },
+    { "path": "./packages/riskos" }
   ],
   "exclude": ["node_modules", "dist", "**/dist", "**/node_modules"]
 }

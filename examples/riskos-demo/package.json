@@ -1,0 +1,19 @@
+{
+  "name": "riskos-demo",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "ts-node index.ts",
+    "kyc:full": "ts-node kyc-full-example.ts",
+    "prod": "ts-node production-example.ts",
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@hazeljs/contracts": "file:../../packages/contracts",
+    "@hazeljs/riskos": "file:../../packages/riskos"
+  },
+  "devDependencies": {
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  }
+}
