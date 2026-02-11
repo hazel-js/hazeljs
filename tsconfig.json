@@ -31,7 +31,9 @@
     { "path": "./packages/cron" },
     { "path": "./packages/cli" },
     { "path": "./packages/rag" },
-    { "path": "./packages/agent" }
+    { "path": "./packages/agent" },
+    { "path": "./packages/resilience" },
+    { "path": "./packages/gateway" }
   ],
   "exclude": ["node_modules", "dist", "**/dist", "**/node_modules"]
 }

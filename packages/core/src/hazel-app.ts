@@ -244,10 +244,22 @@ export class HazelApp {
                 });
                 req.on('error', reject);
               });
-            } catch (error) {
+            } catch (error: unknown) {
+              const err = error as NodeJS.ErrnoException;
+              const msg = err?.message ?? (err && typeof (err as Error).message === 'string' ? (err as Error).message : '');
+              const isClientAbort =
+                err?.code === 'ECONNRESET' ||
+                err?.code === 'EPIPE' ||
+                (typeof msg === 'string' && (msg === 'aborted' || msg.includes('aborted')));
+              if (isClientAbort) {
+                logger.debug('Client disconnected while sending request body');
+                return;
+              }
               logger.error('Error parsing request body:', error);
-              res.writeHead(400);
-              res.end(JSON.stringify({ error: 'Invalid request body' }));
+              if (!res.writableEnded) {
+                res.writeHead(400);
+                res.end(JSON.stringify({ error: 'Invalid request body' }));
+              }
               return;
             }
           }

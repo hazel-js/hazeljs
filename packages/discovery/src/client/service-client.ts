@@ -1,6 +1,7 @@
 /**
  * Service Client
- * HTTP client with automatic service discovery and load balancing
+ * HTTP client with automatic service discovery and load balancing.
+ * Uses @hazeljs/resilience RetryPolicy for retry logic.
  */
 
 import { DiscoveryClient } from './discovery-client';
@@ -8,6 +9,7 @@ import { ServiceFilter } from '../types';
 import { LeastConnectionsStrategy } from '../load-balancer/strategies';
 import { DiscoveryLogger } from '../utils/logger';
 import { validateServiceClientConfig } from '../utils/validation';
+import { RetryPolicy } from '@hazeljs/resilience';
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 
 export interface ServiceClientConfig {
@@ -40,8 +42,7 @@ function isRetryableError(error: unknown): boolean {
 
 export class ServiceClient {
   private axiosInstance: AxiosInstance;
-  private retries: number;
-  private retryDelay: number;
+  private retryPolicy: RetryPolicy;
 
   constructor(
     private discoveryClient: DiscoveryClient,
@@ -49,11 +50,24 @@ export class ServiceClient {
   ) {
     validateServiceClientConfig(config);
 
-    this.retries = config.retries ?? 3;
-    this.retryDelay = config.retryDelay ?? 1000;
-
     this.axiosInstance = axios.create({
       timeout: config.timeout || 5000,
+    });
+
+    // Delegate retry logic to @hazeljs/resilience RetryPolicy
+    const logger = DiscoveryLogger.getLogger();
+    this.retryPolicy = new RetryPolicy({
+      maxAttempts: config.retries ?? 3,
+      backoff: 'fixed',
+      baseDelay: config.retryDelay ?? 1000,
+      jitter: false,
+      retryPredicate: isRetryableError,
+      onRetry: (error, attempt) => {
+        logger.warn(
+          `Request to ${config.serviceName} failed (attempt ${attempt}/${config.retries ?? 3})`,
+          error
+        );
+      },
     });
   }
 
@@ -105,14 +119,11 @@ export class ServiceClient {
   }
 
   /**
-   * Generic request with service discovery
+   * Generic request with service discovery and resilience-backed retry
    */
   private async request<T = unknown>(config: AxiosRequestConfig): Promise<AxiosResponse<T>> {
-    const logger = DiscoveryLogger.getLogger();
-    let lastError: Error | null = null;
-
-    for (let attempt = 0; attempt < this.retries; attempt++) {
-      // Discover service instance
+    return this.retryPolicy.execute(async () => {
+      // Discover service instance on each attempt (may pick a different one)
       const instance = await this.discoveryClient.getInstance(
         this.config.serviceName,
         this.config.loadBalancingStrategy,
@@ -144,37 +155,11 @@ export class ServiceClient {
         // Make request
         const response = await this.axiosInstance.request<T>(fullConfig);
         return response;
-      } catch (error) {
-        lastError = error as Error;
-
-        logger.warn(
-          `Request to ${this.config.serviceName} failed (attempt ${attempt + 1}/${this.retries})`,
-          error
-        );
-
-        // Only retry on transient / network errors
-        if (!isRetryableError(error)) {
-          throw error;
-        }
-
-        // Wait before retry (skip delay on last attempt since we'll throw)
-        if (attempt < this.retries - 1) {
-          await this.sleep(this.retryDelay);
-        }
       } finally {
         if (isLeastConn) {
           (lbStrategy as LeastConnectionsStrategy).decrementConnections(instance.id);
         }
       }
-    }
-
-    throw lastError || new Error('Request failed after all retries');
-  }
-
-  /**
-   * Sleep utility
-   */
-  private sleep(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
+    });
   }
 }

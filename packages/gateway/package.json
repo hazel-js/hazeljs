@@ -1,7 +1,7 @@
 {
-  "name": "@hazeljs/discovery",
+  "name": "@hazeljs/gateway",
   "version": "0.2.0-beta.16",
-  "description": "Service discovery and registry for HazelJS microservices - Eureka-inspired with multiple backend support",
+  "description": "Intelligent API Gateway for HazelJS - Version routing, canary deployments, circuit breaking, and traffic management",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "@hazeljs/core": "file:../core",
+    "@hazeljs/discovery": "file:../discovery",
     "@hazeljs/resilience": "file:../resilience",
     "reflect-metadata": "^0.2.2",
     "axios": "^1.6.0"
@@ -37,18 +38,10 @@
     "typescript": "^5.3.3"
   },
   "peerDependencies": {
-    "ioredis": "^5.3.0",
-    "consul": "^1.2.0",
-    "@kubernetes/client-node": "^0.20.0"
+    "@hazeljs/config": "*"
   },
   "peerDependenciesMeta": {
-    "ioredis": {
-      "optional": true
-    },
-    "consul": {
-      "optional": true
-    },
-    "@kubernetes/client-node": {
+    "@hazeljs/config": {
       "optional": true
     }
   },
@@ -58,17 +51,18 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/hazel-js/hazeljs.git",
-    "directory": "packages/discovery"
+    "directory": "packages/gateway"
   },
   "keywords": [
     "hazeljs",
-    "microservices",
-    "service-discovery",
-    "service-registry",
-    "load-balancing",
-    "eureka",
-    "consul",
-    "kubernetes"
+    "api-gateway",
+    "gateway",
+    "routing",
+    "canary",
+    "circuit-breaker",
+    "traffic-management",
+    "version-routing",
+    "microservices"
   ],
   "author": "Muhammad Arslan <marslan@hazeljs.com>",
   "license": "MIT",

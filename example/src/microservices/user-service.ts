@@ -86,11 +86,11 @@ async function startUserService() {
     {
       name: 'user-service',
       port,
-      host: 'localhost',
+      host: process.env.SERVICE_HOST || '127.0.0.1',
       healthCheckPath: '/health',
       healthCheckInterval: 30000,
       metadata: {
-        version: '1.0.0',
+        version: process.env.USER_SERVICE_VERSION || 'v1',
         environment: process.env.NODE_ENV || 'development',
       },
       zone,
