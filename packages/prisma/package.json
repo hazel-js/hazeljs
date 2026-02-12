@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/prisma",
-  "version": "0.2.0-beta.17",
+  "version": "0.2.0-beta.18",
   "description": "Prisma ORM integration for HazelJS framework",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -43,5 +43,9 @@
     "database"
   ],
   "author": "Muhammad Arslan <marslan@hazeljs.com>",
-  "license": "MIT"
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/hazeljs/hazel-js/issues"
+  },
+  "homepage": "https://hazeljs.com"
 }

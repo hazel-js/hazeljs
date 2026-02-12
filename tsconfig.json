@@ -30,6 +30,7 @@
     { "path": "./packages/auth" },
     { "path": "./packages/config" },
     { "path": "./packages/cron" },
+    { "path": "./packages/kafka" },
     { "path": "./packages/cli" },
     { "path": "./packages/rag" },
     { "path": "./packages/agent" },

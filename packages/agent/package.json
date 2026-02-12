@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/agent",
-  "version": "0.2.0-beta.17",
+  "version": "0.2.0-beta.18",
   "description": "AI-native Agent Runtime for HazelJS - stateful, long-running agents with tools, memory, and human-in-the-loop",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -22,7 +22,7 @@
     "memory",
     "human-in-the-loop"
   ],
-  "author": "HazelJS Team",
+  "author": "Muhammad Arslan <marslan@hazeljs.com>",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -54,5 +54,9 @@
       "optional": true,
       "description": "Required for DatabaseStateManager"
     }
-  }
+  },
+  "bugs": {
+    "url": "https://github.com/hazeljs/hazel-js/issues"
+  },
+  "homepage": "https://hazeljs.com"
 }
