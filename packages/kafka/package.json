@@ -1,10 +1,12 @@
 {
   "name": "@hazeljs/kafka",
-  "version": "0.2.0-beta.17",
+  "version": "0.2.0-beta.18",
   "description": "Kafka module for HazelJS framework - produce, consume, and stream processing",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc",
     "test": "jest --coverage",
@@ -33,7 +35,13 @@
     "url": "git+https://github.com/hazel-js/hazeljs.git",
     "directory": "packages/kafka"
   },
-  "keywords": ["hazeljs", "kafka", "message-queue", "stream-processing", "kafkajs"],
+  "keywords": [
+    "hazeljs",
+    "kafka",
+    "message-queue",
+    "stream-processing",
+    "kafkajs"
+  ],
   "author": "Muhammad Arslan <marslan@hazeljs.com>",
   "license": "MIT",
   "bugs": {
