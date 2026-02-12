@@ -43,5 +43,9 @@
     "database"
   ],
   "author": "Muhammad Arslan <marslan@hazeljs.com>",
-  "license": "MIT"
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/hazeljs/hazel-js/issues"
+  },
+  "homepage": "https://hazeljs.com"
 }

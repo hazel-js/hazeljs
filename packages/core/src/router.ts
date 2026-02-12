@@ -451,7 +451,7 @@ export class Router {
   }
 
   async match(method: string, url: string, context: RequestContext): Promise<RouteMatch | null> {
-    const path = url.split('?')[0];
+    const path = this.normalizePath(url.split('?')[0] || '/');
     logger.debug(`Matching route: ${method} ${path}`);
 
     // Use method-specific cache for O(1) method lookup instead of O(n)

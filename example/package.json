@@ -21,7 +21,9 @@
     "rag:simple": "ts-node src/rag/simple-rag-example.ts",
     "memory:basic": "ts-node src/memory/basic-memory-example.ts",
     "memory:rag": "ts-node src/memory/rag-with-memory-example.ts",
-    "memory:chatbot": "ts-node src/memory/chatbot-with-memory-example.ts"
+    "memory:chatbot": "ts-node src/memory/chatbot-with-memory-example.ts",
+    "kafka": "PORT=3010 ts-node src/kafka/index.ts",
+    "kafka:streams": "ts-node src/kafka/stream-only.example.ts"
   },
   "dependencies": {
     "@hazeljs/core": "file:../packages/core",
@@ -45,7 +47,8 @@
     "jsonwebtoken": "^9.0.2",
     "reflect-metadata": "^0.2.1",
     "swagger-ui-express": "^5.0.0",
-    "winston": "^3.12.0"
+    "winston": "^3.12.0",
+    "@hazeljs/kafka": "file:../packages/kafka"
   },
   "devDependencies": {
     "@types/axios": "^0.9.36",

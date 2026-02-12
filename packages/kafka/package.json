@@ -1,26 +1,23 @@
 {
-  "name": "@hazeljs/cron",
+  "name": "@hazeljs/kafka",
   "version": "0.2.0-beta.17",
-  "description": "Cron job scheduling module for HazelJS framework",
+  "description": "Kafka module for HazelJS framework - produce, consume, and stream processing",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "files": [
-    "dist"
-  ],
+  "files": ["dist"],
   "scripts": {
     "build": "tsc",
-    "test": "jest --coverage --passWithNoTests",
+    "test": "jest --coverage",
     "lint": "eslint \"src/**/*.ts\"",
     "lint:fix": "eslint \"src/**/*.ts\" --fix",
     "clean": "rm -rf dist"
   },
   "dependencies": {
     "@hazeljs/core": "file:../core",
-    "node-cron": "^3.0.3"
+    "kafkajs": "^2.2.4"
   },
   "devDependencies": {
     "@types/node": "^20.17.50",
-    "@types/node-cron": "^3.0.11",
     "@typescript-eslint/eslint-plugin": "^8.18.2",
     "@typescript-eslint/parser": "^8.18.2",
     "eslint": "^8.56.0",
@@ -34,14 +31,9 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/hazel-js/hazeljs.git",
-    "directory": "packages/cron"
+    "directory": "packages/kafka"
   },
-  "keywords": [
-    "hazeljs",
-    "cron",
-    "scheduler",
-    "jobs"
-  ],
+  "keywords": ["hazeljs", "kafka", "message-queue", "stream-processing", "kafkajs"],
   "author": "Muhammad Arslan <marslan@hazeljs.com>",
   "license": "MIT",
   "bugs": {

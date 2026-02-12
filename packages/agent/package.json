@@ -22,7 +22,7 @@
     "memory",
     "human-in-the-loop"
   ],
-  "author": "HazelJS Team",
+  "author": "Muhammad Arslan <marslan@hazeljs.com>",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -54,5 +54,9 @@
       "optional": true,
       "description": "Required for DatabaseStateManager"
     }
-  }
+  },
+  "bugs": {
+    "url": "https://github.com/hazeljs/hazel-js/issues"
+  },
+  "homepage": "https://hazeljs.com"
 }
