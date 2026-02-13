@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/serverless",
-  "version": "0.2.0-beta.21",
+  "version": "0.2.0-beta.22",
   "description": "Serverless adapters (AWS Lambda, Google Cloud Functions) for HazelJS framework",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
