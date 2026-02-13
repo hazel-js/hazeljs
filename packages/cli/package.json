@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/cli",
-  "version": "0.2.0-beta.19",
+  "version": "0.2.0-beta.20",
   "description": "Command-line interface for scaffolding and generating HazelJS applications and components",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
