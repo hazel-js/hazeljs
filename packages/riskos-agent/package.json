@@ -1,0 +1,35 @@
+{
+  "name": "@hazeljs/riskos-agent",
+  "version": "0.2.0-beta.1",
+  "description": "RiskOS Investigator Agent - AI-powered compliance investigator using @hazeljs/agent + @hazeljs/ai + @hazeljs/riskos",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@hazeljs/agent": "file:../agent",
+    "@hazeljs/ai": "file:../ai",
+    "@hazeljs/core": "file:../core",
+    "@hazeljs/rag": "file:../rag",
+    "@hazeljs/riskos": "file:../riskos"
+  },
+  "peerDependencies": {
+    "@hazeljs/agent": ">=0.2.0",
+    "@hazeljs/ai": ">=0.2.0",
+    "@hazeljs/riskos": ">=0.2.0"
+  },
+  "keywords": [
+    "hazeljs",
+    "riskos",
+    "agent",
+    "investigator",
+    "kyc",
+    "aml",
+    "compliance"
+  ],
+  "author": "Muhammad Arslan <marslan@hazeljs.com>",
+  "license": "MIT"
+}

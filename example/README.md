@@ -196,6 +196,7 @@ example/
   │   ├── user/               # User module
   │   ├── auth/               # Authentication module
   │   ├── rag/                # RAG (Retrieval-Augmented Generation) examples
+  │   ├── riskos/             # RiskOS KYC/KYB/PSP compliance examples
   │   ├── ai/                 # AI integration examples
   │   ├── microservices/      # Microservices examples
   │   ├── serverless/         # Serverless examples
@@ -316,6 +317,22 @@ export class DocumentController {
 - Multiple embedding models support
 
 See `src/rag/` for complete examples.
+
+### RiskOS Compliance
+
+KYC, KYB, and PSP transaction/chargeback examples:
+
+```bash
+npm run riskos          # Quick demo
+npm run riskos:kyc      # KYC individual onboarding
+npm run riskos:kyb      # KYB merchant onboarding
+npm run riskos:investigator   # AI investigator
+npm run riskos:chat     # Interactive KYC + investigator
+npm run riskos:psp:transaction  # Transaction risk scoring
+npm run riskos:psp:chargeback   # Chargeback investigation
+```
+
+See `src/riskos/` for complete examples.
 
 ### AI Integration
 

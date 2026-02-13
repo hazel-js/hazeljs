@@ -3,9 +3,9 @@
  * Demonstrates a complete agent with tools, memory, and approval workflow
  */
 
-import { Agent, Tool, AgentRuntime, AgentEventType } from '@hazeljs/agent';
+import { Agent, Tool, AgentRuntime, AgentEventType, createLLMProviderFromAI } from '@hazeljs/agent';
 import { MemoryManager, BufferMemory } from '@hazeljs/rag';
-import { OpenAIProvider } from '@hazeljs/ai';
+import { AIEnhancedService } from '@hazeljs/ai';
 
 class OrderService {
   async findById(orderId: string) {
@@ -204,48 +204,15 @@ async function main() {
   const memoryStore = new BufferMemory({ maxSize: 100 });
   const memoryManager = new MemoryManager(memoryStore);
   
-  // Initialize OpenAI provider
-  const openaiProvider = new OpenAIProvider(process.env.OPENAI_API_KEY, {
-    defaultModel: 'gpt-4-turbo-preview'
+  // Initialize AI service and create LLM provider adapter for agent runtime
+  const aiService = new AIEnhancedService();
+  const llmProvider = createLLMProviderFromAI(aiService, {
+    model: 'gpt-4-turbo-preview',
   });
-
-  // Create adapter for agent runtime
-  const llmAdapter = {
-    async chat(options: any) {
-      // Map tools to OpenAI function format
-      const functions = options.tools?.map((tool: any) => {
-        // Handle both formats: tool.function or tool directly
-        const toolDef = tool.function || tool;
-        return {
-          name: toolDef.name,
-          description: toolDef.description,
-          parameters: toolDef.parameters,
-        };
-      });
-
-      const response = await openaiProvider.complete({
-        messages: options.messages,
-        temperature: 0.7,
-        functions: functions && functions.length > 0 ? functions : undefined,
-      });
-
-      return {
-        content: response.content,
-        tool_calls: response.functionCall ? [{
-          id: response.id,
-          type: 'function' as const,
-          function: {
-            name: response.functionCall.name,
-            arguments: response.functionCall.arguments,
-          },
-        }] : [],
-      };
-    },
-  };
 
   const runtime = new AgentRuntime({
     memoryManager,
-    llmProvider: llmAdapter,
+    llmProvider,
     defaultMaxSteps: 15,
     enableObservability: true,
   });
