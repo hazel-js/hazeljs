@@ -30,8 +30,6 @@
     "directory": "packages/agent"
   },
   "dependencies": {
-    "@hazeljs/core": "file:../core",
-    "@hazeljs/rag": "file:../rag",
     "reflect-metadata": "^0.2.1"
   },
   "devDependencies": {
@@ -42,7 +40,7 @@
     "typescript": "^5.3.3"
   },
   "peerDependencies": {
-    "@hazeljs/core": ">=0.2.0",
+    "@hazeljs/core": ">=0.2.0-beta.0",
     "@hazeljs/rag": ">=0.1.0"
   },
   "peerDependenciesMeta": {

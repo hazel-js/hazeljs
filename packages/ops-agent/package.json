@@ -1,0 +1,50 @@
+{
+  "name": "@hazeljs/ops-agent",
+  "version": "0.2.0-beta.1",
+  "description": "Ops agent for Jira, Slack, and DevOps workflows - AI-powered incident triage and team coordination",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
+    "test": "jest --coverage --passWithNoTests",
+    "test:watch": "jest --watch"
+  },
+  "keywords": [
+    "hazeljs",
+    "ops",
+    "agent",
+    "jira",
+    "slack",
+    "devops",
+    "incident",
+    "sre"
+  ],
+  "author": "Muhammad Arslan <marslan@hazeljs.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/hazeljs/hazel-js/issues"
+  },
+  "homepage": "https://hazeljs.com",
+  "dependencies": {
+    "reflect-metadata": "^0.2.1"
+  },
+  "peerDependencies": {
+    "@hazeljs/agent": ">=0.2.0-beta.0",
+    "@hazeljs/ai": ">=0.2.0-beta.0",
+    "@hazeljs/rag": ">=0.1.0",
+    "@hazeljs/core": ">=0.2.0-beta.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.11",
+    "@types/node": "^20.17.50",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.2",
+    "typescript": "^5.3.3"
+  }
+}

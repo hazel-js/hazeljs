@@ -14,9 +14,7 @@
     "lint:fix": "eslint \"src/**/*.ts\" --fix",
     "clean": "rm -rf dist"
   },
-  "dependencies": {
-    "@hazeljs/core": "file:../core"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@types/aws-lambda": "^8.10.145",
     "@types/node": "^20.17.50",
@@ -47,5 +45,8 @@
   "bugs": {
     "url": "https://github.com/hazeljs/hazel-js/issues"
   },
-  "homepage": "https://hazeljs.com"
+  "homepage": "https://hazeljs.com",
+  "peerDependencies": {
+    "@hazeljs/core": ">=0.2.0-beta.0"
+  }
 }

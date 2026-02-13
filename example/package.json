@@ -23,7 +23,8 @@
     "memory:rag": "ts-node src/memory/rag-with-memory-example.ts",
     "memory:chatbot": "ts-node src/memory/chatbot-with-memory-example.ts",
     "kafka": "PORT=3010 ts-node src/kafka/index.ts",
-    "kafka:streams": "ts-node src/kafka/stream-only.example.ts"
+    "kafka:streams": "ts-node src/kafka/stream-only.example.ts",
+    "ops:agent": "ts-node src/ops/ops-agent-example.ts"
   },
   "dependencies": {
     "@hazeljs/core": "file:../packages/core",
@@ -38,6 +39,7 @@
     "@hazeljs/websocket": "file:../packages/websocket",
     "@hazeljs/discovery": "file:../packages/discovery",
     "@hazeljs/rag": "file:../packages/rag",
+    "@hazeljs/ops-agent": "file:../packages/ops-agent",
     "@prisma/client": "^6.8.2",
     "bcryptjs": "^2.4.3",
     "class-transformer": "^0.5.1",
