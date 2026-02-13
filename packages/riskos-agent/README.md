@@ -97,12 +97,36 @@ const kycStore = new PgKycStore({ pool });
 const auditSink = new PgAuditSink({ pool });
 ```
 
+## Agent Memory
+
+The investigator agent has **memory enabled by default**. When you call `createInvestigatorRuntime` without a `memoryManager`, it uses an in-memory `BufferMemory` so the agent retains conversation history, entities, and context across turns within a session.
+
+For production, pass a custom `MemoryManager` (e.g. with `HybridMemory` from `@hazeljs/rag` for persistent, vector-backed memory):
+
+```ts
+import { MemoryManager, BufferMemory, HybridMemory } from '@hazeljs/rag';
+
+// Development: in-memory (default when omitted)
+const memoryManager = new MemoryManager(new BufferMemory({ maxSize: 50 }));
+
+// Production: persistent with vector store
+// const memoryManager = new MemoryManager(new HybridMemory(buffer, vectorStore));
+
+const runtime = createInvestigatorRuntime({
+  aiService: new AIEnhancedService(),
+  tools: { /* ... */ },
+  memoryManager,
+});
+```
+
+Use the same `sessionId` in `runInvestigator` to maintain context across multiple questions in the same investigation.
+
 ## Integration with AI, Agent, and RAG
 
 ```
 @hazeljs/ai          → LLM providers (OpenAI, Anthropic, etc.)
        ↓
-@hazeljs/rag         → Memory, RAG pipeline (optional)
+@hazeljs/rag         → Memory (BufferMemory, HybridMemory), RAG pipeline (optional)
        ↓
 @hazeljs/agent       → Agent runtime, tools, execution loop
        ↓

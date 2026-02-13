@@ -25,7 +25,7 @@ const DEFAULT_RETRY = { maxAttempts: 3, backoffMs: 1000 };
 
 /** Sleep for backoff */
 function sleep(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /** Build full URL from base + path + query */
@@ -41,13 +41,13 @@ function buildUrl(baseUrl: string, path: string, query?: Record<string, string>)
 export class FetchHttpProvider implements HttpProvider {
   constructor(
     public name: string,
-    private options: FetchHttpProviderOptions,
+    private options: FetchHttpProviderOptions
   ) {}
 
   async call(
     operation: HttpOperation,
     state: Record<string, unknown>,
-    resolveSecret?: SecretResolver,
+    resolveSecret?: SecretResolver
   ): Promise<unknown> {
     const timeoutMs = this.options.timeoutMs ?? DEFAULT_TIMEOUT;
 
@@ -61,7 +61,8 @@ export class FetchHttpProvider implements HttpProvider {
 
     if (this.options.apiKeyHeader && this.options.apiKeyEnvVar && resolveSecret) {
       const key = resolveSecret(this.options.apiKeyEnvVar);
-      if (key) headers[this.options.apiKeyHeader] = key.startsWith('Bearer ') ? key : `Bearer ${key}`;
+      if (key)
+        headers[this.options.apiKeyHeader] = key.startsWith('Bearer ') ? key : `Bearer ${key}`;
     }
 
     const controller = new AbortController();
@@ -85,7 +86,7 @@ export class FetchHttpProvider implements HttpProvider {
           throw new ProviderError(
             `Provider ${this.name} returned ${res.status}: ${text.slice(0, 200)}`,
             this.name,
-            res.status,
+            res.status
           );
         }
 
@@ -102,7 +103,7 @@ export class FetchHttpProvider implements HttpProvider {
         } else {
           throw new ProviderError(
             `Provider ${this.name} failed after ${retry.maxAttempts} attempts: ${lastError.message}`,
-            this.name,
+            this.name
           );
         }
       }

@@ -22,16 +22,14 @@ export class MemoryAuditSink implements AuditSink {
     let filtered = [...this.traces];
 
     if (criteria.requestId) {
-      filtered = filtered.filter(t => t.requestId === criteria.requestId);
+      filtered = filtered.filter((t) => t.requestId === criteria.requestId);
     }
     if (criteria.tenantId) {
-      filtered = filtered.filter(t => t.tenantId === criteria.tenantId);
+      filtered = filtered.filter((t) => t.tenantId === criteria.tenantId);
     }
     if (criteria.timeRange) {
       const { start, end } = criteria.timeRange;
-      filtered = filtered.filter(
-        t => t.tsStart >= start && t.tsEnd <= end,
-      );
+      filtered = filtered.filter((t) => t.tsStart >= start && t.tsEnd <= end);
     }
 
     const id = `ev-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;

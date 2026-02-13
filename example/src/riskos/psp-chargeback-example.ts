@@ -2,7 +2,7 @@
  * PSP Chargeback / Dispute Investigation Example
  * Investigator + evidence pack + transaction timeline for disputed transactions
  *
- * Run: npm run psp:chargeback
+ * Run: npm run riskos:psp:chargeback
  * Requires: OPENAI_API_KEY
  */
 

@@ -7,7 +7,7 @@ export interface EvidenceTool {
 }
 
 export class MemoryEvidenceTool implements EvidenceTool {
-  async getEvidence(requestId: string, _tenantId?: string): Promise<{ traces: unknown[] }> {
+  async getEvidence(_requestId: string, _tenantId?: string): Promise<{ traces: unknown[] }> {
     return { traces: [] };
   }
 }

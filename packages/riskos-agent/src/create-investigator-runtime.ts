@@ -1,18 +1,23 @@
 /**
  * Factory to create a fully configured Investigator Agent runtime.
- * Wires together @hazeljs/ai, @hazeljs/agent, and @hazeljs/riskos.
+ * Wires together @hazeljs/ai, @hazeljs/agent, @hazeljs/rag, and @hazeljs/riskos.
  */
 
 import {
   AgentRuntime,
   createLLMProviderFromAI,
 } from '@hazeljs/agent';
+import { MemoryManager, BufferMemory } from '@hazeljs/rag';
 import { InvestigatorAgent } from './investigator-agent';
 import type { CreateInvestigatorRuntimeOptions } from './types';
 
 /**
  * Create an AgentRuntime configured with the Investigator Agent.
  * Use this when you want the full AI-powered investigator with RiskOS tools.
+ *
+ * Memory: If `memoryManager` is not provided, uses an in-memory BufferMemory by default
+ * so the agent retains conversation history across turns. Pass a custom MemoryManager
+ * (e.g. with HybridMemory for production) for persistent memory.
  */
 export function createInvestigatorRuntime(options: CreateInvestigatorRuntimeOptions): AgentRuntime {
   const llmProvider = createLLMProviderFromAI(options.aiService, {
@@ -21,9 +26,18 @@ export function createInvestigatorRuntime(options: CreateInvestigatorRuntimeOpti
 
   const agent = new InvestigatorAgent(options.tools);
 
+  // Default in-memory memory when none provided (conversation history, entities, context)
+  const memoryManager =
+    options.memoryManager ??
+    new MemoryManager(new BufferMemory({ maxSize: 50 }), {
+      maxConversationLength: 20,
+      entityExtraction: true,
+      importanceScoring: true,
+    });
+
   const runtime = new AgentRuntime({
     llmProvider,
-    memoryManager: options.memoryManager as never,
+    memoryManager: memoryManager as never,
     ragService: options.ragService as never,
     defaultMaxSteps: 15,
     enableObservability: true,

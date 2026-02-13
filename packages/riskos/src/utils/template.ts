@@ -19,13 +19,10 @@ export function resolveTemplate(template: string, state: Record<string, unknown>
 /**
  * Resolve templates in object recursively (for body, nested config)
  */
-export function resolveTemplateDeep(
-  obj: unknown,
-  state: Record<string, unknown>,
-): unknown {
+export function resolveTemplateDeep(obj: unknown, state: Record<string, unknown>): unknown {
   if (obj === null || obj === undefined) return obj;
   if (typeof obj === 'string') return resolveTemplate(obj, state);
-  if (Array.isArray(obj)) return obj.map(item => resolveTemplateDeep(item, state));
+  if (Array.isArray(obj)) return obj.map((item) => resolveTemplateDeep(item, state));
   if (typeof obj === 'object') {
     const out: Record<string, unknown> = {};
     for (const [k, v] of Object.entries(obj)) {

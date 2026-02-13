@@ -2,8 +2,6 @@
  * Minimal JSONPath get/set - supports $.a.b[0] style paths
  */
 
-const PATH_RE = /^(\$\.)?([^.\[\]]+)(\.([^.\[\]]+)|\[(\d+)\])*$/;
-
 /**
  * Get value at JSONPath from object. Supports $.a.b[0].c
  */

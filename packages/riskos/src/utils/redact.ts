@@ -16,18 +16,33 @@ export function hashValue(value: string): string {
 }
 
 const DEFAULT_PII_FIELDS = [
-  'email', 'phone', 'ssn', 'taxId', 'password', 'creditCard',
-  'firstName', 'lastName', 'name', 'address', 'street', 'fullName',
-  'idNumber', 'dateOfBirth', 'nationality',
+  'email',
+  'phone',
+  'ssn',
+  'taxId',
+  'password',
+  'creditCard',
+  'firstName',
+  'lastName',
+  'name',
+  'address',
+  'street',
+  'fullName',
+  'idNumber',
+  'dateOfBirth',
+  'nationality',
 ];
 
 function isPiiField(key: string, piiFields: string[]): boolean {
   const keyLower = key.toLowerCase();
-  return piiFields.some(f => keyLower.includes(f.toLowerCase()));
+  return piiFields.some((f) => keyLower.includes(f.toLowerCase()));
 }
 
 /** Redact known PII fields in an object (shallow) */
-export function redactPii(obj: Record<string, unknown>, fields?: string[]): Record<string, unknown> {
+export function redactPii(
+  obj: Record<string, unknown>,
+  fields?: string[]
+): Record<string, unknown> {
   const piiFields = fields ?? DEFAULT_PII_FIELDS;
   const out: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(obj)) {
@@ -45,7 +60,7 @@ export function redactPiiDeep(obj: unknown, fields?: string[]): unknown {
   const piiFields = fields ?? DEFAULT_PII_FIELDS;
   if (obj === null || obj === undefined) return obj;
   if (typeof obj !== 'object') return obj;
-  if (Array.isArray(obj)) return obj.map(item => redactPiiDeep(item, piiFields));
+  if (Array.isArray(obj)) return obj.map((item) => redactPiiDeep(item, piiFields));
   const out: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(obj)) {
     if (isPiiField(k, piiFields)) {

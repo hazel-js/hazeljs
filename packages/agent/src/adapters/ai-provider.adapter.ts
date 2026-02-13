@@ -11,13 +11,7 @@
  *   const runtime = new AgentRuntime({ llmProvider, ... });
  */
 
-import type {
-  LLMProvider,
-  LLMChatRequest,
-  LLMChatResponse,
-  LLMMessage,
-  LLMToolDefinition,
-} from '../types/llm.types';
+import type { LLMProvider, LLMChatRequest, LLMChatResponse } from '../types/llm.types';
 
 /**
  * Minimal interface for AI completion services.

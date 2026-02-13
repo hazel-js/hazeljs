@@ -53,7 +53,7 @@ export class PrismaKycStore implements KycStore {
       JSON.stringify(session.documents),
       JSON.stringify(session.raw),
       JSON.stringify(session.normalized),
-      JSON.stringify(session.checks),
+      JSON.stringify(session.checks)
     );
     return session;
   }
@@ -61,7 +61,7 @@ export class PrismaKycStore implements KycStore {
   async get(id: string): Promise<KycSession | null> {
     const rows = await this.options.prisma.$queryRawUnsafe<Record<string, unknown>[]>(
       `SELECT * FROM ${this.table} WHERE id = $1`,
-      id,
+      id
     );
     const row = rows[0];
     if (!row) return null;
@@ -91,7 +91,7 @@ export class PrismaKycStore implements KycStore {
       JSON.stringify(merged.raw),
       JSON.stringify(merged.normalized),
       JSON.stringify(merged.checks),
-      merged.decision ? JSON.stringify(merged.decision) : null,
+      merged.decision ? JSON.stringify(merged.decision) : null
     );
     return merged;
   }

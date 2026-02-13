@@ -53,7 +53,7 @@ export class PgAuditSink implements AuditSink {
         hash,
         prevHash,
         traceEvent.versions ? JSON.stringify(traceEvent.versions) : null,
-      ],
+      ]
     );
   }
 
@@ -86,7 +86,7 @@ export class PgAuditSink implements AuditSink {
     const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
     const res = await this.options.pool.query(
       `SELECT * FROM ${this.table} ${where} ORDER BY id ASC`,
-      params,
+      params
     );
 
     const traces = res.rows.map(this.rowToTrace.bind(this));
@@ -107,7 +107,7 @@ export class PgAuditSink implements AuditSink {
 
   private async getLastHash(): Promise<string> {
     const res = await this.options.pool.query(
-      `SELECT integrity_hash FROM ${this.table} ORDER BY id DESC LIMIT 1`,
+      `SELECT integrity_hash FROM ${this.table} ORDER BY id DESC LIMIT 1`
     );
     return res.rows[0]?.integrity_hash ?? GENESIS_HASH;
   }

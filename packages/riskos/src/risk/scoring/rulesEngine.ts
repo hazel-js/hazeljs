@@ -3,7 +3,6 @@
  */
 
 import type { RiskLevel } from '@hazeljs/contracts';
-import type { RiskSignal } from './featureTypes';
 
 export interface ConditionExpr {
   path: string;
@@ -78,7 +77,7 @@ function evalCondition(obj: unknown, c: ConditionExpr): boolean {
 /** Evaluate risk ruleset against state */
 export function evaluateRiskRuleset(
   ruleset: RiskRuleset,
-  state: Record<string, unknown>,
+  state: Record<string, unknown>
 ): ScoringOutput {
   const reasons: string[] = [];
 

@@ -2,7 +2,7 @@
  * RiskOS Investigator Agent Demo
  * Full AI-powered investigator using @hazeljs/riskos-agent + @hazeljs/ai
  *
- * Run: npm run investigator
+ * Run: npm run riskos:investigator
  * Requires: OPENAI_API_KEY
  */
 
@@ -50,6 +50,7 @@ async function main() {
   });
 
   // Create investigator runtime with AI + RiskOS tools
+  // Uses in-memory BufferMemory by default for conversation history (agent memory)
   const runtime = createInvestigatorRuntime({
     aiService: new AIEnhancedService(),
     tools: {
@@ -61,16 +62,27 @@ async function main() {
     model: 'gpt-4',
   });
 
-  // Run investigation
-  console.log('🔍 Investigating case...\n');
+  const sessionId = `investigation-case-123-${Date.now()}`;
 
-  const result = await runInvestigator(runtime, {
+  // First question
+  console.log('🔍 Question 1: KYC status...\n');
+  const result1 = await runInvestigator(runtime, {
     caseId: 'case-123',
     question: `What is the KYC status for session ${session.id}? Summarize any available evidence.`,
+    sessionId,
   });
+  console.log('Response:', result1.response);
+  console.log(`\nCompleted in ${result1.steps} steps (${result1.duration}ms)\n`);
 
-  console.log('Response:', result.response);
-  console.log(`\nCompleted in ${result.steps} steps (${result.duration}ms)`);
+  // Second question - agent remembers context from first (same sessionId)
+  console.log('🔍 Question 2: Follow-up (agent uses memory)...\n');
+  const result2 = await runInvestigator(runtime, {
+    caseId: 'case-123',
+    question: 'Based on what you found, what would you recommend for this case?',
+    sessionId,
+  });
+  console.log('Response:', result2.response);
+  console.log(`\nCompleted in ${result2.steps} steps (${result2.duration}ms)`);
 }
 
 main().catch(console.error);

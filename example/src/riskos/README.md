@@ -20,7 +20,7 @@ Full LLM-powered investigator using `@hazeljs/riskos-agent`. Requires `OPENAI_AP
 
 **Full KYC onboarding + investigator.** Type `/start kyc` to begin the 15-question KYC flow, then ask the investigator anything. Streaming AI responses. Commands: `/start kyc`, `/refresh`, `/quit`.
 
-### Full KYC Individual Onboarding (`npm run kyc:full`)
+### Full KYC Individual Onboarding (`npm run riskos:kyc`)
 
 Complete KYC flow with **15 questions**:
 
@@ -35,7 +35,7 @@ Flow: Questions → Validation (JSON Schema) → Sanctions check → Doc verify 
 
 Decision rules: APPROVED when sanctions clear, REVIEW for sanctions match or PEP, REJECTED if doc verification fails.
 
-### KYB Merchant Onboarding (`npm run kyb:full`)
+### KYB Merchant Onboarding (`npm run riskos:kyb`)
 
 Merchant/business onboarding for PSPs with **10 questions**:
 
@@ -47,7 +47,9 @@ Merchant/business onboarding for PSPs with **10 questions**:
 
 Flow: Questions → Validation → Sanctions (business + UBO) → Transform → Decision.
 
-### PSP Transaction Risk (`npm run psp:transaction`)
+**External APIs** — Use `FetchHttpProvider` with real providers: Trulioo, ComplyCube, Onfido, Jumio (KYC/identity); ComplyAdvantage, LSEG World-Check, OFAC-API (sanctions/AML); ARGOS Identity, BlinkID, IDEMIA (document/liveness). See [package docs](https://hazeljs.com/docs/packages/riskos#compatible-external-apis).
+
+### PSP Transaction Risk (`npm run riskos:psp:transaction`)
 
 Real-time transaction risk scoring with approve/review/decline:
 
@@ -55,7 +57,7 @@ Real-time transaction risk scoring with approve/review/decline:
 - **Score rules**: Amount tiers, velocity (1h), card country mismatch, new merchant
 - Output: Score, level (LOW/MEDIUM/HIGH), decision, reasons
 
-### PSP Chargeback Investigation (`npm run psp:chargeback`)
+### PSP Chargeback Investigation (`npm run riskos:psp:chargeback`)
 
 AI-powered dispute investigation. Requires `OPENAI_API_KEY`.
 
@@ -63,16 +65,18 @@ Uses investigator agent + KYC store + evidence pack + transaction timeline to re
 
 ## Run
 
+From the `example` directory (root of this app):
+
 ```bash
 npm install
-npm start            # Quick demo
-npm run kyc:full     # Full KYC individual onboarding
-npm run kyb:full     # KYB merchant onboarding
-npm run investigator # AI investigator (requires OPENAI_API_KEY)
-npm run chat         # Interactive streaming chat
-npm run psp:transaction  # Transaction risk scoring
-npm run psp:chargeback   # Chargeback investigation (requires OPENAI_API_KEY)
-npm run prod         # Production example (requires DATABASE_URL)
+npm run riskos              # Quick demo
+npm run riskos:kyc          # Full KYC individual onboarding
+npm run riskos:kyb          # KYB merchant onboarding
+npm run riskos:investigator # AI investigator (requires OPENAI_API_KEY)
+npm run riskos:chat         # Interactive streaming chat
+npm run riskos:psp:transaction  # Transaction risk scoring
+npm run riskos:psp:chargeback   # Chargeback investigation (requires OPENAI_API_KEY)
+npm run riskos:prod         # Production example (requires DATABASE_URL)
 ```
 
-For `npm run prod`: set `DATABASE_URL`, run migrations from `node_modules/@hazeljs/riskos/sql/migrations/`.
+For `npm run riskos:prod`: set `DATABASE_URL`, run migrations from `node_modules/@hazeljs/riskos/sql/migrations/`.

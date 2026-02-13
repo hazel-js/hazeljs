@@ -59,7 +59,10 @@ export { evaluateRiskRuleset } from './risk/scoring/rulesEngine';
 export type { RiskRuleset, ScoringOutput } from './risk/scoring/rulesEngine';
 
 // Investigator
-export { runInvestigatorAgent, formatResponseWithCitations } from './investigator/agent/investigatorAgent';
+export {
+  runInvestigatorAgent,
+  formatResponseWithCitations,
+} from './investigator/agent/investigatorAgent';
 export type { InvestigatorInput } from './investigator/agent/investigatorAgent';
 export type { InvestigatorResponse } from './investigator/contracts/response';
 

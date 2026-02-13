@@ -12,7 +12,7 @@ export class MemoryEventBus implements EventBus {
     for (const h of this.handlers) {
       try {
         h(event);
-      } catch (_e) {
+      } catch {
         // swallow handler errors
       }
     }
@@ -21,7 +21,7 @@ export class MemoryEventBus implements EventBus {
   subscribe(handler: EventHandler): () => void {
     this.handlers.push(handler);
     return () => {
-      this.handlers = this.handlers.filter(h => h !== handler);
+      this.handlers = this.handlers.filter((h) => h !== handler);
     };
   }
 }

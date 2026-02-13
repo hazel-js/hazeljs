@@ -2,7 +2,7 @@
  * PSP Transaction Risk Scoring Example
  * Real-time approve/review/decline based on amount, velocity, country, MCC
  *
- * Run: npm run psp:transaction
+ * Run: npm run riskos:psp:transaction
  */
 
 import {

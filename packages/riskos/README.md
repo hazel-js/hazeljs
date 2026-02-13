@@ -99,6 +99,11 @@ const auditSink = new PgAuditSink({ pool });
 
 Use `FetchHttpProvider` for sanctions, document verification, etc. Requires Node 18+ (native fetch). Supports retry, timeout, and API key injection via `resolveSecret`.
 
+**Compatible external APIs** (integrate via `FetchHttpProvider`):
+- **KYC / Identity**: Trulioo, ComplyCube, Onfido, Jumio, Youverify, Fourthline
+- **Sanctions / AML**: ComplyAdvantage, LSEG World-Check, OFAC-API
+- **Document / Liveness**: ARGOS Identity, BlinkID (Microblink), IDEMIA
+
 ## AI Investigator (optional)
 
 For a full LLM-powered investigator assistant, use `@hazeljs/riskos-agent`:
@@ -117,8 +122,8 @@ const runtime = createInvestigatorRuntime({
 });
 ```
 
-See `packages/riskos-agent/README.md` and `examples/riskos-demo/investigator-example.ts`.
+See `packages/riskos-agent/README.md` and `example/src/riskos/investigator-example.ts`.
 
 ## Example
 
-See `examples/riskos-demo/` for a full demo.
+See `example/src/riskos/` for a full demo.

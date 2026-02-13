@@ -56,7 +56,7 @@ export class PrismaAuditSink implements AuditSink {
       traceEvent.error ?? null,
       hash,
       prevHash,
-      traceEvent.versions ? JSON.stringify(traceEvent.versions) : null,
+      traceEvent.versions ? JSON.stringify(traceEvent.versions) : null
     );
   }
 
@@ -89,7 +89,7 @@ export class PrismaAuditSink implements AuditSink {
     const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
     const rows = await this.options.prisma.$queryRawUnsafe<Record<string, unknown>[]>(
       `SELECT * FROM ${this.table} ${where} ORDER BY id ASC`,
-      ...params,
+      ...params
     );
 
     const traces = rows.map((row) => this.rowToTrace(row));
@@ -110,7 +110,7 @@ export class PrismaAuditSink implements AuditSink {
 
   private async getLastHash(): Promise<string> {
     const rows = await this.options.prisma.$queryRawUnsafe<{ integrity_hash: string }[]>(
-      `SELECT integrity_hash FROM ${this.table} ORDER BY id DESC LIMIT 1`,
+      `SELECT integrity_hash FROM ${this.table} ORDER BY id DESC LIMIT 1`
     );
     return rows[0]?.integrity_hash ?? GENESIS_HASH;
   }

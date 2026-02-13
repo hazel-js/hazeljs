@@ -11,10 +11,7 @@ export interface DecideStepConfig {
 }
 
 /** Run decide step - produces decision on session */
-export function runDecideStep(
-  session: KycSession,
-  config: DecideStepConfig,
-): KycSession {
+export function runDecideStep(session: KycSession, config: DecideStepConfig): KycSession {
   const state = {
     ...session.answers,
     ...session.normalized,

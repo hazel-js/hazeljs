@@ -5,7 +5,6 @@
 import { randomUUID } from 'crypto';
 import type { HazelContext, HazelEvent, HazelActor } from '@hazeljs/contracts';
 import { NoopBus } from '../bus/noopBus';
-import { MemoryEventBus } from '../bus/memoryBus';
 import type { AuditSink } from '../audit/sink';
 import { computeTraceHash } from '../audit/integrity/hashChain';
 import { nowISO, nowMs } from '../utils/time';
@@ -40,13 +39,14 @@ export class RiskOSRuntime {
 
   /** Create request context */
   createContext(base?: CreateContextOptions | HazelContext): HazelContext {
-    const requestId = (base && 'requestId' in base)
-      ? (base as HazelContext).requestId
-      : `req-${randomUUID()}`;
-    const tenantId = (base && 'tenantId' in base) ? (base as { tenantId?: string }).tenantId : undefined;
-    const actor = (base && 'actor' in base) ? (base as { actor?: HazelActor }).actor : undefined;
-    const purpose = (base && 'purpose' in base) ? (base as { purpose?: string }).purpose : undefined;
-    const baseTags = (base && 'tags' in base) ? (base as { tags?: Record<string, unknown> }).tags : undefined;
+    const requestId =
+      base && 'requestId' in base ? (base as HazelContext).requestId : `req-${randomUUID()}`;
+    const tenantId =
+      base && 'tenantId' in base ? (base as { tenantId?: string }).tenantId : undefined;
+    const actor = base && 'actor' in base ? (base as { actor?: HazelActor }).actor : undefined;
+    const purpose = base && 'purpose' in base ? (base as { purpose?: string }).purpose : undefined;
+    const baseTags =
+      base && 'tags' in base ? (base as { tags?: Record<string, unknown> }).tags : undefined;
     const tags = baseTags ?? {};
 
     const ctx: HazelContext = {
@@ -74,7 +74,7 @@ export class RiskOSRuntime {
   async run<T>(
     actionName: string,
     ctxBase: CreateContextOptions | HazelContext,
-    fn: (ctx: HazelContext) => Promise<T> | T,
+    fn: (ctx: HazelContext) => Promise<T> | T
   ): Promise<T> {
     const ctx = this.createContext(ctxBase);
     const tsStart = nowISO();
@@ -83,10 +83,8 @@ export class RiskOSRuntime {
     const aiCallEvents: HazelEvent[] = [];
     const decisionEvents: HazelEvent[] = [];
     const policyResults: ComplianceTrace['policyResults'] = [];
-    let lastEvent: HazelEvent | undefined;
 
-    const wrappedEmit = (event: HazelEvent) => {
-      lastEvent = event;
+    const wrappedEmit = (event: HazelEvent): void => {
       if (event.type === 'dataAccess') dataAccessEvents.push(event);
       if (event.type === 'aiCall') aiCallEvents.push(event);
       if (event.type === 'decision') decisionEvents.push(event);
@@ -145,9 +143,14 @@ export class RiskOSRuntime {
             hash: '',
             prevHash: this.lastHash,
           },
-          versions: this.appVersion || this.configHash || this.policyVersion
-            ? { appVersion: this.appVersion, configHash: this.configHash, policyVersion: this.policyVersion }
-            : undefined,
+          versions:
+            this.appVersion || this.configHash || this.policyVersion
+              ? {
+                  appVersion: this.appVersion,
+                  configHash: this.configHash,
+                  policyVersion: this.policyVersion,
+                }
+              : undefined,
         };
         trace.integrity.hash = computeTraceHash(trace, this.lastHash);
         this.lastHash = trace.integrity.hash;
@@ -168,7 +171,7 @@ export class RiskOSRuntime {
   }
 
   /** Get bus */
-  getBus() {
+  getBus(): EventBus {
     return this.bus;
   }
 }
@@ -183,7 +186,7 @@ export function riskosPlugin(config: RiskOSConfig): RiskOSPlugin {
   const runtime = createRiskOS(config);
   return {
     name: '@hazeljs/riskos',
-    install(app: { use?: (plugin: RiskOSPlugin) => void }) {
+    install(app: { use?: (plugin: RiskOSPlugin) => void }): void {
       if (typeof (app as Record<string, unknown>).riskos === 'function') {
         (app as { riskos: (r: RiskOSRuntime) => void }).riskos(runtime);
       }

@@ -6,7 +6,7 @@
 export class RiskOSError extends Error {
   constructor(
     message: string,
-    public readonly code?: string,
+    public readonly code?: string
   ) {
     super(message);
     this.name = 'RiskOSError';
@@ -18,7 +18,7 @@ export class RiskOSError extends Error {
 export class PolicyDeniedError extends RiskOSError {
   constructor(
     message: string,
-    public readonly policyName?: string,
+    public readonly policyName?: string
   ) {
     super(message, 'POLICY_DENIED');
     this.name = 'PolicyDeniedError';
@@ -30,7 +30,7 @@ export class PolicyDeniedError extends RiskOSError {
 export class KycValidationError extends RiskOSError {
   constructor(
     message: string,
-    public readonly errors?: unknown[],
+    public readonly errors?: unknown[]
   ) {
     super(message, 'KYC_VALIDATION');
     this.name = 'KycValidationError';
@@ -43,7 +43,7 @@ export class ProviderError extends RiskOSError {
   constructor(
     message: string,
     public readonly providerName?: string,
-    public readonly statusCode?: number,
+    public readonly statusCode?: number
   ) {
     super(message, 'PROVIDER_ERROR');
     this.name = 'ProviderError';

@@ -6,7 +6,9 @@ import type { Policy, PolicyContext, PolicyResult } from '../policyEngine';
 import type { HazelEvent } from '@hazeljs/contracts';
 
 function getEventTenantId(event: HazelEvent): string | undefined {
-  const payload = (event as unknown as Record<string, unknown>).payload as Record<string, unknown> | undefined;
+  const payload = (event as unknown as Record<string, unknown>).payload as
+    | Record<string, unknown>
+    | undefined;
   if (payload?.tenantId) return String(payload.tenantId);
   const da = event as { dataset?: string; tenantId?: string };
   if ('tenantId' in da) return da.tenantId;

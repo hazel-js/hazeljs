@@ -15,13 +15,13 @@ export interface MockHttpProviderOptions {
 export class MockHttpProvider implements HttpProvider {
   constructor(
     public name: string,
-    private options: MockHttpProviderOptions = {},
+    private options: MockHttpProviderOptions = {}
   ) {}
 
   async call(
     operation: HttpOperation,
     _state: Record<string, unknown>,
-    _resolveSecret?: (key: string) => string | undefined,
+    _resolveSecret?: (key: string) => string | undefined
   ): Promise<unknown> {
     if (this.options.pathResponses?.[operation.path]) {
       return this.options.pathResponses[operation.path];

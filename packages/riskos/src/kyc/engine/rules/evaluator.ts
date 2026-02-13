@@ -12,7 +12,7 @@ export interface EvaluatorResult {
 /** Evaluate ruleset against session state */
 export function evaluateRuleset(
   ruleset: DecisionRuleset,
-  state: Record<string, unknown>,
+  state: Record<string, unknown>
 ): EvaluatorResult {
   const reasons: string[] = [];
   for (const rule of ruleset.rules) {

@@ -22,10 +22,7 @@ export interface CheckResult {
 }
 
 /** Run verify step - produces check result */
-export function runVerifyStep(
-  session: KycSession,
-  config: VerifyStepConfig,
-): KycSession {
+export function runVerifyStep(session: KycSession, config: VerifyStepConfig): KycSession {
   const result = get(session.raw, config.resultPath) as Record<string, unknown> | undefined;
   const checks = { ...session.checks };
   let checkResult: CheckResult = { ok: false };

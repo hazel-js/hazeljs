@@ -50,16 +50,13 @@ export class PgKycStore implements KycStore {
         JSON.stringify(session.raw),
         JSON.stringify(session.normalized),
         JSON.stringify(session.checks),
-      ],
+      ]
     );
     return session;
   }
 
   async get(id: string): Promise<KycSession | null> {
-    const res = await this.options.pool.query(
-      `SELECT * FROM ${this.table} WHERE id = $1`,
-      [id],
-    );
+    const res = await this.options.pool.query(`SELECT * FROM ${this.table} WHERE id = $1`, [id]);
     const row = res.rows[0];
     if (!row) return null;
     return this.rowToSession(row);
@@ -90,7 +87,7 @@ export class PgKycStore implements KycStore {
         JSON.stringify(merged.normalized),
         JSON.stringify(merged.checks),
         merged.decision ? JSON.stringify(merged.decision) : null,
-      ],
+      ]
     );
     return merged;
   }

@@ -23,7 +23,15 @@
     "memory:rag": "ts-node src/memory/rag-with-memory-example.ts",
     "memory:chatbot": "ts-node src/memory/chatbot-with-memory-example.ts",
     "kafka": "PORT=3010 ts-node src/kafka/index.ts",
-    "kafka:streams": "ts-node src/kafka/stream-only.example.ts"
+    "kafka:streams": "ts-node src/kafka/stream-only.example.ts",
+    "riskos": "ts-node src/riskos/index.ts",
+    "riskos:kyc": "ts-node src/riskos/kyc-full-example.ts",
+    "riskos:kyb": "ts-node src/riskos/kyb-full-example.ts",
+    "riskos:investigator": "ts-node src/riskos/investigator-example.ts",
+    "riskos:chat": "ts-node src/riskos/chat-demo.ts",
+    "riskos:psp:transaction": "ts-node src/riskos/psp-transaction-risk-example.ts",
+    "riskos:psp:chargeback": "ts-node src/riskos/psp-chargeback-example.ts",
+    "riskos:prod": "ts-node src/riskos/production-example.ts"
   },
   "dependencies": {
     "@hazeljs/core": "file:../packages/core",
@@ -38,6 +46,9 @@
     "@hazeljs/websocket": "file:../packages/websocket",
     "@hazeljs/discovery": "file:../packages/discovery",
     "@hazeljs/rag": "file:../packages/rag",
+    "@hazeljs/riskos": "file:../packages/riskos",
+    "@hazeljs/riskos-agent": "file:../packages/riskos-agent",
+    "@hazeljs/contracts": "file:../packages/contracts",
     "@prisma/client": "^6.8.2",
     "bcryptjs": "^2.4.3",
     "class-transformer": "^0.5.1",

@@ -38,10 +38,7 @@ export interface KycEngineOptions {
 }
 
 /** Chat-based onboarding planner - next prompt for UI */
-export function nextChatTurn(
-  session: KycSession,
-  flowConfig: KycFlowConfig,
-): AskResult | null {
+export function nextChatTurn(session: KycSession, flowConfig: KycFlowConfig): AskResult | null {
   for (const step of flowConfig.steps) {
     if (step.type !== 'ask') continue;
     const res = runAskStep(session, step.config);
@@ -54,7 +51,7 @@ export function nextChatTurn(
 export class KycEngine {
   constructor(
     private readonly store: KycStore,
-    private readonly providers: Record<string, HttpProvider> = {},
+    private readonly providers: Record<string, HttpProvider> = {}
   ) {}
 
   async createSession(tenantId?: string): Promise<KycSession> {
@@ -75,7 +72,7 @@ export class KycEngine {
 
   async validate(
     sessionId: string,
-    config: ValidateStepConfig,
+    config: ValidateStepConfig
   ): Promise<{ valid: boolean; errors?: Array<{ path: string; message: string }> }> {
     const session = await this.store.get(sessionId);
     if (!session) return { valid: false, errors: [{ path: '', message: 'session not found' }] };
@@ -85,7 +82,7 @@ export class KycEngine {
   async runStep(
     sessionId: string,
     step: StepConfig,
-    resolveSecret?: (key: string) => string | undefined,
+    resolveSecret?: (key: string) => string | undefined
   ): Promise<KycSession | AskResult | null> {
     const session = await this.store.get(sessionId);
     if (!session) return null;
@@ -120,7 +117,7 @@ export class KycEngine {
   async runFlow(
     sessionId: string,
     flowConfig: KycFlowConfig,
-    resolveSecret?: (key: string) => string | undefined,
+    resolveSecret?: (key: string) => string | undefined
   ): Promise<KycSession> {
     let session = await this.store.get(sessionId);
     if (!session) throw new Error('Session not found');

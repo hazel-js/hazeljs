@@ -14,7 +14,7 @@ export interface InvestigatorInput {
 
 /** Stub investigator - produces structured response with "No sources available" when no citations */
 export async function runInvestigatorAgent(
-  input: InvestigatorInput,
+  input: InvestigatorInput
 ): Promise<InvestigatorResponse> {
   return {
     summary: `Investigation placeholder for case ${input.caseId}. No sources available - suggest running KYC checks and risk scoring.`,
@@ -32,8 +32,9 @@ export async function runInvestigatorAgent(
 
 /** Format response with citation notice */
 export function formatResponseWithCitations(res: InvestigatorResponse): string {
-  const cit = res.citations.length > 0
-    ? res.citations.map(c => `[${c.sourceId}]`).join(', ')
-    : 'No sources available';
+  const cit =
+    res.citations.length > 0
+      ? res.citations.map((c) => `[${c.sourceId}]`).join(', ')
+      : 'No sources available';
   return `${res.summary}\n\nKey factors: ${res.keyFactors.join('; ')}\n\nCitations: ${cit}\n\nSuggested: ${res.suggestedActions.join(', ')}`;
 }

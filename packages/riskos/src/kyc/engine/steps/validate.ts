@@ -29,15 +29,12 @@ export interface ValidateResult {
 }
 
 /** Validate data at path with JSON Schema */
-export function runValidateStep(
-  session: KycSession,
-  config: ValidateStepConfig,
-): ValidateResult {
+export function runValidateStep(session: KycSession, config: ValidateStepConfig): ValidateResult {
   const data = get(session, config.from);
   const validate = getAjv().compile(config.schema) as ValidateFunction;
   const valid = validate(data);
   if (!valid && validate.errors) {
-    const errors = validate.errors.map(e => ({
+    const errors = validate.errors.map((e) => ({
       path: e.instancePath || config.from,
       message: e.message ?? 'validation failed',
     }));
@@ -47,10 +44,7 @@ export function runValidateStep(
 }
 
 /** Validate and throw on failure */
-export function validateAndThrow(
-  session: KycSession,
-  config: ValidateStepConfig,
-): void {
+export function validateAndThrow(session: KycSession, config: ValidateStepConfig): void {
   const result = runValidateStep(session, config);
   if (!result.valid) {
     throw new KycValidationError('Validation failed', result.errors);

@@ -15,10 +15,7 @@ export interface TransformStepConfig {
 }
 
 /** Transform raw to normalized via JSONPath mappings */
-export function runTransformStep(
-  session: KycSession,
-  config: TransformStepConfig,
-): KycSession {
+export function runTransformStep(session: KycSession, config: TransformStepConfig): KycSession {
   const normalized = { ...session.normalized };
   for (const m of config.mappings) {
     const val = get(session.raw, m.from);

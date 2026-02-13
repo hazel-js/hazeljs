@@ -33,4 +33,9 @@ export interface GeoSignal {
   [key: string]: unknown;
 }
 
-export type RiskSignal = TransactionSignal | AlertSignal | DeviceSignal | GeoSignal | Record<string, unknown>;
+export type RiskSignal =
+  | TransactionSignal
+  | AlertSignal
+  | DeviceSignal
+  | GeoSignal
+  | Record<string, unknown>;

@@ -2,7 +2,6 @@
  * HTTP provider for external KYC/verification APIs
  */
 
-import { resolveTemplate } from '../../utils/template';
 import type { SecretResolver } from './secrets';
 import type { HttpOperation } from './templates';
 
@@ -12,6 +11,6 @@ export interface HttpProvider {
   call(
     operation: HttpOperation,
     state: Record<string, unknown>,
-    resolveSecret?: SecretResolver,
+    resolveSecret?: SecretResolver
   ): Promise<unknown>;
 }

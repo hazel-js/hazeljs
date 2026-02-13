@@ -20,7 +20,7 @@ export async function runApiCallStep(
   session: KycSession,
   config: ApiCallStepConfig,
   providers: Record<string, HttpProvider>,
-  resolveSecret?: SecretResolver,
+  resolveSecret?: SecretResolver
 ): Promise<KycSession> {
   const provider = providers[config.provider];
   if (!provider) throw new Error(`Provider ${config.provider} not found`);
@@ -42,7 +42,7 @@ export async function runApiCallStep(
           Object.entries(config.operation.headers).map(([k, v]) => [
             k,
             resolveTemplate(String(v), state),
-          ]),
+          ])
         )
       : undefined,
     query: config.operation.query
@@ -50,7 +50,7 @@ export async function runApiCallStep(
           Object.entries(config.operation.query).map(([k, v]) => [
             k,
             resolveTemplate(String(v), state),
-          ]),
+          ])
         )
       : undefined,
   };

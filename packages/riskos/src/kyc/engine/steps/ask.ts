@@ -19,10 +19,7 @@ export interface AskResult {
 }
 
 /** Get next chat turn / form prompt for required field */
-export function runAskStep(
-  session: KycSession,
-  config: AskStepConfig,
-): AskResult {
+export function runAskStep(session: KycSession, config: AskStepConfig): AskResult {
   const value = getPath(session.answers, config.fieldPath);
   if (value != null && value !== '') {
     return { message: '', inputType: config.inputType ?? 'text', fieldPath: config.fieldPath };

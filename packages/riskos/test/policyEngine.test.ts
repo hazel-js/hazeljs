@@ -2,7 +2,7 @@
  * Policy engine tests - deny on missing tenant
  */
 
-import { PolicyEngine, requireTenant, createRiskOS, PolicyDeniedError } from '../src';
+import { PolicyEngine, requireTenant, requirePurpose, createRiskOS, PolicyDeniedError } from '../src';
 
 describe('PolicyEngine', () => {
   it('denies when tenantId is missing', async () => {
@@ -36,5 +36,24 @@ describe('PolicyEngine', () => {
       () => 'ok',
     );
     expect(result).toBe('ok');
+  });
+
+  it('requirePurpose allows when purpose present for sensitive action', async () => {
+    const pe = new PolicyEngine();
+    pe.addPolicy(requirePurpose());
+    const results = await pe.evaluateBefore({
+      actionName: 'kyc.onboarding',
+      purpose: 'compliance',
+    });
+    expect(results[0].result).toBe('ALLOW');
+  });
+
+  it('requirePurpose denies when purpose missing for sensitive action', async () => {
+    const pe = new PolicyEngine();
+    pe.addPolicy(requirePurpose());
+    const results = await pe.evaluateBefore({
+      actionName: 'kyc.onboarding',
+    });
+    expect(results[0].result).toBe('DENY');
   });
 });

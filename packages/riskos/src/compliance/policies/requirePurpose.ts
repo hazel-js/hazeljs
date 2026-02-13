@@ -17,7 +17,7 @@ export function requirePurpose(config?: RequirePurposeConfig): Policy {
     phase: 'before',
     evaluate(ctx: PolicyContext): PolicyResult {
       const action = ctx.actionName?.toLowerCase() ?? '';
-      const isSensitive = actions.some(a => action.includes(a));
+      const isSensitive = actions.some((a) => action.includes(a));
       if (!isSensitive) return { policy: 'requirePurpose', result: 'ALLOW' };
       if (ctx.purpose && typeof ctx.purpose === 'string' && ctx.purpose.length > 0) {
         return { policy: 'requirePurpose', result: 'ALLOW' };
