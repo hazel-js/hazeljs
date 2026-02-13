@@ -41,7 +41,7 @@
     "scheduler",
     "jobs"
   ],
-  "author": "Muhammad Arslan <marslan@hazeljs.com>",
+  "author": "Muhammad Arslan <muhammad.arslan@hazeljs.com>",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/hazeljs/hazel-js/issues"
