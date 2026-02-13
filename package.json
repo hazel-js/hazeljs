@@ -13,7 +13,7 @@
     "build:tier1": "npm run build --workspace=@hazeljs/cache --workspace=@hazeljs/config --workspace=@hazeljs/auth --workspace=@hazeljs/cron --workspace=@hazeljs/kafka --workspace=@hazeljs/prisma --workspace=@hazeljs/swagger --workspace=@hazeljs/websocket --workspace=@hazeljs/serverless --workspace=@hazeljs/discovery --workspace=@hazeljs/cli",
     "build:tier2": "npm run build --workspace=@hazeljs/ai --workspace=@hazeljs/rag",
     "build:tier3": "npm run build --workspace=@hazeljs/agent",
-    "build:riskos": "npm run build --workspace=@hazeljs/riskos",
+    "build:riskos": "npm run build --workspace=@hazeljs/riskos --workspace=@hazeljs/riskos-agent",
     "build:packages": "npm run build --workspaces --if-present",
     "publish:all": "npm run publish:core && npm run publish:tier1 && npm run publish:tier2 && npm run publish:tier3",
     "publish:core": "npm publish --workspace=@hazeljs/core --access public --tag beta",

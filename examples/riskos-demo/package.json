@@ -5,12 +5,20 @@
   "scripts": {
     "start": "ts-node index.ts",
     "kyc:full": "ts-node kyc-full-example.ts",
+    "investigator": "ts-node investigator-example.ts",
+    "kyb:full": "ts-node kyb-full-example.ts",
+    "psp:transaction": "ts-node psp-transaction-risk-example.ts",
+    "psp:chargeback": "ts-node psp-chargeback-example.ts",
     "prod": "ts-node production-example.ts",
-    "build": "tsc"
+    "build": "tsc",
+    "chat": "ts-node chat-demo.ts"
   },
   "dependencies": {
+    "@hazeljs/ai": "file:../../packages/ai",
+    "@hazeljs/agent": "file:../../packages/agent",
     "@hazeljs/contracts": "file:../../packages/contracts",
-    "@hazeljs/riskos": "file:../../packages/riskos"
+    "@hazeljs/riskos": "file:../../packages/riskos",
+    "@hazeljs/riskos-agent": "file:../../packages/riskos-agent"
   },
   "devDependencies": {
     "ts-node": "^10.9.2",

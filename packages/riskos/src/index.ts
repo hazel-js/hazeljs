@@ -24,6 +24,8 @@ export type { ComplianceTrace } from './audit/trace';
 export type { EvidencePack } from './audit/evidence/pack';
 export { MemoryAuditSink } from './audit/sinks/memorySink';
 export { PgAuditSink } from './audit/sinks/pgAuditSink';
+export { PrismaAuditSink } from './audit/sinks/prismaAuditSink';
+export type { PrismaAuditSinkOptions } from './audit/sinks/prismaAuditSink';
 export type { PgAuditSinkOptions } from './audit/sinks/pgAuditSink';
 
 // Compliance
@@ -44,6 +46,8 @@ export type { KycFlowConfig, StepConfig } from './kyc/engine/kycEngine';
 export type { KycStore, KycSession } from './kyc/store/store';
 export { MemoryKycStore } from './kyc/store/memoryStore';
 export { PgKycStore } from './kyc/store/pgKycStore';
+export { PrismaKycStore } from './kyc/store/prismaKycStore';
+export type { PrismaKycStoreOptions } from './kyc/store/prismaKycStore';
 export type { PgKycStoreOptions } from './kyc/store/pgKycStore';
 export type { HttpProvider } from './kyc/providers/httpProvider';
 export { MockHttpProvider } from './kyc/providers/mockHttpProvider';

@@ -36,3 +36,9 @@ export * from './utils/circuit-breaker';
 export * from './utils/health-check';
 
 export * from './agent.module';
+
+export {
+  createLLMProviderFromAI,
+  type AIServiceAdapter,
+  type CreateLLMProviderFromAIOptions,
+} from './adapters/ai-provider.adapter';

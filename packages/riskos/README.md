@@ -53,20 +53,18 @@ const result = await riskos.run(
 
 ## Production Deployment
 
-### PostgreSQL persistence
+### Prisma (recommended for hazeljs)
 
-1. Run the migration in `sql/migrations/001_riskos_tables.sql`
-2. Install `pg`: `npm install pg`
-3. Use `PgKycStore` and `PgAuditSink`:
+1. Run the migration: `psql $DATABASE_URL -f sql/migrations/001_riskos_tables.sql` (or add to Prisma migrations)
 
 ```ts
-import { Pool } from 'pg';
-import { PgKycStore, PgAuditSink, FetchHttpProvider } from '@hazeljs/riskos';
+import { PrismaService } from '@hazeljs/prisma';
+import { PrismaKycStore, PrismaAuditSink, FetchHttpProvider } from '@hazeljs/riskos';
 
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const prisma = new PrismaService();
 
-const store = new PgKycStore({ pool });
-const auditSink = new PgAuditSink({ pool });
+const store = new PrismaKycStore({ prisma });
+const auditSink = new PrismaAuditSink({ prisma });
 
 const sanctions = new FetchHttpProvider('sanctions', {
   baseUrl: 'https://api.your-sanctions-provider.com',
@@ -79,11 +77,47 @@ const kycEngine = new KycEngine(store, { sanctions });
 const riskos = createRiskOS({ auditSink, /* ... */ });
 ```
 
-`PgAuditSink` maintains hash chain continuity across instances by reading `prevHash` from the database.
+### PostgreSQL (raw pg)
+
+Alternative when not using Prisma:
+
+```ts
+import { Pool } from 'pg';
+import { PgKycStore, PgAuditSink } from '@hazeljs/riskos';
+
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const store = new PgKycStore({ pool });
+const auditSink = new PgAuditSink({ pool });
+```
+
+1. Run the migration in `sql/migrations/001_riskos_tables.sql`
+2. Install `pg`: `npm install pg`
+
+`PgAuditSink` and `PrismaAuditSink` maintain hash chain continuity across instances by reading `prevHash` from the database.
 
 ### KYC provider (real HTTP)
 
 Use `FetchHttpProvider` for sanctions, document verification, etc. Requires Node 18+ (native fetch). Supports retry, timeout, and API key injection via `resolveSecret`.
+
+## AI Investigator (optional)
+
+For a full LLM-powered investigator assistant, use `@hazeljs/riskos-agent`:
+
+```bash
+npm install @hazeljs/riskos-agent @hazeljs/ai @hazeljs/agent
+```
+
+```ts
+import { AIEnhancedService } from '@hazeljs/ai';
+import { createInvestigatorRuntime, createKycToolFromStore, createEvidenceToolFromAuditSink } from '@hazeljs/riskos-agent';
+
+const runtime = createInvestigatorRuntime({
+  aiService: new AIEnhancedService(),
+  tools: { kyc: createKycToolFromStore(store), evidence: createEvidenceToolFromAuditSink(sink), ... },
+});
+```
+
+See `packages/riskos-agent/README.md` and `examples/riskos-demo/investigator-example.ts`.
 
 ## Example
 

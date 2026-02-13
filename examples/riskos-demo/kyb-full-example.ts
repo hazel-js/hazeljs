@@ -1,7 +1,7 @@
 /**
- * RiskOS - Comprehensive KYC Individual Onboarding Example
+ * RiskOS - KYB (Know Your Business) Merchant Onboarding Example
  *
- * Full flow: questions -> validation -> sanctions check -> doc verify (optional) -> decision
+ * Full flow: business info -> processing -> UBO -> validation -> sanctions -> decision
  */
 
 import {
@@ -15,37 +15,27 @@ import {
   requireTenant,
   PolicyEngine,
 } from '@hazeljs/riskos';
-import { FULL_KYC_FLOW } from './kyc-flow-config';
+import { FULL_KYB_FLOW } from './kyb-flow-config';
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// Demo runner
-// ═══════════════════════════════════════════════════════════════════════════════
-
-/** Simulated user answers for demo */
+/** Simulated merchant answers for demo */
 const DEMO_ANSWERS: Record<string, unknown> = {
-  fullName: 'Anna Andersson',
-  email: 'anna.andersson@example.com',
-  dateOfBirth: '1985-03-15',
-  nationality: 'SE',
-  'address.street': 'Storgatan 42',
-  'address.city': 'Stockholm',
-  'address.postalCode': '111 22',
-  'address.country': 'SE',
-  idType: 'passport',
-  idNumber: '****1234',
-  taxResidence: 'SE',
-  employmentStatus: 'employed',
-  sourceOfFunds: 'salary',
-  isPep: 'no',
-  purposeOfAccount: 'personal_banking',
+  businessName: 'Nordic Crafts AB',
+  registrationNumber: '556123-4567',
+  country: 'SE',
+  legalStructure: 'llc',
+  mcc: '5942',
+  expectedMonthlyVolume: 50000,
+  currency: 'EUR',
+  uboName: 'Erik Nilsson',
+  uboRole: 'owner',
+  uboNationality: 'SE',
 };
 
-async function runFullKycExample() {
+async function runFullKybExample() {
   console.log('═══════════════════════════════════════════════════════════════');
-  console.log('  RiskOS - Full KYC Individual Onboarding Example');
+  console.log('  RiskOS - KYB Merchant Onboarding Example');
   console.log('═══════════════════════════════════════════════════════════════\n');
 
-  // 1. Setup
   const bus = new MemoryEventBus();
   const auditSink = new MemoryAuditSink();
   const policyEngine = new PolicyEngine();
@@ -67,25 +57,16 @@ async function runFullKycExample() {
         screenedAt: new Date().toISOString(),
       },
     }),
-    docVerify: new MockHttpProvider('docVerify', {
-      mockResponse: {
-        verified: true,
-        confidence: 0.95,
-        idType: 'passport',
-      },
-    }),
   };
 
   const kycEngine = new KycEngine(store, providers);
 
-  // 2. Create session
-  const session = await kycEngine.createSession('tenant-acme');
+  const session = await kycEngine.createSession('psp-acme');
   console.log('Session created:', session.id);
-  console.log('Tenant: tenant-acme\n');
+  console.log('Tenant: psp-acme\n');
 
-  // 3. Chat-based question loop - simulate user answering each question
-  console.log('--- Step 1: Collecting information ---\n');
-  let turn = nextChatTurn(session, FULL_KYC_FLOW);
+  console.log('--- Step 1: Collecting merchant information ---\n');
+  let turn = nextChatTurn(session, FULL_KYB_FLOW);
   let stepNum = 1;
 
   while (turn && turn.message) {
@@ -99,24 +80,23 @@ async function runFullKycExample() {
     await kycEngine.answer(session.id, fieldPath, answer ?? `demo-${fieldPath}`);
     const updated = await kycEngine.getSession(session.id);
     if (!updated) break;
-    turn = nextChatTurn(updated, FULL_KYC_FLOW);
+    turn = nextChatTurn(updated, FULL_KYB_FLOW);
     stepNum++;
   }
 
   console.log(`  ✓ All ${stepNum - 1} questions answered.\n`);
 
-  // 4. Run validation and backend steps (no more ask steps)
-  console.log('--- Step 2: Validation & backend checks ---\n');
+  console.log('--- Step 2: Validation & sanctions check ---\n');
 
   await riskos.run(
-    'kyc.onboarding.complete',
+    'kyb.onboarding.complete',
     {
-      tenantId: 'tenant-acme',
+      tenantId: 'psp-acme',
       actor: { userId: 'sys', role: 'admin' },
-      purpose: 'kyc',
+      purpose: 'kyb',
     },
     async () => {
-      await kycEngine.runFlow(session.id, FULL_KYC_FLOW);
+      await kycEngine.runFlow(session.id, FULL_KYB_FLOW);
       return null;
     },
   );
@@ -124,19 +104,15 @@ async function runFullKycExample() {
   const finalSession = await kycEngine.getSession(session.id);
   if (!finalSession) throw new Error('Session lost');
 
-  // 5. Output summary
   console.log('--- Step 3: Result ---\n');
   console.log('  Sanctions check:', finalSession.raw?.sanctions);
-  console.log('  Doc verify:', finalSession.raw?.docVerify);
-  console.log('  Checks:', JSON.stringify(finalSession.checks, null, 2));
   console.log('  Decision:', finalSession.decision);
   console.log('');
 
-  // 6. Evidence pack
-  const pack = await auditSink.buildEvidencePack({ tenantId: 'tenant-acme' });
+  const pack = await auditSink.buildEvidencePack({ tenantId: 'psp-acme' });
   console.log('--- Evidence ---');
   console.log('  Pack:', pack.id);
   console.log('  Traces:', pack.manifest.traceCount);
 }
 
-runFullKycExample().catch(console.error);
+runFullKybExample().catch(console.error);
