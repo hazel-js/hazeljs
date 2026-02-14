@@ -264,4 +264,4 @@ const allStatuses = this.cronService.getAllJobStatuses();
 - The current implementation uses a simple interval-based scheduler
 - For production use with complex cron expressions, consider integrating a library like `cron-parser` or `node-cron`
 - Jobs run in the same process as your application
-- For distributed systems, consider using a dedicated job queue like Bull or BullMQ
+- For distributed systems, use `@hazeljs/queue` for Redis-backed job queues

@@ -61,7 +61,7 @@ npm install @hazeljs/ai @hazeljs/agent @hazeljs/rag
 
 # Infrastructure packages
 npm install @hazeljs/cache @hazeljs/websocket @hazeljs/serverless
-npm install @hazeljs/discovery @hazeljs/config @hazeljs/cron
+npm install @hazeljs/discovery @hazeljs/config @hazeljs/cron @hazeljs/queue
 
 # Data & Auth packages
 npm install @hazeljs/prisma @hazeljs/auth @hazeljs/swagger
@@ -274,6 +274,7 @@ npm run lerna:publish:latest # Publish with latest tag
 - **[CLI Tool](./packages/cli/README.md)** - Scaffolding and code generation
 - **[Configuration](./packages/config/README.md)** - Type-safe configuration management
 - **[Cron Jobs](./packages/cron/README.md)** - Scheduled task execution
+- **[Queue](./packages/queue/README.md)** - Redis-backed job queues (BullMQ)
 - **[Service Discovery](./packages/discovery/README.md)** - Microservices registry
 - **[Prisma ORM](./packages/prisma/README.md)** - Database integration with repository pattern
 - **[Serverless](./packages/serverless/README.md)** - AWS Lambda & Google Cloud Functions
