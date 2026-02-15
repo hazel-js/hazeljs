@@ -301,16 +301,12 @@ export class AgentExecutor {
       context.userId
     );
 
+    // Store as assistant message summarizing the tool call + result (OpenAI requires tool
+    // messages to follow assistant messages with tool_calls; we avoid that format to keep
+    // storage simple and ensure the LLM receives the tool result context)
+    const toolSummary = `[Tool: ${action.toolName}]\nInput: ${JSON.stringify(action.toolInput)}\nOutput: ${JSON.stringify(result.output)}`;
     await this.unwrap(
-      this.stateManager.addMessage(
-        context.executionId,
-        'tool',
-        JSON.stringify({
-          tool: action.toolName,
-          input: action.toolInput,
-          output: result.output,
-        })
-      )
+      this.stateManager.addMessage(context.executionId, 'assistant', toolSummary)
     );
 
     return {
