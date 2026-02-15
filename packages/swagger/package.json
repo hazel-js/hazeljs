@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/swagger",
-  "version": "0.2.0-beta.24",
+  "version": "0.2.0-beta.25",
   "description": "Swagger/OpenAPI documentation module for HazelJS framework",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
