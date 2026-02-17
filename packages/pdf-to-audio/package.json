@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/pdf-to-audio",
-  "version": "0.2.0-beta.25",
+  "version": "0.2.0-beta.27",
   "description": "Convert PDF documents to audio using TTS - PDF text extraction, chunking, and OpenAI TTS",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
