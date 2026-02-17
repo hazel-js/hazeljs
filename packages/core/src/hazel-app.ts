@@ -1,5 +1,5 @@
 import { Type } from './types';
-import { HazelModuleInstance } from './hazel-module';
+import { HazelModuleInstance, getModuleMetadata } from './hazel-module';
 import { Container } from './container';
 import { Router } from './router';
 import { RequestParser } from './request-parser';
@@ -111,7 +111,7 @@ export class HazelApp {
     if (visited.has(moduleType)) return [];
     visited.add(moduleType);
 
-    const metadata = Reflect.getMetadata(MODULE_METADATA_KEY, moduleType) || {};
+    const metadata = getModuleMetadata(moduleType as object) || {};
     const controllers: Type<unknown>[] = [];
 
     // Collect from imported modules first
@@ -190,7 +190,7 @@ export class HazelApp {
           }
 
           const { method, url, headers } = req;
-          logger.info('Incoming request:', { method, url, headers });
+          logger.debug('Incoming request:', { method, url, headers });
 
           // Handle CORS
           if (this.corsEnabled) {
@@ -216,9 +216,11 @@ export class HazelApp {
             }
           }
 
-          // Parse request body for POST/PUT/PATCH requests
+          // Parse request body for POST/PUT/PATCH requests (skip multipart - let route handle it)
           let body: unknown = undefined;
-          if (method === 'POST' || method === 'PUT' || method === 'PATCH') {
+          const contentType = headers['content-type'] || '';
+          const isMultipart = contentType.includes('multipart/form-data');
+          if ((method === 'POST' || method === 'PUT' || method === 'PATCH') && !isMultipart) {
             try {
               const chunks: Buffer[] = [];
               req.on('data', (chunk: Buffer) => chunks.push(chunk));
@@ -227,7 +229,6 @@ export class HazelApp {
                   try {
                     const bodyStr = Buffer.concat(chunks).toString();
                     if (bodyStr) {
-                      const contentType = headers['content-type'] || '';
                       if (contentType.includes('application/json')) {
                         body = JSON.parse(bodyStr);
                       } else if (contentType.includes('application/x-www-form-urlencoded')) {

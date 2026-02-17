@@ -10,9 +10,11 @@ dotenv.config();
 
 const logLevel = process.env.LOG_LEVEL || 'info';
 const logDir = process.env.LOG_DIR || 'logs';
+const logEnabled = process.env.LOG_ENABLED !== 'false'; // default: true
+const logPackage = process.env.LOG_PACKAGE || ''; // e.g. "http" = only HTTP request logs
 
 // Ensure log directory exists
-if (!fs.existsSync(logDir)) {
+if (logDir && !fs.existsSync(logDir)) {
   fs.mkdirSync(logDir, { recursive: true });
 }
 
@@ -170,6 +172,76 @@ const customFormat = winston.format.printf(({ level, message, timestamp, ...meta
   return `${time} ${levelStr} ${msg}${metaStr}`;
 });
 
+// When LOG_PACKAGE=http, only allow logs that look like HTTP requests
+const isHttpLog = (info: winston.Logform.TransformableInfo): boolean => {
+  const msg = String((info as { message?: unknown }).message ?? '');
+  return /^(GET|POST|PUT|PATCH|DELETE|OPTIONS|HEAD)\s+/i.test(msg) || msg.includes(' → ') || msg.includes(' ← ');
+};
+
+const transports: winston.transport[] = [];
+
+if (logEnabled) {
+  if (logPackage === 'http') {
+    transports.push(
+      new winston.transports.Console({
+        format: winston.format.combine(
+          winston.format((info: winston.Logform.TransformableInfo) => (isHttpLog(info) ? info : false))(),
+          customFormat
+        ),
+      })
+    );
+  } else {
+    transports.push(
+      new winston.transports.Console({
+        format: winston.format.combine(customFormat),
+      })
+    );
+  }
+  if (logDir) {
+    transports.push(
+      new winston.transports.File({
+        filename: path.join(logDir, 'combined.log'),
+        format: winston.format.combine(
+          winston.format.timestamp(),
+          winston.format.printf(({ level, message, timestamp, ...metadata }) => {
+            let msg = `${timestamp} [${level.toUpperCase()}] ${message}`;
+            if (Object.keys(metadata).length > 0) {
+              msg += ` | ${JSON.stringify(metadata, (key, val) => {
+                if (key === 'socket' || key === 'parser' || key === 'res' || key === 'req') {
+                  return '[Circular]';
+                }
+                return val;
+              })}`;
+            }
+            return msg;
+          })
+        ),
+      }),
+      new winston.transports.File({
+        filename: path.join(logDir, 'error.log'),
+        level: 'error',
+        format: winston.format.combine(
+          winston.format.timestamp(),
+          winston.format.printf(({ level, message, timestamp, ...metadata }) => {
+            let msg = `${timestamp} [${level.toUpperCase()}] ${message}`;
+            if (Object.keys(metadata).length > 0) {
+              msg += ` | ${JSON.stringify(metadata, (key, val) => {
+                if (key === 'socket' || key === 'parser' || key === 'res' || key === 'req') {
+                  return '[Circular]';
+                }
+                return val;
+              })}`;
+            }
+            return msg;
+          })
+        ),
+      })
+    );
+  }
+} else {
+  transports.push(new winston.transports.Console({ silent: true }));
+}
+
 // Create logger instance
 const logger = winston.createLogger({
   level: logLevel,
@@ -177,51 +249,7 @@ const logger = winston.createLogger({
     winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
     customFormat
   ),
-  transports: [
-    // Console transport with colors
-    new winston.transports.Console({
-      format: winston.format.combine(customFormat),
-    }),
-    // File transport for all logs (without colors)
-    new winston.transports.File({
-      filename: path.join(logDir, 'combined.log'),
-      format: winston.format.combine(
-        winston.format.timestamp(),
-        winston.format.printf(({ level, message, timestamp, ...metadata }) => {
-          let msg = `${timestamp} [${level.toUpperCase()}] ${message}`;
-          if (Object.keys(metadata).length > 0) {
-            msg += ` | ${JSON.stringify(metadata, (key, val) => {
-              if (key === 'socket' || key === 'parser' || key === 'res' || key === 'req') {
-                return '[Circular]';
-              }
-              return val;
-            })}`;
-          }
-          return msg;
-        })
-      ),
-    }),
-    // File transport for errors only (without colors)
-    new winston.transports.File({
-      filename: path.join(logDir, 'error.log'),
-      level: 'error',
-      format: winston.format.combine(
-        winston.format.timestamp(),
-        winston.format.printf(({ level, message, timestamp, ...metadata }) => {
-          let msg = `${timestamp} [${level.toUpperCase()}] ${message}`;
-          if (Object.keys(metadata).length > 0) {
-            msg += ` | ${JSON.stringify(metadata, (key, val) => {
-              if (key === 'socket' || key === 'parser' || key === 'res' || key === 'req') {
-                return '[Circular]';
-              }
-              return val;
-            })}`;
-          }
-          return msg;
-        })
-      ),
-    }),
-  ],
+  transports,
 });
 
 // Log application info when starting

@@ -1,0 +1,59 @@
+{
+  "name": "@hazeljs/pdf-to-audio",
+  "version": "0.2.0-beta.25",
+  "description": "Convert PDF documents to audio using TTS - PDF text extraction, chunking, and OpenAI TTS",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
+    "test": "jest --coverage --passWithNoTests",
+    "test:watch": "jest --watch"
+  },
+  "keywords": [
+    "hazeljs",
+    "pdf",
+    "audio",
+    "tts",
+    "text-to-speech",
+    "pdf-to-audio"
+  ],
+  "author": "Muhammad Arslan <muhammad.arslan@hazeljs.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/hazeljs/hazel-js/issues"
+  },
+  "homepage": "https://hazeljs.com",
+  "dependencies": {
+    "pdf-parse": "^1.1.1",
+    "reflect-metadata": "^0.2.1",
+    "bullmq": "^5.34.0"
+  },
+  "peerDependencies": {
+    "@hazeljs/ai": ">=0.2.0-beta.0",
+    "@hazeljs/core": ">=0.2.0-beta.0",
+    "@hazeljs/rag": ">=0.2.0-beta.0",
+    "@hazeljs/queue": ">=0.2.0-beta.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.11",
+    "@types/node": "^20.17.50",
+    "@types/pdf-parse": "^1.1.4",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.2",
+    "typescript": "^5.3.3"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hazel-js/hazeljs.git",
+    "directory": "packages/pdf-to-audio"
+  }
+}

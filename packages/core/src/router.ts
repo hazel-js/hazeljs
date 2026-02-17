@@ -248,6 +248,9 @@ export class Router {
               } else {
                 args[i] = context.headers;
               }
+            } else if (injection.type === 'request') {
+              // Handle @Req() / @Request() decorator - raw request for multipart, etc.
+              args[i] = req;
             } else if (injection.type === 'response') {
               // Handle @Res decorator
               args[i] = new HazelExpressResponse(res);

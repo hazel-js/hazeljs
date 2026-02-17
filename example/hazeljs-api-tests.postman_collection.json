@@ -1,9 +1,9 @@
 {
   "info": {
     "name": "HazelJS API Tests - Complete",
-    "description": "Comprehensive collection for testing all HazelJS example API endpoints including Cache, Serverless, Demo, Auth, AI Jobs, Users, Cron, AI Enhanced, Knowledge Base, and Documentation",
+    "description": "Comprehensive collection for testing all HazelJS example API endpoints including Cache, Serverless, Demo, Auth, AI Jobs, Users, Cron, AI Enhanced, Knowledge Base, PDF-to-Audio, Kafka, and Documentation",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "version": "3.0.0"
+    "version": "3.1.0"
   },
   "item": [
     {
@@ -1920,6 +1920,195 @@
               "raw": "{{baseUrl}}/knowledge/documents/{{documentId}}",
               "host": ["{{baseUrl}}"],
               "path": ["knowledge", "documents", "{{documentId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "PDF-to-Audio API",
+      "description": "Async PDF-to-audio conversion. Submit job, poll status, download when ready. Requires OPENAI_API_KEY.",
+      "item": [
+        {
+          "name": "Submit PDF for Conversion",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 202\", function () {",
+                  "    pm.response.to.have.status(202);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has jobId\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('jobId');",
+                  "    pm.environment.set('pdfToAudioJobId', jsonData.jobId);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "",
+                  "description": "Select a PDF file to convert"
+                },
+                {
+                  "key": "includeSummary",
+                  "value": "true",
+                  "type": "text",
+                  "description": "Include AI-generated document summary (true/false)"
+                },
+                {
+                  "key": "voice",
+                  "value": "alloy",
+                  "type": "text",
+                  "description": "TTS voice: alloy, echo, fable, onyx, nova, shimmer, ash, sage, coral"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/pdf-to-audio/convert",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "pdf-to-audio", "convert"]
+            }
+          }
+        },
+        {
+          "name": "Get Job Status",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has status\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('jobId');",
+                  "    pm.expect(jsonData).to.have.property('status');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/pdf-to-audio/status/{{pdfToAudioJobId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "pdf-to-audio", "status", "{{pdfToAudioJobId}}"]
+            }
+          }
+        },
+        {
+          "name": "Download Audio",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is audio\", function () {",
+                  "    pm.expect(pm.response.headers.get('Content-Type')).to.include('audio');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/pdf-to-audio/download/{{pdfToAudioJobId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "pdf-to-audio", "download", "{{pdfToAudioJobId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Kafka API",
+      "description": "Kafka order endpoints. Run with: npm run kafka (port 3010). Set baseUrl to http://localhost:3010 when testing Kafka.",
+      "item": [
+        {
+          "name": "Create Order",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 201\", function () {",
+                  "    pm.expect([200, 201]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": \"ORD-001\",\n  \"customerId\": \"CUST-001\",\n  \"items\": [\"Item A\", \"Item B\"],\n  \"total\": 99.99\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/kafka/orders/",
+              "host": ["{{baseUrl}}"],
+              "path": ["kafka", "orders", ""]
+            }
+          }
+        },
+        {
+          "name": "Publish Order Event",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 201\", function () {",
+                  "    pm.expect([200, 201]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventType\": \"order_created\",\n  \"orderId\": \"ORD-001\",\n  \"payload\": {\"status\": \"pending\"}\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/kafka/orders/events",
+              "host": ["{{baseUrl}}"],
+              "path": ["kafka", "orders", "events"]
             }
           }
         }

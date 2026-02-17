@@ -22,6 +22,13 @@ export class QueueService {
   }
 
   /**
+   * Get Redis connection options (for creating Workers that share the same connection)
+   */
+  getConnection(): RedisConnectionOptions | null {
+    return this.connection;
+  }
+
+  /**
    * Get or create a BullMQ Queue instance for the given name
    */
   getQueue<T = unknown>(name: string): BullQueue<T> {
