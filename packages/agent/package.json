@@ -23,7 +23,7 @@
     "human-in-the-loop"
   ],
   "author": "Muhammad Arslan <muhammad.arslan@hazeljs.com>",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/hazeljs/hazeljs",

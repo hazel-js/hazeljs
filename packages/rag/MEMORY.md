@@ -468,7 +468,7 @@ await memoryManager.storeFact(
 
 ## License
 
-MIT
+Apache 2.0
 
 ## Contributing
 

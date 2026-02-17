@@ -2,7 +2,7 @@
 
 [![codecov](https://codecov.io/gh/yourusername/hazeljs/branch/main/graph/badge.svg)](https://codecov.io/gh/yourusername/hazeljs)
 [![npm version](https://badge.fury.io/js/%40hazeljs%2Fcore.svg)](https://badge.fury.io/js/%40hazeljs%2Fcore)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 
 A modern, lightweight, enterprise-grade Node.js framework. HazelJS provides a robust architecture for building scalable server-side applications using TypeScript and decorators, with built-in AI capabilities, agent runtime, and RAG support.
 
@@ -386,7 +386,7 @@ We welcome contributions! Please see our contributing guidelines.
 
 ## 📝 License
 
-MIT - Free to use in commercial and open-source projects
+Apache 2.0 - Free to use in commercial and open-source projects
 
 ---
 

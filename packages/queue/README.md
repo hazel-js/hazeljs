@@ -5,7 +5,7 @@
 Add and process background jobs using BullMQ with Redis. Ideal for distributed systems, cron-triggered workloads, and long-running agent tasks.
 
 [![npm version](https://img.shields.io/npm/v/@hazeljs/queue.svg)](https://www.npmjs.com/package/@hazeljs/queue)
-[![License: MIT](https://img.shields.io/npm/l/@hazeljs/queue.svg)](https://opensource.org/licenses/MIT)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 
 ## Features
 

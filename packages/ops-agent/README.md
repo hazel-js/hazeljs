@@ -85,4 +85,4 @@ runtime.on('tool.approval.requested', (event) => {
 
 ## License
 
-MIT
+Apache 2.0

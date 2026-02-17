@@ -24,7 +24,7 @@
     "pdf-to-audio"
   ],
   "author": "Muhammad Arslan <muhammad.arslan@hazeljs.com>",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/hazeljs/hazel-js/issues"
   },

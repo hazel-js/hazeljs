@@ -424,4 +424,4 @@ See [API Documentation](./docs/api.md) for complete API reference.
 
 ## License
 
-MIT
+Apache 2.0
