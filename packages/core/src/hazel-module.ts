@@ -66,14 +66,17 @@ export class HazelModuleInstance {
     if (metadata.providers) {
       logger.debug(
         'Registering providers:',
-        metadata.providers.map((p: unknown) => (p && typeof p === 'object' && 'provide' in p ? (p as { provide: unknown }).provide : (p as { name?: string })?.name))
+        metadata.providers.map((p: unknown) => {
+          const val = p && typeof p === 'object' && 'provide' in p ? (p as { provide: unknown }).provide : (p as { name?: string })?.name;
+          return typeof val === 'symbol' ? val.toString() : val;
+        })
       );
       metadata.providers.forEach((provider: unknown) => {
         // Dynamic module provider: { provide, useFactory?, useClass?, useValue? } (NestJS-style)
         if (provider && typeof provider === 'object' && ('provide' in provider || 'token' in provider)) {
           const p = provider as { provide?: unknown; token?: unknown; useFactory?: unknown; useClass?: unknown; useValue?: unknown; inject?: unknown[] };
           const token = p.token ?? p.provide;
-          logger.debug(`Registering provider config for: ${token}`);
+          logger.debug(`Registering provider config for: ${typeof token === 'symbol' ? token.toString() : token}`);
           this.container.registerProvider({
             token,
             useFactory: p.useFactory,
