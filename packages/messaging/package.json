@@ -1,10 +1,12 @@
 {
   "name": "@hazeljs/messaging",
-  "version": "0.2.0-beta.28",
+  "version": "0.2.0-beta.30",
   "description": "Multichannel messaging for HazelJS - WhatsApp, Telegram, Viber with LLM-powered bot responses",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc --skipLibCheck",
     "clean": "rm -rf dist",
@@ -25,7 +27,9 @@
   ],
   "author": "Muhammad Arslan <muhammad.arslan@hazeljs.com>",
   "license": "Apache-2.0",
-  "bugs": { "url": "https://github.com/hazeljs/hazel-js/issues" },
+  "bugs": {
+    "url": "https://github.com/hazeljs/hazel-js/issues"
+  },
   "homepage": "https://hazeljs.com",
   "dependencies": {
     "reflect-metadata": "^0.2.1",
@@ -72,7 +76,9 @@
     "ts-jest": "^29.1.2",
     "typescript": "^5.3.3"
   },
-  "publishConfig": { "access": "public" },
+  "publishConfig": {
+    "access": "public"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/hazel-js/hazeljs.git",
