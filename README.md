@@ -98,6 +98,38 @@ async function bootstrap() {
 bootstrap();
 ```
 
+## Flow Engine
+
+@hazeljs/flow is a durable execution graph engine with Prisma persistence. It is fully independent of Hazel core.
+
+### Setup
+
+1. Set `DATABASE_URL` (e.g. `postgresql://postgres:postgres@localhost:5432/hazeljs?schema=public`)
+2. Start Postgres: `docker-compose up -d`
+3. Run migrations: `pnpm flow:migrate`
+4. Run tests: `pnpm flow:test`
+5. Start flow runtime: `pnpm flow:runtime`
+
+### curl Examples
+
+```bash
+# Start a run
+curl -X POST http://localhost:3000/v1/runs/start \
+  -H "Content-Type: application/json" \
+  -d '{"flowId":"demo-fraud","version":"1.0.0","input":{"amount":500}}'
+
+# Get run status
+curl http://localhost:3000/v1/runs/{runId}
+
+# Get timeline
+curl http://localhost:3000/v1/runs/{runId}/timeline
+
+# Resume a waiting run
+curl -X POST http://localhost:3000/v1/runs/{runId}/resume \
+  -H "Content-Type: application/json" \
+  -d '{"payload":{"ticketId":"T-123"}}'
+```
+
 ## Database Setup
 
 1. Start the database:

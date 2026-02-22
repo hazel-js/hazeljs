@@ -79,6 +79,12 @@
     },
     {
       "path": "./packages/messaging"
+    },
+    {
+      "path": "./packages/flow"
+    },
+    {
+      "path": "./packages/flow-runtime"
     }
   ]
 }

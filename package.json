@@ -9,7 +9,7 @@
   "scripts": {
     "build": "npm run build:core && npm run build:tier1 && npm run build:tier2 && npm run build:tier3",
     "build:core": "npm run build --workspace=@hazeljs/core",
-    "build:tier1": "npm run build --workspace=@hazeljs/cache --workspace=@hazeljs/config --workspace=@hazeljs/auth --workspace=@hazeljs/cron --workspace=@hazeljs/event-emitter --workspace=@hazeljs/grpc --workspace=@hazeljs/queue --workspace=@hazeljs/kafka --workspace=@hazeljs/prisma --workspace=@hazeljs/swagger --workspace=@hazeljs/websocket --workspace=@hazeljs/serverless --workspace=@hazeljs/discovery --workspace=@hazeljs/cli",
+    "build:tier1": "npm run build --workspace=@hazeljs/cache --workspace=@hazeljs/config --workspace=@hazeljs/auth --workspace=@hazeljs/cron --workspace=@hazeljs/event-emitter --workspace=@hazeljs/grpc --workspace=@hazeljs/queue --workspace=@hazeljs/kafka --workspace=@hazeljs/prisma --workspace=@hazeljs/swagger --workspace=@hazeljs/websocket --workspace=@hazeljs/serverless --workspace=@hazeljs/discovery --workspace=@hazeljs/cli --workspace=@hazeljs/flow --workspace=@hazeljs/flow-runtime",
     "build:tier2": "npm run build --workspace=@hazeljs/ai --workspace=@hazeljs/rag --workspace=@hazeljs/pdf-to-audio --workspace=@hazeljs/messaging",
     "build:tier3": "npm run build --workspace=@hazeljs/agent",
     "build:packages": "npm run build --workspaces --if-present",
@@ -36,7 +36,10 @@
     "prisma:reset": "ts-node scripts/migrate.ts reset",
     "db:up": "docker-compose up -d",
     "db:down": "docker-compose down",
-    "db:logs": "docker-compose logs -f"
+    "db:logs": "docker-compose logs -f",
+    "flow:migrate": "npm run prisma:migrate --workspace=@hazeljs/flow",
+    "flow:test": "npm run test --workspace=@hazeljs/flow",
+    "flow:runtime": "npm run dev --workspace=@hazeljs/flow-runtime"
   },
   "repository": {
     "type": "git",
