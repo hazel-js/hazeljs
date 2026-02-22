@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/rag",
-  "version": "0.2.0-beta.32",
+  "version": "0.2.0-beta.34",
   "description": "Retrieval-Augmented Generation (RAG) and vector search for HazelJS framework",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
