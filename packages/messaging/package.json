@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/messaging",
-  "version": "0.2.0-beta.34",
+  "version": "0.2.0-beta.35",
   "description": "Multichannel messaging for HazelJS - WhatsApp, Telegram, Viber with LLM-powered bot responses",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
