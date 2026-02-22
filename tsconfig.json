@@ -60,6 +60,9 @@
       "path": "./packages/event-emitter"
     },
     {
+      "path": "./packages/grpc"
+    },
+    {
       "path": "./packages/queue"
     },
     {
