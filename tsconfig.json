@@ -57,6 +57,9 @@
       "path": "./packages/cron"
     },
     {
+      "path": "./packages/event-emitter"
+    },
+    {
       "path": "./packages/queue"
     },
     {

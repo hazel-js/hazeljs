@@ -57,6 +57,13 @@ class HttpResponse implements Response {
       this.headers[name] = value;
     }
   }
+
+  redirect(url: string, statusCode: number = 302): void {
+    if (this.headersSent) return;
+    this.headersSent = true;
+    this.res.writeHead(statusCode, { ...this.headers, Location: url });
+    this.res.end();
+  }
 }
 
 export class HazelApp {
@@ -218,6 +225,7 @@ export class HazelApp {
 
           // Parse request body for POST/PUT/PATCH requests (skip multipart - let route handle it)
           let body: unknown = undefined;
+          let rawBody = '';
           const contentType = headers['content-type'] || '';
           const isMultipart = contentType.includes('multipart/form-data');
           if ((method === 'POST' || method === 'PUT' || method === 'PATCH') && !isMultipart) {
@@ -228,6 +236,7 @@ export class HazelApp {
                 req.on('end', () => {
                   try {
                     const bodyStr = Buffer.concat(chunks).toString();
+                    rawBody = bodyStr;
                     if (bodyStr) {
                       if (contentType.includes('application/json')) {
                         body = JSON.parse(bodyStr);
@@ -256,6 +265,7 @@ export class HazelApp {
           // Extend the original request object
           Object.assign(req, {
             body,
+            rawBody: rawBody || undefined,
             params: {},
             query: {},
           });
