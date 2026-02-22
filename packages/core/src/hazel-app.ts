@@ -1,5 +1,5 @@
 import { Type } from './types';
-import { HazelModuleInstance, getModuleMetadata } from './hazel-module';
+import { HazelModuleInstance, getModuleMetadata, type DynamicModule } from './hazel-module';
 import { Container } from './container';
 import { Router } from './router';
 import { RequestParser } from './request-parser';
@@ -114,11 +114,14 @@ export class HazelApp {
     }
   }
 
-  private collectControllers(moduleType: Type<unknown>, visited = new Set<Type<unknown>>()): Type<unknown>[] {
-    if (visited.has(moduleType)) return [];
-    visited.add(moduleType);
+  private collectControllers(
+    moduleRef: Type<unknown> | DynamicModule,
+    visited = new Set<Type<unknown> | DynamicModule>()
+  ): Type<unknown>[] {
+    if (visited.has(moduleRef)) return [];
+    visited.add(moduleRef);
 
-    const metadata = getModuleMetadata(moduleType as object) || {};
+    const metadata = getModuleMetadata(moduleRef as object) || {};
     const controllers: Type<unknown>[] = [];
 
     // Collect from imported modules first
