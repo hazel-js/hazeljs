@@ -1,10 +1,12 @@
 {
   "name": "@hazeljs/event-emitter",
-  "version": "0.2.0-beta.29",
+  "version": "0.2.0-beta.31",
   "description": "Event emitter module for HazelJS framework - event-driven architecture with decorators",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc",
     "test": "jest --coverage --passWithNoTests",
@@ -35,7 +37,13 @@
     "url": "git+https://github.com/hazel-js/hazeljs.git",
     "directory": "packages/event-emitter"
   },
-  "keywords": ["hazeljs", "events", "event-emitter", "event-driven", "decorators"],
+  "keywords": [
+    "hazeljs",
+    "events",
+    "event-emitter",
+    "event-driven",
+    "decorators"
+  ],
   "author": "Muhammad Arslan <muhammad.arslan@hazeljs.com>",
   "license": "Apache-2.0",
   "bugs": {
