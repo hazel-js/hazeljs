@@ -1,7 +1,7 @@
 import { Controller, Get } from '@hazeljs/core';
 import { SwaggerService } from './swagger.service';
 import { RequestContext, Type } from '@hazeljs/core';
-import { getModuleMetadata } from '@hazeljs/core';
+import { getModuleMetadata, type DynamicModule } from '@hazeljs/core';
 import logger from '@hazeljs/core';
 import { Swagger, ApiOperation } from './swagger.decorator';
 import { SwaggerSpec } from './swagger.service';
@@ -81,11 +81,15 @@ export class SwaggerController {
       const controllers = new Set<Type<unknown>>();
 
       // Helper function to recursively collect controllers from modules
-      const collectControllers = (moduleType: Type<unknown>): void => {
-        logger.debug(`Collecting controllers from module: ${moduleType.name}`);
-        const metadata = getModuleMetadata(moduleType);
+      const collectControllers = (moduleRef: Type<unknown> | DynamicModule): void => {
+        const moduleName =
+          typeof moduleRef === 'function'
+            ? moduleRef.name
+            : (moduleRef as DynamicModule).module?.name;
+        logger.debug(`Collecting controllers from module: ${moduleName}`);
+        const metadata = getModuleMetadata(moduleRef as object);
         if (!metadata) {
-          logger.warn(`No metadata found for module: ${moduleType.name}`);
+          logger.warn(`No metadata found for module: ${moduleName}`);
           return;
         }
 
@@ -95,7 +99,7 @@ export class SwaggerController {
             (c: unknown) => c && typeof c === 'function'
           );
           logger.debug(
-            `${moduleType.name} controllers:`,
+            `${moduleName} controllers:`,
             validControllers.map((c: Type<unknown>) =>
               typeof c === 'function' ? c.name : undefined
             )
@@ -104,21 +108,26 @@ export class SwaggerController {
             controllers.add(controller as Type<unknown>)
           );
         } else {
-          logger.debug(`No controllers found in module: ${moduleType.name}`);
+          logger.debug(`No controllers found in module: ${moduleName}`);
         }
 
-        // Recursively process imported modules
+        // Recursively process imported modules (Type or DynamicModule)
         if (metadata.imports) {
           const validModules = metadata.imports.filter(
-            (m: unknown) => m && typeof m === 'function'
+            (m: unknown) =>
+              m && (typeof m === 'function' || (typeof m === 'object' && 'module' in (m as object)))
           );
           logger.debug(
-            `${moduleType.name} imported modules:`,
-            validModules.map((m: Type<unknown>) => (typeof m === 'function' ? m.name : undefined))
+            `${moduleName} imported modules:`,
+            validModules.map((m: Type<unknown> | DynamicModule) =>
+              typeof m === 'function' ? m.name : (m as DynamicModule).module?.name
+            )
           );
-          validModules.forEach((moduleType: Type<unknown>) => collectControllers(moduleType));
+          validModules.forEach((moduleRef: Type<unknown> | DynamicModule) =>
+            collectControllers(moduleRef)
+          );
         } else {
-          logger.debug(`No imports found in module: ${moduleType.name}`);
+          logger.debug(`No imports found in module: ${moduleName}`);
         }
       };
 
