@@ -10,7 +10,7 @@ import 'reflect-metadata';
 // Core exports
 export { HazelApp } from './hazel-app';
 export { HazelModule, Module, HazelModuleInstance, getModuleMetadata } from './hazel-module';
-export type { ModuleOptions } from './hazel-module';
+export type { ModuleOptions, DynamicModule } from './hazel-module';
 
 // Shutdown & Health
 export { ShutdownManager } from './shutdown';

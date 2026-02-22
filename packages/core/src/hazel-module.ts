@@ -6,8 +6,18 @@ import logger from './logger';
 const MODULE_METADATA_KEY = 'hazel:module';
 const ROUTE_METADATA_KEY = 'hazel:route';
 
+/** Dynamic module returned by forRoot() / forRootAsync() */
+export interface DynamicModule {
+  module: Type<unknown>;
+  providers?: unknown[];
+  controllers?: Type<unknown>[];
+  imports?: (Type<unknown> | DynamicModule)[];
+  exports?: unknown[];
+  global?: boolean;
+}
+
 export interface ModuleOptions {
-  imports?: Type<unknown>[];
+  imports?: (Type<unknown> | DynamicModule)[];
   controllers?: Type<unknown>[];
   providers?: Type<unknown>[];
   exports?: Type<unknown>[];
@@ -40,8 +50,8 @@ export function getModuleMetadata(target: object): ModuleOptions | undefined {
 export class HazelModuleInstance {
   private container: Container;
 
-  constructor(private readonly moduleType: Type<unknown>) {
-    const name = (moduleType as { name?: string })?.name ?? (moduleType as { module?: { name?: string } })?.module?.name ?? 'DynamicModule';
+  constructor(private readonly moduleType: Type<unknown> | DynamicModule) {
+    const name = (moduleType as { name?: string })?.name ?? (moduleType as DynamicModule)?.module?.name ?? 'DynamicModule';
     logger.debug(`Initializing HazelModule: ${name}`);
     this.container = Container.getInstance();
     this.initialize();
