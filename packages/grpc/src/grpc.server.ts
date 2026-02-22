@@ -160,7 +160,6 @@ export class GrpcServer {
           reject(err);
           return;
         }
-        this.server!.start();
         logger.info(`gRPC server listening on ${url}`);
         resolve();
       });
