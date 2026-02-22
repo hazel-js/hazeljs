@@ -4,7 +4,7 @@
  */
 
 /** Supported messaging channels */
-export type MessagingChannel = 'telegram' | 'whatsapp' | 'viber' | 'slack' | 'custom';
+export type MessagingChannel = 'telegram' | 'whatsapp' | 'viber' | 'slack' | 'teams' | 'custom';
 
 /** Normalized incoming message - same structure regardless of channel */
 export interface IncomingMessage {

@@ -13,6 +13,8 @@ import {
 import { TelegramAdapter } from './adapters/telegram.adapter';
 import { WhatsAppAdapter } from './adapters/whatsapp.adapter';
 import { ViberAdapter } from './adapters/viber.adapter';
+import { SlackAdapter } from './adapters/slack.adapter';
+import { TeamsAdapter } from './adapters/teams.adapter';
 import { RedisConversationContextStore } from './store/redis-conversation-context';
 import { MemoryConversationContextStore } from './store/memory-conversation-context';
 import type { MessagingServiceOptions } from './messaging.service';
@@ -23,6 +25,8 @@ export interface MessagingModuleChannelConfig {
   telegram?: { botToken: string };
   whatsapp?: { accessToken: string; phoneNumberId: string; apiVersion?: string };
   viber?: { authToken: string };
+  slack?: { webhookUrl: string };
+  teams?: { webhookUrl: string };
 }
 
 /** Redis config - client or connection options */
@@ -104,6 +108,12 @@ export class MessagingModule {
     }
     if (channels.viber?.authToken) {
       adapters.push(new ViberAdapter({ authToken: channels.viber.authToken }));
+    }
+    if (channels.slack?.webhookUrl) {
+      adapters.push(new SlackAdapter({ webhookUrl: channels.slack.webhookUrl }));
+    }
+    if (channels.teams?.webhookUrl) {
+      adapters.push(new TeamsAdapter({ webhookUrl: channels.teams.webhookUrl }));
     }
 
     const useKafka = !!options.kafka;

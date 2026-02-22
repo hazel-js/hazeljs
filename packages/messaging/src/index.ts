@@ -21,6 +21,10 @@ export { WhatsAppAdapter } from './adapters/whatsapp.adapter';
 export type { WhatsAppAdapterConfig } from './adapters/whatsapp.adapter';
 export { ViberAdapter } from './adapters/viber.adapter';
 export type { ViberAdapterConfig } from './adapters/viber.adapter';
+export { SlackAdapter } from './adapters/slack.adapter';
+export type { SlackAdapterConfig } from './adapters/slack.adapter';
+export { TeamsAdapter } from './adapters/teams.adapter';
+export type { TeamsAdapterConfig } from './adapters/teams.adapter';
 
 export type {
   MessagingChannel,
