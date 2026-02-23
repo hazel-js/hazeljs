@@ -1,10 +1,12 @@
 {
   "name": "@hazeljs/data",
-  "version": "0.2.0-beta.36",
+  "version": "0.2.0-beta.37",
   "description": "Data Processing & ETL for HazelJS framework",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc --skipLibCheck",
     "test": "jest --coverage --maxWorkers=1",
@@ -33,9 +35,19 @@
     "url": "git+https://github.com/hazel-js/hazeljs.git",
     "directory": "packages/data"
   },
-  "keywords": ["hazeljs", "data", "etl", "pipeline", "flink", "streaming", "validation"],
+  "keywords": [
+    "hazeljs",
+    "data",
+    "etl",
+    "pipeline",
+    "flink",
+    "streaming",
+    "validation"
+  ],
   "author": "Muhammad Arslan <muhammad.arslan@hazeljs.com>",
   "license": "Apache-2.0",
-  "bugs": {"url": "https://github.com/hazeljs/hazel-js/issues"},
+  "bugs": {
+    "url": "https://github.com/hazeljs/hazel-js/issues"
+  },
   "homepage": "https://hazeljs.com"
 }
