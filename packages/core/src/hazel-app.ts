@@ -17,6 +17,12 @@ import { CorsOptions } from './middleware/cors.middleware';
 
 const MODULE_METADATA_KEY = 'hazel:module';
 
+/** Early HTTP handler (e.g. for GraphQL) - receives raw req/res before body parsing */
+export type EarlyHttpHandler = (
+  req: IncomingMessage,
+  res: ServerResponse
+) => void | Promise<void>;
+
 class HttpResponse implements Response {
   private statusCode: number = 200;
   private headers: Record<string, string> = { 'Content-Type': 'application/json' };
@@ -78,10 +84,12 @@ export class HazelApp {
   private corsEnabled: boolean = false;
   private corsOptions?: CorsOptions;
   private timeoutMiddleware?: TimeoutMiddleware;
+  private earlyHandlers: Array<{ path: string; handler: EarlyHttpHandler }> = [];
 
   constructor(private readonly moduleType: Type<unknown>) {
     logger.info('Initializing HazelApp');
     this.container = Container.getInstance();
+    this.container.register(HazelApp, this);
     this.router = new Router(this.container);
     this.requestParser = new RequestParser();
     this.module = new HazelModuleInstance(this.moduleType);
@@ -197,6 +205,15 @@ export class HazelApp {
             res.writeHead(200, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify(startup));
             return;
+          }
+
+          // Early handlers (e.g. GraphQL) - must run before body parsing
+          for (const { path, handler } of this.earlyHandlers) {
+            const pathname = req.url?.split('?')[0] ?? '';
+            if (pathname === path || pathname.startsWith(path + '/')) {
+              await handler(req, res);
+              return;
+            }
           }
 
           const { method, url, headers } = req;
@@ -516,6 +533,14 @@ export class HazelApp {
 
   getRouter(): Router {
     return this.router;
+  }
+
+  /**
+   * Add an early HTTP handler (runs before body parsing, for GraphQL etc.)
+   */
+  addEarlyHandler(path: string, handler: EarlyHttpHandler): void {
+    this.earlyHandlers.push({ path, handler });
+    logger.info('Early handler registered', { path });
   }
 }
 
