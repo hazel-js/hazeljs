@@ -110,7 +110,7 @@ jobs:
         run: |
           VERSION="${{ steps.version.outputs.version }}"
           echo "Updating latest dist-tag to $VERSION for all packages"
-          for pkg in core cli ai agent auth cache config cron discovery kafka grpc messaging ops-agent event-emitter pdf-to-audio prisma queue rag serverless swagger websocket; do
+          for pkg in core cli ai agent auth cache config cron discovery kafka grpc messaging ops-agent data ml rag event-emitter pdf-to-audio prisma queue serverless swagger websocket; do
             echo "  @hazeljs/$pkg@$VERSION -> latest"
             npm dist-tag add "@hazeljs/$pkg@$VERSION" latest || true
           done

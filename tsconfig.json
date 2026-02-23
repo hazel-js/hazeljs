@@ -78,6 +78,12 @@
       "path": "./packages/agent"
     },
     {
+      "path": "./packages/data"
+    },
+    {
+      "path": "./packages/ml"
+    },
+    {
       "path": "./packages/messaging"
     }
   ]
