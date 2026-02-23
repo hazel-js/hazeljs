@@ -41,7 +41,17 @@ This Postman collection provides comprehensive API testing for all HazelJS examp
 - Validate Job Description
 - Extract Skills
 
-### 6. **Documentation** (2 endpoints)
+### 6. **PDF-to-Audio API** (3 endpoints, async)
+- Submit PDF for Conversion — `POST /api/pdf-to-audio/convert` (multipart/form-data). Returns `{ jobId }` (202).
+- Get Job Status — `GET /api/pdf-to-audio/status/:jobId`. Returns `{ status, progress, ... }`.
+- Download Audio — `GET /api/pdf-to-audio/download/:jobId`. Returns MP3 when job is completed.
+- Requires `OPENAI_API_KEY`. Run "Submit" first, poll "Status" until completed, then "Download".
+
+### 7. **Kafka API** (2 endpoints)
+- Create Order — `POST /kafka/orders/` (run with `npm run kafka` on port 3010)
+- Publish Order Event — `POST /kafka/orders/events`
+
+### 8. **Documentation** (2 endpoints)
 - Get Swagger UI
 - Get OpenAPI Spec
 
@@ -129,9 +139,11 @@ When running all tests with the server running:
 ✓ Demo API (6/6 tests passed)
 ✓ Authentication (3/3 tests passed)
 ✓ AI Jobs (3/3 tests passed)
+✓ PDF-to-Audio API (3/3 tests passed — run Submit, then poll Status until completed, then Download)
+✓ Kafka API (2/2 tests passed — use baseUrl http://localhost:3010 and run `npm run kafka`)
 ✓ Documentation (2/2 tests passed)
 
-Total: 29/29 tests passed
+Total: 34+/34+ tests passed
 ```
 
 ## 🔧 Troubleshooting
@@ -155,6 +167,12 @@ npm run dev
 
 ### Port Conflict
 **Solution**: Update the `baseUrl` variable to match your server port
+
+### PDF-to-Audio Requires OpenAI Key
+**Solution**: Set `OPENAI_API_KEY` in your environment. 1) Submit a PDF via "Submit PDF for Conversion" (form-data → file). 2) Poll "Get Job Status" until status is `completed`. 3) Call "Download Audio" to get the MP3.
+
+### Kafka Tests
+**Solution**: Kafka runs as a separate app. Run `npm run kafka` (starts on port 3010), then set `baseUrl` to `http://localhost:3010` for Kafka API requests.
 
 ## 📝 Test Scenarios
 
@@ -270,7 +288,7 @@ To add new tests:
 
 ## 📄 License
 
-MIT License - see LICENSE file for details
+Apache 2.0 - see LICENSE file for details
 
 ## 🔗 Links
 
@@ -280,7 +298,7 @@ MIT License - see LICENSE file for details
 
 ---
 
-**Total Endpoints**: 29  
-**Total Tests**: 29+  
+**Total Endpoints**: 32+  
+**Total Tests**: 32+  
 **Coverage**: 100%  
-**Last Updated**: December 2024
+**Last Updated**: February 2025

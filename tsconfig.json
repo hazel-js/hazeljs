@@ -17,7 +17,7 @@
   },
   "files": [],
   "include": [],
-  "exclude": ["node_modules", "dist", "**/dist", "**/node_modules", "packages", "example"],
+  "exclude": ["node_modules", "dist", "**/dist", "**/node_modules"],
   "references": [
     { "path": "./packages/core" },
     { "path": "./packages/ai" },
@@ -33,7 +33,13 @@
     { "path": "./packages/rag" },
     { "path": "./packages/agent" },
     { "path": "./packages/resilience" },
-    { "path": "./packages/gateway" }
-  ],
-  "exclude": ["node_modules", "dist", "**/dist", "**/node_modules"]
+    { "path": "./packages/gateway" },
+    { "path": "./packages/discovery" },
+    { "path": "./packages/event-emitter"},
+    { "path": "./packages/graphql"},
+    { "path": "./packages/grpc"},
+    { "path": "./packages/queue"},
+    { "path": "./packages/kafka"},
+    { "path": "./packages/messaging"}
+  ]
 }

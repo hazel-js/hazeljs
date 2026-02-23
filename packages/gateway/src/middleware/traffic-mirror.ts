@@ -31,9 +31,7 @@ export class TrafficMirror {
 
     const mirrorFn = async (): Promise<void> => {
       try {
-        const instance = await this.discoveryClient.getInstance(
-          this.config.service
-        );
+        const instance = await this.discoveryClient.getInstance(this.config.service);
 
         if (!instance) return;
 

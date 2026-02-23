@@ -1,0 +1,55 @@
+{
+  "name": "@hazeljs/grpc",
+  "version": "0.2.0-beta.38",
+  "description": "gRPC module for HazelJS framework - RPC server and client support with decorators",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "jest --coverage --passWithNoTests",
+    "lint": "eslint \"src/**/*.ts\"",
+    "lint:fix": "eslint \"src/**/*.ts\" --fix",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@grpc/grpc-js": "^1.13.0",
+    "@grpc/proto-loader": "^0.7.13"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.50",
+    "@typescript-eslint/eslint-plugin": "^8.18.2",
+    "@typescript-eslint/parser": "^8.18.2",
+    "eslint": "^8.56.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.2",
+    "typescript": "^5.3.3"
+  },
+  "peerDependencies": {
+    "@hazeljs/core": ">=0.2.0-beta.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hazel-js/hazeljs.git",
+    "directory": "packages/grpc"
+  },
+  "keywords": [
+    "hazeljs",
+    "grpc",
+    "rpc",
+    "microservices",
+    "protobuf",
+    "decorators"
+  ],
+  "author": "Muhammad Arslan <muhammad.arslan@hazeljs.com>",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/hazeljs/hazel-js/issues"
+  },
+  "homepage": "https://hazeljs.com"
+}

@@ -15,6 +15,8 @@ export interface QdrantConfig {
   apiKey?: string;
   collectionName: string;
   vectorSize?: number;
+  /** Skip client-server version check (avoids warning when Qdrant is unreachable). Default: true */
+  checkCompatibility?: boolean;
 }
 
 export class QdrantVectorStore implements VectorStore {
@@ -35,6 +37,7 @@ export class QdrantVectorStore implements VectorStore {
     this.client = new Client({
       url: config.url,
       apiKey: config.apiKey,
+      checkCompatibility: config.checkCompatibility ?? false,
     });
   }
 

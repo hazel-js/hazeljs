@@ -8,7 +8,6 @@
 
 import { EventEmitter } from 'events';
 import { DiscoveryClient, RegistryBackend } from '@hazeljs/discovery';
-import { CircuitBreakerRegistry } from '@hazeljs/resilience';
 import {
   GatewayConfig,
   GatewayFullConfig,
@@ -16,8 +15,6 @@ import {
   ProxyRequest,
   ProxyResponse,
   CanaryConfig,
-  VersionRouteConfig,
-  TrafficMirrorConfig,
   GatewayEventType,
 } from './types';
 import { ServiceProxy, ServiceProxyConfig } from './proxy/service-proxy';
@@ -48,10 +45,7 @@ export class GatewayServer extends EventEmitter {
     this.config = config;
     this.metrics = new GatewayMetrics(config.metrics?.windowSize ?? 60_000);
 
-    this.discoveryClient = new DiscoveryClient(
-      config.discovery ?? {},
-      backend
-    );
+    this.discoveryClient = new DiscoveryClient(config.discovery ?? {}, backend);
   }
 
   /**
@@ -70,7 +64,10 @@ export class GatewayServer extends EventEmitter {
   /**
    * Create a gateway from a decorated class
    */
-  static fromClass(gatewayClass: Function, backend?: RegistryBackend): GatewayServer {
+  static fromClass(
+    gatewayClass: new (...args: unknown[]) => unknown,
+    backend?: RegistryBackend
+  ): GatewayServer {
     const { config, routes } = collectRouteDefinitions(gatewayClass);
     const gateway = new GatewayServer(config, backend);
 
@@ -139,9 +136,7 @@ export class GatewayServer extends EventEmitter {
     }
 
     this.routes.set(definition.path, handler);
-    this.sortedPatterns = sortRoutesBySpecificity(
-      Array.from(this.routes.keys())
-    );
+    this.sortedPatterns = sortRoutesBySpecificity(Array.from(this.routes.keys()));
   }
 
   /**
@@ -198,11 +193,7 @@ export class GatewayServer extends EventEmitter {
       const duration = Date.now() - startTime;
       const isError = response.status >= 500;
       if (isError) {
-        this.metrics.recordFailure(
-          handler.definition.path,
-          duration,
-          `HTTP ${response.status}`
-        );
+        this.metrics.recordFailure(handler.definition.path, duration, `HTTP ${response.status}`);
       } else {
         this.metrics.recordSuccess(handler.definition.path, duration);
       }
@@ -210,11 +201,7 @@ export class GatewayServer extends EventEmitter {
       return response;
     } catch (error) {
       const duration = Date.now() - startTime;
-      this.metrics.recordFailure(
-        handler.definition.path,
-        duration,
-        String(error)
-      );
+      this.metrics.recordFailure(handler.definition.path, duration, String(error));
 
       this.emit('route:error' as GatewayEventType, {
         route: handler.definition.path,
@@ -328,12 +315,7 @@ export class GatewayServer extends EventEmitter {
     } catch (error) {
       const duration = Date.now() - startTime;
       engine.recordFailure(target, duration, String(error));
-      this.metrics.recordFailure(
-        handler.definition.path,
-        duration,
-        String(error),
-        version
-      );
+      this.metrics.recordFailure(handler.definition.path, duration, String(error), version);
       throw error;
     }
   }
@@ -355,11 +337,7 @@ export class GatewayServer extends EventEmitter {
       );
 
       const duration = Date.now() - startTime;
-      this.metrics.recordSuccess(
-        handler.definition.path,
-        duration,
-        resolution.version
-      );
+      this.metrics.recordSuccess(handler.definition.path, duration, resolution.version);
 
       return response;
     } catch (error) {

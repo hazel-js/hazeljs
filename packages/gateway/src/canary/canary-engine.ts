@@ -16,14 +16,7 @@
 
 import { EventEmitter } from 'events';
 import { MetricsCollector } from '@hazeljs/resilience';
-import {
-  CanaryConfig,
-  CanaryState,
-  CanaryMetrics,
-  CanaryVersionMetrics,
-  CanaryDecision,
-  ProxyRequest,
-} from '../types';
+import { CanaryConfig, CanaryState, CanaryMetrics, CanaryDecision, ProxyRequest } from '../types';
 
 export interface CanaryStatus {
   state: CanaryState;
@@ -183,9 +176,7 @@ export class CanaryEngine extends EventEmitter {
    * Get the version string for a target
    */
   getVersion(target: 'stable' | 'canary'): string {
-    return target === 'stable'
-      ? this.config.stable.version
-      : this.config.canary.version;
+    return target === 'stable' ? this.config.stable.version : this.config.canary.version;
   }
 
   /**
@@ -387,7 +378,9 @@ export function parseInterval(value: number | string): number {
 
   const match = value.match(/^(\d+)(ms|s|m|h)$/);
   if (!match) {
-    throw new Error(`Invalid interval format: "${value}". Use formats like "5m", "30s", "1h", or a number in ms.`);
+    throw new Error(
+      `Invalid interval format: "${value}". Use formats like "5m", "30s", "1h", or a number in ms.`
+    );
   }
 
   const amount = parseInt(match[1], 10);

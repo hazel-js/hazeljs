@@ -5,7 +5,7 @@
 Scaffold applications and generate components with a powerful CLI tool for rapid development.
 
 [![npm version](https://img.shields.io/npm/v/@hazeljs/cli.svg)](https://www.npmjs.com/package/@hazeljs/cli)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 
 ## Features
 
@@ -665,7 +665,7 @@ Contributions are welcome! Please read our [Contributing Guide](../../CONTRIBUTI
 
 ## License
 
-MIT © [HazelJS](https://hazeljs.com)
+Apache 2.0 © [HazelJS](https://hazeljs.com)
 
 ## Links
 

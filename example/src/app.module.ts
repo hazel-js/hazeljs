@@ -10,9 +10,18 @@ import { DemoModule } from './demo/demo.module';
 import { ServerlessModule } from './serverless/serverless.module';
 import { CacheExampleModule } from './cache/cache-example.module';
 import { KnowledgeBaseAgentModule } from './agent/knowledge-base-agent.module';
+import { PdfToAudioModule } from '@hazeljs/pdf-to-audio';
 
 @HazelModule({
   imports: [
+    // PDF-to-Audio with Redis queue (requires Redis running)
+    PdfToAudioModule.forRoot({
+      connection: {
+        host: process.env.REDIS_HOST || 'localhost',
+        port: parseInt(process.env.REDIS_PORT || '6379', 10),
+      },
+      outputDir: process.env.PDF_TO_AUDIO_OUTPUT_DIR || './data/pdf-to-audio',
+    }) as any,
     // Configuration module with validation
     ConfigModule.forRoot({
       envFilePath: ['.env', '.env.local'],

@@ -2,7 +2,7 @@
 
 [![codecov](https://codecov.io/gh/yourusername/hazeljs/branch/main/graph/badge.svg)](https://codecov.io/gh/yourusername/hazeljs)
 [![npm version](https://badge.fury.io/js/%40hazeljs%2Fcore.svg)](https://badge.fury.io/js/%40hazeljs%2Fcore)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 
 A modern, lightweight, enterprise-grade Node.js framework. HazelJS provides a robust architecture for building scalable server-side applications using TypeScript and decorators, with built-in AI capabilities, agent runtime, and RAG support.
 
@@ -61,7 +61,7 @@ npm install @hazeljs/ai @hazeljs/agent @hazeljs/rag
 
 # Infrastructure packages
 npm install @hazeljs/cache @hazeljs/websocket @hazeljs/serverless
-npm install @hazeljs/discovery @hazeljs/config @hazeljs/cron
+npm install @hazeljs/discovery @hazeljs/config @hazeljs/cron @hazeljs/queue
 
 # Data & Auth packages
 npm install @hazeljs/prisma @hazeljs/auth @hazeljs/swagger
@@ -274,6 +274,7 @@ npm run lerna:publish:latest # Publish with latest tag
 - **[CLI Tool](./packages/cli/README.md)** - Scaffolding and code generation
 - **[Configuration](./packages/config/README.md)** - Type-safe configuration management
 - **[Cron Jobs](./packages/cron/README.md)** - Scheduled task execution
+- **[Queue](./packages/queue/README.md)** - Redis-backed job queues (BullMQ)
 - **[Service Discovery](./packages/discovery/README.md)** - Microservices registry
 - **[Prisma ORM](./packages/prisma/README.md)** - Database integration with repository pattern
 - **[Serverless](./packages/serverless/README.md)** - AWS Lambda & Google Cloud Functions
@@ -385,7 +386,7 @@ We welcome contributions! Please see our contributing guidelines.
 
 ## 📝 License
 
-MIT - Free to use in commercial and open-source projects
+Apache 2.0 - Free to use in commercial and open-source projects
 
 ---
 

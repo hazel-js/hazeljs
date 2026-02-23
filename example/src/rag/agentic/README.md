@@ -293,4 +293,4 @@ async retrieve(query: string): Promise<SearchResult[]> { }
 
 ## 📄 License
 
-MIT License - see [LICENSE](../LICENSE)
+Apache 2.0 - see [LICENSE](../LICENSE)

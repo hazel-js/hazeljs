@@ -37,11 +37,14 @@ function trackProperty(target: object, propertyKey: string | symbol): void {
   Reflect.defineMetadata(GATEWAY_PROPERTIES_KEY, existing, target);
 }
 
+type Constructor = new (...args: unknown[]) => unknown;
+
 /**
  * @Gateway class decorator
  * Marks a class as a gateway definition with global configuration.
  */
 export function Gateway(config: GatewayConfig): ClassDecorator {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type -- ClassDecorator requires Function
   return function (target: Function) {
     Reflect.defineMetadata(GATEWAY_CONFIG_KEY, config, target);
   };
@@ -54,9 +57,7 @@ export function Gateway(config: GatewayConfig): ClassDecorator {
 export function Route(pathOrConfig: string | RouteConfig): PropertyDecorator {
   return function (target: object, propertyKey: string | symbol) {
     const config: RouteConfig =
-      typeof pathOrConfig === 'string'
-        ? { path: pathOrConfig }
-        : pathOrConfig;
+      typeof pathOrConfig === 'string' ? { path: pathOrConfig } : pathOrConfig;
     Reflect.defineMetadata(ROUTE_KEY, config, target, propertyKey);
     trackProperty(target, propertyKey);
   };
@@ -66,14 +67,10 @@ export function Route(pathOrConfig: string | RouteConfig): PropertyDecorator {
  * @ServiceRoute property/method decorator
  * Maps this route to a service in the discovery registry.
  */
-export function ServiceRoute(
-  nameOrConfig: string | ServiceRouteConfig
-): PropertyDecorator {
+export function ServiceRoute(nameOrConfig: string | ServiceRouteConfig): PropertyDecorator {
   return function (target: object, propertyKey: string | symbol) {
     const config: ServiceRouteConfig =
-      typeof nameOrConfig === 'string'
-        ? { serviceName: nameOrConfig }
-        : nameOrConfig;
+      typeof nameOrConfig === 'string' ? { serviceName: nameOrConfig } : nameOrConfig;
     Reflect.defineMetadata(SERVICE_ROUTE_KEY, config, target, propertyKey);
     trackProperty(target, propertyKey);
   };
@@ -113,9 +110,7 @@ export function TrafficPolicy(config: TrafficPolicyConfig): PropertyDecorator {
  * @CircuitBreaker property decorator (gateway-specific)
  * Overrides circuit breaker configuration for this route.
  */
-export function GatewayCircuitBreaker(
-  config: Partial<CircuitBreakerConfig>
-): PropertyDecorator {
+export function GatewayCircuitBreaker(config: Partial<CircuitBreakerConfig>): PropertyDecorator {
   return function (target: object, propertyKey: string | symbol) {
     Reflect.defineMetadata(CIRCUIT_BREAKER_KEY, config, target, propertyKey);
   };
@@ -125,9 +120,7 @@ export function GatewayCircuitBreaker(
  * @RateLimit property decorator (gateway-specific)
  * Overrides rate limit configuration for this route.
  */
-export function GatewayRateLimit(
-  config: Partial<RateLimiterConfig>
-): PropertyDecorator {
+export function GatewayRateLimit(config: Partial<RateLimiterConfig>): PropertyDecorator {
   return function (target: object, propertyKey: string | symbol) {
     Reflect.defineMetadata(RATE_LIMIT_KEY, config, target, propertyKey);
   };
@@ -135,7 +128,7 @@ export function GatewayRateLimit(
 
 // ─── Metadata Readers ───
 
-export function getGatewayConfig(target: Function): GatewayConfig | undefined {
+export function getGatewayConfig(target: Constructor): GatewayConfig | undefined {
   return Reflect.getMetadata(GATEWAY_CONFIG_KEY, target);
 }
 
@@ -191,7 +184,7 @@ export function getRateLimitConfig(
 /**
  * Collect all route definitions from a gateway class instance
  */
-export function collectRouteDefinitions(gatewayClass: Function): {
+export function collectRouteDefinitions(gatewayClass: Constructor): {
   config: GatewayConfig;
   routes: Array<{
     propertyKey: string;
@@ -210,9 +203,7 @@ export function collectRouteDefinitions(gatewayClass: Function): {
   // Get tracked gateway properties (from decorators) + prototype methods
   const trackedProps: Set<string> =
     Reflect.getMetadata(GATEWAY_PROPERTIES_KEY, prototype) || new Set<string>();
-  const protoMethods = Object.getOwnPropertyNames(prototype).filter(
-    (p) => p !== 'constructor'
-  );
+  const protoMethods = Object.getOwnPropertyNames(prototype).filter((p) => p !== 'constructor');
   const allProperties = new Set([...trackedProps, ...protoMethods]);
 
   const routes = Array.from(allProperties)

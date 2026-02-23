@@ -21,9 +21,7 @@ describe('VersionRouter', () => {
         },
       });
 
-      const result = router.resolve(
-        makeRequest({ headers: { 'X-API-Version': 'v2' } })
-      );
+      const result = router.resolve(makeRequest({ headers: { 'X-API-Version': 'v2' } }));
       expect(result.version).toBe('v2');
       expect(result.resolvedBy).toBe('header');
     });
@@ -37,9 +35,7 @@ describe('VersionRouter', () => {
         },
       });
 
-      const result = router.resolve(
-        makeRequest({ headers: { 'X-API-Version': 'v2' } })
-      );
+      const result = router.resolve(makeRequest({ headers: { 'X-API-Version': 'v2' } }));
       expect(result.version).toBe('v2');
       expect(result.resolvedBy).toBe('header');
     });
@@ -54,9 +50,7 @@ describe('VersionRouter', () => {
       });
 
       // Header says v2 but it's not explicitly allowed
-      const result = router.resolve(
-        makeRequest({ headers: { 'X-API-Version': 'v2' } })
-      );
+      const result = router.resolve(makeRequest({ headers: { 'X-API-Version': 'v2' } }));
       expect(result.version).toBe('v1');
       expect(result.resolvedBy).toBe('weight');
     });
@@ -139,9 +133,7 @@ describe('VersionRouter', () => {
         },
       });
 
-      const result = router.resolve(
-        makeRequest({ query: { version: 'v2' } })
-      );
+      const result = router.resolve(makeRequest({ query: { version: 'v2' } }));
       expect(result.version).toBe('v2');
       expect(result.resolvedBy).toBe('query');
     });

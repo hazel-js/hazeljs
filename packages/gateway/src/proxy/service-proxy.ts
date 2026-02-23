@@ -69,10 +69,7 @@ export class ServiceProxy {
 
     if (config.circuitBreaker) {
       const breakerName = `gateway:${config.serviceName}`;
-      this.circuitBreaker = CircuitBreakerRegistry.getOrCreate(
-        breakerName,
-        config.circuitBreaker
-      );
+      this.circuitBreaker = CircuitBreakerRegistry.getOrCreate(breakerName, config.circuitBreaker);
     }
 
     if (config.timeout) {
@@ -111,21 +108,21 @@ export class ServiceProxy {
     if (this.retryPolicy) {
       const retryPolicy = this.retryPolicy;
       const innerFn = wrappedFn;
-      wrappedFn = () => retryPolicy.execute(innerFn);
+      wrappedFn = (): Promise<ProxyResponse> => retryPolicy.execute(innerFn);
     }
 
     // Circuit breaker wraps retry
     if (this.circuitBreaker) {
       const breaker = this.circuitBreaker;
       const innerFn = wrappedFn;
-      wrappedFn = () => breaker.execute(innerFn);
+      wrappedFn = (): Promise<ProxyResponse> => breaker.execute(innerFn);
     }
 
     // Timeout wraps circuit breaker
     if (this.timeout) {
       const timeout = this.timeout;
       const innerFn = wrappedFn;
-      wrappedFn = () => timeout.execute(innerFn);
+      wrappedFn = (): Promise<ProxyResponse> => timeout.execute(innerFn);
     }
 
     const startTime = Date.now();
@@ -169,10 +166,7 @@ export class ServiceProxy {
   /**
    * Forward with a custom filter override
    */
-  async forwardWithFilter(
-    request: ProxyRequest,
-    filter: ServiceFilter
-  ): Promise<ProxyResponse> {
+  async forwardWithFilter(request: ProxyRequest, filter: ServiceFilter): Promise<ProxyResponse> {
     const instance = await this.discoveryClient.getInstance(
       this.config.serviceName,
       this.config.loadBalancingStrategy,
@@ -180,9 +174,7 @@ export class ServiceProxy {
     );
 
     if (!instance) {
-      throw new Error(
-        `No instances available for service: ${this.config.serviceName} with filter`
-      );
+      throw new Error(`No instances available for service: ${this.config.serviceName} with filter`);
     }
 
     return this.doForwardToInstance(request, instance);
@@ -219,9 +211,7 @@ export class ServiceProxy {
     );
 
     if (!instance) {
-      throw new Error(
-        `No instances available for service: ${this.config.serviceName}`
-      );
+      throw new Error(`No instances available for service: ${this.config.serviceName}`);
     }
 
     return this.doForwardToInstance(request, instance);

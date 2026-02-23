@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/discovery",
-  "version": "0.2.0-beta.16",
+  "version": "0.2.0-beta.38",
   "description": "Service discovery and registry for HazelJS microservices - Eureka-inspired with multiple backend support",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -39,7 +39,8 @@
   "peerDependencies": {
     "ioredis": "^5.3.0",
     "consul": "^1.2.0",
-    "@kubernetes/client-node": "^0.20.0"
+    "@kubernetes/client-node": "^0.20.0",
+    "@hazeljs/core": ">=0.2.0-beta.0"
   },
   "peerDependenciesMeta": {
     "ioredis": {
@@ -70,8 +71,8 @@
     "consul",
     "kubernetes"
   ],
-  "author": "Muhammad Arslan <marslan@hazeljs.com>",
-  "license": "MIT",
+  "author": "Muhammad Arslan <muhammad.arslan@hazeljs.com>",
+  "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/hazeljs/hazel-js/issues"
   },

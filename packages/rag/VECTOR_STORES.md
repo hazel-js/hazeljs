@@ -246,4 +246,4 @@ See the `example/src/rag/` directory for complete examples:
 
 ## License
 
-MIT
+Apache 2.0

@@ -54,7 +54,11 @@ export { matchRoute, sortRoutesBySpecificity, RouteMatch } from './routing/route
 export { CanaryEngine, CanaryStatus, parseInterval } from './canary/canary-engine';
 
 // Metrics
-export { GatewayMetrics, GatewayMetricsSnapshot, RouteMetricsSnapshot } from './metrics/gateway-metrics';
+export {
+  GatewayMetrics,
+  GatewayMetricsSnapshot,
+  RouteMetricsSnapshot,
+} from './metrics/gateway-metrics';
 
 // Traffic Mirror
 export { TrafficMirror } from './middleware/traffic-mirror';

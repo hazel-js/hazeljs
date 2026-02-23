@@ -73,7 +73,9 @@ export class GatewayModule {
    * @param configService - Optional ConfigService instance. Required if
    *   no direct `config` was provided in forRoot().
    */
-  static resolveConfig(configService?: { get: <T>(key: string) => T | undefined }): GatewayFullConfig {
+  static resolveConfig(configService?: {
+    get: <T>(key: string) => T | undefined;
+  }): GatewayFullConfig {
     const opts = GatewayModule.options;
 
     // Direct config takes precedence
@@ -85,8 +87,8 @@ export class GatewayModule {
     if (!configService) {
       throw new Error(
         'GatewayModule: No config provided and no ConfigService available. ' +
-        'Either pass config directly via GatewayModule.forRoot({ config: {...} }) ' +
-        'or provide a ConfigService instance.'
+          'Either pass config directly via GatewayModule.forRoot({ config: {...} }) ' +
+          'or provide a ConfigService instance.'
       );
     }
 
@@ -96,14 +98,14 @@ export class GatewayModule {
     if (!config) {
       throw new Error(
         `GatewayModule: No configuration found at key "${key}". ` +
-        `Make sure your config loader returns a "${key}" key with routes.`
+          `Make sure your config loader returns a "${key}" key with routes.`
       );
     }
 
     if (!config.routes || !Array.isArray(config.routes)) {
       throw new Error(
         `GatewayModule: Configuration at key "${key}" is missing a "routes" array. ` +
-        'Each route needs at least { path, serviceName }.'
+          'Each route needs at least { path, serviceName }.'
       );
     }
 

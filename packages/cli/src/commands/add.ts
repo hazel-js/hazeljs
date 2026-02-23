@@ -40,6 +40,10 @@ const HAZEL_PACKAGES: Record<string, { npm: string; hint: string }> = {
     npm: '@hazeljs/rag',
     hint: 'import { RAGPipeline } from "@hazeljs/rag";',
   },
+  'pdf-to-audio': {
+    npm: '@hazeljs/pdf-to-audio',
+    hint: 'import { PdfToAudioModule } from "@hazeljs/pdf-to-audio";\n  // PdfToAudioModule converts PDFs to audio via TTS',
+  },
   serverless: {
     npm: '@hazeljs/serverless',
     hint: 'import { createLambdaHandler } from "@hazeljs/serverless";',

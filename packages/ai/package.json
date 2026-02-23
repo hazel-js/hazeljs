@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/ai",
-  "version": "0.2.0-beta.16",
+  "version": "0.2.0-beta.38",
   "description": "AI integration module for HazelJS framework",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -17,8 +17,6 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.71.2",
     "@google/generative-ai": "^0.24.1",
-    "@hazeljs/cache": "file:../cache",
-    "@hazeljs/core": "file:../core",
     "cohere-ai": "^7.14.0",
     "openai": "^6.15.0"
   },
@@ -47,6 +45,14 @@
     "gemini",
     "llm"
   ],
-  "author": "Muhammad Arslan <marslan@hazeljs.com>",
-  "license": "MIT"
+  "author": "Muhammad Arslan <muhammad.arslan@hazeljs.com>",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/hazeljs/hazel-js/issues"
+  },
+  "homepage": "https://hazeljs.com",
+  "peerDependencies": {
+    "@hazeljs/cache": ">=0.2.0-beta.0",
+    "@hazeljs/core": ">=0.2.0-beta.0"
+  }
 }

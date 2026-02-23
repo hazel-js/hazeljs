@@ -248,6 +248,9 @@ export class Router {
               } else {
                 args[i] = context.headers;
               }
+            } else if (injection.type === 'request') {
+              // Handle @Req() / @Request() decorator - raw request for multipart, etc.
+              args[i] = req;
             } else if (injection.type === 'response') {
               // Handle @Res decorator
               args[i] = new HazelExpressResponse(res);
@@ -451,7 +454,7 @@ export class Router {
   }
 
   async match(method: string, url: string, context: RequestContext): Promise<RouteMatch | null> {
-    const path = url.split('?')[0];
+    const path = this.normalizePath(url.split('?')[0] || '/');
     logger.debug(`Matching route: ${method} ${path}`);
 
     // Use method-specific cache for O(1) method lookup instead of O(n)

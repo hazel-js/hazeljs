@@ -26,10 +26,7 @@ describe('matchRoute', () => {
     });
 
     it('should match multiple parameters', () => {
-      const result = matchRoute(
-        '/api/:service/:id',
-        '/api/users/456'
-      );
+      const result = matchRoute('/api/:service/:id', '/api/users/456');
       expect(result.matched).toBe(true);
       expect(result.params).toEqual({ service: 'users', id: '456' });
     });
@@ -67,12 +64,7 @@ describe('matchRoute', () => {
 
 describe('sortRoutesBySpecificity', () => {
   it('should sort most specific first', () => {
-    const routes = [
-      '/api/**',
-      '/api/users/:id',
-      '/api/users/me',
-      '/api/users/*',
-    ];
+    const routes = ['/api/**', '/api/users/:id', '/api/users/me', '/api/users/*'];
 
     const sorted = sortRoutesBySpecificity(routes);
 

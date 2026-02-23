@@ -354,4 +354,4 @@ See full documentation at: https://hazeljs.com/docs/ai
 
 ## License
 
-MIT
+Apache 2.0
