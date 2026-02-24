@@ -3,6 +3,7 @@
 Service Discovery and Registry for HazelJS microservices - inspired by Netflix Eureka and Consul.
 
 [![npm version](https://img.shields.io/npm/v/@hazeljs/discovery.svg)](https://www.npmjs.com/package/@hazeljs/discovery)
+[![npm downloads](https://img.shields.io/npm/dm/@hazeljs/discovery)](https://www.npmjs.com/package/@hazeljs/discovery)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 
 ## Features

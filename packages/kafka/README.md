@@ -5,6 +5,7 @@
 Apache Kafka integration for HazelJS with decorator-based consumers, producer service, and lightweight stream processing.
 
 [![npm version](https://img.shields.io/npm/v/@hazeljs/kafka.svg)](https://www.npmjs.com/package/@hazeljs/kafka)
+[![npm downloads](https://img.shields.io/npm/dm/@hazeljs/kafka)](https://www.npmjs.com/package/@hazeljs/kafka)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 
 ## Features

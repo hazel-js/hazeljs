@@ -5,6 +5,7 @@
 The foundation of the HazelJS framework, providing enterprise-grade dependency injection, decorator-based routing, middleware support, and production-ready features.
 
 [![npm version](https://img.shields.io/npm/v/@hazeljs/core.svg)](https://www.npmjs.com/package/@hazeljs/core)
+[![npm downloads](https://img.shields.io/npm/dm/@hazeljs/core)](https://www.npmjs.com/package/@hazeljs/core)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 
 ## Features

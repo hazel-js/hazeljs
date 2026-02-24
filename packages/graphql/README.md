@@ -2,6 +2,10 @@
 
 GraphQL server and client for HazelJS with decorator-based schema and typed client.
 
+[![npm version](https://img.shields.io/npm/v/@hazeljs/graphql.svg)](https://www.npmjs.com/package/@hazeljs/graphql)
+[![npm downloads](https://img.shields.io/npm/dm/@hazeljs/graphql)](https://www.npmjs.com/package/@hazeljs/graphql)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
+
 ## Installation
 
 ```bash

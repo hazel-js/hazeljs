@@ -3,6 +3,7 @@
 Machine Learning & Model Management for HazelJS - training, prediction, model registry, and metrics.
 
 [![npm version](https://img.shields.io/npm/v/@hazeljs/ml.svg)](https://www.npmjs.com/package/@hazeljs/ml)
+[![npm downloads](https://img.shields.io/npm/dm/@hazeljs/ml)](https://www.npmjs.com/package/@hazeljs/ml)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 
 ## Features
