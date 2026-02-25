@@ -8,6 +8,7 @@
 
 import { EventEmitter } from 'events';
 import { DiscoveryClient, RegistryBackend } from '@hazeljs/discovery';
+import { RateLimitError } from '@hazeljs/resilience';
 import {
   GatewayConfig,
   GatewayFullConfig,
@@ -208,6 +209,20 @@ export class GatewayServer extends EventEmitter {
         service: handler.definition.serviceName,
         error: String(error),
       });
+
+      // Return 429 for rate limit exceeded (RFC 6585)
+      if (error instanceof RateLimitError) {
+        const retryAfterSec = error.retryAfterMs ? Math.ceil(error.retryAfterMs / 1000) : 60;
+        return {
+          status: 429,
+          headers: { 'Retry-After': String(retryAfterSec) },
+          body: {
+            error: 'Too Many Requests',
+            message: error.message,
+            retryAfter: retryAfterSec,
+          },
+        };
+      }
 
       return {
         status: 502,

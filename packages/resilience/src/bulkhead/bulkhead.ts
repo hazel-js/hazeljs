@@ -94,11 +94,7 @@ export class Bulkhead {
           if (idx !== -1) {
             this.queue.splice(idx, 1);
             this.rejectedCount++;
-            reject(
-              new BulkheadError(
-                `Bulkhead queue timeout after ${this.queueTimeout}ms`
-              )
-            );
+            reject(new BulkheadError(`Bulkhead queue timeout after ${this.queueTimeout}ms`));
           }
         }, this.queueTimeout);
       }

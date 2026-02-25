@@ -22,7 +22,9 @@ import {
 import { SlidingWindow, createSlidingWindow } from './sliding-window';
 import { MetricsCollector } from '../metrics/metrics-collector';
 
-const DEFAULT_CONFIG: Required<Omit<CircuitBreakerConfig, 'fallback' | 'onStateChange' | 'failurePredicate'>> & {
+const DEFAULT_CONFIG: Required<
+  Omit<CircuitBreakerConfig, 'fallback' | 'onStateChange' | 'failurePredicate'>
+> & {
   fallback?: string;
   onStateChange?: (from: CircuitState, to: CircuitState) => void;
   failurePredicate?: (error: unknown) => boolean;
@@ -51,9 +53,7 @@ export class CircuitBreaker extends EventEmitter {
 
     const swCfg = this.config.slidingWindow!;
     this.slidingWindow = createSlidingWindow(swCfg.type, swCfg.size);
-    this.metrics = new MetricsCollector(
-      swCfg.type === 'time' ? swCfg.size : 60_000
-    );
+    this.metrics = new MetricsCollector(swCfg.type === 'time' ? swCfg.size : 60_000);
   }
 
   /**
@@ -63,10 +63,7 @@ export class CircuitBreaker extends EventEmitter {
     // If OPEN, check if it's time to try again
     if (this.state === CircuitState.OPEN) {
       if (Date.now() < this.nextAttempt) {
-        throw new CircuitBreakerError(
-          'Circuit breaker is OPEN - service unavailable',
-          this.state
-        );
+        throw new CircuitBreakerError('Circuit breaker is OPEN - service unavailable', this.state);
       }
       this.transitionTo(CircuitState.HALF_OPEN);
     }

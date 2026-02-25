@@ -63,6 +63,9 @@ export {
 // Traffic Mirror
 export { TrafficMirror } from './middleware/traffic-mirror';
 
+// HazelJS Core Integration
+export { createGatewayHandler } from './hazel-integration';
+
 // Decorators
 export {
   Gateway,

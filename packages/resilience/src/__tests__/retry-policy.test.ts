@@ -35,9 +35,9 @@ describe('RetryPolicy', () => {
       backoff: 'fixed',
     });
 
-    await expect(
-      policy.execute(() => Promise.reject(new Error('always-fail')))
-    ).rejects.toThrow(RetryExhaustedError);
+    await expect(policy.execute(() => Promise.reject(new Error('always-fail')))).rejects.toThrow(
+      RetryExhaustedError
+    );
   });
 
   it('should not retry non-retryable errors', async () => {
@@ -45,8 +45,7 @@ describe('RetryPolicy', () => {
     const policy = new RetryPolicy({
       maxAttempts: 5,
       baseDelay: 10,
-      retryPredicate: (error) =>
-        error instanceof Error && error.message !== 'fatal',
+      retryPredicate: (error) => error instanceof Error && error.message !== 'fatal',
     });
 
     await expect(
@@ -69,9 +68,7 @@ describe('RetryPolicy', () => {
       onRetry: (_error, attempt) => retries.push(attempt),
     });
 
-    await policy
-      .execute(() => Promise.reject(new Error('fail')))
-      .catch(() => {});
+    await policy.execute(() => Promise.reject(new Error('fail'))).catch(() => {});
 
     expect(retries).toEqual([1, 2, 3]);
   });

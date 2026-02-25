@@ -49,11 +49,7 @@ export { Timeout, withTimeout } from './timeout/timeout';
 export { Bulkhead } from './bulkhead/bulkhead';
 
 // Rate Limiter
-export {
-  RateLimiter,
-  TokenBucketLimiter,
-  SlidingWindowLimiter,
-} from './rate-limiter/rate-limiter';
+export { RateLimiter, TokenBucketLimiter, SlidingWindowLimiter } from './rate-limiter/rate-limiter';
 
 // Metrics
 export { MetricsCollector, MetricsRegistry } from './metrics/metrics-collector';

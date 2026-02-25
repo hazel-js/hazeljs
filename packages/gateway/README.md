@@ -197,6 +197,24 @@ gateway.on('canary:complete', (data) => {
 | Query | `?version=v2` | Quick testing |
 | Weighted | Percentage-based random | A/B testing, canary |
 
+## HazelJS Core Integration
+
+Use the gateway with HazelApp's built-in HTTP server:
+
+```typescript
+import { HazelApp } from '@hazeljs/core';
+import { GatewayServer, createGatewayHandler } from '@hazeljs/gateway';
+
+const gateway = GatewayServer.fromConfig(config);
+gateway.startCanaries();
+
+const app = new HazelApp(AppModule);
+app.addProxyHandler('/api', createGatewayHandler(gateway));
+app.listen(3000);
+```
+
+`addProxyHandler(pathPrefix, handler)` runs after body parsing and before the router. Requests matching the path prefix are forwarded to the gateway.
+
 ## Programmatic API
 
 ```typescript

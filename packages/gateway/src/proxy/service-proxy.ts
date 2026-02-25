@@ -12,6 +12,7 @@ import {
   RetryPolicy,
   Timeout,
   RateLimiter,
+  RateLimitError,
   MetricsCollector,
   CircuitBreakerConfig,
   RetryConfig,
@@ -85,9 +86,15 @@ export class ServiceProxy {
    * Forward an incoming request to the target service
    */
   async forward(request: ProxyRequest): Promise<ProxyResponse> {
-    // Apply rate limiting
+    // Apply rate limiting — reject with 429 when limit exceeded
     if (this.rateLimiter) {
-      this.rateLimiter.tryAcquire();
+      if (!this.rateLimiter.tryAcquire()) {
+        const retryAfterMs = this.rateLimiter.getRetryAfterMs();
+        throw new RateLimitError(
+          `Rate limit exceeded for ${this.config.serviceName}. Retry after ${retryAfterMs}ms`,
+          retryAfterMs
+        );
+      }
     }
 
     // Apply request transformation

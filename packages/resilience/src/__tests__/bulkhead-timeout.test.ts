@@ -23,9 +23,9 @@ describe('Bulkhead', () => {
     );
 
     // This should be rejected immediately
-    await expect(
-      bulkhead.execute(() => Promise.resolve('should-not-run'))
-    ).rejects.toThrow(BulkheadError);
+    await expect(bulkhead.execute(() => Promise.resolve('should-not-run'))).rejects.toThrow(
+      BulkheadError
+    );
 
     await slowCall;
   });
@@ -71,9 +71,7 @@ describe('Timeout', () => {
   it('should reject with TimeoutError if too slow', async () => {
     const timeout = new Timeout(50);
     await expect(
-      timeout.execute(
-        () => new Promise((resolve) => setTimeout(() => resolve('slow'), 200))
-      )
+      timeout.execute(() => new Promise((resolve) => setTimeout(() => resolve('slow'), 200)))
     ).rejects.toThrow(TimeoutError);
   });
 
@@ -85,9 +83,7 @@ describe('Timeout', () => {
   it('should include duration in error message', async () => {
     const timeout = new Timeout({ duration: 50, message: 'Custom timeout' });
     try {
-      await timeout.execute(
-        () => new Promise((resolve) => setTimeout(() => resolve('slow'), 200))
-      );
+      await timeout.execute(() => new Promise((resolve) => setTimeout(() => resolve('slow'), 200)));
       fail('should have thrown');
     } catch (error) {
       expect((error as TimeoutError).message).toContain('Custom timeout');

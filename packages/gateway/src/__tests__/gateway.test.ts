@@ -95,6 +95,31 @@ describe('GatewayServer', () => {
       expect(mockRequest).toHaveBeenCalled();
     });
 
+    it('should return 429 with Retry-After when rate limit exceeded', async () => {
+      const gateway = new GatewayServer({ discovery: { cacheEnabled: false } }, backend);
+      gateway.addRoute({
+        path: '/api/users/**',
+        serviceName: 'user-service',
+        rateLimit: { strategy: 'sliding-window', max: 1, window: 60_000 },
+      });
+
+      await gateway.handleRequest({
+        method: 'GET',
+        path: '/api/users/1',
+        headers: {},
+      });
+
+      const response = await gateway.handleRequest({
+        method: 'GET',
+        path: '/api/users/1',
+        headers: {},
+      });
+
+      expect(response.status).toBe(429);
+      expect(response.headers['Retry-After']).toBeDefined();
+      expect(response.body).toMatchObject({ error: 'Too Many Requests' });
+    });
+
     it('should return 502 when service proxy throws', async () => {
       await backend.deregister('user-1');
 

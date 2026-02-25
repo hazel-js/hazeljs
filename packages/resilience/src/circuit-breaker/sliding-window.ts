@@ -106,11 +106,6 @@ export class TimeBasedSlidingWindow implements SlidingWindow {
 /**
  * Factory to create the appropriate sliding window
  */
-export function createSlidingWindow(
-  type: 'count' | 'time',
-  size: number
-): SlidingWindow {
-  return type === 'count'
-    ? new CountBasedSlidingWindow(size)
-    : new TimeBasedSlidingWindow(size);
+export function createSlidingWindow(type: 'count' | 'time', size: number): SlidingWindow {
+  return type === 'count' ? new CountBasedSlidingWindow(size) : new TimeBasedSlidingWindow(size);
 }

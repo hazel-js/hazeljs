@@ -140,10 +140,7 @@ export class RateLimiter {
   async execute<T>(fn: () => Promise<T>): Promise<T> {
     if (!this.limiter.tryAcquire()) {
       const retryAfter = this.limiter.getRetryAfterMs();
-      throw new RateLimitError(
-        `Rate limit exceeded. Retry after ${retryAfter}ms`,
-        retryAfter
-      );
+      throw new RateLimitError(`Rate limit exceeded. Retry after ${retryAfter}ms`, retryAfter);
     }
     return fn();
   }

@@ -12,10 +12,7 @@ export class CircuitBreakerRegistry {
   /**
    * Get or create a circuit breaker by name
    */
-  static getOrCreate(
-    name: string,
-    config?: Partial<CircuitBreakerConfig>
-  ): CircuitBreaker {
+  static getOrCreate(name: string, config?: Partial<CircuitBreakerConfig>): CircuitBreaker {
     let breaker = this.breakers.get(name);
     if (!breaker) {
       breaker = new CircuitBreaker(config);

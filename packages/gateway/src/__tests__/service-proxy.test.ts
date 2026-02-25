@@ -1,5 +1,6 @@
 import { ServiceProxy } from '../proxy/service-proxy';
 import { DiscoveryClient, MemoryRegistryBackend, ServiceStatus } from '@hazeljs/discovery';
+import { RateLimitError } from '@hazeljs/resilience';
 import { ProxyRequest } from '../types';
 import axios from 'axios';
 
@@ -96,6 +97,22 @@ describe('ServiceProxy', () => {
   it('getServiceName should return service name', () => {
     const proxy = new ServiceProxy(discoveryClient, { serviceName: 'my-service' });
     expect(proxy.getServiceName()).toBe('my-service');
+  });
+
+  it('should throw RateLimitError when rate limit exceeded', async () => {
+    const proxy = new ServiceProxy(discoveryClient, {
+      serviceName: 'test-service',
+      rateLimit: { strategy: 'sliding-window', max: 1, window: 60_000 },
+    });
+
+    await proxy.forward({ method: 'GET', path: '/x', headers: {} });
+
+    await expect(proxy.forward({ method: 'GET', path: '/x', headers: {} })).rejects.toThrow(
+      RateLimitError
+    );
+    await expect(proxy.forward({ method: 'GET', path: '/x', headers: {} })).rejects.toThrow(
+      'Rate limit exceeded'
+    );
   });
 
   it('forwardToVersion should merge filter with version', async () => {

@@ -27,17 +27,15 @@ describe('CircuitBreaker', () => {
     });
 
     it('should pass through failing calls and count failures', async () => {
-      await expect(
-        breaker.execute(() => Promise.reject(new Error('fail')))
-      ).rejects.toThrow('fail');
+      await expect(breaker.execute(() => Promise.reject(new Error('fail')))).rejects.toThrow(
+        'fail'
+      );
       expect(breaker.getFailureCount()).toBe(1);
     });
 
     it('should transition to OPEN after failure threshold', async () => {
       for (let i = 0; i < 3; i++) {
-        await breaker
-          .execute(() => Promise.reject(new Error('fail')))
-          .catch(() => {});
+        await breaker.execute(() => Promise.reject(new Error('fail'))).catch(() => {});
       }
       expect(breaker.getState()).toBe(CircuitState.OPEN);
       expect(breaker.isOpen()).toBe(true);
@@ -48,16 +46,14 @@ describe('CircuitBreaker', () => {
     beforeEach(async () => {
       // Trip the breaker
       for (let i = 0; i < 3; i++) {
-        await breaker
-          .execute(() => Promise.reject(new Error('fail')))
-          .catch(() => {});
+        await breaker.execute(() => Promise.reject(new Error('fail'))).catch(() => {});
       }
     });
 
     it('should reject calls immediately when OPEN', async () => {
-      await expect(
-        breaker.execute(() => Promise.resolve('should not reach'))
-      ).rejects.toThrow(CircuitBreakerError);
+      await expect(breaker.execute(() => Promise.resolve('should not reach'))).rejects.toThrow(
+        CircuitBreakerError
+      );
     });
 
     it('should transition to HALF_OPEN after reset timeout', async () => {
@@ -73,9 +69,7 @@ describe('CircuitBreaker', () => {
     beforeEach(async () => {
       // Trip the breaker, then wait for reset
       for (let i = 0; i < 3; i++) {
-        await breaker
-          .execute(() => Promise.reject(new Error('fail')))
-          .catch(() => {});
+        await breaker.execute(() => Promise.reject(new Error('fail'))).catch(() => {});
       }
       await new Promise((resolve) => setTimeout(resolve, 150));
     });
@@ -91,9 +85,7 @@ describe('CircuitBreaker', () => {
 
     it('should transition back to OPEN on failure in HALF_OPEN', async () => {
       await breaker.execute(() => Promise.resolve('ok')); // first trial success
-      await breaker
-        .execute(() => Promise.reject(new Error('fail')))
-        .catch(() => {}); // failure -> back to OPEN
+      await breaker.execute(() => Promise.reject(new Error('fail'))).catch(() => {}); // failure -> back to OPEN
       expect(breaker.getState()).toBe(CircuitState.OPEN);
     });
   });
@@ -105,15 +97,10 @@ describe('CircuitBreaker', () => {
 
       // Trip the breaker
       for (let i = 0; i < 3; i++) {
-        await breaker
-          .execute(() => Promise.reject(new Error('fail')))
-          .catch(() => {});
+        await breaker.execute(() => Promise.reject(new Error('fail'))).catch(() => {});
       }
 
-      expect(transitions).toContainEqual([
-        CircuitState.CLOSED,
-        CircuitState.OPEN,
-      ]);
+      expect(transitions).toContainEqual([CircuitState.CLOSED, CircuitState.OPEN]);
     });
 
     it('should emit success and failure events', async () => {
@@ -123,9 +110,7 @@ describe('CircuitBreaker', () => {
       breaker.on('failure', () => failureCount++);
 
       await breaker.execute(() => Promise.resolve('ok'));
-      await breaker
-        .execute(() => Promise.reject(new Error('fail')))
-        .catch(() => {});
+      await breaker.execute(() => Promise.reject(new Error('fail'))).catch(() => {});
 
       expect(successCount).toBe(1);
       expect(failureCount).toBe(1);
@@ -135,9 +120,7 @@ describe('CircuitBreaker', () => {
   describe('metrics', () => {
     it('should track metrics', async () => {
       await breaker.execute(() => Promise.resolve('ok'));
-      await breaker
-        .execute(() => Promise.reject(new Error('fail')))
-        .catch(() => {});
+      await breaker.execute(() => Promise.reject(new Error('fail'))).catch(() => {});
 
       const metrics = breaker.getMetrics();
       expect(metrics.totalRequests).toBe(2);
@@ -151,9 +134,7 @@ describe('CircuitBreaker', () => {
     it('should reset to CLOSED state', async () => {
       // Trip the breaker
       for (let i = 0; i < 3; i++) {
-        await breaker
-          .execute(() => Promise.reject(new Error('fail')))
-          .catch(() => {});
+        await breaker.execute(() => Promise.reject(new Error('fail'))).catch(() => {});
       }
       expect(breaker.getState()).toBe(CircuitState.OPEN);
 
@@ -167,20 +148,15 @@ describe('CircuitBreaker', () => {
     it('should ignore errors that do not match the predicate', async () => {
       const selectiveBreaker = new CircuitBreaker({
         failureThreshold: 1,
-        failurePredicate: (error) =>
-          error instanceof Error && error.message !== 'ignore-me',
+        failurePredicate: (error) => error instanceof Error && error.message !== 'ignore-me',
       });
 
       // This error should NOT count as failure
-      await selectiveBreaker
-        .execute(() => Promise.reject(new Error('ignore-me')))
-        .catch(() => {});
+      await selectiveBreaker.execute(() => Promise.reject(new Error('ignore-me'))).catch(() => {});
       expect(selectiveBreaker.getState()).toBe(CircuitState.CLOSED);
 
       // This error SHOULD count
-      await selectiveBreaker
-        .execute(() => Promise.reject(new Error('count-me')))
-        .catch(() => {});
+      await selectiveBreaker.execute(() => Promise.reject(new Error('count-me'))).catch(() => {});
       expect(selectiveBreaker.getState()).toBe(CircuitState.OPEN);
     });
   });
