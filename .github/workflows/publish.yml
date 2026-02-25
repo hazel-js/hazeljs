@@ -107,24 +107,22 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Update latest dist-tag to current version
-        if: steps.release-tag.outputs.tag == 'latest'
         run: |
           VERSION="${{ steps.version.outputs.version }}"
           echo "Updating latest dist-tag to $VERSION for all packages"
-          for pkg in core cli ai agent auth cache config cron graphql discovery gateway resilience kafka grpc messaging ops-agent data ml rag event-emitter pdf-to-audio prisma queue serverless swagger websocket; do
+          for pkg in core cli ai agent auth cache config cron graphql discovery kafka gateway resilience grpc messaging ops-agent data ml rag event-emitter pdf-to-audio prisma queue serverless swagger websocket; do
             echo "  @hazeljs/$pkg@$VERSION -> latest"
             npm dist-tag add "@hazeljs/$pkg@$VERSION" latest || true
           done
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}    
       
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ steps.version.outputs.tag_name }}
           name: Release ${{ steps.version.outputs.version }}
           draft: false
           prerelease: ${{ steps.release-tag.outputs.tag != 'latest' }}
-          generate_release_notes: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
