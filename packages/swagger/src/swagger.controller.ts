@@ -160,7 +160,9 @@ export class SwaggerController {
       const spec = this.swaggerService.generateSpec(controllerArray);
       return spec;
     } catch (error) {
-      logger.error('Error generating Swagger spec:', error);
+      if (process.env.NODE_ENV !== 'test') {
+        logger.error('Error generating Swagger spec:', error);
+      }
       throw error;
     }
   }

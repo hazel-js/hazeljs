@@ -2,6 +2,10 @@
 
 Intelligent API Gateway for HazelJS with version-based routing, canary deployments, circuit breaking, traffic management, and automatic rollback.
 
+[![npm version](https://img.shields.io/npm/v/@hazeljs/gateway.svg)](https://www.npmjs.com/package/@hazeljs/gateway)
+[![npm downloads](https://img.shields.io/npm/dm/@hazeljs/gateway)](https://www.npmjs.com/package/@hazeljs/gateway)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+
 ## Installation
 
 ```bash
