@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/grpc",
-  "version": "0.2.0-beta.42",
+  "version": "0.2.0-beta.43",
   "description": "gRPC module for HazelJS framework - RPC server and client support with decorators",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

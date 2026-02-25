@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/graphql",
-  "version": "0.2.0-beta.42",
+  "version": "0.2.0-beta.43",
   "description": "GraphQL server and client for HazelJS - decorator-based schema and typed client",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
