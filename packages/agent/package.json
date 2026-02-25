@@ -30,6 +30,9 @@
     "directory": "packages/agent"
   },
   "dependencies": {
+    "@hazeljs/core": "file:../core",
+    "@hazeljs/rag": "file:../rag",
+    "@hazeljs/resilience": "file:../resilience",
     "reflect-metadata": "^0.2.1"
   },
   "devDependencies": {

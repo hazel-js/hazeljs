@@ -136,11 +136,11 @@ async function startOrderService() {
     {
       name: 'order-service',
       port,
-      host: 'localhost',
+      host: process.env.SERVICE_HOST || '127.0.0.1',
       healthCheckPath: '/health',
       healthCheckInterval: 30000,
       metadata: {
-        version: '1.0.0',
+        version: process.env.ORDER_SERVICE_VERSION || 'v1', // v1/v2 for gateway canary routing
         environment: process.env.NODE_ENV || 'development',
       },
       zone,

@@ -18,6 +18,8 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
+    "@hazeljs/core": "file:../core",
+    "@hazeljs/resilience": "file:../resilience",
     "reflect-metadata": "^0.2.2",
     "axios": "^1.6.0"
   },
