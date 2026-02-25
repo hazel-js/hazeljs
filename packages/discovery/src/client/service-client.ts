@@ -36,7 +36,11 @@ function isRetryableError(error: unknown): boolean {
     return RETRYABLE_STATUS_CODES.has(error.response.status);
   }
 
-  // Non-Axios errors (e.g. "no instances available") are retryable
+  // "No instances available" is not transient - do not retry
+  const msg = error instanceof Error ? error.message : String(error);
+  if (msg.includes('No instances available')) return false;
+
+  // Other non-Axios errors (e.g. network) are retryable
   return true;
 }
 
@@ -62,7 +66,7 @@ export class ServiceClient {
       baseDelay: config.retryDelay ?? 1000,
       jitter: false,
       retryPredicate: isRetryableError,
-      onRetry: (error, attempt) => {
+      onRetry: (error: unknown, attempt: number): void => {
         logger.warn(
           `Request to ${config.serviceName} failed (attempt ${attempt}/${config.retries ?? 3})`,
           error

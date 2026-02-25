@@ -110,7 +110,12 @@ jobs:
         run: |
           VERSION="${{ steps.version.outputs.version }}"
           echo "Updating latest dist-tag to $VERSION for all packages"
-          for pkg in core cli ai agent auth cache config cron graphql discovery gateway kafka grpc messaging ops-agent data ml rag event-emitter pdf-to-audio prisma queue serverless swagger websocket; do
+          PKGS=$(npx lerna list --json | node -e "
+            const data = JSON.parse(require('fs').readFileSync(0,'utf8'));
+            const names = (data || []).filter(p => p.name && p.name.startsWith('@hazeljs/') && !p.private).map(p => p.name.replace('@hazeljs/',''));
+            console.log(names.join(' '));
+          ")
+          for pkg in $PKGS; do
             echo "  @hazeljs/$pkg@$VERSION -> latest"
             npm dist-tag add "@hazeljs/$pkg@$VERSION" latest || true
           done
