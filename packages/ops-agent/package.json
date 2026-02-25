@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/ops-agent",
-  "version": "0.2.0-beta.43",
+  "version": "0.2.0-beta.44",
   "description": "Ops agent for Jira, Slack, and DevOps workflows - AI-powered incident triage and team coordination",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
