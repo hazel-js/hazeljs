@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/resilience",
-  "version": "0.2.0-beta.41",
+  "version": "0.2.0-beta.42",
   "description": "Fault-tolerance and resilience patterns for HazelJS - Circuit Breaker, Retry, Bulkhead, Timeout, Rate Limiter",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
