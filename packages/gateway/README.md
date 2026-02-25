@@ -252,4 +252,4 @@ const response = await gateway.handleRequest({
 
 ## License
 
-MIT
+Apache 2.0

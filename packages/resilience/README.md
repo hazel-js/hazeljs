@@ -92,4 +92,4 @@ See the [full documentation](https://hazeljs.com/docs/packages/resilience) for c
 
 ## License
 
-MIT
+Apache 2.0
