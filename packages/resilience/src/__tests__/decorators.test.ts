@@ -1,21 +1,8 @@
 import 'reflect-metadata';
-import {
-  CircuitBreaker,
-  Retry,
-  Timeout,
-  Bulkhead,
-  Fallback,
-  RateLimit,
-} from '../decorators';
-import {
-  WithCircuitBreaker,
-  WithRetry,
-  WithTimeout,
-  WithBulkhead,
-  WithRateLimit,
-} from '../index';
+import { CircuitBreaker, Retry, Timeout, Bulkhead, Fallback, RateLimit } from '../decorators';
+import { WithCircuitBreaker, WithRetry, WithTimeout, WithBulkhead, WithRateLimit } from '../index';
 import { CircuitBreakerRegistry } from '../circuit-breaker/circuit-breaker-registry';
-import { RateLimitError, CircuitBreakerError } from '../types';
+import { RateLimitError } from '../types';
 
 describe('CircuitBreaker decorator', () => {
   beforeEach(() => {
@@ -154,10 +141,7 @@ describe('Bulkhead decorator', () => {
       }
     }
     const svc = new TestService();
-    const [a, b] = await Promise.all([
-      svc.limited(),
-      svc.limited().catch((e) => e.message),
-    ]);
+    const [a, b] = await Promise.all([svc.limited(), svc.limited().catch((e) => e.message)]);
     expect(a).toBe('done');
     expect(b).toContain('Bulkhead');
   });
