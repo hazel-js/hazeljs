@@ -574,7 +574,7 @@ async generateWeeklyReport(): Promise<void> {
 - The current implementation uses a simple interval-based scheduler
 - For production use with complex cron expressions, consider integrating a library like `cron-parser` or `node-cron`
 - Jobs run in the same process as your application
-- For distributed systems, consider using a dedicated job queue like Bull or BullMQ
+- For distributed systems, use `@hazeljs/queue` (BullMQ-based) for Redis-backed job queues. See [Queue Package](../../packages/queue/README.md) for setup.
 - Make sure to handle errors properly to prevent jobs from crashing your application
 
 ## See Also

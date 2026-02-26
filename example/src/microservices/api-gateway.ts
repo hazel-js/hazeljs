@@ -1,219 +1,198 @@
 /**
- * API Gateway - Microservices Example
- * Demonstrates service discovery, load balancing, and routing
+ * API Gateway - Config-Driven Microservices Example
+ *
+ * Demonstrates @hazeljs/gateway with config-driven routing:
+ *   - All route definitions come from gateway.config.ts + env vars
+ *   - Canary weights, thresholds, versions are configurable per environment
+ *   - No hardcoded values in decorators
+ *
+ * To change gateway behavior without redeploying, set env vars:
+ *   ORDER_CANARY_WEIGHT=20          -> send 20% to canary
+ *   ORDER_CANARY_ERROR_THRESHOLD=3  -> rollback at 3% error rate
+ *   USER_SVC_RATE_LIMIT_MAX=200     -> increase user service rate limit
+ *
+ * See gateway.config.ts for the full list of configurable env vars.
  */
 
-import { HazelApp, HazelModule, Controller, Get, Post, Body, Param, Injectable } from '@hazeljs/core';
-import { DiscoveryClient, ServiceClient, ServiceRegistry } from '@hazeljs/discovery';
+import * as http from 'http';
+import { ConfigModule, ConfigService } from '@hazeljs/config';
+import { ServiceRegistry } from '@hazeljs/discovery';
+import { GatewayServer, GatewayModule } from '@hazeljs/gateway';
 import { sharedBackend } from './shared-registry';
+import gatewayConfig from './gateway.config';
 
-@Controller('/users')
-@Injectable()
-class UserGatewayController {
-  private userServiceClient: ServiceClient;
-
-  constructor() {
-    const discoveryClient = new DiscoveryClient(
-      {
-        cacheEnabled: true,
-        cacheTTL: 30000,
-      },
-      sharedBackend
-    );
-
-    this.userServiceClient = new ServiceClient(discoveryClient, {
-      serviceName: 'user-service',
-      loadBalancingStrategy: 'round-robin',
-      timeout: 5000,
-      retries: 3,
-    });
-  }
-
-  @Get('/')
-  async getAllUsers() {
-    try {
-      const response = await this.userServiceClient.get('/users');
-      return response.data;
-    } catch (error: any) {
-      return { error: 'User service unavailable', details: error.message };
-    }
-  }
-
-  @Get('/:id')
-  async getUser(@Param('id') id: string) {
-    try {
-      const response = await this.userServiceClient.get(`/users/${id}`);
-      return response.data;
-    } catch (error: any) {
-      return { error: 'User service unavailable', details: error.message };
-    }
-  }
-
-  @Post('/')
-  async createUser(@Body() body: any) {
-    try {
-      const response = await this.userServiceClient.post('/users', body);
-      return response.data;
-    } catch (error: any) {
-      return { error: 'User service unavailable', details: error.message };
-    }
-  }
-}
-
-@Controller('/orders')
-@Injectable()
-class OrderGatewayController {
-  private orderServiceClient: ServiceClient;
-
-  constructor() {
-    const discoveryClient = new DiscoveryClient(
-      {
-        cacheEnabled: true,
-        cacheTTL: 30000,
-      },
-      sharedBackend
-    );
-
-    this.orderServiceClient = new ServiceClient(discoveryClient, {
-      serviceName: 'order-service',
-      loadBalancingStrategy: 'round-robin',
-      timeout: 5000,
-      retries: 3,
-    });
-  }
-
-  @Get('/')
-  async getAllOrders() {
-    try {
-      const response = await this.orderServiceClient.get('/orders');
-      return response.data;
-    } catch (error: any) {
-      return { error: 'Order service unavailable', details: error.message };
-    }
-  }
-
-  @Get('/:id')
-  async getOrder(@Param('id') id: string) {
-    try {
-      const response = await this.orderServiceClient.get(`/orders/${id}`);
-      return response.data;
-    } catch (error: any) {
-      return { error: 'Order service unavailable', details: error.message };
-    }
-  }
-
-  @Post('/')
-  async createOrder(@Body() body: any) {
-    try {
-      const response = await this.orderServiceClient.post('/orders', body);
-      return response.data;
-    } catch (error: any) {
-      return { error: 'Order service unavailable', details: error.message };
-    }
-  }
-}
-
-@Controller('/services')
-@Injectable()
-class ServiceDiscoveryController {
-  private discoveryClient: DiscoveryClient;
-
-  constructor() {
-    this.discoveryClient = new DiscoveryClient({}, sharedBackend);
-  }
-
-  @Get('/')
-  async getAllServices() {
-    const services = await this.discoveryClient.getAllServices();
-    const serviceDetails = await Promise.all(
-      services.map(async (serviceName) => {
-        const instances = await this.discoveryClient.getInstances(serviceName);
-        return {
-          name: serviceName,
-          instanceCount: instances.length,
-          instances: instances.map((i) => ({
-            id: i.id,
-            host: i.host,
-            port: i.port,
-            status: i.status,
-            zone: i.zone,
-            tags: i.tags,
-            metadata: i.metadata,
-          })),
-        };
-      })
-    );
-
-    return {
-      totalServices: services.length,
-      services: serviceDetails,
-    };
-  }
-
-  @Get('/:serviceName')
-  async getServiceInstances(@Param('serviceName') serviceName: string) {
-    const instances = await this.discoveryClient.getInstances(serviceName);
-    return {
-      serviceName,
-      instanceCount: instances.length,
-      instances: instances.map((i) => ({
-        id: i.id,
-        host: i.host,
-        port: i.port,
-        status: i.status,
-        zone: i.zone,
-        tags: i.tags,
-        metadata: i.metadata,
-        lastHeartbeat: i.lastHeartbeat,
-      })),
-    };
-  }
-}
-
-@Controller('/health')
-@Injectable()
-class HealthController {
-  private startTime = Date.now();
-
-  @Get('/')
-  async healthCheck() {
-    return {
-      status: 'UP',
-      timestamp: new Date().toISOString(),
-      service: 'api-gateway',
-      uptime: Date.now() - this.startTime,
-    };
-  }
-}
+// ─── Start the Gateway ───
 
 async function startAPIGateway() {
-  const port = parseInt(process.env.PORT || '3003');
+  const port = parseInt(process.env.GATEWAY_PORT || process.env.PORT || '3003');
   const zone = process.env.ZONE || 'us-east-1';
+  const startTime = Date.now();
 
-  // Create module
-  @HazelModule({
-    controllers: [
-      UserGatewayController,
-      OrderGatewayController,
-      ServiceDiscoveryController,
-      HealthController,
-    ],
-  })
-  class APIGatewayModule {}
+  // 1. Register ConfigModule with the gateway config loader
+  ConfigModule.forRoot({
+    envFilePath: ['.env', '.env.local'],
+    isGlobal: true,
+    load: [gatewayConfig],
+  });
 
-  // Create HazelJS app
-  const app = new HazelApp(APIGatewayModule);
+  // 2. Register GatewayModule and resolve config
+  GatewayModule.forRoot({ configKey: 'gateway' });
+  const configService = new ConfigService();
+  const gwConfig = GatewayModule.resolveConfig(configService);
 
-  // Initialize service registry
+  // 3. Create the gateway server from config
+  const gateway = GatewayServer.fromConfig(gwConfig, sharedBackend);
+
+  gateway.on('canary:promote', (data) => {
+    console.log(`🟢 Canary promoted: step ${data.step}/${data.totalSteps}, canary weight: ${data.canaryWeight}%`);
+  });
+  gateway.on('canary:rollback', (data) => {
+    console.log(`🔴 Canary rolled back: ${data.canaryVersion} -> ${data.stableVersion} (trigger: ${data.trigger})`);
+  });
+  gateway.on('canary:complete', (data) => {
+    console.log(`✅ Canary complete: ${data.version} is now receiving 100% traffic`);
+  });
+
+  gateway.startCanaries();
+
+  // 4. Create HTTP server: /health and /gateway/* are handled here; everything else goes to the gateway proxy
+  const server = http.createServer(async (req, res) => {
+    const url = req.url || '/';
+    const [pathname, search] = url.split('?');
+    const method = req.method || 'GET';
+
+    // Parse query string
+    const query: Record<string, string> = {};
+    if (search) {
+      for (const part of search.split('&')) {
+        const [k, v] = part.split('=').map(decodeURIComponent);
+        if (k) query[k] = v || '';
+      }
+    }
+
+    // Built-in: health
+    if (pathname === '/health' && method === 'GET') {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(
+        JSON.stringify({
+          status: 'UP',
+          timestamp: new Date().toISOString(),
+          service: 'api-gateway',
+          uptime: Date.now() - startTime,
+        })
+      );
+      return;
+    }
+
+    // Built-in: gateway routes info
+    if (pathname === '/gateway/routes' && method === 'GET') {
+      try {
+        const config = GatewayModule.resolveConfig(configService);
+        const body = {
+          totalRoutes: config.routes.length,
+          routes: config.routes.map((r) => ({
+            path: r.path,
+            service: r.serviceName,
+            hasCanary: !!r.canary,
+            hasVersionRouting: !!r.versionRoute,
+            hasCircuitBreaker: !!r.circuitBreaker,
+            hasRateLimit: !!r.rateLimit,
+            hasMirror: !!r.trafficPolicy?.mirror,
+          })),
+        };
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(body));
+      } catch (err) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(
+          JSON.stringify({
+            statusCode: 500,
+            message: err instanceof Error ? err.message : 'Failed to resolve gateway config',
+          })
+        );
+      }
+      return;
+    }
+
+    // All other requests: read body then proxy through the gateway
+    const runProxy = (body: unknown) => {
+      const headers: Record<string, string | string[] | undefined> = {};
+      for (const [k, v] of Object.entries(req.headers)) {
+        if (v !== undefined) headers[k] = v;
+      }
+      const proxyRequest = { method, path: pathname, headers, body, query };
+
+      // Defer proxy to next tick so the same-process backend (user/order service)
+      // can run when we await the outbound request — avoids same-process deadlock.
+      setImmediate(async () => {
+        try {
+          const proxyResponse = await gateway.handleRequest(proxyRequest);
+          if (res.writableEnded) return;
+          res.writeHead(proxyResponse.status, proxyResponse.headers);
+          const out =
+            typeof proxyResponse.body === 'object' && proxyResponse.body !== null
+              ? JSON.stringify(proxyResponse.body)
+              : String(proxyResponse.body ?? '');
+          res.end(out);
+        } catch (err) {
+          if (res.writableEnded) return;
+          res.writeHead(502, { 'Content-Type': 'application/json' });
+          res.end(
+            JSON.stringify({
+              statusCode: 502,
+              message: err instanceof Error ? err.message : 'Bad Gateway',
+            })
+          );
+        }
+      });
+    };
+
+    if (method === 'POST' || method === 'PUT' || method === 'PATCH') {
+      const chunks: Buffer[] = [];
+      req.on('data', (chunk: Buffer) => chunks.push(chunk));
+      req.on('end', () => {
+        let body: unknown = undefined;
+        const raw = Buffer.concat(chunks).toString();
+        if (raw) {
+          const contentType = req.headers['content-type'] || '';
+          if (contentType.includes('application/json')) {
+            try {
+              body = JSON.parse(raw);
+            } catch {
+              body = raw;
+            }
+          } else {
+            body = raw;
+          }
+        }
+        runProxy(body);
+      });
+      req.on('error', (err: NodeJS.ErrnoException) => {
+        const isClientAbort =
+          err?.message === 'aborted' || err?.code === 'ECONNRESET' || err?.code === 'EPIPE';
+        if (isClientAbort || res.writableEnded) return;
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ statusCode: 400, message: 'Invalid request body' }));
+      });
+    } else {
+      runProxy(undefined);
+    }
+  });
+
+  server.listen(port, () => {
+    console.log(`✅ API Gateway started on port ${port}`);
+  });
+
+  // Register in service registry
   const registry = new ServiceRegistry(
     {
       name: 'api-gateway',
       port,
-      host: 'localhost',
+      host: process.env.GATEWAY_HOST || 'localhost',
       healthCheckPath: '/health',
-      healthCheckInterval: 30000,
+      healthCheckInterval: parseInt(process.env.GATEWAY_HEALTH_INTERVAL || '30000'),
       metadata: {
-        version: '1.0.0',
+        version: process.env.APP_VERSION || '1.0.0',
         environment: process.env.NODE_ENV || 'development',
       },
       zone,
@@ -222,42 +201,32 @@ async function startAPIGateway() {
     sharedBackend
   );
 
-  // Start the app
-  await app.listen(port);
-  console.log(`✅ API Gateway started on port ${port}`);
-
-  // Register with service registry
-  await registry.register();
-  console.log(`✅ API Gateway registered in zone: ${zone}`);
-  console.log(`📊 Service ID: ${registry.getInstance()?.id}`);
-
-  // Discover available services
-  const discoveryClient = new DiscoveryClient({}, sharedBackend);
-  const services = await discoveryClient.getAllServices();
-  console.log(`🔍 Discovered ${services.length} service(s): ${services.join(', ')}`);
-
-  console.log('\n📡 API Gateway Routes:');
-  console.log(`  - GET    http://localhost:${port}/users`);
-  console.log(`  - POST   http://localhost:${port}/users`);
-  console.log(`  - GET    http://localhost:${port}/users/:id`);
-  console.log(`  - GET    http://localhost:${port}/orders`);
-  console.log(`  - POST   http://localhost:${port}/orders`);
-  console.log(`  - GET    http://localhost:${port}/orders/:id`);
-  console.log(`  - GET    http://localhost:${port}/services (discovery info)`);
-  console.log(`  - GET    http://localhost:${port}/health\n`);
-
-  // Graceful shutdown
-  process.on('SIGINT', async () => {
-    console.log('\n🛑 Shutting down API Gateway...');
-    await registry.deregister();
-    process.exit(0);
+  registry.register().then(() => {
+    console.log(`✅ API Gateway registered in zone: ${zone}`);
   });
 
-  process.on('SIGTERM', async () => {
+  const discoveryClient = gateway.getDiscoveryClient();
+  discoveryClient.getAllServices().then((services) => {
+    console.log(`🔍 Discovered ${services.length} service(s): ${services.join(', ')}`);
+  });
+
+  console.log('\n📡 API Gateway Routes (from config):');
+  for (const route of gateway.getRoutes()) {
+    console.log(`  ${route}`);
+  }
+  console.log(`  GET http://localhost:${port}/health`);
+  console.log(`  GET http://localhost:${port}/gateway/routes\n`);
+
+  const shutdown = async () => {
     console.log('\n🛑 Shutting down API Gateway...');
+    gateway.stop();
+    server.close();
     await registry.deregister();
     process.exit(0);
-  });
+  };
+
+  process.on('SIGINT', shutdown);
+  process.on('SIGTERM', shutdown);
 }
 
 // Start the gateway

@@ -26,6 +26,7 @@ import { generateDiscovery } from './commands/generate-discovery';
 import { infoCommand } from './commands/info';
 import { addCommand } from './commands/add';
 import { buildCommand } from './commands/build';
+import { pdfToAudioCommand } from './commands/pdf-to-audio';
 import { startCommand } from './commands/start';
 import { testCommand } from './commands/test';
 
@@ -43,6 +44,7 @@ generateApp(program);
 infoCommand(program);
 addCommand(program);
 buildCommand(program);
+pdfToAudioCommand(program);
 startCommand(program);
 testCommand(program);
 

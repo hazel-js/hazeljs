@@ -6,6 +6,7 @@
     "declaration": true,
     "strict": true,
     "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "experimentalDecorators": true,
@@ -13,11 +14,12 @@
     "resolveJsonModule": true,
     "moduleResolution": "node",
     "composite": true,
-    "declarationMap": true
+    "declarationMap": true,
+    "downlevelIteration": true
   },
   "files": [],
   "include": [],
-  "exclude": ["node_modules", "dist", "**/dist", "**/node_modules", "packages", "example"],
+  "exclude": ["node_modules", "dist", "**/dist", "**/node_modules"],
   "references": [
     { "path": "./packages/core" },
     { "path": "./packages/contracts" },
@@ -30,11 +32,19 @@
     { "path": "./packages/auth" },
     { "path": "./packages/config" },
     { "path": "./packages/cron" },
-    { "path": "./packages/kafka" },
     { "path": "./packages/cli" },
     { "path": "./packages/rag" },
     { "path": "./packages/agent" },
-    { "path": "./packages/riskos" }
-  ],
-  "exclude": ["node_modules", "dist", "**/dist", "**/node_modules"]
+    { "path": "./packages/resilience" },
+    { "path": "./packages/gateway" },
+    { "path": "./packages/discovery" },
+    { "path": "./packages/event-emitter" },
+    { "path": "./packages/graphql" },
+    { "path": "./packages/grpc" },
+    { "path": "./packages/queue" },
+    { "path": "./packages/kafka" },
+    { "path": "./packages/messaging" },
+    { "path": "./packages/riskos" },
+    { "path": "./packages/riskos-agent" }
+  ]
 }

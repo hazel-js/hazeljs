@@ -6,6 +6,9 @@ export interface HazelResponse {
   end(): void;
   status(code: number): HazelResponse;
   json(data: unknown): void;
+  redirect(url: string, statusCode?: number): void;
+  /** Send a Buffer as binary (e.g. audio, PDF). Sets Content-Type if provided. */
+  sendBuffer?(buffer: Buffer, contentType?: string): void;
 }
 
 export class HazelExpressResponse implements HazelResponse {
@@ -43,6 +46,28 @@ export class HazelExpressResponse implements HazelResponse {
       this.res.status(code);
     }
     return this;
+  }
+
+  redirect(url: string, statusCode: number = 302): void {
+    if (this.headersSent) return;
+    if (typeof (this.res as { redirect?: (u: string, c?: number) => void }).redirect === 'function') {
+      (this.res as unknown as { redirect: (u: string, c?: number) => void }).redirect(url, statusCode);
+      return;
+    }
+    this.headersSent = true;
+    (this.res as unknown as { writeHead: (code: number, headers: Record<string, string>) => void }).writeHead(statusCode, { Location: url });
+    this.res.end();
+  }
+
+  sendBuffer(buffer: Buffer, contentType?: string): void {
+    if (this.isStreaming || this.headersSent) {
+      return;
+    }
+    if (contentType) {
+      this.res.setHeader('Content-Type', contentType);
+    }
+    (this.res as unknown as { send: (data: Buffer) => void }).send(buffer);
+    this.headersSent = true;
   }
 
   json(data: unknown): void {

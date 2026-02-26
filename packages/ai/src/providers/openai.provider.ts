@@ -217,6 +217,55 @@ export class OpenAIProvider implements IAIProvider {
     }
   }
 
+  /** Valid OpenAI TTS voices (updated to include ash, sage, coral) */
+  private static readonly TTS_VOICES = [
+    'alloy',
+    'echo',
+    'fable',
+    'onyx',
+    'nova',
+    'shimmer',
+    'ash',
+    'sage',
+    'coral',
+  ] as const;
+
+  /**
+   * Generate speech from text (TTS)
+   */
+  async speech(
+    input: string,
+    options?: { voice?: string; model?: string; format?: 'mp3' | 'opus' }
+  ): Promise<Buffer> {
+    try {
+      if (input.length > 4096) {
+        throw new Error(
+          'TTS input must be 4096 characters or less. Chunk longer text before calling speech().'
+        );
+      }
+
+      const rawVoice = (options?.voice || 'alloy').toString().trim().toLowerCase();
+      const voice = OpenAIProvider.TTS_VOICES.includes(
+        rawVoice as (typeof OpenAIProvider.TTS_VOICES)[number]
+      )
+        ? rawVoice
+        : 'alloy';
+
+      const response = await this.client.audio.speech.create({
+        model: options?.model || 'tts-1',
+        voice,
+        input,
+        response_format: options?.format || 'mp3',
+      });
+
+      const arrayBuffer = await response.arrayBuffer();
+      return Buffer.from(arrayBuffer);
+    } catch (error) {
+      logger.error('OpenAI TTS failed:', error);
+      throw this.handleError(error);
+    }
+  }
+
   /**
    * Check if provider is available
    */

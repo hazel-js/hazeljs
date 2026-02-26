@@ -143,7 +143,7 @@ export function generateApp(program: Command) {
           name: appName,
           description: `A HazelJS application`,
           author: '',
-          license: 'MIT',
+          license: 'Apache-2.0',
           packages: [] as string[],
         };
 
@@ -168,7 +168,7 @@ export function generateApp(program: Command) {
               name: 'license',
               message: 'License:',
               choices: ['MIT', 'Apache-2.0', 'GPL-3.0', 'BSD-3-Clause', 'ISC'],
-              default: 'MIT',
+              default: 'Apache-2.0',
             },
             {
               type: 'checkbox',

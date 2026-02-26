@@ -5,7 +5,8 @@
 Auto-generate interactive API documentation with Swagger UI and OpenAPI specifications.
 
 [![npm version](https://img.shields.io/npm/v/@hazeljs/swagger.svg)](https://www.npmjs.com/package/@hazeljs/swagger)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![npm downloads](https://img.shields.io/npm/dm/@hazeljs/swagger)](https://www.npmjs.com/package/@hazeljs/swagger)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 
 ## Features
 
@@ -327,8 +328,8 @@ SwaggerModule.forRoot({
   
   // License
   license: {
-    name: 'MIT',
-    url: 'https://opensource.org/licenses/MIT',
+    name: 'Apache-2.0',
+    url: 'https://www.apache.org/licenses/LICENSE-2.0',
   },
   
   // Terms of service
@@ -571,7 +572,7 @@ Contributions are welcome! Please read our [Contributing Guide](../../CONTRIBUTI
 
 ## License
 
-MIT © [HazelJS](https://hazeljs.com)
+Apache 2.0 © [HazelJS](https://hazeljs.com)
 
 ## Links
 

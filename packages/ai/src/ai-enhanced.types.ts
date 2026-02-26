@@ -195,6 +195,14 @@ export interface IAIProvider {
    * Check if provider is available
    */
   isAvailable(): Promise<boolean>;
+
+  /**
+   * Generate speech from text (TTS). Optional; supported by OpenAI and compatible providers.
+   */
+  speech?(
+    input: string,
+    options?: { voice?: string; model?: string; format?: 'mp3' | 'opus' }
+  ): Promise<Buffer>;
 }
 
 /**

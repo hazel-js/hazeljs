@@ -6,8 +6,18 @@ import logger from './logger';
 const MODULE_METADATA_KEY = 'hazel:module';
 const ROUTE_METADATA_KEY = 'hazel:route';
 
+/** Dynamic module returned by forRoot() / forRootAsync() */
+export interface DynamicModule {
+  module: Type<unknown>;
+  providers?: unknown[];
+  controllers?: Type<unknown>[];
+  imports?: (Type<unknown> | DynamicModule)[];
+  exports?: unknown[];
+  global?: boolean;
+}
+
 export interface ModuleOptions {
-  imports?: Type<unknown>[];
+  imports?: (Type<unknown> | DynamicModule)[];
   controllers?: Type<unknown>[];
   providers?: Type<unknown>[];
   exports?: Type<unknown>[];
@@ -23,14 +33,26 @@ export function HazelModule(options: ModuleOptions): ClassDecorator {
 export const Module = HazelModule;
 
 export function getModuleMetadata(target: object): ModuleOptions | undefined {
-  return Reflect.getMetadata(MODULE_METADATA_KEY, target);
+  const fromDecorator = Reflect.getMetadata(MODULE_METADATA_KEY, target);
+  if (fromDecorator) return fromDecorator;
+  // Support dynamic modules: { module, providers?, controllers?, imports? }
+  if (target && typeof target === 'object' && 'module' in target) {
+    const dyn = target as { module: Type<unknown>; providers?: unknown[]; controllers?: unknown[]; imports?: unknown[] };
+    return {
+      providers: dyn.providers as Type<unknown>[] | undefined,
+      controllers: dyn.controllers as Type<unknown>[] | undefined,
+      imports: dyn.imports as Type<unknown>[] | undefined,
+    };
+  }
+  return undefined;
 }
 
 export class HazelModuleInstance {
   private container: Container;
 
-  constructor(private readonly moduleType: Type<unknown>) {
-    logger.debug(`Initializing HazelModule: ${moduleType.name}`);
+  constructor(private readonly moduleType: Type<unknown> | DynamicModule) {
+    const name = (moduleType as { name?: string })?.name ?? (moduleType as DynamicModule)?.module?.name ?? 'DynamicModule';
+    logger.debug(`Initializing HazelModule: ${name}`);
     this.container = Container.getInstance();
     this.initialize();
   }
@@ -39,31 +61,57 @@ export class HazelModuleInstance {
     const metadata = getModuleMetadata(this.moduleType) || {};
     logger.debug('Module metadata:', metadata);
 
+    // Initialize imported modules first (so their providers are available)
+    if (metadata.imports) {
+      logger.debug(
+        'Initializing imported modules:',
+        metadata.imports.map((m: unknown) => (m && typeof m === 'object' && 'module' in m ? (m as { module: { name?: string } }).module?.name : (m as { name?: string })?.name))
+      );
+      metadata.imports.forEach((moduleType: unknown) => {
+        new HazelModuleInstance(moduleType as Type<unknown>);
+      });
+    }
+
     // Register providers
     if (metadata.providers) {
       logger.debug(
         'Registering providers:',
-        metadata.providers.map((p) => p.name)
+        metadata.providers.map((p: unknown) => {
+          const val = p && typeof p === 'object' && 'provide' in p ? (p as { provide: unknown }).provide : (p as { name?: string })?.name;
+          return typeof val === 'symbol' ? val.toString() : val;
+        })
       );
-      metadata.providers.forEach((provider) => {
-        logger.debug(`Registering provider: ${provider.name}`);
+      metadata.providers.forEach((provider: unknown) => {
+        // Dynamic module provider: { provide, useFactory?, useClass?, useValue? } (NestJS-style)
+        if (provider && typeof provider === 'object' && ('provide' in provider || 'token' in provider)) {
+          const p = provider as { provide?: unknown; token?: unknown; useFactory?: unknown; useClass?: unknown; useValue?: unknown; inject?: unknown[] };
+          const token = p.token ?? p.provide;
+          logger.debug(`Registering provider config for: ${typeof token === 'symbol' ? token.toString() : token}`);
+          this.container.registerProvider({
+            token,
+            useFactory: p.useFactory,
+            useClass: p.useClass,
+            useValue: p.useValue,
+            inject: p.inject,
+          } as Parameters<Container['registerProvider']>[0]);
+          return;
+        }
+        const cls = provider as Type<unknown>;
+        logger.debug(`Registering provider: ${cls?.name}`);
 
         // Check if provider is request-scoped
-        const scope = Reflect.getMetadata('hazel:scope', provider);
+        const scope = Reflect.getMetadata('hazel:scope', cls);
 
         if (scope === 'request') {
           // Don't eagerly resolve request-scoped providers
-          // They will be resolved per-request by the container
-          logger.debug(`Skipping eager resolution for request-scoped provider: ${provider.name}`);
-          // Just register the class itself, not an instance
           this.container.registerProvider({
-            token: provider,
-            useClass: provider,
+            token: cls,
+            useClass: cls,
             scope: Scope.REQUEST,
           });
         } else {
           // Eagerly resolve singleton and transient providers
-          this.container.register(provider, this.container.resolve(provider));
+          this.container.register(cls, this.container.resolve(cls));
         }
       });
     }
@@ -72,7 +120,7 @@ export class HazelModuleInstance {
     if (metadata.controllers) {
       logger.debug(
         'Registering controllers:',
-        metadata.controllers.map((c) => c.name)
+        metadata.controllers.map((c: unknown) => (c as { name?: string })?.name)
       );
       metadata.controllers.forEach((controller) => {
         logger.debug(`Registering controller: ${controller.name}`);
@@ -114,17 +162,6 @@ export class HazelModuleInstance {
             logger.debug(`Registering route: ${route.method} ${route.path}`);
           }
         });
-      });
-    }
-
-    // Initialize imported modules
-    if (metadata.imports) {
-      logger.debug(
-        'Initializing imported modules:',
-        metadata.imports.map((m) => m.name)
-      );
-      metadata.imports.forEach((moduleType) => {
-        new HazelModuleInstance(moduleType);
       });
     }
   }

@@ -119,7 +119,7 @@ describe('CircuitBreaker', () => {
       expect(breaker.getFailureCount()).toBe(1);
     });
 
-    it('should reset failure count on success', async () => {
+    it('should track failure count within sliding window', async () => {
       const breaker = new CircuitBreaker();
 
       try {
@@ -130,9 +130,13 @@ describe('CircuitBreaker', () => {
         // Expected
       }
 
+      expect(breaker.getFailureCount()).toBe(1);
+
       await breaker.execute(async () => 'success');
 
-      expect(breaker.getFailureCount()).toBe(0);
+      // Resilience CircuitBreaker uses a sliding window — success doesn't remove
+      // the failure from the window; 1 failure + 1 success = 1 failure in window
+      expect(breaker.getFailureCount()).toBe(1);
     });
 
     it('should track success count in HALF_OPEN', async () => {

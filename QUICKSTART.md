@@ -447,4 +447,4 @@ export class LoggingInterceptor implements Interceptor {
 
 ## License
 
-MIT
+Apache 2.0

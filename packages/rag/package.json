@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/rag",
-  "version": "0.2.0-beta.18",
+  "version": "0.2.0-beta.47",
   "description": "Retrieval-Augmented Generation (RAG) and vector search for HazelJS framework",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -15,8 +15,6 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@hazeljs/core": "file:../core",
-    "@hazeljs/ai": "file:../ai",
     "reflect-metadata": "^0.2.1"
   },
   "peerDependencies": {
@@ -26,7 +24,9 @@
     "chromadb": "^1.8.0",
     "openai": "^4.0.0",
     "cohere-ai": "^7.0.0",
-    "@huggingface/inference": "^2.0.0"
+    "@huggingface/inference": "^2.0.0",
+    "@hazeljs/ai": ">=0.2.0-beta.0",
+    "@hazeljs/core": ">=0.2.0-beta.0"
   },
   "peerDependenciesMeta": {
     "@pinecone-database/pinecone": {
@@ -52,6 +52,7 @@
     }
   },
   "devDependencies": {
+    "openai": "^4.0.0",
     "@types/node": "^20.17.50",
     "@typescript-eslint/eslint-plugin": "^8.18.2",
     "@typescript-eslint/parser": "^8.18.2",
@@ -82,8 +83,8 @@
     "ai",
     "llm"
   ],
-  "author": "Muhammad Arslan <marslan@hazeljs.com>",
-  "license": "MIT",
+  "author": "Muhammad Arslan <muhammad.arslan@hazeljs.com>",
+  "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/hazeljs/hazel-js/issues"
   },

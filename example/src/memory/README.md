@@ -220,4 +220,4 @@ Found an issue or want to add an example? Please open an issue or PR!
 
 ## License
 
-MIT
+Apache 2.0

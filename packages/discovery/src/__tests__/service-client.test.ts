@@ -174,7 +174,8 @@ describe('ServiceClient', () => {
       (serviceClient as any).axiosInstance = { request: mockRequest };
 
       await expect(serviceClient.get('/api/users')).rejects.toThrow();
-      expect(mockRequest).toHaveBeenCalledTimes(3); // Default retries
+      // retries: 3 → RetryPolicy maxAttempts: 3 → 1 initial + 3 retries = 4 total
+      expect(mockRequest).toHaveBeenCalledTimes(4);
     });
 
     it('should respect retry delay', async () => {
