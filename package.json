@@ -7,11 +7,13 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "npm run build:core && npm run build:tier1 && npm run build:tier2 && npm run build:tier3",
+    "build": "npm run build:core && npm run build:contracts && npm run build:tier1 && npm run build:tier2 && npm run build:tier3 && npm run build:riskos",
     "build:core": "npm run build --workspace=@hazeljs/core",
+    "build:contracts": "npm run build --workspace=@hazeljs/contracts",
     "build:tier1": "npm run build --workspace=@hazeljs/cache --workspace=@hazeljs/config --workspace=@hazeljs/auth --workspace=@hazeljs/cron --workspace=@hazeljs/event-emitter --workspace=@hazeljs/graphql --workspace=@hazeljs/grpc --workspace=@hazeljs/queue --workspace=@hazeljs/kafka --workspace=@hazeljs/prisma --workspace=@hazeljs/swagger --workspace=@hazeljs/websocket --workspace=@hazeljs/serverless --workspace=@hazeljs/resilience --workspace=@hazeljs/discovery --workspace=@hazeljs/gateway --workspace=@hazeljs/cli",
     "build:tier2": "npm run build --workspace=@hazeljs/ai --workspace=@hazeljs/data --workspace=@hazeljs/ml --workspace=@hazeljs/rag --workspace=@hazeljs/pdf-to-audio --workspace=@hazeljs/messaging",
     "build:tier3": "npm run build --workspace=@hazeljs/agent",
+    "build:riskos": "npm run build --workspace=@hazeljs/riskos --workspace=@hazeljs/riskos-agent",
     "build:packages": "npm run build --workspaces --if-present",
     "publish:all": "npm run publish:core && npm run publish:tier1 && npm run publish:tier2 && npm run publish:tier3",
     "publish:core": "npm publish --workspace=@hazeljs/core --access public --tag beta",
@@ -65,14 +67,14 @@
     "@types/dotenv": "^6.1.1",
     "@types/jest": "^29.5.14",
     "@types/jsonwebtoken": "^9.0.9",
-    "@types/node": "^20.17.50",
+    "@types/node": "^20.19.0",
     "@types/supertest": "^6.0.3",
     "@types/swagger-ui-express": "^4.1.6",
     "@types/winston": "^2.4.4",
-    "@typescript-eslint/eslint-plugin": "^8.18.2",
-    "@typescript-eslint/parser": "^8.18.2",
+    "@typescript-eslint/eslint-plugin": "^8.56.0",
+    "@typescript-eslint/parser": "^8.56.0",
     "class-transformer": "^0.5.1",
-    "class-validator": "^0.14.2",
+    "class-validator": "^0.14.4",
     "eslint": "^8.56.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.1.3",
@@ -87,7 +89,7 @@
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.3.3",
-    "typescript-eslint": "^8.32.1"
+    "typescript-eslint": "^8.56.0"
   },
   "engines": {
     "node": ">=14.0.0",

@@ -111,6 +111,43 @@ describe('ToolRegistry', () => {
   });
 
   describe('getToolDefinitions', () => {
+    it('should return empty array for non-existent agent', () => {
+      const definitions = registry.getToolDefinitions('non-existent');
+      expect(definitions).toEqual([]);
+    });
+
+    it('should include enum in parameters when specified', () => {
+      @Agent({ name: 'enum-agent', description: 'Enum agent' })
+      class EnumAgent {
+        @Tool({
+          description: 'Tool with enum',
+          parameters: [
+            {
+              name: 'status',
+              type: 'string',
+              required: true,
+              description: 'Status',
+              enum: ['active', 'inactive'],
+            },
+          ],
+        })
+        async enumTool(input: { status: string }) {
+          return { result: input.status };
+        }
+      }
+
+      const agent = new EnumAgent();
+      registry.registerAgentTools('enum-agent', agent);
+
+      const definitions = registry.getToolDefinitions('enum-agent');
+      expect(definitions).toHaveLength(1);
+      expect(definitions[0].parameters.properties.status).toMatchObject({
+        type: 'string',
+        description: 'Status',
+        enum: ['active', 'inactive'],
+      });
+    });
+
     it('should return tool definitions in correct format', () => {
       @Agent({ name: 'def-agent', description: 'Definition agent' })
       class DefAgent {

@@ -55,7 +55,14 @@
     "@prisma/client": {
       "optional": true,
       "description": "Required for DatabaseStateManager"
+    },
+    "@hazeljs/ai": {
+      "optional": true,
+      "description": "Use createLLMProviderFromAI() for AI-backed agents"
     }
+  },
+  "peerDependencies": {
+    "@hazeljs/ai": ">=0.2.0-beta.0"
   },
   "bugs": {
     "url": "https://github.com/hazeljs/hazel-js/issues"
