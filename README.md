@@ -1,6 +1,6 @@
 # HazelJS
 
-[![codecov](https://codecov.io/gh/yourusername/hazeljs/branch/main/graph/badge.svg)](https://codecov.io/gh/yourusername/hazeljs)
+[![codecov](https://codecov.io/gh/hazel-js/hazeljs/branch/main/graph/badge.svg)](https://codecov.io/gh/hazel-js/hazeljs)
 [![npm version](https://badge.fury.io/js/%40hazeljs%2Fcore.svg)](https://badge.fury.io/js/%40hazeljs%2Fcore)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 
