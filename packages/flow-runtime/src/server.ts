@@ -1,16 +1,18 @@
-import Fastify, { type FastifyInstance } from 'fastify';
+/**
+ * Flow runtime HTTP server using HazelApp
+ */
+import 'reflect-metadata';
+import { HazelApp, HazelModule } from '@hazeljs/core';
 import type { FlowEngine } from '@hazeljs/flow';
-import { registerRunRoutes } from './routes/runs.js';
-import { registerFlowRoutes } from './routes/flows.js';
+import { createFlowHandler } from './flow-handler.js';
 
-export async function createServer(engine: FlowEngine, port: number): Promise<FastifyInstance> {
-  const app = Fastify({ logger: true });
+@HazelModule({ controllers: [], providers: [] })
+class FlowRuntimeModule {}
 
-  await registerRunRoutes(app, engine);
-  await registerFlowRoutes(app, engine);
-
-  app.get('/health', async () => ({ status: 'ok' }));
-
-  await app.listen({ port, host: '0.0.0.0' });
+export async function createServer(engine: FlowEngine, port: number): Promise<HazelApp> {
+  const app = new HazelApp(FlowRuntimeModule);
+  const flowHandler = createFlowHandler(engine);
+  app.addProxyHandler('/v1', flowHandler);
+  await app.listen(port);
   return app;
 }

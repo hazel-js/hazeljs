@@ -28,6 +28,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      '@hazeljs/core': path.resolve(__dirname, '../core/dist/index.js'),
       '@hazeljs/flow': path.resolve(__dirname, '../flow/dist/index.js'),
     },
   },

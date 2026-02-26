@@ -1,7 +1,7 @@
 {
   "name": "@hazeljs/flow-runtime",
   "version": "0.2.0-beta.47",
-  "description": "Standalone deployable flow runtime service (Fastify)",
+  "description": "Standalone deployable flow runtime service (HazelJS)",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": ["dist"],
@@ -16,9 +16,10 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
+    "@hazeljs/core": "*",
     "@hazeljs/flow": "*",
-    "fastify": "^5.1.0",
-    "p-limit": "^6.1.0"
+    "p-limit": "^6.1.0",
+    "reflect-metadata": "^0.2.2"
   },
   "devDependencies": {
     "@types/node": "^20.17.50",
@@ -35,7 +36,7 @@
     "url": "git+https://github.com/hazel-js/hazeljs.git",
     "directory": "packages/flow-runtime"
   },
-  "keywords": ["hazeljs", "flow", "runtime", "workflow", "fastify"],
+  "keywords": ["hazeljs", "flow", "runtime", "workflow"],
   "author": "Muhammad Arslan <muhammad.arslan@hazeljs.com>",
   "license": "Apache-2.0",
   "engines": {

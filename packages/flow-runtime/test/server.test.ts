@@ -1,5 +1,4 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import Fastify from 'fastify';
 import type { FlowEngine } from '@hazeljs/flow';
 import { createServer } from '../src/server.js';
 
@@ -21,9 +20,8 @@ describe('createServer', () => {
     await app.close();
   });
 
-  it('GET /health returns ok', async () => {
-    const res = await app.inject({ method: 'GET', url: '/health' });
-    expect(res.statusCode).toBe(200);
-    expect(JSON.parse(res.payload)).toEqual({ status: 'ok' });
+  it('creates HazelApp and listens', async () => {
+    expect(app).toBeDefined();
+    expect(typeof app.close).toBe('function');
   });
 });

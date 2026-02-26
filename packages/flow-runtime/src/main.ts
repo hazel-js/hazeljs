@@ -1,6 +1,8 @@
 /**
  * Flow runtime - standalone deployable service
  */
+/// <reference types="node" />
+import 'reflect-metadata';
 import { FlowEngine, createFlowPrismaClient } from '@hazeljs/flow';
 import { getConfig } from './config.js';
 import { createServiceRegistry } from './services/ServiceRegistry.js';
