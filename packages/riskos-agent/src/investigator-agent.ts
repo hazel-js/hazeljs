@@ -41,7 +41,10 @@ export class InvestigatorAgent {
       },
     ],
   })
-  async getKycStatus(input: { sessionId: string; tenantId?: string }) {
+  async getKycStatus(input: {
+    sessionId: string;
+    tenantId?: string;
+  }): Promise<{ status: string; decision?: string }> {
     return this.tools.kyc.getKycStatus(input.sessionId, input.tenantId);
   }
 
@@ -63,7 +66,10 @@ export class InvestigatorAgent {
       },
     ],
   })
-  async getEvidence(input: { requestId: string; tenantId?: string }) {
+  async getEvidence(input: {
+    requestId: string;
+    tenantId?: string;
+  }): Promise<{ traces: unknown[] }> {
     return this.tools.evidence.getEvidence(input.requestId, input.tenantId);
   }
 
@@ -85,7 +91,10 @@ export class InvestigatorAgent {
       },
     ],
   })
-  async getRiskHistory(input: { entityId: string; tenantId?: string }) {
+  async getRiskHistory(input: {
+    entityId: string;
+    tenantId?: string;
+  }): Promise<Array<{ ts: string; score: number; reasons: string[] }>> {
     return this.tools.riskHistory.getRiskHistory(input.entityId, input.tenantId);
   }
 
@@ -107,7 +116,10 @@ export class InvestigatorAgent {
       },
     ],
   })
-  async getTransactionTimeline(input: { caseId: string; tenantId?: string }) {
+  async getTransactionTimeline(input: {
+    caseId: string;
+    tenantId?: string;
+  }): Promise<Array<{ ts: string; amount: number; desc: string }>> {
     return this.tools.transactionTimeline.getTimeline(input.caseId, input.tenantId);
   }
 }

@@ -17,7 +17,7 @@ export function createKycToolFromStore(store: {
   get(id: string): Promise<{ decision?: { status?: string } } | null>;
 }): KycToolLike {
   return {
-    async getKycStatus(sessionId: string) {
+    async getKycStatus(sessionId: string): Promise<{ status: string; decision?: string }> {
       const session = await store.get(sessionId);
       if (!session) return { status: 'not_found' };
       return {
@@ -38,7 +38,7 @@ export function createEvidenceToolFromAuditSink(sink: {
   }): Promise<{ traces: unknown[] }>;
 }): EvidenceToolLike {
   return {
-    async getEvidence(requestId: string, tenantId?: string) {
+    async getEvidence(requestId: string, tenantId?: string): Promise<{ traces: unknown[] }> {
       const pack = await sink.buildEvidencePack({ requestId, tenantId });
       return { traces: pack.traces };
     },
@@ -50,7 +50,9 @@ export function createEvidenceToolFromAuditSink(sink: {
  */
 export function createPlaceholderRiskHistoryTool(): RiskHistoryToolLike {
   return {
-    async getRiskHistory(_entityId: string) {
+    async getRiskHistory(
+      _entityId: string
+    ): Promise<Array<{ ts: string; score: number; reasons: string[] }>> {
       return [{ ts: new Date().toISOString(), score: 0, reasons: ['No risk history available'] }];
     },
   };
@@ -61,7 +63,9 @@ export function createPlaceholderRiskHistoryTool(): RiskHistoryToolLike {
  */
 export function createPlaceholderTransactionTimelineTool(): TransactionTimelineToolLike {
   return {
-    async getTimeline(caseId: string) {
+    async getTimeline(
+      caseId: string
+    ): Promise<Array<{ ts: string; amount: number; desc: string }>> {
       return [{ ts: new Date().toISOString(), amount: 0, desc: `Placeholder for case ${caseId}` }];
     },
   };

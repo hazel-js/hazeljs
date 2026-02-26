@@ -11,10 +11,7 @@ export interface KycToolLike {
 }
 
 export interface EvidenceToolLike {
-  getEvidence(
-    requestId: string,
-    tenantId?: string
-  ): Promise<{ traces: unknown[] }>;
+  getEvidence(requestId: string, tenantId?: string): Promise<{ traces: unknown[] }>;
 }
 
 export interface RiskHistoryToolLike {

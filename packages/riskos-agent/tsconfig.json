@@ -1,13 +1,1 @@
-{
-  "extends": "../../tsconfig.json",
-  "compilerOptions": {
-    "outDir": "./dist",
-    "rootDir": "./src",
-    "declaration": true,
-    "declarationMap": true,
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true
-  },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
-}
+{"extends":"../../tsconfig.json","compilerOptions":{"outDir":"./dist","rootDir":"./src","declaration":true,"declarationMap":true,"experimentalDecorators":true,"emitDecoratorMetadata":true,"types":["node","jest"]},"include":["src/**/*"],"exclude":["node_modules","dist"]}

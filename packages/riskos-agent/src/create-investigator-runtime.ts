@@ -3,10 +3,7 @@
  * Wires together @hazeljs/ai, @hazeljs/agent, @hazeljs/rag, and @hazeljs/riskos.
  */
 
-import {
-  AgentRuntime,
-  createLLMProviderFromAI,
-} from '@hazeljs/agent';
+import { AgentRuntime, createLLMProviderFromAI } from '@hazeljs/agent';
 import { MemoryManager, BufferMemory } from '@hazeljs/rag';
 import { InvestigatorAgent } from './investigator-agent';
 import type { CreateInvestigatorRuntimeOptions } from './types';

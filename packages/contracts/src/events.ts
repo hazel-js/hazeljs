@@ -65,3 +65,16 @@ export type HazelEvent =
   | DataAccessEvent
   | AiCallEvent
   | DecisionEvent;
+
+const HAZEL_EVENT_TYPES = ['metric', 'span', 'audit', 'dataAccess', 'aiCall', 'decision'] as const;
+
+/** Type guard to check if a value is a valid HazelEvent */
+export function isHazelEvent(value: unknown): value is HazelEvent {
+  if (value === null || typeof value !== 'object') return false;
+  const obj = value as Record<string, unknown>;
+  const type = obj?.type;
+  return (
+    typeof type === 'string' &&
+    HAZEL_EVENT_TYPES.includes(type as (typeof HAZEL_EVENT_TYPES)[number])
+  );
+}

@@ -2,6 +2,10 @@
 
 **Risk Operating System** - Production-grade module for banking/fintech: KYC/KYB onboarding, fraud/AML risk scoring, investigator assistant, compliance/audit logging, and analytics.
 
+[![npm version](https://img.shields.io/npm/v/@hazeljs/riskos.svg)](https://www.npmjs.com/package/@hazeljs/riskos)
+[![npm downloads](https://img.shields.io/npm/dm/@hazeljs/riskos)](https://www.npmjs.com/package/@hazeljs/riskos)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
+
 ## Architecture
 
 - **Event bus** - Integrates via shared events, not hard imports. Works when `@hazeljs/compliance` and `@hazeljs/analytics` are not installed.
@@ -127,3 +131,7 @@ See `packages/riskos-agent/README.md` and `example/src/riskos/investigator-examp
 ## Example
 
 See `example/src/riskos/` for a full demo.
+
+## License
+
+Apache 2.0 © [HazelJS](https://hazeljs.com)

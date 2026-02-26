@@ -2,6 +2,10 @@
 
 **AI-powered Investigator Agent for RiskOS** — combines `@hazeljs/ai`, `@hazeljs/agent`, and `@hazeljs/riskos` for an intelligent compliance investigator.
 
+[![npm version](https://img.shields.io/npm/v/@hazeljs/riskos-agent.svg)](https://www.npmjs.com/package/@hazeljs/riskos-agent)
+[![npm downloads](https://img.shields.io/npm/dm/@hazeljs/riskos-agent)](https://www.npmjs.com/package/@hazeljs/riskos-agent)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
+
 ## Overview
 
 When you need a **real** LLM-powered investigator (instead of the stub in `@hazeljs/riskos`), use this package. It provides:
@@ -147,4 +151,4 @@ Use the same `sessionId` in `runInvestigator` to maintain context across multipl
 
 ## License
 
-MIT
+Apache 2.0 © [HazelJS](https://hazeljs.com)
