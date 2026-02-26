@@ -107,13 +107,20 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Update latest dist-tag to current version
+        timeout-minutes: 5
         run: |
           VERSION="${{ steps.version.outputs.version }}"
-          echo "Updating latest dist-tag to $VERSION for all packages"
-          for pkg in core cli ai agent auth cache config cron graphql discovery kafka gateway resilience grpc messaging ops-agent data ml rag event-emitter pdf-to-audio prisma queue serverless swagger websocket; do
-            echo "  @hazeljs/$pkg@$VERSION -> latest"
-            npm dist-tag add "@hazeljs/$pkg@$VERSION" latest || true
+          PKGS="core cli ai agent auth cache config cron graphql discovery kafka gateway resilience grpc messaging ops-agent data ml rag event-emitter pdf-to-audio prisma queue serverless swagger websocket"
+          TOTAL=$(echo $PKGS | wc -w)
+          echo "Updating latest dist-tag to $VERSION for $TOTAL packages (8 parallel)"
+          i=0
+          for pkg in $PKGS; do
+            i=$((i+1))
+            (echo "[$i/$TOTAL] @hazeljs/$pkg" && npm dist-tag add "@hazeljs/$pkg@$VERSION" latest || true) &
+            if [ $((i % 8)) -eq 0 ]; then wait; fi
           done
+          wait
+          echo "Done"
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}    
       
