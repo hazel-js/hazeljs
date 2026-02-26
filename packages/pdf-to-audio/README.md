@@ -2,6 +2,10 @@
 
 Convert PDF documents to audio using OpenAI TTS. Extracts text from PDFs, chunks it, generates speech per chunk, and merges the audio.
 
+[![npm version](https://img.shields.io/npm/v/@hazeljs/pdf-to-audio.svg)](https://www.npmjs.com/package/@hazeljs/pdf-to-audio)
+[![npm downloads](https://img.shields.io/npm/dm/@hazeljs/pdf-to-audio)](https://www.npmjs.com/package/@hazeljs/pdf-to-audio)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
+
 ## Installation
 
 ```bash

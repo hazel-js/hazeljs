@@ -29,7 +29,7 @@ class WaitResumeFlow {
   }
 }
 
-async function main() {
+async function main(): Promise<void> {
   const engine = new FlowEngine();
   const def = buildFlowDefinition(WaitResumeFlow);
 
@@ -46,6 +46,7 @@ async function main() {
     run = await engine.tick(runId);
   }
 
+  // eslint-disable-next-line no-console
   console.log('After first tick (should be WAITING):', run?.status);
 
   run = await engine.resumeRun(runId, { approved: true });
@@ -53,7 +54,11 @@ async function main() {
     run = await engine.tick(runId);
   }
 
+  // eslint-disable-next-line no-console
   console.log('After resume:', run?.status, run?.outputsJson);
 }
 
-main().catch(console.error);
+main().catch((err) => {
+  // eslint-disable-next-line no-console
+  console.error(err);
+});

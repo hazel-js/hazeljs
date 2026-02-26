@@ -15,9 +15,18 @@ export interface ServiceRegistry {
 export function createServiceRegistry(): ServiceRegistry {
   return {
     logger: {
-      info: (msg, meta) => console.log('[INFO]', msg, meta ?? ''),
-      error: (msg, meta) => console.error('[ERROR]', msg, meta ?? ''),
-      debug: (msg, meta) => console.debug('[DEBUG]', msg, meta ?? ''),
+      info: (msg, meta): void => {
+        // eslint-disable-next-line no-console -- default logger implementation
+        console.log('[INFO]', msg, meta ?? '');
+      },
+      error: (msg, meta): void => {
+        // eslint-disable-next-line no-console -- default logger implementation
+        console.error('[ERROR]', msg, meta ?? '');
+      },
+      debug: (msg, meta): void => {
+        // eslint-disable-next-line no-console -- default logger implementation
+        console.debug('[DEBUG]', msg, meta ?? '');
+      },
     },
   };
 }

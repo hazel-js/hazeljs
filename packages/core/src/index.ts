@@ -8,7 +8,7 @@
 import 'reflect-metadata';
 
 // Core exports
-export { HazelApp } from './hazel-app';
+export { HazelApp, type EarlyHttpHandler, type ProxyHandler } from './hazel-app';
 export { HazelModule, Module, HazelModuleInstance, getModuleMetadata } from './hazel-module';
 export type { ModuleOptions, DynamicModule } from './hazel-module';
 

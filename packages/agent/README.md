@@ -2,6 +2,10 @@
 
 **AI-native Agent Runtime for HazelJS** - Build stateful, long-running agents with tools, memory, and human-in-the-loop workflows.
 
+[![npm version](https://img.shields.io/npm/v/@hazeljs/agent.svg)](https://www.npmjs.com/package/@hazeljs/agent)
+[![npm downloads](https://img.shields.io/npm/dm/@hazeljs/agent)](https://www.npmjs.com/package/@hazeljs/agent)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
+
 ## Overview
 
 The Agent Runtime is a core primitive in HazelJS designed for building production-grade AI agents. Unlike stateless request handlers, agents are:

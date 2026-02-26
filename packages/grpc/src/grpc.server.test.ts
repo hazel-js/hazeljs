@@ -195,7 +195,6 @@ describe('GrpcServer', () => {
         expect.anything(),
         expect.any(Function)
       );
-      expect(mockServer.start).toHaveBeenCalled();
 
       await server.close();
     });

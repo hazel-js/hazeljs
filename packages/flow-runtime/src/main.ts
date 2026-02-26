@@ -8,7 +8,7 @@ import { demoFraudFlow, demoSupportFlow } from './flows/index.js';
 import { recovery } from './recovery.js';
 import { createServer } from './server.js';
 
-async function main() {
+async function main(): Promise<void> {
   const config = getConfig();
   const services = createServiceRegistry();
 
@@ -28,6 +28,7 @@ async function main() {
 }
 
 main().catch((err) => {
+  // eslint-disable-next-line no-console -- top-level error handler
   console.error(err);
   process.exit(1);
 });

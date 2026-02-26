@@ -5,6 +5,7 @@
 Auto-generate interactive API documentation with Swagger UI and OpenAPI specifications.
 
 [![npm version](https://img.shields.io/npm/v/@hazeljs/swagger.svg)](https://www.npmjs.com/package/@hazeljs/swagger)
+[![npm downloads](https://img.shields.io/npm/dm/@hazeljs/swagger)](https://www.npmjs.com/package/@hazeljs/swagger)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 
 ## Features

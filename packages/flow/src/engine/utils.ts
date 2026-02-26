@@ -17,10 +17,7 @@ export function deepMerge(
       typeof tgtVal === 'object' &&
       !Array.isArray(tgtVal)
     ) {
-      result[key] = deepMerge(
-        tgtVal as Record<string, unknown>,
-        srcVal as Record<string, unknown>
-      );
+      result[key] = deepMerge(tgtVal as Record<string, unknown>, srcVal as Record<string, unknown>);
     } else {
       result[key] = srcVal;
     }

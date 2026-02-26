@@ -122,12 +122,7 @@ export class FlowEngine {
       services: this.services,
     };
 
-    const { result, cached } = await executeNode(
-      node,
-      ctx,
-      this.eventRepo,
-      this.idempotencyRepo
-    );
+    const { result, cached } = await executeNode(node, ctx, this.eventRepo, this.idempotencyRepo);
 
     if (result.status === 'error') {
       await this.runRepo.update(runId, {
@@ -179,7 +174,8 @@ export class FlowEngine {
         outputs: newOutputs,
       });
     } catch (err) {
-      const code = err instanceof Error && 'code' in err ? (err as { code: string }).code : 'UNKNOWN';
+      const code =
+        err instanceof Error && 'code' in err ? (err as { code: string }).code : 'UNKNOWN';
       const message = err instanceof Error ? err.message : String(err);
       await this.runRepo.update(runId, {
         status: FlowRunStatus.FAILED,
@@ -256,9 +252,15 @@ export class FlowEngine {
     return this.defRepo.list();
   }
 
-  async getTimeline(
-    runId: string
-  ): Promise<Array<{ at: Date; type: string; nodeId: string | null; attempt: number | null; payloadJson: unknown }>> {
+  async getTimeline(runId: string): Promise<
+    Array<{
+      at: Date;
+      type: string;
+      nodeId: string | null;
+      attempt: number | null;
+      payloadJson: unknown;
+    }>
+  > {
     return this.eventRepo.getTimeline(runId);
   }
 }

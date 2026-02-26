@@ -20,7 +20,15 @@ export class FlowEventRepo {
     });
   }
 
-  async getTimeline(runId: string): Promise<Array<{ at: Date; type: string; nodeId: string | null; attempt: number | null; payloadJson: unknown }>> {
+  async getTimeline(runId: string): Promise<
+    Array<{
+      at: Date;
+      type: string;
+      nodeId: string | null;
+      attempt: number | null;
+      payloadJson: unknown;
+    }>
+  > {
     const rows = await this.prisma.flowRunEvent.findMany({
       where: { runId },
       orderBy: { at: 'asc' },

@@ -117,8 +117,8 @@ export class AgentRuntime {
         failureThreshold: 5,
         successThreshold: 2,
         resetTimeout: 30000,
-        onStateChange: (state: string): void => {
-          this.logger.warn('Circuit breaker state changed', { state });
+        onStateChange: (_from: unknown, to: unknown): void => {
+          this.logger.warn('Circuit breaker state changed', { state: to });
         },
       });
     }

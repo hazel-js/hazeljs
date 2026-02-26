@@ -44,7 +44,10 @@ export function Entry(): MethodDecorator {
 /**
  * Mark a method as a flow node. Method name is used as nodeId if not provided.
  */
-export function Node(nodeIdOrOptions?: string | NodeDecoratorOptions, options?: NodeDecoratorOptions): MethodDecorator {
+export function Node(
+  nodeIdOrOptions?: string | NodeDecoratorOptions,
+  options?: NodeDecoratorOptions
+): MethodDecorator {
   const nodeId = typeof nodeIdOrOptions === 'string' ? nodeIdOrOptions : undefined;
   const opts = (typeof nodeIdOrOptions === 'object' ? nodeIdOrOptions : options) ?? {};
   return (target, propertyKey, descriptor: PropertyDescriptor) => {
@@ -64,7 +67,8 @@ export function Edge(
 ): MethodDecorator {
   return (target, propertyKey) => {
     const from = typeof propertyKey === 'string' ? propertyKey : String(propertyKey);
-    const edges: EdgeDefinition[] = Reflect.getMetadata(EDGE_METADATA_KEY, target, propertyKey) ?? [];
+    const edges: EdgeDefinition[] =
+      Reflect.getMetadata(EDGE_METADATA_KEY, target, propertyKey) ?? [];
     edges.push({ from, to, when, priority: priority ?? 0 });
     Reflect.defineMetadata(EDGE_METADATA_KEY, edges, target, propertyKey);
   };
@@ -96,7 +100,9 @@ export function buildFlowDefinition(FlowClass: new () => object): FlowDefinition
     if (!nodeMeta) continue;
 
     const { id: nodeId, options } = nodeMeta;
-    const handler = (prototype[methodName] as (ctx: FlowContext) => Promise<NodeResult>).bind(instance);
+    const handler = (prototype[methodName] as (ctx: FlowContext) => Promise<NodeResult>).bind(
+      instance
+    );
 
     nodes[nodeId] = {
       id: nodeId,

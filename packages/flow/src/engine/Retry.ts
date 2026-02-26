@@ -7,10 +7,7 @@ export function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export function getRetryDelayMs(
-  attempt: number,
-  policy: RetryPolicy
-): number {
+export function getRetryDelayMs(attempt: number, policy: RetryPolicy): number {
   if (attempt >= policy.maxAttempts) return -1;
   let ms: number;
   if (policy.backoff === 'exponential') {

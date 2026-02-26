@@ -9,10 +9,14 @@ class DemoFraudFlow {
   @Entry()
   @Node('score')
   @Edge('approve', (ctx: FlowContext) => (ctx.state.riskScore as number) < 30, 1)
-  @Edge('review', (ctx: FlowContext) => {
-    const s = ctx.state.riskScore as number;
-    return s >= 30 && s < 70;
-  }, 1)
+  @Edge(
+    'review',
+    (ctx: FlowContext) => {
+      const s = ctx.state.riskScore as number;
+      return s >= 30 && s < 70;
+    },
+    1
+  )
   @Edge('reject', (ctx: FlowContext) => (ctx.state.riskScore as number) >= 70, 1)
   async score(ctx: FlowContext): Promise<NodeResult> {
     const input = ctx.input as { amount: number; userId: string };

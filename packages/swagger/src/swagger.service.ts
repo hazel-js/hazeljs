@@ -59,7 +59,9 @@ export class SwaggerService {
       // Process each controller
       controllers.forEach((controller) => {
         if (!controller || typeof controller !== 'function') {
-          logger.warn('Invalid controller found:', controller);
+          if (process.env.NODE_ENV !== 'test') {
+            logger.warn('Invalid controller found:', controller);
+          }
           return;
         }
 
@@ -128,7 +130,9 @@ export class SwaggerService {
       logger.debug('Generated Swagger specification:', this.spec);
       return this.spec;
     } catch (error) {
-      logger.error('Failed to generate Swagger specification:', error);
+      if (process.env.NODE_ENV !== 'test') {
+        logger.error('Failed to generate Swagger specification:', error);
+      }
       throw error;
     }
   }

@@ -5,7 +5,8 @@
 RPC server support with decorator-based handlers. Built on [@grpc/grpc-js](https://www.npmjs.com/package/@grpc/grpc-js) and [@grpc/proto-loader](https://www.npmjs.com/package/@grpc/proto-loader).
 
 [![npm version](https://img.shields.io/npm/v/@hazeljs/grpc.svg)](https://www.npmjs.com/package/@hazeljs/grpc)
-[![License: Apache-2.0](https://img.shields.io/npm/l/@hazeljs/grpc.svg)](https://www.apache.org/licenses/LICENSE-2.0)
+[![npm downloads](https://img.shields.io/npm/dm/@hazeljs/grpc)](https://www.npmjs.com/package/@hazeljs/grpc)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 
 ## Features
 

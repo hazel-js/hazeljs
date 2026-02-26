@@ -13,9 +13,9 @@ export function runIdToLockKey(runId: string): bigint {
   for (let i = 0; i < runId.length; i++) {
     hash = ((hash << 5) + hash) ^ runId.charCodeAt(i);
   }
-  // Ensure positive and within safe int8 range
+  // Ensure positive and within safe int8 range (use MAX_SAFE_INTEGER to avoid precision loss)
   const h = Math.abs(hash);
-  return BigInt(h % 0x7fffffffffffffff);
+  return BigInt(h % Number.MAX_SAFE_INTEGER);
 }
 
 export async function withAdvisoryLock<T>(

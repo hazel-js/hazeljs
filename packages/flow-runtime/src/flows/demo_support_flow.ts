@@ -12,7 +12,11 @@ class DemoSupportFlow {
   async create(ctx: FlowContext): Promise<NodeResult> {
     const payload = (ctx.state as { _resumePayload?: { ticketId: string } })._resumePayload;
     if (payload) {
-      return { status: 'ok', output: { ticketId: payload.ticketId }, patch: { ticketId: payload.ticketId } };
+      return {
+        status: 'ok',
+        output: { ticketId: payload.ticketId },
+        patch: { ticketId: payload.ticketId },
+      };
     }
     return { status: 'wait', reason: 'awaiting_ticket_creation', until: 'manual' };
   }

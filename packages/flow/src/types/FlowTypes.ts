@@ -56,4 +56,10 @@ export type NodeResult =
       status: 'error';
       error: { code: string; message: string; retryable?: boolean };
     }
-  | { status: 'wait'; reason?: string; until?: string; patch?: Record<string, unknown>; output?: unknown };
+  | {
+      status: 'wait';
+      reason?: string;
+      until?: string;
+      patch?: Record<string, unknown>;
+      output?: unknown;
+    };

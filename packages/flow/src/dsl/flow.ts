@@ -12,13 +12,34 @@ import type {
 
 type NodeId = string;
 
-export function flow(flowId: string, version: string) {
+interface FlowBuilder {
+  entry(nodeId: NodeId): FlowBuilder;
+  node(
+    nodeId: NodeId,
+    handler: (ctx: FlowContext) => Promise<NodeResult>,
+    options?: {
+      name?: string;
+      retry?: RetryPolicy;
+      timeoutMs?: number;
+      idempotencyKey?: (ctx: FlowContext) => string;
+    }
+  ): FlowBuilder;
+  edge(
+    from: NodeId,
+    to: NodeId,
+    when?: (ctx: FlowContext) => boolean,
+    priority?: number
+  ): FlowBuilder;
+  build(): FlowDefinition;
+}
+
+export function flow(flowId: string, version: string): FlowBuilder {
   const nodes: Record<NodeId, NodeDefinition> = {};
   const edges: EdgeDefinition[] = [];
   let entryNodeId: NodeId | null = null;
 
   return {
-    entry(nodeId: NodeId) {
+    entry(nodeId: NodeId): FlowBuilder {
       entryNodeId = nodeId;
       return this;
     },
@@ -32,7 +53,7 @@ export function flow(flowId: string, version: string) {
         timeoutMs?: number;
         idempotencyKey?: (ctx: FlowContext) => string;
       }
-    ) {
+    ): FlowBuilder {
       nodes[nodeId] = {
         id: nodeId,
         name: options?.name,
@@ -41,7 +62,7 @@ export function flow(flowId: string, version: string) {
         timeoutMs: options?.timeoutMs,
         idempotencyKey: options?.idempotencyKey,
       };
-      return this;
+      return this as FlowBuilder;
     },
 
     edge(
@@ -49,7 +70,7 @@ export function flow(flowId: string, version: string) {
       to: NodeId,
       when?: (ctx: FlowContext) => boolean,
       priority?: number
-    ) {
+    ): FlowBuilder {
       edges.push({
         from,
         to,

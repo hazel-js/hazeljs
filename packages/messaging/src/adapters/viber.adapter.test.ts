@@ -79,4 +79,22 @@ describe('ViberAdapter', () => {
       expect(adapter.getBot()).toBeDefined();
     });
   });
+
+  describe('parseIncoming with missing sender', () => {
+    it('handles event when sender is missing', () => {
+      const payload = {
+        event: 'message',
+        message: { text: 'Hi' },
+        message_token: 1,
+        timestamp: 1609459200000,
+      };
+
+      const result = adapter.parseIncoming(payload);
+      expect(result).not.toBeNull();
+      const msg = Array.isArray(result) ? result[0] : result;
+      expect(msg?.conversationId).toBe('');
+      expect(msg?.userId).toBe('');
+      expect(msg?.sessionId).toBeUndefined();
+    });
+  });
 });

@@ -91,24 +91,19 @@ export async function executeNode(
         error: result.error,
       });
 
-      const retryable =
-        result.error.retryable ?? RETRYABLE_ERROR_CODES.has(result.error.code);
+      const retryable = result.error.retryable ?? RETRYABLE_ERROR_CODES.has(result.error.code);
       if (!retryable || a === maxAttempts - 1) {
         return { result, cached: false };
       }
 
-      const delayMs = node.retry
-        ? getRetryDelayMs(a, node.retry)
-        : -1;
+      const delayMs = node.retry ? getRetryDelayMs(a, node.retry) : -1;
       if (delayMs > 0) {
         await delay(delayMs);
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       const code =
-        err instanceof Error && 'code' in err
-          ? String((err as { code: string }).code)
-          : 'UNKNOWN';
+        err instanceof Error && 'code' in err ? String((err as { code: string }).code) : 'UNKNOWN';
       lastError = { code, message, retryable: code === 'TIMEOUT' };
       await eventRepo.append(ctx.runId, 'NODE_FAILED', {
         nodeId: node.id,

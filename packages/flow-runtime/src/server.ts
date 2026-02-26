@@ -1,9 +1,9 @@
-import Fastify from 'fastify';
+import Fastify, { type FastifyInstance } from 'fastify';
 import type { FlowEngine } from '@hazeljs/flow';
 import { registerRunRoutes } from './routes/runs.js';
 import { registerFlowRoutes } from './routes/flows.js';
 
-export async function createServer(engine: FlowEngine, port: number) {
+export async function createServer(engine: FlowEngine, port: number): Promise<FastifyInstance> {
   const app = Fastify({ logger: true });
 
   await registerRunRoutes(app, engine);

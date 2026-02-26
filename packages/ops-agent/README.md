@@ -2,6 +2,10 @@
 
 **Ops Agent** — AI-powered DevOps assistant for Jira, Slack, and incident coordination.
 
+[![npm version](https://img.shields.io/npm/v/@hazeljs/ops-agent.svg)](https://www.npmjs.com/package/@hazeljs/ops-agent)
+[![npm downloads](https://img.shields.io/npm/dm/@hazeljs/ops-agent)](https://www.npmjs.com/package/@hazeljs/ops-agent)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
+
 ## Overview
 
 When you need an AI assistant that can create Jira tickets, post to Slack, and coordinate incidents, use this package. It provides:

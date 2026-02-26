@@ -4,6 +4,10 @@
 
 Build powerful AI applications with semantic search, document retrieval, and LLM-augmented responses.
 
+[![npm version](https://img.shields.io/npm/v/@hazeljs/rag.svg)](https://www.npmjs.com/package/@hazeljs/rag)
+[![npm downloads](https://img.shields.io/npm/dm/@hazeljs/rag)](https://www.npmjs.com/package/@hazeljs/rag)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
+
 ## Features
 
 - 🔍 **Vector Search** - Semantic similarity search using embeddings

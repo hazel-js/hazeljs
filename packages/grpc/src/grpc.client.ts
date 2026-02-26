@@ -9,7 +9,10 @@ import type {
   GrpcDiscoveryClientLike,
 } from './grpc.client.types';
 
-type GrpcClientStub = Record<string, (req: unknown, cb: (err: Error | null, res: unknown) => void) => void>;
+type GrpcClientStub = Record<
+  string,
+  (req: unknown, cb: (err: Error | null, res: unknown) => void) => void
+>;
 
 /**
  * gRPC Client service - creates and caches gRPC client stubs for calling remote gRPC services
@@ -69,9 +72,7 @@ export class GrpcClientService {
 
     const instance = await client.getInstance(discovery.serviceName, strategy, filter);
     if (!instance) {
-      throw new Error(
-        `Discovery: no gRPC instance found for service "${discovery.serviceName}"`
-      );
+      throw new Error(`Discovery: no gRPC instance found for service "${discovery.serviceName}"`);
     }
 
     const url = `${instance.host}:${instance.port}`;
@@ -99,13 +100,13 @@ export class GrpcClientService {
    */
   getClient(serviceName: string, url?: string): GrpcClientStub {
     if (!this.protoDescriptor || !this.options) {
-      throw new Error(
-        'GrpcClientService not configured. Use GrpcClientModule.forRoot() first.'
-      );
+      throw new Error('GrpcClientService not configured. Use GrpcClientModule.forRoot() first.');
     }
 
     const pkg = this.options.package;
-    const pkgObj = this.protoDescriptor[pkg] as Record<string, new (url: string, creds: grpc.ChannelCredentials) => GrpcClientStub> | undefined;
+    const pkgObj = this.protoDescriptor[pkg] as
+      | Record<string, new (url: string, creds: grpc.ChannelCredentials) => GrpcClientStub>
+      | undefined;
 
     if (!pkgObj) {
       throw new Error(

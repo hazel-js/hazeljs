@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/flow-runtime",
-  "version": "0.2.0-beta.31",
+  "version": "0.2.0-beta.47",
   "description": "Standalone deployable flow runtime service (Fastify)",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -10,7 +10,10 @@
     "dev": "tsx watch src/main.ts",
     "start": "node dist/main.js",
     "lint": "eslint \"src/**/*.ts\"",
-    "clean": "rm -rf dist"
+    "lint:fix": "eslint \"src/**/*.ts\" --fix",
+    "clean": "rm -rf dist",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@hazeljs/flow": "*",
@@ -19,8 +22,10 @@
   },
   "devDependencies": {
     "@types/node": "^20.17.50",
+    "@vitest/coverage-v8": "^2.1.0",
     "tsx": "^4.19.0",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "vitest": "^2.1.0"
   },
   "publishConfig": {
     "access": "public"

@@ -22,7 +22,7 @@ class SimpleFlow {
   }
 }
 
-async function main() {
+async function main(): Promise<void> {
   const engine = new FlowEngine();
   const def = buildFlowDefinition(SimpleFlow);
 
@@ -40,8 +40,13 @@ async function main() {
   }
 
   const timeline = await engine.getTimeline(runId);
+  // eslint-disable-next-line no-console
   console.log('Run:', run);
+  // eslint-disable-next-line no-console
   console.log('Timeline:', JSON.stringify(timeline, null, 2));
 }
 
-main().catch(console.error);
+main().catch((err) => {
+  // eslint-disable-next-line no-console
+  console.error(err);
+});

@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/queue",
-  "version": "0.2.0-beta.31",
+  "version": "0.2.0-beta.47",
   "description": "Redis-backed job queue module for HazelJS framework using BullMQ",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

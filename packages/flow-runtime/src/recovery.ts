@@ -16,6 +16,7 @@ export async function recovery(engine: FlowEngine): Promise<void> {
         try {
           await engine.tick(runId);
         } catch (err) {
+          // eslint-disable-next-line no-console -- recovery error reporting
           console.error(`Recovery failed for run ${runId}:`, err);
         }
       })

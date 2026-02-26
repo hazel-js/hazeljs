@@ -17,6 +17,19 @@ import { CorsOptions } from './middleware/cors.middleware';
 
 const MODULE_METADATA_KEY = 'hazel:module';
 
+/** Early HTTP handler (e.g. for GraphQL) - receives raw req/res before body parsing */
+export type EarlyHttpHandler = (
+  req: IncomingMessage,
+  res: ServerResponse
+) => void | Promise<void>;
+
+/** Proxy handler - runs after body parsing, receives (req, res, context). Returns true if handled. */
+export type ProxyHandler = (
+  req: IncomingMessage,
+  res: ServerResponse,
+  context: RequestContext
+) => Promise<boolean>;
+
 class HttpResponse implements Response {
   private statusCode: number = 200;
   private headers: Record<string, string> = { 'Content-Type': 'application/json' };
@@ -78,10 +91,13 @@ export class HazelApp {
   private corsEnabled: boolean = false;
   private corsOptions?: CorsOptions;
   private timeoutMiddleware?: TimeoutMiddleware;
+  private earlyHandlers: Array<{ path: string; handler: EarlyHttpHandler }> = [];
+  private proxyHandlers: Array<{ pathPrefix: string; handler: ProxyHandler }> = [];
 
   constructor(private readonly moduleType: Type<unknown>) {
     logger.info('Initializing HazelApp');
     this.container = Container.getInstance();
+    this.container.register(HazelApp, this);
     this.router = new Router(this.container);
     this.requestParser = new RequestParser();
     this.module = new HazelModuleInstance(this.moduleType);
@@ -199,6 +215,15 @@ export class HazelApp {
             return;
           }
 
+          // Early handlers (e.g. GraphQL) - must run before body parsing
+          for (const { path, handler } of this.earlyHandlers) {
+            const pathname = req.url?.split('?')[0] ?? '';
+            if (pathname === path || pathname.startsWith(path + '/')) {
+              await handler(req, res);
+              return;
+            }
+          }
+
           const { method, url, headers } = req;
           logger.debug('Incoming request:', { method, url, headers });
 
@@ -257,10 +282,22 @@ export class HazelApp {
                 });
                 req.on('error', reject);
               });
-            } catch (error) {
+            } catch (error: unknown) {
+              const err = error as NodeJS.ErrnoException;
+              const msg = err?.message ?? (err && typeof (err as Error).message === 'string' ? (err as Error).message : '');
+              const isClientAbort =
+                err?.code === 'ECONNRESET' ||
+                err?.code === 'EPIPE' ||
+                (typeof msg === 'string' && (msg === 'aborted' || msg.includes('aborted')));
+              if (isClientAbort) {
+                logger.debug('Client disconnected while sending request body');
+                return;
+              }
               logger.error('Error parsing request body:', error);
-              res.writeHead(400);
-              res.end(JSON.stringify({ error: 'Invalid request body' }));
+              if (!res.writableEnded) {
+                res.writeHead(400);
+                res.end(JSON.stringify({ error: 'Invalid request body' }));
+              }
               return;
             }
           }
@@ -296,6 +333,15 @@ export class HazelApp {
               return;
             }
             throw error;
+          }
+
+          // Proxy handlers (e.g. API gateway) - run before router
+          const pathname = (req.url || '/').split('?')[0];
+          for (const { pathPrefix, handler } of this.proxyHandlers) {
+            if (pathname === pathPrefix || pathname.startsWith(pathPrefix + '/')) {
+              const handled = await handler(req, res, context);
+              if (handled) return;
+            }
           }
 
           // Apply timeout middleware if configured
@@ -516,6 +562,23 @@ export class HazelApp {
 
   getRouter(): Router {
     return this.router;
+  }
+
+  /**
+   * Add an early HTTP handler (runs before body parsing, for GraphQL etc.)
+   */
+  addEarlyHandler(path: string, handler: EarlyHttpHandler): void {
+    this.earlyHandlers.push({ path, handler });
+    logger.info('Early handler registered', { path });
+  }
+
+  /**
+   * Add a proxy handler (runs after body parsing, before router).
+   * Use with @hazeljs/gateway: app.addProxyHandler('/api', createGatewayHandler(gateway))
+   */
+  addProxyHandler(pathPrefix: string, handler: ProxyHandler): void {
+    this.proxyHandlers.push({ pathPrefix, handler });
+    logger.info('Proxy handler registered', { pathPrefix });
   }
 }
 

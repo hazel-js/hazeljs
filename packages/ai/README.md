@@ -5,6 +5,7 @@
 Build AI-powered applications with first-class LLM integration, streaming support, and decorator-based APIs.
 
 [![npm version](https://img.shields.io/npm/v/@hazeljs/ai.svg)](https://www.npmjs.com/package/@hazeljs/ai)
+[![npm downloads](https://img.shields.io/npm/dm/@hazeljs/ai)](https://www.npmjs.com/package/@hazeljs/ai)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 
 ## Features

@@ -268,5 +268,66 @@ describe('MessagingController', () => {
 
       expect(telegramAdapter.parseIncoming).toHaveBeenCalledWith({});
     });
+
+    it('handles Kafka produce error and still returns 200', async () => {
+      const msg = createMockMessage();
+      (telegramAdapter.parseIncoming as jest.Mock).mockReturnValue(msg);
+      const producer = {
+        send: jest.fn().mockRejectedValue(new Error('Kafka unreachable')),
+      };
+      const controller = new MessagingController(
+        messagingService,
+        [telegramAdapter],
+        true,
+        producer
+      );
+      const req = { body: {} };
+      const res = createMockRes();
+
+      await controller.webhookPost('telegram', req as never, res as never);
+
+      expect(res.json).toHaveBeenCalledWith({ ok: true });
+    });
+
+    it('handles sync processing error and still returns 200', async () => {
+      const msg = createMockMessage();
+      (telegramAdapter.parseIncoming as jest.Mock).mockReturnValue(msg);
+      const failingService = new MessagingService({
+        customHandler: jest.fn().mockRejectedValue(new Error('AI service down')),
+      });
+      const controller = new MessagingController(
+        failingService,
+        [telegramAdapter],
+        false,
+        undefined
+      );
+      const req = { body: {} };
+      const res = createMockRes();
+
+      await controller.webhookPost('telegram', req as never, res as never);
+
+      expect(res.json).toHaveBeenCalledWith({ ok: true });
+    });
+
+    it('does not send when handleMessage returns null', async () => {
+      const msg = createMockMessage();
+      (telegramAdapter.parseIncoming as jest.Mock).mockReturnValue(msg);
+      const noReplyService = new MessagingService({
+        customHandler: jest.fn().mockResolvedValue(null),
+      });
+      const controller = new MessagingController(
+        noReplyService,
+        [telegramAdapter],
+        false,
+        undefined
+      );
+      const req = { body: {} };
+      const res = createMockRes();
+
+      await controller.webhookPost('telegram', req as never, res as never);
+
+      expect(telegramAdapter.send).not.toHaveBeenCalled();
+      expect(res.json).toHaveBeenCalledWith({ ok: true });
+    });
   });
 });

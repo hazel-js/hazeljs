@@ -5,19 +5,24 @@ import { TelegramAdapter } from './telegram.adapter';
 import { Telegraf } from 'telegraf';
 
 // Mock Telegraf to avoid actual Telegram API calls
-jest.mock('telegraf', () => {
-  const mockSendMessage = jest.fn().mockResolvedValue(undefined);
-  return {
-    Telegraf: jest.fn().mockImplementation(() => ({
-      telegram: { sendMessage: mockSendMessage },
-    })),
-  };
-});
+const mockSendMessage = jest.fn().mockResolvedValue(undefined);
+let capturedTextHandler: ((ctx: { update: unknown }) => Promise<void>) | null = null;
+
+jest.mock('telegraf', () => ({
+  Telegraf: jest.fn().mockImplementation(() => ({
+    telegram: { sendMessage: mockSendMessage },
+    on: jest.fn((event: string, handler: (ctx: { update: unknown }) => Promise<void>) => {
+      if (event === 'text') capturedTextHandler = handler;
+    }),
+  })),
+}));
 
 describe('TelegramAdapter', () => {
   let adapter: TelegramAdapter;
 
   beforeEach(() => {
+    capturedTextHandler = null;
+    mockSendMessage.mockClear();
     adapter = new TelegramAdapter({ botToken: 'test-token' });
   });
 
@@ -124,6 +129,53 @@ describe('TelegramAdapter', () => {
       });
 
       expect(mockInstance.telegram.sendMessage).toHaveBeenCalledWith('456', 'Standalone', {});
+    });
+  });
+
+  describe('onMessage', () => {
+    it('invokes handler and sends reply when handler returns response', async () => {
+      const handler = jest.fn().mockResolvedValue('Echo: Hello');
+      adapter.onMessage(handler);
+
+      expect(capturedTextHandler).not.toBeNull();
+      await capturedTextHandler!({
+        update: {
+          message: {
+            message_id: 1,
+            chat: { id: 123 },
+            from: { id: 1 },
+            text: 'Hello',
+          },
+        },
+      });
+
+      expect(handler).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: '1',
+          conversationId: '123',
+          text: 'Hello',
+        })
+      );
+      expect(mockSendMessage).toHaveBeenCalledWith('123', 'Echo: Hello', expect.any(Object));
+    });
+
+    it('does not send when handler returns empty string', async () => {
+      const handler = jest.fn().mockResolvedValue('');
+      adapter.onMessage(handler);
+
+      await capturedTextHandler!({
+        update: {
+          message: {
+            message_id: 2,
+            chat: { id: 456 },
+            from: { id: 2 },
+            text: 'Hi',
+          },
+        },
+      });
+
+      expect(handler).toHaveBeenCalled();
+      expect(mockSendMessage).not.toHaveBeenCalled();
     });
   });
 });
