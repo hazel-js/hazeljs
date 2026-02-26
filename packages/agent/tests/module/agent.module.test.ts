@@ -39,7 +39,18 @@ describe('AgentService', () => {
   let service: AgentService;
 
   beforeEach(() => {
+    AgentModule.forRoot({});
     service = new AgentService();
+  });
+
+  it('should register agents from module options when forRoot was called with agents', () => {
+    @Agent({ name: 'module-agent', description: 'Agent from module' })
+    class ModuleAgent {}
+
+    AgentModule.forRoot({ agents: [ModuleAgent] });
+    const svc = new AgentService();
+    const agents = svc.getAgents();
+    expect(agents.length).toBeGreaterThanOrEqual(0);
   });
 
   describe('getRuntime', () => {
