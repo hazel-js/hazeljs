@@ -99,10 +99,11 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish packages to NPM with Lerna
+        timeout-minutes: 30
         run: |
           RELEASE_TAG="${{ steps.release-tag.outputs.tag }}"
           echo "Publishing with tag: $RELEASE_TAG using Lerna"
-          npx lerna publish from-package --yes --dist-tag "$RELEASE_TAG" --no-git-reset --no-git-tag-version --no-verify-access
+          CI=true npx lerna publish from-package --yes --dist-tag "$RELEASE_TAG" --no-git-reset --no-git-tag-version --no-verify-access
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
