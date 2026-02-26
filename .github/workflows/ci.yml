@@ -9,7 +9,8 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
-
+    environment: prod
+    
     strategy:
       matrix:
         node-version: [23.x]
