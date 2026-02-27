@@ -83,6 +83,80 @@ function scaffoldPackageBoilerplate(destPath: string, packages: string[]) {
     moduleImports.push('WebSocketModule');
   }
 
+  if (packages.includes('@hazeljs/ai')) {
+    imports.push("import { AIModule } from '@hazeljs/ai';");
+    moduleImports.push('AIModule');
+  }
+
+  if (packages.includes('@hazeljs/agent')) {
+    imports.push("import { AgentModule } from '@hazeljs/agent';");
+    moduleImports.push('AgentModule');
+  }
+
+  if (packages.includes('@hazeljs/rag')) {
+    imports.push("import { RAGModule } from '@hazeljs/rag';");
+    moduleImports.push('RAGModule');
+  }
+
+  if (packages.includes('@hazeljs/discovery')) {
+    // Discovery uses ServiceRegistry/DiscoveryClient programmatically - no module import
+  }
+
+  if (packages.includes('@hazeljs/pdf-to-audio')) {
+    imports.push("import { PdfToAudioModule } from '@hazeljs/pdf-to-audio';");
+    moduleImports.push('PdfToAudioModule');
+  }
+
+  if (packages.includes('@hazeljs/data')) {
+    imports.push("import { DataModule } from '@hazeljs/data';");
+    moduleImports.push('DataModule.forRoot()');
+  }
+
+  if (packages.includes('@hazeljs/event-emitter')) {
+    imports.push("import { EventEmitterModule } from '@hazeljs/event-emitter';");
+    moduleImports.push('EventEmitterModule.forRoot()');
+  }
+
+  if (packages.includes('@hazeljs/gateway')) {
+    imports.push("import { GatewayModule } from '@hazeljs/gateway';");
+    moduleImports.push('GatewayModule');
+  }
+
+  if (packages.includes('@hazeljs/graphql')) {
+    imports.push("import { GraphQLModule } from '@hazeljs/graphql';");
+    moduleImports.push('GraphQLModule');
+  }
+
+  if (packages.includes('@hazeljs/grpc')) {
+    imports.push("import { GrpcModule } from '@hazeljs/grpc';");
+    moduleImports.push('GrpcModule');
+  }
+
+  if (packages.includes('@hazeljs/kafka')) {
+    imports.push("import { KafkaModule } from '@hazeljs/kafka';");
+    moduleImports.push('KafkaModule');
+  }
+
+  if (packages.includes('@hazeljs/messaging')) {
+    imports.push("import { MessagingModule } from '@hazeljs/messaging';");
+    moduleImports.push('MessagingModule');
+  }
+
+  if (packages.includes('@hazeljs/ml')) {
+    imports.push("import { MLModule } from '@hazeljs/ml';");
+    moduleImports.push('MLModule.forRoot()');
+  }
+
+  if (packages.includes('@hazeljs/queue')) {
+    imports.push("import { QueueModule } from '@hazeljs/queue';");
+    moduleImports.push('QueueModule');
+  }
+
+  if (packages.includes('@hazeljs/resilience')) {
+    // Resilience is a library of decorators, not a module - no import needed in app.module
+    // User can import { CircuitBreaker, WithRetry } in their services
+  }
+
   // Generate the enhanced app.module.ts
   const importsSection = moduleImports.length > 0
     ? `\n  imports: [\n    ${moduleImports.join(',\n    ')},\n  ],`
@@ -175,18 +249,29 @@ export function generateApp(program: Command) {
               name: 'packages',
               message: 'Select additional HazelJS packages to install:',
               choices: [
-                { name: 'Authentication (@hazeljs/auth)', value: '@hazeljs/auth' },
-                { name: 'Configuration (@hazeljs/config)', value: '@hazeljs/config' },
-                { name: 'Swagger/OpenAPI (@hazeljs/swagger)', value: '@hazeljs/swagger' },
-                { name: 'Prisma ORM (@hazeljs/prisma)', value: '@hazeljs/prisma' },
-                { name: 'Caching (@hazeljs/cache)', value: '@hazeljs/cache' },
-                { name: 'Cron Jobs (@hazeljs/cron)', value: '@hazeljs/cron' },
-                { name: 'WebSocket (@hazeljs/websocket)', value: '@hazeljs/websocket' },
                 { name: 'AI Integration (@hazeljs/ai)', value: '@hazeljs/ai' },
                 { name: 'AI Agents (@hazeljs/agent)', value: '@hazeljs/agent' },
-                { name: 'RAG/Vector Search (@hazeljs/rag)', value: '@hazeljs/rag' },
-                { name: 'Serverless (@hazeljs/serverless)', value: '@hazeljs/serverless' },
+                { name: 'Authentication (@hazeljs/auth)', value: '@hazeljs/auth' },
+                { name: 'Caching (@hazeljs/cache)', value: '@hazeljs/cache' },
+                { name: 'Configuration (@hazeljs/config)', value: '@hazeljs/config' },
+                { name: 'Cron Jobs (@hazeljs/cron)', value: '@hazeljs/cron' },
+                { name: 'Data/ETL (@hazeljs/data)', value: '@hazeljs/data' },
                 { name: 'Service Discovery (@hazeljs/discovery)', value: '@hazeljs/discovery' },
+                { name: 'Event Emitter (@hazeljs/event-emitter)', value: '@hazeljs/event-emitter' },
+                { name: 'API Gateway (@hazeljs/gateway)', value: '@hazeljs/gateway' },
+                { name: 'GraphQL (@hazeljs/graphql)', value: '@hazeljs/graphql' },
+                { name: 'gRPC (@hazeljs/grpc)', value: '@hazeljs/grpc' },
+                { name: 'Kafka (@hazeljs/kafka)', value: '@hazeljs/kafka' },
+                { name: 'Messaging - WhatsApp/Telegram (@hazeljs/messaging)', value: '@hazeljs/messaging' },
+                { name: 'Machine Learning (@hazeljs/ml)', value: '@hazeljs/ml' },
+                { name: 'PDF to Audio (@hazeljs/pdf-to-audio)', value: '@hazeljs/pdf-to-audio' },
+                { name: 'Prisma ORM (@hazeljs/prisma)', value: '@hazeljs/prisma' },
+                { name: 'Queue/BullMQ (@hazeljs/queue)', value: '@hazeljs/queue' },
+                { name: 'RAG/Vector Search (@hazeljs/rag)', value: '@hazeljs/rag' },
+                { name: 'Resilience - Circuit Breaker (@hazeljs/resilience)', value: '@hazeljs/resilience' },
+                { name: 'Serverless (@hazeljs/serverless)', value: '@hazeljs/serverless' },
+                { name: 'Swagger/OpenAPI (@hazeljs/swagger)', value: '@hazeljs/swagger' },
+                { name: 'WebSocket (@hazeljs/websocket)', value: '@hazeljs/websocket' },
               ],
             },
           ]);
@@ -244,13 +329,18 @@ export function generateApp(program: Command) {
               'reflect-metadata': '^0.2.2',
             },
             devDependencies: {
-              '@types/node': '^20.0.0',
-              'typescript': '^5.3.3',
-              'ts-node-dev': '^2.0.0',
               '@types/jest': '^29.5.12',
+              '@types/node': '^20.0.0',
+              '@typescript-eslint/eslint-plugin': '^8.18.2',
+              '@typescript-eslint/parser': '^8.18.2',
+              'eslint': '^8.56.0',
+              'eslint-config-prettier': '^9.1.0',
+              'eslint-plugin-prettier': '^5.1.3',
               'jest': '^29.7.0',
-              'ts-jest': '^29.1.2',
               'prettier': '^3.2.5',
+              'ts-jest': '^29.1.2',
+              'ts-node-dev': '^2.0.0',
+              'typescript': '^5.3.3',
             },
             author: projectConfig.author,
             license: projectConfig.license,

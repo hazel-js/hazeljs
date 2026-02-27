@@ -28,17 +28,57 @@ const HAZEL_PACKAGES: Record<string, { npm: string; hint: string }> = {
     npm: '@hazeljs/cron',
     hint: 'import { CronModule } from "@hazeljs/cron";',
   },
+  data: {
+    npm: '@hazeljs/data',
+    hint: 'import { DataModule } from "@hazeljs/data";',
+  },
   discovery: {
     npm: '@hazeljs/discovery',
     hint: 'import { ServiceRegistry, DiscoveryClient } from "@hazeljs/discovery";',
+  },
+  'event-emitter': {
+    npm: '@hazeljs/event-emitter',
+    hint: 'import { EventEmitterModule } from "@hazeljs/event-emitter";',
+  },
+  gateway: {
+    npm: '@hazeljs/gateway',
+    hint: 'import { GatewayModule } from "@hazeljs/gateway";',
+  },
+  graphql: {
+    npm: '@hazeljs/graphql',
+    hint: 'import { GraphQLModule } from "@hazeljs/graphql";',
+  },
+  grpc: {
+    npm: '@hazeljs/grpc',
+    hint: 'import { GrpcModule } from "@hazeljs/grpc";',
+  },
+  kafka: {
+    npm: '@hazeljs/kafka',
+    hint: 'import { KafkaModule } from "@hazeljs/kafka";',
+  },
+  messaging: {
+    npm: '@hazeljs/messaging',
+    hint: 'import { MessagingModule } from "@hazeljs/messaging";',
+  },
+  ml: {
+    npm: '@hazeljs/ml',
+    hint: 'import { MLModule } from "@hazeljs/ml";',
   },
   prisma: {
     npm: '@hazeljs/prisma',
     hint: 'import { PrismaModule } from "@hazeljs/prisma";',
   },
+  queue: {
+    npm: '@hazeljs/queue',
+    hint: 'import { QueueModule } from "@hazeljs/queue";',
+  },
   rag: {
     npm: '@hazeljs/rag',
     hint: 'import { RAGPipeline } from "@hazeljs/rag";',
+  },
+  resilience: {
+    npm: '@hazeljs/resilience',
+    hint: 'import { CircuitBreaker, WithRetry, WithTimeout } from "@hazeljs/resilience";',
   },
   'pdf-to-audio': {
     npm: '@hazeljs/pdf-to-audio',
