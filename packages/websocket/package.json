@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/websocket",
-  "version": "0.2.0-beta.48",
+  "version": "0.2.0-beta.49",
   "description": "WebSocket and Server-Sent Events module for HazelJS framework",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

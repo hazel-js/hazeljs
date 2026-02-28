@@ -1,10 +1,12 @@
 {
   "name": "@hazeljs/oauth",
-  "version": "0.2.0-beta.47",
+  "version": "0.2.0-beta.49",
   "description": "OAuth 2.0 social login module for HazelJS - Microsoft, Google, GitHub and more",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc",
     "test": "jest --coverage --passWithNoTests",
@@ -32,7 +34,15 @@
     "url": "git+https://github.com/hazel-js/hazeljs.git",
     "directory": "packages/oauth"
   },
-  "keywords": ["hazeljs", "oauth", "authentication", "google", "microsoft", "github", "social-login"],
+  "keywords": [
+    "hazeljs",
+    "oauth",
+    "authentication",
+    "google",
+    "microsoft",
+    "github",
+    "social-login"
+  ],
   "author": "Muhammad Arslan <muhammad.arslan@hazeljs.com>",
   "license": "Apache-2.0",
   "bugs": {
