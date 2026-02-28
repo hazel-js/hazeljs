@@ -68,6 +68,13 @@ function scaffoldPackageBoilerplate(destPath: string, packages: string[]) {
     moduleImports.push("JwtModule.forRoot({ secret: process.env.JWT_SECRET || 'change-me', expiresIn: '1d' })");
   }
 
+  if (packages.includes('@hazeljs/oauth')) {
+    imports.push("import { OAuthModule } from '@hazeljs/oauth';");
+    moduleImports.push(
+      "OAuthModule.forRoot({ providers: { google: { clientId: process.env.GOOGLE_CLIENT_ID!, clientSecret: process.env.GOOGLE_CLIENT_SECRET!, redirectUri: process.env.OAUTH_REDIRECT_URI! } } })"
+    );
+  }
+
   if (packages.includes('@hazeljs/cache')) {
     imports.push("import { CacheModule } from '@hazeljs/cache';");
     moduleImports.push('CacheModule');
@@ -252,6 +259,7 @@ export function generateApp(program: Command) {
                 { name: 'AI Integration (@hazeljs/ai)', value: '@hazeljs/ai' },
                 { name: 'AI Agents (@hazeljs/agent)', value: '@hazeljs/agent' },
                 { name: 'Authentication (@hazeljs/auth)', value: '@hazeljs/auth' },
+                { name: 'OAuth - Google/Microsoft/GitHub (@hazeljs/oauth)', value: '@hazeljs/oauth' },
                 { name: 'Caching (@hazeljs/cache)', value: '@hazeljs/cache' },
                 { name: 'Configuration (@hazeljs/config)', value: '@hazeljs/config' },
                 { name: 'Cron Jobs (@hazeljs/cron)', value: '@hazeljs/cron' },

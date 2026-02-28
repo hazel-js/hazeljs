@@ -16,6 +16,10 @@ const HAZEL_PACKAGES: Record<string, { npm: string; hint: string }> = {
     npm: '@hazeljs/auth',
     hint: 'import { JwtModule } from "@hazeljs/auth";\n  // JwtModule.forRoot({ secret: "your-secret", expiresIn: "1d" })',
   },
+  oauth: {
+    npm: '@hazeljs/oauth',
+    hint: 'import { OAuthModule } from "@hazeljs/oauth";\n  // OAuthModule.forRoot({ providers: { google: {...}, microsoft: {...}, github: {...} } })',
+  },
   cache: {
     npm: '@hazeljs/cache',
     hint: 'import { CacheModule } from "@hazeljs/cache";',

@@ -27,6 +27,7 @@
     { "path": "./packages/swagger" },
     { "path": "./packages/prisma" },
     { "path": "./packages/auth" },
+    { "path": "./packages/oauth" },
     { "path": "./packages/config" },
     { "path": "./packages/cron" },
     { "path": "./packages/cli" },
