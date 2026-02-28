@@ -1,8 +1,8 @@
 # @hazeljs/ai
 
-**AI Integration Module for HazelJS - OpenAI, Anthropic, Gemini, Cohere, and Ollama Support**
+**Add AI to your API in minutes — not days.**
 
-Build AI-powered applications with first-class LLM integration, streaming support, and decorator-based APIs.
+OpenAI, Anthropic, Gemini, Cohere, Ollama. One decorator, one config. Streaming, caching, retries, and type-safe outputs. Ship AI features without the glue code.
 
 [![npm version](https://img.shields.io/npm/v/@hazeljs/ai.svg)](https://www.npmjs.com/package/@hazeljs/ai)
 [![npm downloads](https://img.shields.io/npm/dm/@hazeljs/ai)](https://www.npmjs.com/package/@hazeljs/ai)
@@ -493,5 +493,5 @@ Apache 2.0 © [HazelJS](https://hazeljs.com)
 
 - [Documentation](https://hazeljs.com/docs/packages/ai)
 - [GitHub](https://github.com/hazel-js/hazeljs)
-- [Issues](https://github.com/hazeljs/hazel-js/issues)
+- [Issues](https://github.com/hazel-js/hazeljs/issues)
 - [Discord](https://discord.gg/hazeljs)

@@ -1,8 +1,8 @@
 # @hazeljs/config
 
-**Configuration Module for HazelJS - Environment Variables and Type-Safe Configuration**
+**Config that validates itself. No more `process.env.UNDEFINED` at runtime.**
 
-Manage application configuration with environment variables, validation, and type safety.
+Schema-based, type-safe, validated on startup. `.env` files, nested config, transforms. Fail fast if something's missing — before users hit your API.
 
 [![npm version](https://img.shields.io/npm/v/@hazeljs/config.svg)](https://www.npmjs.com/package/@hazeljs/config)
 [![npm downloads](https://img.shields.io/npm/dm/@hazeljs/config)](https://www.npmjs.com/package/@hazeljs/config)
@@ -505,5 +505,5 @@ Apache 2.0 © [HazelJS](https://hazeljs.com)
 
 - [Documentation](https://hazeljs.com/docs/packages/config)
 - [GitHub](https://github.com/hazel-js/hazeljs)
-- [Issues](https://github.com/hazeljs/hazel-js/issues)
+- [Issues](https://github.com/hazel-js/hazeljs/issues)
 - [Discord](https://discord.gg/hazeljs)

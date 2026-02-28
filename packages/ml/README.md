@@ -182,5 +182,5 @@ See [hazeljs-ml-starter](../../../hazeljs-ml-starter) for a full example with se
 
 - [Documentation](https://hazeljs.com/docs/packages/ml)
 - [GitHub](https://github.com/hazel-js/hazeljs)
-- [Issues](https://github.com/hazeljs/hazel-js/issues)
+- [Issues](https://github.com/hazel-js/hazeljs/issues)
 - [Homepage](https://hazeljs.com)

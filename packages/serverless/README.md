@@ -1,8 +1,8 @@
 # @hazeljs/serverless
 
-**Serverless Adapters for HazelJS - AWS Lambda & Google Cloud Functions**
+**Deploy to Lambda or Cloud Functions. Zero code changes.**
 
-Deploy HazelJS applications to serverless platforms with zero configuration changes.
+Same HazelJS app, same controllers, same routing. Wrap it and ship. Cold start optimization, request mapping, env handling — built in.
 
 [![npm version](https://img.shields.io/npm/v/@hazeljs/serverless.svg)](https://www.npmjs.com/package/@hazeljs/serverless)
 [![npm downloads](https://img.shields.io/npm/dm/@hazeljs/serverless)](https://www.npmjs.com/package/@hazeljs/serverless)
@@ -497,5 +497,5 @@ Apache 2.0 © [HazelJS](https://hazeljs.com)
 - [AWS Lambda Docs](https://docs.aws.amazon.com/lambda/)
 - [Google Cloud Functions Docs](https://cloud.google.com/functions/docs)
 - [GitHub](https://github.com/hazel-js/hazeljs)
-- [Issues](https://github.com/hazeljs/hazel-js/issues)
+- [Issues](https://github.com/hazel-js/hazeljs/issues)
 - [Discord](https://discord.gg/hazeljs)

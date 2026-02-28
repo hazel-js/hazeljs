@@ -1,8 +1,8 @@
 # @hazeljs/cron
 
-**Cron Job Scheduling Module for HazelJS**
+**Scheduled tasks as decorators. No `setInterval` hacks.**
 
-Schedule and manage recurring tasks with cron expressions and decorator-based API.
+`@Cron('0 9 * * *')` for daily at 9am. `@Interval(60000)` for every minute. Real cron expressions, timezone support, overlap prevention. Background jobs that actually run when you expect.
 
 [![npm version](https://img.shields.io/npm/v/@hazeljs/cron.svg)](https://www.npmjs.com/package/@hazeljs/cron)
 [![npm downloads](https://img.shields.io/npm/dm/@hazeljs/cron)](https://www.npmjs.com/package/@hazeljs/cron)
@@ -438,5 +438,5 @@ Apache 2.0 © [HazelJS](https://hazeljs.com)
 
 - [Documentation](https://hazeljs.com/docs/packages/cron)
 - [GitHub](https://github.com/hazel-js/hazeljs)
-- [Issues](https://github.com/hazeljs/hazel-js/issues)
+- [Issues](https://github.com/hazel-js/hazeljs/issues)
 - [Discord](https://discord.gg/hazeljs)

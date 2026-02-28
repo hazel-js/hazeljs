@@ -1,8 +1,8 @@
 # @hazeljs/rag
 
-**Retrieval-Augmented Generation (RAG) and Vector Search for HazelJS**
+**Your docs. Your data. AI that actually knows them.**
 
-Build powerful AI applications with semantic search, document retrieval, and LLM-augmented responses.
+Semantic search, embeddings, document indexing. Pinecone, Weaviate, Qdrant, ChromaDB — or in-memory for dev. Full RAG pipeline: load, split, embed, retrieve, augment. No PhD required.
 
 [![npm version](https://img.shields.io/npm/v/@hazeljs/rag.svg)](https://www.npmjs.com/package/@hazeljs/rag)
 [![npm downloads](https://img.shields.io/npm/dm/@hazeljs/rag)](https://www.npmjs.com/package/@hazeljs/rag)

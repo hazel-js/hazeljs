@@ -1,8 +1,8 @@
 # @hazeljs/websocket
 
-**WebSocket and Server-Sent Events Module for HazelJS**
+**Real-time, the HazelJS way.**
 
-Build real-time applications with WebSocket support, room management, and event-driven architecture.
+WebSockets and SSE. Rooms, broadcasting, decorator-based handlers. `@WebSocketGateway`, `@OnMessage`, `@Subscribe`. Chat, notifications, live dashboards — without the socket.io complexity.
 
 [![npm version](https://img.shields.io/npm/v/@hazeljs/websocket.svg)](https://www.npmjs.com/package/@hazeljs/websocket)
 [![npm downloads](https://img.shields.io/npm/dm/@hazeljs/websocket)](https://www.npmjs.com/package/@hazeljs/websocket)
@@ -527,5 +527,5 @@ Apache 2.0 © [HazelJS](https://hazeljs.com)
 - [Documentation](https://hazeljs.com/docs/packages/websocket)
 - [WebSocket API](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket)
 - [GitHub](https://github.com/hazel-js/hazeljs)
-- [Issues](https://github.com/hazeljs/hazel-js/issues)
+- [Issues](https://github.com/hazel-js/hazeljs/issues)
 - [Discord](https://discord.gg/hazeljs)

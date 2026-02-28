@@ -1,8 +1,8 @@
 # @hazeljs/swagger
 
-**Swagger/OpenAPI Documentation Module for HazelJS**
+**API docs that write themselves.**
 
-Auto-generate interactive API documentation with Swagger UI and OpenAPI specifications.
+Add `@ApiOperation` and `@ApiResponse` — get Swagger UI. No manual OpenAPI JSON. Decorators on your controllers, interactive docs at `/api-docs`. Your frontend team will thank you.
 
 [![npm version](https://img.shields.io/npm/v/@hazeljs/swagger.svg)](https://www.npmjs.com/package/@hazeljs/swagger)
 [![npm downloads](https://img.shields.io/npm/dm/@hazeljs/swagger)](https://www.npmjs.com/package/@hazeljs/swagger)
@@ -580,5 +580,5 @@ Apache 2.0 © [HazelJS](https://hazeljs.com)
 - [OpenAPI Specification](https://swagger.io/specification/)
 - [Swagger UI](https://swagger.io/tools/swagger-ui/)
 - [GitHub](https://github.com/hazel-js/hazeljs)
-- [Issues](https://github.com/hazeljs/hazel-js/issues)
+- [Issues](https://github.com/hazel-js/hazeljs/issues)
 - [Discord](https://discord.gg/hazeljs)

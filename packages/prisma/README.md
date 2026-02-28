@@ -1,8 +1,8 @@
 # @hazeljs/prisma
 
-**Prisma ORM Integration for HazelJS**
+**Prisma + HazelJS. Type-safe, no boilerplate.**
 
-First-class Prisma support with repository pattern, automatic migrations, and type-safe database access.
+Repository pattern, `@PrismaModel` decorator, DI integration. Full CRUD from your schema. Transactions, relations, pagination — the way you'd expect it to work.
 
 [![npm version](https://img.shields.io/npm/v/@hazeljs/prisma.svg)](https://www.npmjs.com/package/@hazeljs/prisma)
 [![npm downloads](https://img.shields.io/npm/dm/@hazeljs/prisma)](https://www.npmjs.com/package/@hazeljs/prisma)
@@ -573,5 +573,5 @@ Apache 2.0 © [HazelJS](https://hazeljs.com)
 - [Documentation](https://hazeljs.com/docs/packages/prisma)
 - [Prisma Docs](https://www.prisma.io/docs)
 - [GitHub](https://github.com/hazel-js/hazeljs)
-- [Issues](https://github.com/hazeljs/hazel-js/issues)
+- [Issues](https://github.com/hazel-js/hazeljs/issues)
 - [Discord](https://discord.gg/hazeljs)

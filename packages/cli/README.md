@@ -1,8 +1,8 @@
 # @hazeljs/cli
 
-**Command-Line Interface for HazelJS**
+**From zero to CRUD in one command.**
 
-Scaffold applications and generate components with a powerful CLI tool for rapid development.
+Generate controllers, services, modules, DTOs — or a full CRUD resource. Interactive project setup, package management, and code that follows best practices. Stop copy-pasting, start shipping.
 
 [![npm version](https://img.shields.io/npm/v/@hazeljs/cli.svg)](https://www.npmjs.com/package/@hazeljs/cli)
 [![npm downloads](https://img.shields.io/npm/dm/@hazeljs/cli)](https://www.npmjs.com/package/@hazeljs/cli)

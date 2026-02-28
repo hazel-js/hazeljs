@@ -1,8 +1,8 @@
 # @hazeljs/core
 
-**Core HazelJS Framework - Dependency Injection, Routing, Decorators, and Base Functionality**
+**The foundation of HazelJS — DI, routing, and decorators that feel right.**
 
-The foundation of the HazelJS framework, providing enterprise-grade dependency injection, decorator-based routing, middleware support, and production-ready features.
+Stop wiring boilerplate. Build APIs with dependency injection, decorator-based routing, and middleware that just works. TypeScript-first, production-ready, zero Express dependency.
 
 [![npm version](https://img.shields.io/npm/v/@hazeljs/core.svg)](https://www.npmjs.com/package/@hazeljs/core)
 [![npm downloads](https://img.shields.io/npm/dm/@hazeljs/core)](https://www.npmjs.com/package/@hazeljs/core)
@@ -519,5 +519,5 @@ Apache 2.0 © [HazelJS](https://hazeljs.com)
 
 - [Documentation](https://hazeljs.com/docs)
 - [GitHub](https://github.com/hazel-js/hazeljs)
-- [Issues](https://github.com/hazeljs/hazel-js/issues)
+- [Issues](https://github.com/hazel-js/hazeljs/issues)
 - [Discord](https://discord.gg/hazeljs)

@@ -1,6 +1,8 @@
 # @hazeljs/discovery
 
-Service Discovery and Registry for HazelJS microservices - inspired by Netflix Eureka and Consul.
+**Microservices that find each other.**
+
+Service registry, health checks, load balancing. Round Robin, Least Connections, Zone Aware — 6 strategies. Memory, Redis, Consul, or Kubernetes. Eureka-style, without the Java.
 
 [![npm version](https://img.shields.io/npm/v/@hazeljs/discovery.svg)](https://www.npmjs.com/package/@hazeljs/discovery)
 [![npm downloads](https://img.shields.io/npm/dm/@hazeljs/discovery)](https://www.npmjs.com/package/@hazeljs/discovery)

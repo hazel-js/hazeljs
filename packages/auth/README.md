@@ -1,8 +1,8 @@
 # @hazeljs/auth
 
-**Authentication and JWT Module for HazelJS**
+**Auth that stays out of your way.**
 
-Secure your HazelJS applications with JWT-based authentication, guards, and decorators.
+JWT, guards, roles, refresh tokens — all with decorators. Protect routes in one line. No passport config, no middleware soup. Just `@UseGuard(AuthGuard)` and ship.
 
 [![npm version](https://img.shields.io/npm/v/@hazeljs/auth.svg)](https://www.npmjs.com/package/@hazeljs/auth)
 [![npm downloads](https://img.shields.io/npm/dm/@hazeljs/auth)](https://www.npmjs.com/package/@hazeljs/auth)
@@ -480,5 +480,5 @@ Apache 2.0 © [HazelJS](https://hazeljs.com)
 
 - [Documentation](https://hazeljs.com/docs/packages/auth)
 - [GitHub](https://github.com/hazel-js/hazeljs)
-- [Issues](https://github.com/hazeljs/hazel-js/issues)
+- [Issues](https://github.com/hazel-js/hazeljs/issues)
 - [Discord](https://discord.gg/hazeljs)

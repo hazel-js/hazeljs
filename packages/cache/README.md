@@ -1,8 +1,8 @@
 # @hazeljs/cache
 
-**Multi-Tier Caching Module for HazelJS - Memory, Redis, and CDN Support**
+**Cache with one decorator. Invalidate with another.**
 
-Smart caching system with automatic invalidation, tag-based management, and decorator-based API.
+Memory, Redis, or hybrid. `@Cache` for results, `@CacheEvict` for invalidation. Tag-based, TTL, warming, stats. Stop writing cache logic by hand.
 
 [![npm version](https://img.shields.io/npm/v/@hazeljs/cache.svg)](https://www.npmjs.com/package/@hazeljs/cache)
 [![npm downloads](https://img.shields.io/npm/dm/@hazeljs/cache)](https://www.npmjs.com/package/@hazeljs/cache)
@@ -520,5 +520,5 @@ Apache 2.0 © [HazelJS](https://hazeljs.com)
 
 - [Documentation](https://hazeljs.com/docs/packages/cache)
 - [GitHub](https://github.com/hazel-js/hazeljs)
-- [Issues](https://github.com/hazeljs/hazel-js/issues)
+- [Issues](https://github.com/hazel-js/hazeljs/issues)
 - [Discord](https://discord.gg/hazeljs)

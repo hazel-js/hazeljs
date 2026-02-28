@@ -1,8 +1,8 @@
 # @hazeljs/oauth
 
-**OAuth 2.0 Social Login for HazelJS**
+**"Sign in with Google" in 5 minutes.**
 
-Add Google, Microsoft, GitHub, Facebook, and Twitter authentication to your HazelJS applications with a unified API. Built on [Arctic](https://arcticjs.dev) — 50+ OAuth providers available.
+Google, Microsoft, GitHub, Facebook, Twitter — one config, ready-made routes. PKCE, user profiles, JWT integration. Built on [Arctic](https://arcticjs.dev) — 50+ providers available if you need more.
 
 [![npm version](https://img.shields.io/npm/v/@hazeljs/oauth.svg)](https://www.npmjs.com/package/@hazeljs/oauth)
 [![npm downloads](https://img.shields.io/npm/dm/@hazeljs/oauth)](https://www.npmjs.com/package/@hazeljs/oauth)

@@ -190,5 +190,5 @@ See [hazeljs-data-starter](../../../hazeljs-data-starter) for a full example wit
 
 - [Documentation](https://hazeljs.com/docs/packages/data)
 - [GitHub](https://github.com/hazel-js/hazeljs)
-- [Issues](https://github.com/hazeljs/hazel-js/issues)
+- [Issues](https://github.com/hazel-js/hazeljs/issues)
 - [Homepage](https://hazeljs.com)
