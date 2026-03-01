@@ -111,7 +111,7 @@ jobs:
         timeout-minutes: 5
         run: |
           VERSION="${{ steps.version.outputs.version }}"
-          PKGS="core cli ai agent auth cache config cron graphql discovery oauth kafka gateway resilience grpc messaging ops-agent data ml rag event-emitter pdf-to-audio prisma queue serverless swagger websocket"
+          PKGS="core cli ai agent auth cache config cron graphql discovery oauth kafka gateway guardrails resilience grpc messaging ops-agent data ml rag event-emitter pdf-to-audio prisma queue serverless swagger websocket"
           TOTAL=$(echo $PKGS | wc -w)
           echo "Updating latest dist-tag to $VERSION for $TOTAL packages (8 parallel)"
           i=0

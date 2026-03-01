@@ -45,7 +45,8 @@
   "peerDependencies": {
     "@hazeljs/core": ">=0.2.0-beta.0",
     "@hazeljs/rag": ">=0.1.0",
-    "redis": ">=4.0.0"
+    "redis": ">=4.0.0",
+    "@hazeljs/guardrails": ">=0.2.0-beta.0"
   },
   "peerDependenciesMeta": {
     "redis": {
@@ -55,6 +56,10 @@
     "@prisma/client": {
       "optional": true,
       "description": "Required for DatabaseStateManager"
+    },
+    "@hazeljs/guardrails": {
+      "optional": true,
+      "description": "Optional guardrails for tool input/output validation"
     }
   },
   "bugs": {

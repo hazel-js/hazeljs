@@ -2,6 +2,22 @@
  * Core Agent Runtime Types
  */
 
+/** Guardrails service interface (from @hazeljs/guardrails when available) */
+export interface IGuardrailsService {
+  checkInput(input: string | object, options?: unknown): {
+    allowed: boolean;
+    modified?: string | object;
+    violations?: string[];
+    blockedReason?: string;
+  };
+  checkOutput(output: string | object, options?: unknown): {
+    allowed: boolean;
+    modified?: string | object;
+    violations?: string[];
+    blockedReason?: string;
+  };
+}
+
 /**
  * Agent execution state
  */

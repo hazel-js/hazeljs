@@ -48,6 +48,10 @@ const HAZEL_PACKAGES: Record<string, { npm: string; hint: string }> = {
     npm: '@hazeljs/gateway',
     hint: 'import { GatewayModule } from "@hazeljs/gateway";',
   },
+  guardrails: {
+    npm: '@hazeljs/guardrails',
+    hint: 'import { GuardrailsModule } from "@hazeljs/guardrails";\n  // GuardrailsModule.forRoot({ redactPIIByDefault: true })',
+  },
   graphql: {
     npm: '@hazeljs/graphql',
     hint: 'import { GraphQLModule } from "@hazeljs/graphql";',

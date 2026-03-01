@@ -3,11 +3,14 @@
  * HazelJS module for Agent Runtime
  */
 
-import { Injectable, HazelModule } from '@hazeljs/core';
+import { Injectable, Inject, HazelModule } from '@hazeljs/core';
 import { AgentRuntime, AgentRuntimeConfig } from './runtime/agent.runtime';
 import { AgentEventType } from './types/event.types';
 
 type NewableFunction = new (...args: unknown[]) => unknown;
+
+/** Token for optional GuardrailsService injection (from @hazeljs/guardrails) */
+export const GUARDRAILS_SERVICE_TOKEN = 'GuardrailsService';
 
 /**
  * Agent Module Options
@@ -25,9 +28,18 @@ export interface AgentModuleOptions {
 export class AgentService {
   private runtime: AgentRuntime;
 
-  constructor(config: AgentRuntimeConfig = {}) {
+  constructor(
+    @Inject(GUARDRAILS_SERVICE_TOKEN) guardrailsService?: {
+      checkInput: (input: string | object, options?: unknown) => { allowed: boolean; modified?: string | object; violations?: string[]; blockedReason?: string };
+      checkOutput: (output: string | object, options?: unknown) => { allowed: boolean; modified?: string | object; violations?: string[]; blockedReason?: string };
+    },
+    config: AgentRuntimeConfig = {}
+  ) {
     const moduleOpts = AgentModule.getOptions();
-    const runtimeConfig = moduleOpts.runtime || config;
+    const runtimeConfig: AgentRuntimeConfig = {
+      ...(moduleOpts.runtime || config),
+      guardrailsService: guardrailsService ?? moduleOpts.runtime?.guardrailsService ?? config.guardrailsService,
+    };
     this.runtime = new AgentRuntime(runtimeConfig);
 
     // Register agents from module options

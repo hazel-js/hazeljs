@@ -16,6 +16,7 @@ import {
   AgentExecutionResult,
   AgentContext,
   AgentState,
+  IGuardrailsService,
 } from '../types/agent.types';
 import { AgentEventType } from '../types/event.types';
 import { LLMProvider } from '../types/llm.types';
@@ -36,6 +37,7 @@ export interface AgentRuntimeConfig {
   memoryManager?: MemoryManager;
   ragService?: RAGService;
   llmProvider?: LLMProvider;
+  guardrailsService?: IGuardrailsService;
   defaultMaxSteps?: number;
   defaultTimeout?: number;
   enableObservability?: boolean;
@@ -132,9 +134,12 @@ export class AgentRuntime {
     this.contextBuilder = new AgentContextBuilder(config.memoryManager);
     this.eventEmitter = new AgentEventEmitter();
 
-    this.toolExecutor = new ToolExecutor((type, data) => {
-      this.eventEmitter.emit(type, '', '', data);
-    });
+    this.toolExecutor = new ToolExecutor(
+      (type, data) => {
+        this.eventEmitter.emit(type, '', '', data);
+      },
+      config.guardrailsService
+    );
 
     this.agentExecutor = new AgentExecutor(
       this.stateManager,

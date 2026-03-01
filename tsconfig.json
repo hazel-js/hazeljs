@@ -41,6 +41,7 @@
     { "path": "./packages/grpc"},
     { "path": "./packages/queue"},
     { "path": "./packages/kafka"},
-    { "path": "./packages/messaging"}
+    { "path": "./packages/messaging"},
+    { "path": "./packages/guardrails"}
   ]
 }
