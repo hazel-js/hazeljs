@@ -484,6 +484,18 @@ describe('UserController', () => {
 });
 ```
 
+## Logging
+
+HTTP requests are logged in following format: `METHOD path status duration` (e.g. `GET /api/health 200 3ms`).
+
+| Env var | Default | Description |
+|---------|---------|-------------|
+| `LOG_LEVEL` | `info` | Log level (error, warn, info, debug) |
+| `LOG_HTTP` | `true` | Set to `false` to disable HTTP request logs |
+| `LOG_ENABLED` | `true` | Set to `false` to disable all logging |
+
+Startup and registration logs (controllers, routes, providers) are at `debug` level. Use `LOG_LEVEL=debug` for troubleshooting.
+
 ## API Reference
 
 ### Decorators

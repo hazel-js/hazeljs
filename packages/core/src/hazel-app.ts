@@ -95,7 +95,7 @@ export class HazelApp {
   private proxyHandlers: Array<{ pathPrefix: string; handler: ProxyHandler }> = [];
 
   constructor(private readonly moduleType: Type<unknown>) {
-    logger.info('Initializing HazelApp');
+    logger.debug('Initializing HazelApp');
     this.container = Container.getInstance();
     this.container.register(HazelApp, this);
     this.router = new Router(this.container);
@@ -112,7 +112,7 @@ export class HazelApp {
   }
 
   private initialize(): void {
-    logger.info('Initializing module:', { moduleName: this.moduleType.name });
+    logger.debug('Initializing module:', { moduleName: this.moduleType.name });
     const metadata = Reflect.getMetadata(MODULE_METADATA_KEY, this.moduleType) || {};
     logger.debug('Module metadata:', metadata);
 
@@ -121,7 +121,7 @@ export class HazelApp {
 
     // Register all controllers with the router
     if (allControllers.length > 0) {
-      logger.info('Registering controllers:', {
+      logger.debug('Registering controllers:', {
         controllers: allControllers.map((c: Type<unknown>) => c.name),
       });
       allControllers.forEach((controller: Type<unknown>) => {
@@ -184,6 +184,22 @@ export class HazelApp {
   async listen(port: number): Promise<void> {
     return new Promise((resolve) => {
       this.server = new Server(async (req: IncomingMessage, res: ServerResponse) => {
+        const startTime = Date.now();
+        const method = req.method || 'GET';
+        const url = req.url || '/';
+        const path = url.split('?')[0];
+
+        res.once('finish', () => {
+          if (process.env.LOG_HTTP === 'false') return;
+          const duration = Date.now() - startTime;
+          const status = res.statusCode || 0;
+          const statusColor =
+            status >= 500 ? chalk.red : status >= 400 ? chalk.yellow : chalk.green;
+          logger.info(
+            `${chalk.bold(method)} ${path} ${statusColor(String(status))} ${chalk.gray(duration + 'ms')}`
+          );
+        });
+
         try {
           if (!req.url) {
             logger.warn('Invalid URL received');
@@ -403,9 +419,9 @@ export class HazelApp {
         this.shutdownManager.registerHandler({
           name: 'http-server',
           handler: async () => {
-            logger.info('Closing HTTP server...');
+            logger.debug('Closing HTTP server...');
             await this.close();
-            logger.info('HTTP server closed');
+            logger.debug('HTTP server closed');
           },
           timeout: 10000,
         });
@@ -429,11 +445,8 @@ export class HazelApp {
       }
     } catch (error: unknown) {
       const httpError = error as HttpError;
-      logger.error(
-        `[${req.method}] ${req.url} - Route matching error: ${httpError.message} (status: ${httpError.statusCode || 404})`
-      );
       if (process.env.NODE_ENV === 'development' && httpError.stack) {
-        logger.debug(httpError.stack);
+        logger.debug(`Route not found: ${req.method} ${req.url}`, httpError.stack);
       }
       const status = httpError.statusCode || 404;
       res.writeHead(status, { 'Content-Type': 'application/json' });
@@ -445,12 +458,6 @@ export class HazelApp {
       );
       return;
     }
-
-    logger.info('Matched route:', {
-      method: req.method,
-      url: req.url,
-      params: context.params,
-    });
 
     try {
       const response = new HttpResponse(res);
@@ -521,7 +528,7 @@ export class HazelApp {
   setRequestTimeout(timeout: number, options?: TimeoutOptions): void {
     this.requestTimeout = timeout;
     this.timeoutMiddleware = new TimeoutMiddleware({ ...options, timeout });
-    logger.info(`Request timeout set to ${timeout}ms`);
+    logger.debug(`Request timeout set to ${timeout}ms`);
   }
 
   /**
@@ -530,7 +537,7 @@ export class HazelApp {
   enableCors(options?: CorsOptions): void {
     this.corsEnabled = true;
     this.corsOptions = options;
-    logger.info('CORS enabled', options);
+    logger.debug('CORS enabled', options);
   }
 
   /**
@@ -539,7 +546,7 @@ export class HazelApp {
   disableCors(): void {
     this.corsEnabled = false;
     this.corsOptions = undefined;
-    logger.info('CORS disabled');
+    logger.debug('CORS disabled');
   }
 
   /**
@@ -569,7 +576,7 @@ export class HazelApp {
    */
   addEarlyHandler(path: string, handler: EarlyHttpHandler): void {
     this.earlyHandlers.push({ path, handler });
-    logger.info('Early handler registered', { path });
+    logger.debug('Early handler registered', { path });
   }
 
   /**
@@ -578,7 +585,7 @@ export class HazelApp {
    */
   addProxyHandler(pathPrefix: string, handler: ProxyHandler): void {
     this.proxyHandlers.push({ pathPrefix, handler });
-    logger.info('Proxy handler registered', { pathPrefix });
+    logger.debug('Proxy handler registered', { pathPrefix });
   }
 }
 

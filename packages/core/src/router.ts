@@ -41,7 +41,7 @@ export class Router {
   }
 
   registerController(controller: Type<unknown>): void {
-    logger.info(`Registering controller: ${controller.name}`);
+    logger.debug(`Registering controller: ${controller.name}`);
     const controllerMetadata = Reflect.getMetadata(CONTROLLER_METADATA_KEY, controller) || {};
     const routes = Reflect.getMetadata(ROUTE_METADATA_KEY, controller) || [];
     logger.debug('Controller metadata:', controllerMetadata);
@@ -52,7 +52,7 @@ export class Router {
       const basePath = controllerMetadata.path || '';
       const routePath = path || '';
       const fullPath = this.normalizePath(`${basePath}${routePath}`);
-      logger.info(`Registering route: ${method} ${fullPath} (handler: ${String(propertyKey)})`);
+      logger.debug(`Registering route: ${method} ${fullPath} (handler: ${String(propertyKey)})`);
 
       // Get parameter types from TypeScript metadata
       const paramTypes =
@@ -528,7 +528,7 @@ export class Router {
       // Match the request method and URL
       const match = await this.match(req.method || 'GET', req.url || '/', context);
       if (!match) {
-        logger.warn(`No route found for ${req.method} ${req.url}`);
+        logger.debug(`No route found for ${req.method} ${req.url}`);
         res.status(404).json({ error: 'Not Found' });
         return;
       }

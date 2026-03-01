@@ -33,7 +33,7 @@ export class Container {
   // Note: resolutionStack is used per-resolve chain via parameter threading, not shared state
 
   private constructor() {
-    logger.info('Container initialized');
+    logger.debug('Container initialized');
   }
 
   static getInstance(): Container {
@@ -59,7 +59,7 @@ export class Container {
     scope: Scope = Scope.SINGLETON
   ): void {
     const tokenName = this.getTokenName(token);
-    logger.info(`Registering provider: ${tokenName} with scope: ${scope}`);
+      logger.debug(`Registering provider: ${tokenName} with scope: ${scope}`);
 
     if (this.isProvider(provider)) {
       this.registerProvider(provider);
@@ -281,7 +281,7 @@ export class Container {
     // Create instance with dependencies
     const instance = new token(...dependencies);
     if (logger.isDebugEnabled()) {
-      logger.info(`Created instance of: ${this.getTokenName(token)}`);
+        logger.debug(`Created instance of: ${this.getTokenName(token)}`);
     }
 
     return instance;
@@ -301,7 +301,7 @@ export class Container {
    * Clear all providers
    */
   clear(): void {
-    logger.info('Clearing container');
+    logger.debug('Clearing container');
     this.providers.clear();
     this.requestScopedProviders.clear();
   }
