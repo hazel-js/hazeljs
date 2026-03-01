@@ -186,6 +186,19 @@ describe('AgentEventEmitter', () => {
 
       expect(handler).toHaveBeenCalled();
     });
+
+    it('should silently handle errors in wildcard handlers', async () => {
+      const wildcardHandler = jest.fn().mockImplementation(() => {
+        throw new Error('Wildcard handler error');
+      });
+      emitter.onAny(wildcardHandler);
+
+      await expect(
+        emitter.emit(AgentEventType.EXECUTION_STARTED, 'agent-1', 'exec-1', {})
+      ).resolves.not.toThrow();
+
+      expect(wildcardHandler).toHaveBeenCalled();
+    });
   });
 
   describe('clear', () => {

@@ -29,16 +29,34 @@ export class AgentService {
   private runtime: AgentRuntime;
 
   constructor(
-    @Inject(GUARDRAILS_SERVICE_TOKEN) guardrailsService?: {
-      checkInput: (input: string | object, options?: unknown) => { allowed: boolean; modified?: string | object; violations?: string[]; blockedReason?: string };
-      checkOutput: (output: string | object, options?: unknown) => { allowed: boolean; modified?: string | object; violations?: string[]; blockedReason?: string };
+    @Inject(GUARDRAILS_SERVICE_TOKEN)
+    guardrailsService?: {
+      checkInput: (
+        input: string | object,
+        options?: unknown
+      ) => {
+        allowed: boolean;
+        modified?: string | object;
+        violations?: string[];
+        blockedReason?: string;
+      };
+      checkOutput: (
+        output: string | object,
+        options?: unknown
+      ) => {
+        allowed: boolean;
+        modified?: string | object;
+        violations?: string[];
+        blockedReason?: string;
+      };
     },
     config: AgentRuntimeConfig = {}
   ) {
     const moduleOpts = AgentModule.getOptions();
     const runtimeConfig: AgentRuntimeConfig = {
       ...(moduleOpts.runtime || config),
-      guardrailsService: guardrailsService ?? moduleOpts.runtime?.guardrailsService ?? config.guardrailsService,
+      guardrailsService:
+        guardrailsService ?? moduleOpts.runtime?.guardrailsService ?? config.guardrailsService,
     };
     this.runtime = new AgentRuntime(runtimeConfig);
 

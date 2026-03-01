@@ -134,12 +134,9 @@ export class AgentRuntime {
     this.contextBuilder = new AgentContextBuilder(config.memoryManager);
     this.eventEmitter = new AgentEventEmitter();
 
-    this.toolExecutor = new ToolExecutor(
-      (type, data) => {
-        this.eventEmitter.emit(type, '', '', data);
-      },
-      config.guardrailsService
-    );
+    this.toolExecutor = new ToolExecutor((type, data) => {
+      this.eventEmitter.emit(type, '', '', data);
+    }, config.guardrailsService);
 
     this.agentExecutor = new AgentExecutor(
       this.stateManager,
