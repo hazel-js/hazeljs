@@ -78,18 +78,19 @@ const getCategoryColor = (message: string): ((text: string) => string) => {
 };
 
 // Custom format for better readability with enhanced colors
-const customFormat = winston.format.printf(({ level, message, timestamp, ...metadata }) => {
+const customFormat = winston.format.printf((info: winston.Logform.TransformableInfo) => {
+  const { level, message, timestamp, ...metadata } = info;
   // Get the appropriate color for the log level
-  const levelColor = colors[level as keyof typeof colors] || chalk.white;
+  const levelColor = colors[(level as string) as keyof typeof colors] || chalk.white;
 
   // Format the timestamp with subtle color
-  const time = chalk.gray.dim(timestamp as string);
+  const time = chalk.gray.dim(String(timestamp ?? ''));
 
   // Format the level with color and padding (no icons for professional look)
-  const levelStr = levelColor.bold(`[${level.toUpperCase()}]`.padEnd(9));
+  const levelStr = levelColor.bold(`[${String(level).toUpperCase()}]`.padEnd(9));
 
   // Convert message to string
-  const messageStr = String(message);
+  const messageStr = String(message ?? '');
 
   // Detect category and apply appropriate color to message
   const categoryColor = getCategoryColor(messageStr);
@@ -203,18 +204,20 @@ if (logEnabled) {
         filename: path.join(logDir, 'combined.log'),
         format: winston.format.combine(
           winston.format.timestamp(),
-          winston.format.printf(({ level, message, timestamp, ...metadata }) => {
-            let msg = `${timestamp} [${level.toUpperCase()}] ${message}`;
-            if (Object.keys(metadata).length > 0) {
-              msg += ` | ${JSON.stringify(metadata, (key, val) => {
-                if (key === 'socket' || key === 'parser' || key === 'res' || key === 'req') {
-                  return '[Circular]';
-                }
-                return val;
-              })}`;
+          winston.format.printf((info: winston.Logform.TransformableInfo) => {
+            const { level, message, timestamp, ...metadata } = info;
+            let msg = `${timestamp} [${String(level).toUpperCase()}] ${message}`;
+              if (Object.keys(metadata).length > 0) {
+                msg += ` | ${JSON.stringify(metadata, (key, val) => {
+                  if (key === 'socket' || key === 'parser' || key === 'res' || key === 'req') {
+                    return '[Circular]';
+                  }
+                  return val;
+                })}`;
+              }
+              return msg;
             }
-            return msg;
-          })
+          )
         ),
       }),
       new winston.transports.File({
@@ -222,18 +225,20 @@ if (logEnabled) {
         level: 'error',
         format: winston.format.combine(
           winston.format.timestamp(),
-          winston.format.printf(({ level, message, timestamp, ...metadata }) => {
-            let msg = `${timestamp} [${level.toUpperCase()}] ${message}`;
-            if (Object.keys(metadata).length > 0) {
-              msg += ` | ${JSON.stringify(metadata, (key, val) => {
-                if (key === 'socket' || key === 'parser' || key === 'res' || key === 'req') {
-                  return '[Circular]';
-                }
-                return val;
-              })}`;
+          winston.format.printf((info: winston.Logform.TransformableInfo) => {
+            const { level, message, timestamp, ...metadata } = info;
+            let msg = `${timestamp} [${String(level).toUpperCase()}] ${message}`;
+              if (Object.keys(metadata).length > 0) {
+                msg += ` | ${JSON.stringify(metadata, (key, val) => {
+                  if (key === 'socket' || key === 'parser' || key === 'res' || key === 'req') {
+                    return '[Circular]';
+                  }
+                  return val;
+                })}`;
+              }
+              return msg;
             }
-            return msg;
-          })
+          )
         ),
       })
     );
@@ -281,11 +286,11 @@ export const requestLogger = (
               ? chalk.green
               : chalk.white;
 
-    logger.info(`${chalk.bold(req.method)} ${req.url}`, {
-      status: statusColor(res.statusCode),
+    logger.info(`${chalk.bold(req.method ?? '')} ${req.url ?? ''}`, {
+      status: statusColor(String(res.statusCode)),
       duration: chalk.yellow(`${duration}ms`),
-      userAgent: chalk.gray(req.headers['user-agent']),
-      ip: chalk.gray(req.socket.remoteAddress),
+      userAgent: chalk.gray(String(req.headers['user-agent'] ?? '')),
+      ip: chalk.gray(String(req.socket.remoteAddress ?? '')),
     });
   });
   next();
