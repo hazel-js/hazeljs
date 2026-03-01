@@ -55,7 +55,8 @@
     "jsonwebtoken": "^9.0.2",
     "reflect-metadata": "^0.2.1",
     "swagger-ui-express": "^5.0.0",
-    "winston": "^3.12.0"
+    "winston": "^3.12.0",
+    "@hazeljs/cron": "file:../packages/cron"
   },
   "devDependencies": {
     "@types/axios": "^0.9.36",

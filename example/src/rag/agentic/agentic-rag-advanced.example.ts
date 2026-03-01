@@ -23,10 +23,11 @@ import {
   getQueryPlan,
   getReasoningChain,
   getHyDEResult,
-} from '@hazeljs/rag/src/agentic';
-import { MemoryVectorStore } from '@hazeljs/rag/src/vector-stores/memory-vector-store';
-import { OpenAIEmbeddings } from '@hazeljs/rag/src/embeddings/openai-embeddings';
-import { Document, SearchResult } from '@hazeljs/rag/src/types';
+  MemoryVectorStore,
+  OpenAIEmbeddings,
+  Document,
+  SearchResult,
+} from '@hazeljs/rag';
 
 // Custom Agentic RAG class with all features
 class AdvancedResearchAssistant {

@@ -10,7 +10,7 @@ import { JwtAuthGuard } from './jwt-auth.guard';
     UserModule,
     JwtModule.forRoot({
       secret: process.env.JWT_SECRET || 'your-secret-key',
-      signOptions: { expiresIn: '1h' },
+      expiresIn: '1h',
     }),
   ],
   controllers: [AuthController],

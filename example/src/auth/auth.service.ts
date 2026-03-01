@@ -42,7 +42,10 @@ export class AuthService {
       throw new UnauthorizedError('Invalid credentials');
     }
 
-    const token = await this.jwtService.signAsync({ sub: user.id, email: user.email });
+    const token = this.jwtService.sign(
+      { sub: String(user.id), email: user.email },
+      { expiresIn: '1h' }
+    );
     return { access_token: token };
   }
 
@@ -63,7 +66,7 @@ export class AuthService {
     if (!context.user) {
       throw new UnauthorizedError('User not authenticated');
     }
-    const user = await this.userService.findById(context.user.id);
+    const user = await this.userService.findById(Number(context.user.id));
     if (!user) {
       throw new UnauthorizedError('User not found');
     }

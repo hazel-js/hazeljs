@@ -13,10 +13,10 @@ import {
   SelfReflective,
   AdaptiveRetrieval,
   Cached,
-} from '@hazeljs/rag/src/agentic';
-import { MemoryVectorStore } from '@hazeljs/rag/src/vector-stores/memory-vector-store';
-import { OpenAIEmbeddings } from '@hazeljs/rag/src/embeddings/openai-embeddings';
-import { Document } from '@hazeljs/rag/src/types';
+  MemoryVectorStore,
+  OpenAIEmbeddings,
+  Document,
+} from '@hazeljs/rag';
 
 async function basicExample() {
   console.log('🤖 Basic Agentic RAG Example\n');
