@@ -43,12 +43,20 @@ export class FileAuditTransport implements AuditTransport {
     this.maxSizeBytes = options.maxSizeBytes;
     this.rollDaily = options.rollDaily ?? false;
     this.currentPath = this.resolveCurrentPath();
-    // Create directory at startup so the path is visible before first event
+    // Create directory and touch file at startup so the path is visible and writable before first event
     if (this.ensureDir) {
       const dir = path.dirname(this.currentPath);
       if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir, { recursive: true });
       }
+    }
+    // Ensure file exists so consumers see it immediately and first append succeeds
+    try {
+      if (!fs.existsSync(this.currentPath)) {
+        fs.writeFileSync(this.currentPath, '', 'utf8');
+      }
+    } catch {
+      // ignore (e.g. permission); appendFileSync in log() will create on first write
     }
   }
 

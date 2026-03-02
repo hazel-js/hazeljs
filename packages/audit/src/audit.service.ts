@@ -22,6 +22,8 @@ export class AuditService {
     );
     if (opts.transports && opts.transports.length > 0) {
       this.transports = opts.transports;
+    } else if (AuditService.staticOptions.transports?.length) {
+      this.transports = AuditService.staticOptions.transports;
     } else {
       this.transports = [new ConsoleAuditTransport()];
     }
