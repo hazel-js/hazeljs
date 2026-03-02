@@ -12,6 +12,10 @@ const HAZEL_PACKAGES: Record<string, { npm: string; hint: string }> = {
     npm: '@hazeljs/agent',
     hint: 'import { AgentModule } from "@hazeljs/agent";',
   },
+  audit: {
+    npm: '@hazeljs/audit',
+    hint: 'import { AuditModule, ConsoleAuditTransport } from "@hazeljs/audit";\n  // AuditModule.forRoot({ transports: [new ConsoleAuditTransport()] })',
+  },
   auth: {
     npm: '@hazeljs/auth',
     hint: 'import { JwtModule } from "@hazeljs/auth";\n  // JwtModule.forRoot({ secret: "your-secret", expiresIn: "1d" })',

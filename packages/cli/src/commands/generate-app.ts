@@ -63,6 +63,11 @@ function scaffoldPackageBoilerplate(destPath: string, packages: string[]) {
     moduleImports.push('PrismaModule');
   }
 
+  if (packages.includes('@hazeljs/audit')) {
+    imports.push("import { AuditModule, ConsoleAuditTransport } from '@hazeljs/audit';");
+    moduleImports.push("AuditModule.forRoot({ transports: [new ConsoleAuditTransport()] })");
+  }
+
   if (packages.includes('@hazeljs/auth')) {
     imports.push("import { JwtModule } from '@hazeljs/auth';");
     moduleImports.push("JwtModule.forRoot({ secret: process.env.JWT_SECRET || 'change-me', expiresIn: '1d' })");
@@ -258,6 +263,7 @@ export function generateApp(program: Command) {
               choices: [
                 { name: 'AI Integration (@hazeljs/ai)', value: '@hazeljs/ai' },
                 { name: 'AI Agents (@hazeljs/agent)', value: '@hazeljs/agent' },
+                { name: 'Audit Logging (@hazeljs/audit)', value: '@hazeljs/audit' },
                 { name: 'Authentication (@hazeljs/auth)', value: '@hazeljs/auth' },
                 { name: 'OAuth - Google/Microsoft/GitHub (@hazeljs/oauth)', value: '@hazeljs/oauth' },
                 { name: 'Caching (@hazeljs/cache)', value: '@hazeljs/cache' },

@@ -104,6 +104,7 @@ hazel add prisma
 
 **Available packages:**
 - `ai` - AI Integration (@hazeljs/ai)
+- `audit` - Audit Logging (@hazeljs/audit)
 - `auth` - Authentication (@hazeljs/auth)
 - `cache` - Caching (@hazeljs/cache)
 - `config` - Configuration (@hazeljs/config)

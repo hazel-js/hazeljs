@@ -13,8 +13,7 @@
     "format": "prettier --write \"src/**/*.ts\""
   },
   "dependencies": {
-    "@hazeljs/core": "^0.2.0",
-    "reflect-metadata": "^0.2.2"
+    "@hazeljs/core": "latest"
   },
   "devDependencies": {
     "@types/jest": "^29.5.12",
