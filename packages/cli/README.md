@@ -110,6 +110,7 @@ hazel add prisma
 - `config` - Configuration (@hazeljs/config)
 - `cron` - Cron Jobs (@hazeljs/cron)
 - `prisma` - Prisma ORM (@hazeljs/prisma)
+- `typeorm` - TypeORM (@hazeljs/typeorm)
 - `rag` - RAG/Vector Search (@hazeljs/rag)
 - `serverless` - Serverless (@hazeljs/serverless)
 - `swagger` - Swagger/OpenAPI (@hazeljs/swagger)

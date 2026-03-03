@@ -80,6 +80,10 @@ const HAZEL_PACKAGES: Record<string, { npm: string; hint: string }> = {
     npm: '@hazeljs/prisma',
     hint: 'import { PrismaModule } from "@hazeljs/prisma";',
   },
+  typeorm: {
+    npm: '@hazeljs/typeorm',
+    hint: 'import { TypeOrmModule } from "@hazeljs/typeorm";',
+  },
   queue: {
     npm: '@hazeljs/queue',
     hint: 'import { QueueModule } from "@hazeljs/queue";',

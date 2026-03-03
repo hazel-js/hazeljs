@@ -52,7 +52,7 @@ describe('addCommand', () => {
     // Test that all documented packages are available
     const expectedPackages = [
       'ai', 'agent', 'auth', 'cache', 'config', 'cron',
-      'discovery', 'prisma', 'rag', 'serverless', 'swagger', 'websocket'
+      'discovery', 'prisma', 'typeorm', 'rag', 'serverless', 'swagger', 'websocket'
     ];
 
     for (const pkg of expectedPackages) {

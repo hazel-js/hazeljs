@@ -63,6 +63,11 @@ function scaffoldPackageBoilerplate(destPath: string, packages: string[]) {
     moduleImports.push('PrismaModule');
   }
 
+  if (packages.includes('@hazeljs/typeorm')) {
+    imports.push("import { TypeOrmModule } from '@hazeljs/typeorm';");
+    moduleImports.push('TypeOrmModule');
+  }
+
   if (packages.includes('@hazeljs/audit')) {
     imports.push("import { AuditModule, ConsoleAuditTransport } from '@hazeljs/audit';");
     moduleImports.push("AuditModule.forRoot({ transports: [new ConsoleAuditTransport()] })");
@@ -280,6 +285,7 @@ export function generateApp(program: Command) {
                 { name: 'Machine Learning (@hazeljs/ml)', value: '@hazeljs/ml' },
                 { name: 'PDF to Audio (@hazeljs/pdf-to-audio)', value: '@hazeljs/pdf-to-audio' },
                 { name: 'Prisma ORM (@hazeljs/prisma)', value: '@hazeljs/prisma' },
+                { name: 'TypeORM (@hazeljs/typeorm)', value: '@hazeljs/typeorm' },
                 { name: 'Queue/BullMQ (@hazeljs/queue)', value: '@hazeljs/queue' },
                 { name: 'RAG/Vector Search (@hazeljs/rag)', value: '@hazeljs/rag' },
                 { name: 'Resilience - Circuit Breaker (@hazeljs/resilience)', value: '@hazeljs/resilience' },

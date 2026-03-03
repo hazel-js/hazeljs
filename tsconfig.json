@@ -48,6 +48,9 @@
       "path": "./packages/prisma"
     },
     {
+      "path": "./packages/typeorm"
+    },
+    {
       "path": "./packages/auth"
     },
     {
