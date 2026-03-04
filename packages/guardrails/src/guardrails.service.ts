@@ -2,7 +2,7 @@
  * GuardrailsService - Content safety, PII, and output validation
  */
 
-import { Injectable } from '@hazeljs/core';
+import { Service } from '@hazeljs/core';
 import { sanitizeString } from '@hazeljs/core';
 import type {
   GuardrailInputOptions,
@@ -17,7 +17,7 @@ import { checkToxicity } from './checks/toxicity.check';
 
 const DEFAULT_ENTITY_TYPES: PIIEntityType[] = ['email', 'phone', 'ssn', 'credit_card'];
 
-@Injectable()
+@Service()
 export class GuardrailsService {
   private static staticOptions: GuardrailsModuleOptions = {};
   private options: GuardrailsModuleOptions = {};

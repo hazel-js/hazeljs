@@ -37,12 +37,12 @@ describe('generateService', () => {
     );
   });
 
-  it('should include Injectable decorator', async () => {
+  it('should include Service decorator', async () => {
     generateService(program);
     await program.parseAsync(['node', 'test', 'service', 'user']);
 
     const writtenContent = mockFs.writeFileSync.mock.calls[0][1] as string;
-    expect(writtenContent).toContain('@Injectable()');
+    expect(writtenContent).toContain('@Service()');
     expect(writtenContent).toContain("from '@hazeljs/core'");
   });
 });

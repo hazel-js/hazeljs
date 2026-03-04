@@ -1,4 +1,4 @@
-import { Injectable } from '@hazeljs/core';
+import { Service } from '@hazeljs/core';
 import { ModelRegistry } from '../registry/model.registry';
 import { getPredictMetadata } from '../decorators';
 import { PredictionResult } from '../ml.types';
@@ -8,7 +8,7 @@ import logger from '@hazeljs/core';
  * Predictor Service - Real-time prediction/inference
  * Routes prediction requests to registered models
  */
-@Injectable()
+@Service()
 export class PredictorService {
   constructor(private readonly modelRegistry: ModelRegistry) {}
 

@@ -15,7 +15,8 @@
     "resolveJsonModule": true,
     "moduleResolution": "node",
     "composite": true,
-    "declarationMap": true
+    "declarationMap": true,
+    "types": ["jest", "node"]
   },
   "files": [],
   "include": [],

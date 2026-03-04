@@ -36,9 +36,7 @@
     "prisma:reset": "ts-node scripts/migrate.ts reset",
     "db:up": "docker-compose up -d",
     "db:down": "docker-compose down",
-    "db:logs": "docker-compose logs -f",
-    "build:architecture": "npm run build --workspace=@hazeljs/architecture",
-    "architecture:generate": "hazel architecture generate"
+    "db:logs": "docker-compose logs -f"
   },
   "repository": {
     "type": "git",

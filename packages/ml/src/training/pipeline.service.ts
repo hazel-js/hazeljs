@@ -1,4 +1,4 @@
-import { Injectable } from '@hazeljs/core';
+import { Service } from '@hazeljs/core';
 import { TrainingData } from '../ml.types';
 import logger from '@hazeljs/core';
 
@@ -11,7 +11,7 @@ export interface PipelineStep {
  * Pipeline Service - ETL pipelines for training data preparation
  * Handles data transformation before model training
  */
-@Injectable()
+@Service()
 export class PipelineService {
   private pipelines: Map<string, PipelineStep[]> = new Map();
 

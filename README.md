@@ -187,7 +187,7 @@ We'd love your help. Every star, issue, and PR matters.
 
 - **Issues**: [Report bugs](https://github.com/hazel-js/hazeljs/issues)
 - **Discussions**: [Ask questions](https://github.com/hazel-js/hazeljs/discussions)
-- **Discord**: Coming soon
+- **Discord**: [Discord](https://discord.com/channels/1448263814238965833/1448263814859456575)
 
 ---
 

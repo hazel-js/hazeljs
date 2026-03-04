@@ -1,4 +1,4 @@
-import { Injectable } from '@hazeljs/core';
+import { Service } from '@hazeljs/core';
 import type { BaseSchema } from '../schema/schema';
 import type { SchemaValidationError } from '../schema/schema';
 
@@ -15,7 +15,7 @@ export class SchemaValidationException extends Error {
 /**
  * Schema Validator - Validates data against schemas
  */
-@Injectable()
+@Service()
 export class SchemaValidator {
   validate<T>(schema: BaseSchema<T>, value: unknown): T {
     const result = schema.validate(value);

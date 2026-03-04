@@ -4,16 +4,17 @@ import { TypeOrmService } from './typeorm.service';
 describe('TypeOrmService', () => {
   describe('with provided DataSource', () => {
     it('should use provided DataSource and initialize/destroy', async () => {
-      const dataSource = {
+      const mockDs = {
         isInitialized: false,
-        async initialize() {
-          this.isInitialized = true;
+        initialize: async () => {
+          mockDs.isInitialized = true;
         },
-        async destroy() {
-          this.isInitialized = false;
+        destroy: async () => {
+          mockDs.isInitialized = false;
         },
         getRepository: jest.fn(() => ({ find: jest.fn() })),
-      } as unknown as DataSource;
+      };
+      const dataSource = mockDs as unknown as DataSource;
 
       const service = new TypeOrmService({ dataSource });
       expect(service.dataSource).toBe(dataSource);

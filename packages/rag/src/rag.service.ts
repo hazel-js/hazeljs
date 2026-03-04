@@ -3,7 +3,7 @@
  * Main service for RAG operations in HazelJS
  */
 
-import { Injectable } from '@hazeljs/core';
+import { Service } from '@hazeljs/core';
 import { RAGPipeline, LLMFunction } from './rag-pipeline';
 import {
   VectorStore,
@@ -23,7 +23,7 @@ export interface RAGServiceConfig {
   topK?: number;
 }
 
-@Injectable()
+@Service()
 export class RAGService {
   private pipeline: RAGPipeline;
 

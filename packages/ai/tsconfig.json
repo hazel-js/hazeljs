@@ -7,17 +7,33 @@
     "composite": true,
     "declarationMap": true,
     "baseUrl": ".",
-    "skipLibCheck": true,
     "paths": {
-      "@hazeljs/core": ["../core/src"],
-      "@hazeljs/cache": ["../cache/src"]
-    }
+      "@hazeljs/core": [
+        "../core/src"
+      ],
+      "@hazeljs/cache": [
+        "../cache/src"
+      ]
+    },
+    "types": [
+      "jest",
+      "node"
+    ]
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "**/*.test.ts", "**/node_modules/openai/src/**"],
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/node_modules/openai/src/**"
+  ],
   "references": [
-    { "path": "../core" },
-    { "path": "../cache" }
+    {
+      "path": "../core"
+    },
+    {
+      "path": "../cache"
+    }
   ]
 }
-

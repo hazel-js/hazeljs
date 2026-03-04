@@ -1,4 +1,4 @@
-import { Injectable } from '@hazeljs/core';
+import { Service } from '@hazeljs/core';
 import logger from '@hazeljs/core';
 
 export type TransformFn<T = unknown, R = unknown> = (input: T) => R | Promise<R>;
@@ -7,7 +7,7 @@ export type TransformFn<T = unknown, R = unknown> = (input: T) => R | Promise<R>
  * Transformer Service - Data transformations
  * Provides utilities for common data transformation patterns
  */
-@Injectable()
+@Service()
 export class TransformerService {
   private transforms: Map<string, TransformFn> = new Map();
 

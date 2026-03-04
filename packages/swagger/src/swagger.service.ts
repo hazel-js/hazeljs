@@ -1,4 +1,4 @@
-import { Injectable } from '@hazeljs/core';
+import { Service } from '@hazeljs/core';
 import { SwaggerOperation, SwaggerSchema } from './swagger.types';
 import { getSwaggerMetadata, getOperationMetadata } from './swagger.decorator';
 import logger from '@hazeljs/core';
@@ -24,7 +24,7 @@ interface RouteMetadata {
   method: string;
 }
 
-@Injectable()
+@Service()
 export class SwaggerService {
   private spec: SwaggerSpec = {
     openapi: '3.0.0',

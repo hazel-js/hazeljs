@@ -1,4 +1,4 @@
-import { Injectable } from '@hazeljs/core';
+import { Service } from '@hazeljs/core';
 import { PredictorService } from './predictor.service';
 import { PredictionResult } from '../ml.types';
 import logger from '@hazeljs/core';
@@ -12,7 +12,7 @@ export interface BatchPredictionOptions {
  * Batch Service - Batch processing for inference
  * Handles bulk prediction requests efficiently
  */
-@Injectable()
+@Service()
 export class BatchService {
   constructor(private readonly predictorService: PredictorService) {}
 

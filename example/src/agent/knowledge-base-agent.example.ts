@@ -17,7 +17,7 @@
 import { Agent, Tool, AgentRuntime, AgentEventType } from '@hazeljs/agent';
 import { RAGService, MemoryManager, BufferMemory, MemoryVectorStore, OpenAIEmbeddings, RecursiveTextSplitter } from '@hazeljs/rag';
 import { OpenAIProvider } from '@hazeljs/ai';
-import { Injectable, Controller, Post, Get, Body, Query, UsePipes, ValidationPipe, logger } from '@hazeljs/core';
+import { Service, Controller, Post, Get, Body, Query, UsePipes, ValidationPipe, logger } from '@hazeljs/core';
 import { Swagger, ApiOperation } from '@hazeljs/swagger';
 
 /**
@@ -168,7 +168,7 @@ export class AskQuestionResponseDto {
 /**
  * Service for managing knowledge base operations
  */
-@Injectable()
+@Service()
 export class KnowledgeBaseService {
   private documents: Map<string, Document> = new Map();
   private agentRuntime: AgentRuntime;

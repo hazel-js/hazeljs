@@ -105,7 +105,11 @@ describe('AuditService', () => {
   it('addTransport adds a transport at runtime', () => {
     const extra: AuditEvent[] = [];
     const service = new AuditService({ transports: [mockTransport] });
-    service.addTransport({ log: (e) => extra.push(e) });
+    service.addTransport({
+      log: (e) => {
+        extra.push(e);
+      },
+    });
     service.log({ action: 'runtime' });
     expect(captured).toHaveLength(1);
     expect(extra).toHaveLength(1);

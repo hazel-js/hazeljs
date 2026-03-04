@@ -1,4 +1,4 @@
-import { Injectable } from '@hazeljs/core';
+import { Service } from '@hazeljs/core';
 import { getPipelineMetadata, getTransformMetadata, getValidateMetadata } from '../decorators';
 import { SchemaValidator } from '../validators/schema.validator';
 import type { BaseSchema } from '../schema/schema';
@@ -16,7 +16,7 @@ export interface PipelineStep {
  * ETL Service - Orchestrates pipeline execution
  * Executes steps sequentially: output from step N → input to step N+1
  */
-@Injectable()
+@Service()
 export class ETLService {
   constructor(private readonly schemaValidator: SchemaValidator) {}
 

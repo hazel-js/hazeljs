@@ -1,4 +1,4 @@
-import { Injectable } from '@hazeljs/core';
+import { Service } from '@hazeljs/core';
 import { FlinkClient } from './streaming/flink/flink.client';
 import { StreamBuilder } from './streaming/stream.builder';
 import { ETLService } from './pipelines/etl.service';
@@ -17,7 +17,7 @@ export interface DeployStreamResult {
  * Flink Service - Deploy stream pipelines to Flink cluster
  * Wraps FlinkClient and StreamBuilder for pipeline deployment
  */
-@Injectable()
+@Service()
 export class FlinkService {
   private flinkClient: FlinkClient | null = null;
 

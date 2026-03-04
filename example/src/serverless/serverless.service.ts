@@ -1,10 +1,10 @@
-import { Injectable } from '@hazeljs/core';
+import { Service } from '@hazeljs/core';
 import { ColdStartOptimizer } from '@hazeljs/serverless';
 
 /**
  * Serverless service for handling serverless-specific logic
  */
-@Injectable()
+@Service()
 export class ServerlessService {
   private coldStartDetected = true;
   private requestCount = 0;

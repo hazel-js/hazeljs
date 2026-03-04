@@ -35,10 +35,10 @@ export class {{className}}Controller {
 }
 `;
 
-const SERVICE_TEMPLATE = `import { Injectable } from '@hazeljs/core';
+const SERVICE_TEMPLATE = `import { Service } from '@hazeljs/core';
 import { Create{{className}}Dto } from './dto/create-{{fileName}}.dto';
 
-@Injectable()
+@Service()
 export class {{className}}Service {
   private items: any[] = [];
 

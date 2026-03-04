@@ -1,4 +1,4 @@
-import { Injectable } from '@hazeljs/core';
+import { Service } from '@hazeljs/core';
 import { JwtService } from '@hazeljs/auth';
 import { UserService } from '../user/user.service';
 import { User } from '../user/user.model';
@@ -16,7 +16,7 @@ export interface LoginResponse {
   access_token: string;
 }
 
-@Injectable()
+@Service()
 export class AuthService {
   constructor(
     private readonly userService: UserService,

@@ -1,4 +1,4 @@
-import { Injectable } from '@hazeljs/core';
+import { Service } from '@hazeljs/core';
 import * as grpc from '@grpc/grpc-js';
 import * as protoLoader from '@grpc/proto-loader';
 import type { PackageDefinition } from '@grpc/proto-loader';
@@ -15,7 +15,7 @@ type UnaryHandler = (
 /**
  * gRPC Server service - manages gRPC server lifecycle and RPC handler registration
  */
-@Injectable()
+@Service()
 export class GrpcServer {
   private server: grpc.Server | null = null;
   private packageDefinition: PackageDefinition | null = null;

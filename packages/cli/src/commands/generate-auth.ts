@@ -17,12 +17,12 @@ import { JwtAuthGuard } from './jwt-auth.guard';
 export class AuthModule {}
 `;
 
-const AUTH_SERVICE_TEMPLATE = `import { Injectable, BadRequestError, UnauthorizedError } from '@hazeljs/core';
+const AUTH_SERVICE_TEMPLATE = `import { Service, BadRequestError, UnauthorizedError } from '@hazeljs/core';
 import { JwtService } from '@hazeljs/auth';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 
-@Injectable()
+@Service()
 export class AuthService {
   constructor(
     private readonly jwtService: JwtService,

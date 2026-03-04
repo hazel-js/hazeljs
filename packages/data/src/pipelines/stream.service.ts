@@ -1,4 +1,4 @@
-import { Injectable } from '@hazeljs/core';
+import { Service } from '@hazeljs/core';
 import { ETLService } from './etl.service';
 import { getStreamMetadata } from '../decorators';
 import logger from '@hazeljs/core';
@@ -7,7 +7,7 @@ import logger from '@hazeljs/core';
  * Stream Service - Streaming pipeline execution
  * Processes data through pipeline steps (for in-process streaming, not Flink deployment)
  */
-@Injectable()
+@Service()
 export class StreamService {
   constructor(private readonly etlService: ETLService) {}
 

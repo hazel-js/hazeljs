@@ -1,12 +1,12 @@
 import { TokenUsage, TokenLimitConfig } from '../ai-enhanced.types';
-import { Injectable } from '@hazeljs/core';
+import { Service } from '@hazeljs/core';
 import logger from '@hazeljs/core';
 
 /**
  * Token Usage Tracker
  * Tracks and limits token usage per user/request
  */
-@Injectable()
+@Service()
 export class TokenTracker {
   private usageHistory: TokenUsage[] = [];
   private config: TokenLimitConfig;

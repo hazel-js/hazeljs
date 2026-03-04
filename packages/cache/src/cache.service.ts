@@ -1,4 +1,4 @@
-import { Injectable } from '@hazeljs/core';
+import { Service } from '@hazeljs/core';
 import { ICacheStore, CacheStats, CacheWarmingOptions, CacheStrategy } from './cache.types';
 import { MemoryCacheStore } from './strategies/memory.strategy';
 import { RedisCacheStore } from './strategies/redis.strategy';
@@ -8,7 +8,7 @@ import logger from '@hazeljs/core';
 /**
  * Cache service for managing cache operations
  */
-@Injectable()
+@Service()
 export class CacheService {
   private store: ICacheStore;
   private strategy: CacheStrategy;

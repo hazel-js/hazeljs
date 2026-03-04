@@ -1,4 +1,4 @@
-import { Injectable } from '@hazeljs/core';
+import { Service } from '@hazeljs/core';
 import logger from '@hazeljs/core';
 
 export interface QualityCheckResult {
@@ -20,7 +20,7 @@ export interface DataQualityReport {
  * Quality Service - Data quality checks
  * Validates data completeness, consistency, and integrity
  */
-@Injectable()
+@Service()
 export class QualityService {
   private checks: Map<string, (data: unknown) => Promise<QualityCheckResult> | QualityCheckResult> =
     new Map();

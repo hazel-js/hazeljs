@@ -1,4 +1,4 @@
-import { Injectable, logger } from '@hazeljs/core';
+import { Service, logger } from '@hazeljs/core';
 import { OpenAIProvider } from '@hazeljs/ai';
 import { RecursiveTextSplitter } from '@hazeljs/rag';
 import { extractText } from './pdf-extractor';
@@ -25,7 +25,7 @@ function enforceChunkSize(chunks: string[]): string[] {
   return result;
 }
 
-@Injectable()
+@Service()
 export class PdfToAudioService {
   private splitter = new RecursiveTextSplitter({
     chunkSize: TTS_CHUNK_SIZE,

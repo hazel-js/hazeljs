@@ -2,10 +2,10 @@ import { Command } from 'commander';
 import { Generator } from '../utils/generator';
 import chalk from 'chalk';
 
-const CRON_SERVICE_TEMPLATE = `import { Injectable } from '@hazeljs/core';
+const CRON_SERVICE_TEMPLATE = `import { Service } from '@hazeljs/core';
 import { Cron, CronExpression } from '@hazeljs/cron';
 
-@Injectable()
+@Service()
 export class {{className}}CronService {
   @Cron(CronExpression.EVERY_MINUTE)
   handleEveryMinute() {

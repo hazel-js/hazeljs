@@ -1,6 +1,5 @@
-import { Injectable } from '@hazeljs/core';
 import { BadRequestError, NotFoundError } from '@hazeljs/core';
-import { BaseRepository } from '@hazeljs/prisma';
+import { Repository,  BaseRepository } from '@hazeljs/prisma';
 import { PrismaService } from '@hazeljs/prisma';
 import { User } from './user.model';
 
@@ -21,7 +20,7 @@ export type WhereUniqueInput =
 
 export type UpdateInput = Partial<CreateUserDto>;
 
-@Injectable()
+@Repository({ model: 'user' })
 export class UserRepository extends BaseRepository<User> {
   protected readonly model = 'user';
 

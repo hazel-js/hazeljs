@@ -1,4 +1,4 @@
-import { Injectable } from '@hazeljs/core';
+import { Service } from '@hazeljs/core';
 import jwt from 'jsonwebtoken';
 
 export interface JwtPayload {
@@ -13,7 +13,7 @@ export interface JwtServiceOptions {
   audience?: string;
 }
 
-@Injectable()
+@Service()
 export class JwtService {
   private readonly secret: string;
   private readonly defaultExpiresIn: string | number;

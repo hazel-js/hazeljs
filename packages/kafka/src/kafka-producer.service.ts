@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@hazeljs/core';
+import { Service, Inject } from '@hazeljs/core';
 import { Kafka } from 'kafkajs';
 import { KafkaMessage, KafkaProduceOptions } from './kafka.types';
 import logger from '@hazeljs/core';
@@ -8,7 +8,7 @@ export const KAFKA_CLIENT_TOKEN = 'KAFKA_CLIENT';
 /**
  * Kafka producer service for publishing messages to topics
  */
-@Injectable()
+@Service()
 export class KafkaProducerService {
   private producer: ReturnType<Kafka['producer']>;
   private isConnected = false;

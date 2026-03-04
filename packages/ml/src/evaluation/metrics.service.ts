@@ -1,4 +1,4 @@
-import { Injectable } from '@hazeljs/core';
+import { Service } from '@hazeljs/core';
 import logger from '@hazeljs/core';
 
 export interface ModelMetrics {
@@ -21,7 +21,7 @@ export interface EvaluationResult {
  * Metrics Service - Model evaluation and metrics
  * Tracks model performance for A/B testing and monitoring
  */
-@Injectable()
+@Service()
 export class MetricsService {
   private metrics: Map<string, EvaluationResult[]> = new Map();
 

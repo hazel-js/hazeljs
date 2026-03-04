@@ -1,9 +1,9 @@
-import { Injectable } from '@hazeljs/core';
+import { Service } from '@hazeljs/core';
 import { User } from './user.model';
 import { UserRepository } from './user.repository';
 import { CreateUserDto, UpdateUserDto } from './user.dto';
 
-@Injectable()
+@Service()
 export class UserService {
   constructor(private readonly userRepository: UserRepository) {}
 

@@ -1,4 +1,4 @@
-import { Injectable } from '@hazeljs/core';
+import { Service } from '@hazeljs/core';
 import { KafkaProducerService } from '@hazeljs/kafka';
 
 export interface CreateOrderDto {
@@ -11,7 +11,7 @@ export interface CreateOrderDto {
 /**
  * Example order service that produces Kafka messages
  */
-@Injectable()
+@Service()
 export class OrderService {
   constructor(private producer: KafkaProducerService) {}
 

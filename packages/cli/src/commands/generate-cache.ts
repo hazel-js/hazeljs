@@ -2,10 +2,10 @@ import { Command } from 'commander';
 import { Generator } from '../utils/generator';
 import chalk from 'chalk';
 
-const CACHE_SERVICE_TEMPLATE = `import { Injectable } from '@hazeljs/core';
+const CACHE_SERVICE_TEMPLATE = `import { Service } from '@hazeljs/core';
 import { CacheService, Cacheable, CacheEvict } from '@hazeljs/cache';
 
-@Injectable()
+@Service()
 export class {{className}}CacheService {
   constructor(private readonly cacheService: CacheService) {}
 

@@ -39,10 +39,10 @@ export class {{className}}Controller {
 }
 `;
 
-const serviceTemplate = `import { Injectable } from '@hazeljs/core';
+const serviceTemplate = `import { Service } from '@hazeljs/core';
 import { Create{{className}}Dto, Update{{className}}Dto } from './dto/{{fileName}}.dto';
 
-@Injectable()
+@Service()
 export class {{className}}Service {
   private {{camelName}}s: any[] = [];
 

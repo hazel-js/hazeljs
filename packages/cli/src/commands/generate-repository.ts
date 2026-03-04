@@ -1,14 +1,13 @@
 import { Command } from 'commander';
 import { Generator } from '../utils/generator';
 
-const REPOSITORY_TEMPLATE = `import { Injectable } from '@hazeljs/core';
-import { BaseRepository, PrismaService } from '@hazeljs/prisma';
+const REPOSITORY_TEMPLATE = `import { Repository, BaseRepository, PrismaService } from '@hazeljs/prisma';
 
-@Injectable()
+// @Repository implies @Injectable() — no need for both decorators
+@Repository({ model: '{{modelName}}' })
 export class {{className}}Repository extends BaseRepository<any> {
   constructor(prisma: PrismaService) {
-    // Replace 'modelName' with your actual Prisma model name (e.g., prisma.user)
-    super(prisma.client.modelName);
+    super(prisma, '{{modelName}}');
   }
 
   // Add custom repository methods here

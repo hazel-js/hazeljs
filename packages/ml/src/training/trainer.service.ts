@@ -1,4 +1,4 @@
-import { Injectable } from '@hazeljs/core';
+import { Service } from '@hazeljs/core';
 import { ModelRegistry } from '../registry/model.registry';
 import { getModelMetadata, getTrainMetadata } from '../decorators';
 import { TrainingData, TrainingResult } from '../ml.types';
@@ -8,7 +8,7 @@ import logger from '@hazeljs/core';
  * Trainer Service - Training orchestration for ML models
  * Coordinates training pipelines and model updates
  */
-@Injectable()
+@Service()
 export class TrainerService {
   constructor(private readonly modelRegistry: ModelRegistry) {}
 

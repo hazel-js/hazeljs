@@ -12,7 +12,7 @@ import {
   AutoEmbed,
   RAGService,
 } from '@hazeljs/rag';
-import { Injectable, Controller, Get, Post, Body, Query } from '@hazeljs/core';
+import { Service, Controller, Get, Post, Body, Query } from '@hazeljs/core';
 
 // Example 1: Embeddable Entity
 @Embeddable({
@@ -33,7 +33,7 @@ class Article {
 }
 
 // Example 2: Repository with Semantic Search
-@Injectable()
+@Service()
 class ArticleRepository {
   constructor(private ragService: RAGService) {}
 
@@ -92,7 +92,7 @@ class DocumentController {
 }
 
 // Example 4: Knowledge Service with Advanced Patterns
-@Injectable()
+@Service()
 class KnowledgeService {
   constructor(private ragService: RAGService) {}
 
@@ -149,7 +149,7 @@ class Article {
 
   console.log('🔍 Example Repository:');
   console.log(`
-@Injectable()
+@Service()
 class ArticleRepository {
   @SemanticSearch()
   async findSimilar(query: string, limit = 10) {

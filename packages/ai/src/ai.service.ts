@@ -1,4 +1,4 @@
-import { Injectable } from '@hazeljs/core';
+import { Service } from '@hazeljs/core';
 import { AITaskConfig, AITaskContext, AITaskResult } from './ai.types';
 import logger from '@hazeljs/core';
 import OpenAI from 'openai';
@@ -11,7 +11,7 @@ interface AIProvider {
   execute: (config: AITaskConfig, input: unknown) => Promise<AITaskResult>;
 }
 
-@Injectable()
+@Service()
 export class AIService {
   private providers: Map<string, AIProvider> = new Map();
 

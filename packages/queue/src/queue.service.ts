@@ -1,4 +1,4 @@
-import { Injectable } from '@hazeljs/core';
+import { Service } from '@hazeljs/core';
 import { Queue as BullQueue, JobsOptions } from 'bullmq';
 import type { RedisConnectionOptions } from './queue.types';
 import logger from '@hazeljs/core';
@@ -7,7 +7,7 @@ import logger from '@hazeljs/core';
  * Queue service for adding and managing jobs
  * Uses BullMQ for Redis-backed job queues
  */
-@Injectable()
+@Service()
 export class QueueService {
   private queues = new Map<string, BullQueue>();
   private connection: RedisConnectionOptions | null = null;

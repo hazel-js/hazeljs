@@ -1,4 +1,4 @@
-import { Injectable } from '@hazeljs/core';
+import { Service } from '@hazeljs/core';
 import { Cron } from '@hazeljs/cron';
 import { CronExpression } from '@hazeljs/cron';
 import logger from '@hazeljs/core';
@@ -6,7 +6,7 @@ import logger from '@hazeljs/core';
 /**
  * Example service demonstrating cron job usage
  */
-@Injectable()
+@Service()
 export class TaskService {
   private taskCount = 0;
   private emailCount = 0;

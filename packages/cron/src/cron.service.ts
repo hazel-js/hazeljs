@@ -1,4 +1,4 @@
-import { Injectable } from '@hazeljs/core';
+import { Service } from '@hazeljs/core';
 import { CronOptions, CronJobStatus } from './cron.types';
 import logger from '@hazeljs/core';
 import cron from 'node-cron';
@@ -162,7 +162,7 @@ class CronJob {
 /**
  * Cron service for managing scheduled jobs
  */
-@Injectable()
+@Service()
 export class CronService {
   private jobs = new Map<string, CronJob>();
 

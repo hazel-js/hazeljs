@@ -2,12 +2,12 @@
  * AuditService - Record audit events and send to configured transports
  */
 
-import { Injectable, logger } from '@hazeljs/core';
+import { Service, logger } from '@hazeljs/core';
 import type { RequestContext } from '@hazeljs/core';
 import type { AuditEvent, AuditTransport, AuditActor, AuditModuleOptions } from './audit.types';
 import { ConsoleAuditTransport } from './transports/console.transport';
 
-@Injectable()
+@Service()
 export class AuditService {
   private static staticOptions: AuditModuleOptions = {};
   private transports: AuditTransport[] = [];

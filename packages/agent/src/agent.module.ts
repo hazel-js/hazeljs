@@ -3,7 +3,7 @@
  * HazelJS module for Agent Runtime
  */
 
-import { Injectable, Inject, HazelModule } from '@hazeljs/core';
+import { Service, Inject, HazelModule } from '@hazeljs/core';
 import { AgentRuntime, AgentRuntimeConfig } from './runtime/agent.runtime';
 import { AgentEventType } from './types/event.types';
 
@@ -24,7 +24,7 @@ export interface AgentModuleOptions {
  * Agent Service
  * Injectable service for agent runtime
  */
-@Injectable()
+@Service()
 export class AgentService {
   private runtime: AgentRuntime;
 

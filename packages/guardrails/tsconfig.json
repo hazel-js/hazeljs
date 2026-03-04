@@ -7,10 +7,25 @@
     "declarationMap": true,
     "baseUrl": ".",
     "paths": {
-      "@hazeljs/core": ["../core/src"]
-    }
+      "@hazeljs/core": [
+        "../core/src"
+      ]
+    },
+    "types": [
+      "jest",
+      "node"
+    ]
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "**/*.test.ts"],
-  "references": [{ "path": "../core" }]
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ],
+  "references": [
+    {
+      "path": "../core"
+    }
+  ]
 }

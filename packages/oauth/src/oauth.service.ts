@@ -1,4 +1,4 @@
-import { Injectable } from '@hazeljs/core';
+import { Service } from '@hazeljs/core';
 import * as arctic from 'arctic';
 import {
   createGoogleProvider,
@@ -27,7 +27,7 @@ import type {
 
 const PKCE_PROVIDERS: SupportedProvider[] = ['google', 'microsoft', 'twitter'];
 
-@Injectable()
+@Service()
 export class OAuthService {
   private options: OAuthModuleOptions;
   private googleClient: ReturnType<typeof createGoogleProvider> | null = null;

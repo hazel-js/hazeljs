@@ -1,4 +1,4 @@
-import { Injectable } from '@hazeljs/core';
+import { Service } from '@hazeljs/core';
 import logger from '@hazeljs/core';
 
 export interface PipelineStepConfig {
@@ -10,7 +10,7 @@ export interface PipelineStepConfig {
 /**
  * Pipeline Builder - DSL for building pipelines programmatically
  */
-@Injectable()
+@Service()
 export class PipelineBuilder {
   private steps: PipelineStepConfig[] = [];
   private name = 'unnamed-pipeline';
