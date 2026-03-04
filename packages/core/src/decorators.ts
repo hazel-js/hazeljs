@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import logger from './logger';
-import { Type } from './types';
+import { Type, RequestContext } from './types';
 import { PipeTransform, PipeMetadata } from './pipes/pipe';
 import { Interceptor, InterceptorMetadata } from './interceptors/interceptor';
 import { HazelApp } from './hazel-app';
@@ -69,6 +69,12 @@ export interface ExecutionContext {
   switchToHttp(): {
     getRequest(): unknown;
     getResponse(): unknown;
+    /**
+     * Returns the fully parsed RequestContext for this request.
+     * Gives guards access to `params`, `query`, `headers`, `user`, and `body`
+     * without having to re-parse the raw Node.js IncomingMessage.
+     */
+    getContext(): RequestContext;
   };
 }
 

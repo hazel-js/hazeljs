@@ -196,6 +196,7 @@ export class Router {
             switchToHttp: () => ({
               getRequest: () => req,
               getResponse: () => res,
+              getContext: () => context,
             }),
           };
 
@@ -281,6 +282,10 @@ export class Router {
               } else {
                 args[i] = queryValue;
               }
+            } else if (injection.type === 'user') {
+              // Handle @CurrentUser() decorator — reads from context.user (set by a guard)
+              const user = context.user ?? (req as Record<string, unknown>).user;
+              args[i] = injection.field ? (user as Record<string, unknown>)?.[injection.field] : user;
             }
           }
         }

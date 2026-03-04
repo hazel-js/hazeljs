@@ -17,6 +17,12 @@ export interface TypeOrmServiceOptions {
 @Injectable()
 export class TypeOrmService {
   private _dataSource: DataSource;
+  /**
+   * Resolves when the DataSource is fully initialised. Started eagerly in the
+   * constructor so that by the time the first HTTP request arrives the
+   * connection is already established — no manual `onModuleInit` call needed.
+   */
+  private _ready: Promise<void>;
 
   constructor(options?: TypeOrmServiceOptions) {
     if (options?.dataSource) {
@@ -37,6 +43,20 @@ export class TypeOrmService {
         logging: false,
       } as DataSourceOptions);
     }
+
+    // Kick off the connection immediately. Errors are surfaced via ready() /
+    // onModuleInit() and on the first query attempt.
+    this._ready = this._dataSource.isInitialized
+      ? Promise.resolve()
+      : this._dataSource
+          .initialize()
+          .then(() => {
+            logger.info('TypeORM connected to database');
+          })
+          .catch((err: unknown) => {
+            logger.error('Failed to connect to database:', err);
+            throw err;
+          });
   }
 
   get dataSource(): DataSource {
@@ -47,16 +67,29 @@ export class TypeOrmService {
     return this._dataSource.getRepository(entity);
   }
 
+  /**
+   * Returns a promise that resolves once the DataSource is initialised.
+   * Useful in `main.ts` when you want to block the server start until the
+   * database is ready (optional but recommended for production).
+   *
+   * @example
+   * ```ts
+   * // Optional — guarantees DB is up before first request
+   * await app.getContainer().resolve(TypeOrmService).ready();
+   * await app.listen(3000);
+   * ```
+   */
+  ready(): Promise<void> {
+    return this._ready;
+  }
+
+  /**
+   * Awaits the DataSource initialisation. Idempotent — safe to call multiple
+   * times. Kept for compatibility with frameworks that call `onModuleInit`
+   * on lifecycle-aware services.
+   */
   async onModuleInit(): Promise<void> {
-    try {
-      if (!this._dataSource.isInitialized) {
-        await this._dataSource.initialize();
-      }
-      logger.info('TypeORM connected to database');
-    } catch (error) {
-      logger.error('Failed to connect to database:', error);
-      throw error;
-    }
+    await this._ready;
   }
 
   async onModuleDestroy(): Promise<void> {

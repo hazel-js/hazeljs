@@ -3,30 +3,67 @@ import { TypeOrmService } from './typeorm.service';
 
 describe('TypeOrmService', () => {
   describe('with provided DataSource', () => {
-    it('should use provided DataSource and initialize/destroy', async () => {
+    it('auto-initialises the DataSource on construction', async () => {
       const mockDs = {
         isInitialized: false,
-        initialize: async () => {
-          mockDs.isInitialized = true;
-        },
-        destroy: async () => {
-          mockDs.isInitialized = false;
-        },
+        initialize: jest.fn(async function (this: typeof mockDs) {
+          this.isInitialized = true;
+        }),
+        destroy: jest.fn(async function (this: typeof mockDs) {
+          this.isInitialized = false;
+        }),
         getRepository: jest.fn(() => ({ find: jest.fn() })),
       };
       const dataSource = mockDs as unknown as DataSource;
 
       const service = new TypeOrmService({ dataSource });
-      expect(service.dataSource).toBe(dataSource);
 
-      await service.onModuleInit();
+      // ready() / onModuleInit() both resolve once initialization completes
+      await service.ready();
+      expect(mockDs.initialize).toHaveBeenCalledTimes(1);
       expect(dataSource.isInitialized).toBe(true);
 
+      // onModuleInit() is idempotent — does not re-initialize
+      await service.onModuleInit();
+      expect(mockDs.initialize).toHaveBeenCalledTimes(1);
+    });
+
+    it('skips re-initialization when DataSource is already initialized', async () => {
+      const mockDs = {
+        isInitialized: true,
+        initialize: jest.fn(),
+        destroy: jest.fn(async function (this: typeof mockDs) {
+          this.isInitialized = false;
+        }),
+        getRepository: jest.fn(() => ({})),
+      };
+      const dataSource = mockDs as unknown as DataSource;
+
+      const service = new TypeOrmService({ dataSource });
+      await service.ready();
+
+      expect(mockDs.initialize).not.toHaveBeenCalled();
+    });
+
+    it('destroys the DataSource on onModuleDestroy', async () => {
+      const mockDs = {
+        isInitialized: true,
+        initialize: jest.fn(),
+        destroy: jest.fn(async function (this: typeof mockDs) {
+          this.isInitialized = false;
+        }),
+        getRepository: jest.fn(() => ({})),
+      };
+      const dataSource = mockDs as unknown as DataSource;
+
+      const service = new TypeOrmService({ dataSource });
       await service.onModuleDestroy();
+
+      expect(mockDs.destroy).toHaveBeenCalledTimes(1);
       expect(dataSource.isInitialized).toBe(false);
     });
 
-    it('should expose getRepository', () => {
+    it('exposes getRepository', async () => {
       const mockRepo = { find: jest.fn(), findOne: jest.fn() };
       const dataSource = {
         isInitialized: true,
@@ -34,9 +71,10 @@ describe('TypeOrmService', () => {
       } as unknown as DataSource;
 
       const service = new TypeOrmService({ dataSource });
+      await service.ready();
+
       const repo = service.getRepository('dummy' as never);
       expect(repo).toBe(mockRepo);
-      expect(typeof repo.find).toBe('function');
     });
   });
 
@@ -47,7 +85,7 @@ describe('TypeOrmService', () => {
       process.env.DATABASE_URL = origEnv;
     });
 
-    it('should throw when DATABASE_URL is not set', () => {
+    it('throws when DATABASE_URL is not set', () => {
       delete process.env.DATABASE_URL;
       expect(() => new TypeOrmService()).toThrow(/DATABASE_URL|options|dataSource/);
     });
