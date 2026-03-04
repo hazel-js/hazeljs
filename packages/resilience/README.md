@@ -4,7 +4,7 @@ Fault-tolerance and resilience patterns for HazelJS. Provides circuit breaker, r
 
 [![npm version](https://img.shields.io/npm/v/@hazeljs/resilience.svg)](https://www.npmjs.com/package/@hazeljs/resilience)
 [![npm downloads](https://img.shields.io/npm/dm/@hazeljs/resilience)](https://www.npmjs.com/package/@hazeljs/resilience)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 
 ## Installation
 
