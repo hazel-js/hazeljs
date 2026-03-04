@@ -29,7 +29,6 @@ import { buildCommand } from './commands/build';
 import { pdfToAudioCommand } from './commands/pdf-to-audio';
 import { startCommand } from './commands/start';
 import { testCommand } from './commands/test';
-import { architectureCommand } from './commands/architecture';
 
 const program = new Command();
 
@@ -48,7 +47,6 @@ buildCommand(program);
 pdfToAudioCommand(program);
 startCommand(program);
 testCommand(program);
-architectureCommand(program);
 
 // Generate command group
 const generateCommand = program
