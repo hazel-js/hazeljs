@@ -128,7 +128,13 @@ describe('OpenAIProvider', () => {
 
       await provider.complete({
         ...BASE_REQUEST,
-        functions: [{ name: 'testFn', description: 'Test', parameters: {} }],
+        functions: [
+          {
+            name: 'testFn',
+            description: 'Test',
+            parameters: { type: 'object' as const, properties: {} },
+          },
+        ],
       });
 
       expect(mockChatCreate).toHaveBeenCalledWith(
