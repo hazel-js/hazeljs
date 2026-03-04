@@ -6,7 +6,7 @@ jest.mock('@hazeljs/core', () => ({
 
 jest.mock('./translation.loader', () => ({
   TranslationLoader: {
-    load: jest.fn().mockResolvedValue(new Map()),
+    load: jest.fn().mockReturnValue(new Map()),
   },
 }));
 
@@ -20,7 +20,7 @@ const mockLoad = TranslationLoader.load as jest.MockedFunction<typeof Translatio
 describe('I18nModule', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockLoad.mockResolvedValue(new Map());
+    mockLoad.mockReturnValue(new Map());
   });
 
   describe('forRoot()', () => {
@@ -68,16 +68,16 @@ describe('I18nModule', () => {
       expect((optionsProvider?.useValue as Record<string, unknown>)?.fallbackLocale).toBe('en');
     });
 
-    it('I18nService factory creates and initializes service', async () => {
-      const store = new Map([['en', { hello: 'Hello' }]]) as never;
-      mockLoad.mockResolvedValue(store);
+    it('I18nService factory creates and initializes service', () => {
+      const store = new Map([['en', { hello: 'Hello' }]]);
+      mockLoad.mockReturnValue(store);
 
       const result = I18nModule.forRoot({ translationsPath: './trans' });
       const serviceProvider = result.providers.find((p) => p.provide === I18nService);
       const optionsProvider = result.providers.find((p) => p.provide === 'I18N_OPTIONS');
       const opts = optionsProvider?.useValue;
 
-      const service = await serviceProvider?.useFactory?.(opts);
+      const service = serviceProvider?.useFactory?.(opts);
       expect(service).toBeInstanceOf(I18nService);
       expect(mockLoad).toHaveBeenCalled();
     });
@@ -110,45 +110,45 @@ describe('I18nModule', () => {
 
   describe('forRootAsync()', () => {
     it('returns module reference', () => {
-      const result = I18nModule.forRootAsync({ useFactory: async () => ({}) });
+      const result = I18nModule.forRootAsync({ useFactory: () => ({}) });
       expect(result.module).toBe(I18nModule);
     });
 
     it('exports I18nService and LocaleMiddleware', () => {
-      const result = I18nModule.forRootAsync({ useFactory: async () => ({}) });
+      const result = I18nModule.forRootAsync({ useFactory: () => ({}) });
       expect(result.exports).toContain(I18nService);
       expect(result.exports).toContain(LocaleMiddleware);
     });
 
     it('sets global to true', () => {
-      const result = I18nModule.forRootAsync({ useFactory: async () => ({}) });
+      const result = I18nModule.forRootAsync({ useFactory: () => ({}) });
       expect(result.global).toBe(true);
     });
 
     it('provides 3 providers', () => {
-      const result = I18nModule.forRootAsync({ useFactory: async () => ({}) });
+      const result = I18nModule.forRootAsync({ useFactory: () => ({}) });
       expect(result.providers).toHaveLength(3);
     });
 
-    it('OPTIONS factory resolves and applies defaults', async () => {
+    it('OPTIONS factory resolves and applies defaults', () => {
       const result = I18nModule.forRootAsync({
-        useFactory: async () => ({ defaultLocale: 'ja' }),
+        useFactory: () => ({ defaultLocale: 'ja' }),
       });
       const optionsProvider = result.providers.find((p) => p.provide === 'I18N_OPTIONS');
-      const resolved = await optionsProvider?.useFactory?.();
+      const resolved = optionsProvider?.useFactory?.();
       expect((resolved as Record<string, unknown>).defaultLocale).toBe('ja');
     });
 
-    it('passes inject args through to useFactory', async () => {
-      const factory = jest.fn().mockResolvedValue({ defaultLocale: 'ko' });
+    it('passes inject args through to useFactory', () => {
+      const factory = jest.fn().mockReturnValue({ defaultLocale: 'ko' });
       const result = I18nModule.forRootAsync({ useFactory: factory, inject: ['CONFIG'] });
       const optionsProvider = result.providers.find((p) => p.provide === 'I18N_OPTIONS');
-      await optionsProvider?.useFactory?.('some-config-value');
+      optionsProvider?.useFactory?.('some-config-value');
       expect(factory).toHaveBeenCalledWith('some-config-value');
     });
 
-    it('I18nService factory creates and initializes service', async () => {
-      const result = I18nModule.forRootAsync({ useFactory: async () => ({}) });
+    it('I18nService factory creates and initializes service', () => {
+      const result = I18nModule.forRootAsync({ useFactory: () => ({}) });
       const serviceProvider = result.providers.find((p) => p.provide === I18nService);
 
       const resolvedOpts = {
@@ -161,12 +161,12 @@ describe('I18nModule', () => {
         isGlobal: true,
       };
 
-      const service = await serviceProvider?.useFactory?.(resolvedOpts);
+      const service = serviceProvider?.useFactory?.(resolvedOpts);
       expect(service).toBeInstanceOf(I18nService);
     });
 
-    it('LocaleMiddleware factory creates middleware', async () => {
-      const result = I18nModule.forRootAsync({ useFactory: async () => ({}) });
+    it('LocaleMiddleware factory creates middleware', () => {
+      const result = I18nModule.forRootAsync({ useFactory: () => ({}) });
       const mwProvider = result.providers.find((p) => p.provide === LocaleMiddleware);
 
       const resolvedOpts = {
@@ -179,12 +179,12 @@ describe('I18nModule', () => {
         isGlobal: true,
       };
 
-      const mw = await mwProvider?.useFactory?.(resolvedOpts);
+      const mw = mwProvider?.useFactory?.(resolvedOpts);
       expect(mw).toBeInstanceOf(LocaleMiddleware);
     });
 
     it('uses empty array for inject when not specified', () => {
-      const result = I18nModule.forRootAsync({ useFactory: async () => ({}) });
+      const result = I18nModule.forRootAsync({ useFactory: () => ({}) });
       const optionsProvider = result.providers.find((p) => p.provide === 'I18N_OPTIONS');
       expect(optionsProvider?.inject).toEqual([]);
     });

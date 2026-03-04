@@ -33,7 +33,14 @@ export class LocaleMiddleware {
   /**
    * Run through each configured strategy in priority order and return the
    * first valid locale found, or the default locale as a fallback.
+   *
+   * Exposed publicly so proxy handlers (e.g. addProxyHandler in main.ts) can
+   * call locale detection without going through the full middleware pipeline.
    */
+  resolveLocale(req: Request): string {
+    return this.detect(req);
+  }
+
   private detect(req: Request): string {
     for (const strategy of this.options.detection) {
       switch (strategy) {

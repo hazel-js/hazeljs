@@ -1,14 +1,14 @@
 import { TranslationLoader } from './translation.loader';
 
-jest.mock('fs/promises', () => ({
-  readdir: jest.fn(),
-  readFile: jest.fn(),
+jest.mock('fs', () => ({
+  readdirSync: jest.fn(),
+  readFileSync: jest.fn(),
 }));
 
-import { readdir, readFile } from 'fs/promises';
+import { readdirSync, readFileSync } from 'fs';
 
-const mockReaddir = readdir as jest.MockedFunction<typeof readdir>;
-const mockReadFile = readFile as jest.MockedFunction<typeof readFile>;
+const mockReaddirSync = readdirSync as jest.MockedFunction<typeof readdirSync>;
+const mockReadFileSync = readFileSync as jest.MockedFunction<typeof readFileSync>;
 
 describe('TranslationLoader', () => {
   beforeEach(() => {
@@ -16,65 +16,67 @@ describe('TranslationLoader', () => {
   });
 
   describe('load()', () => {
-    it('returns an empty store when directory does not exist', async () => {
-      mockReaddir.mockRejectedValue(Object.assign(new Error('ENOENT'), { code: 'ENOENT' }));
+    it('returns an empty store when directory does not exist', () => {
+      mockReaddirSync.mockImplementation(() => {
+        throw Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
+      });
 
-      const store = await TranslationLoader.load('/nonexistent/path');
+      const store = TranslationLoader.load('/nonexistent/path');
       expect(store.size).toBe(0);
     });
 
-    it('returns an empty store when directory is empty', async () => {
-      mockReaddir.mockResolvedValue([] as never);
+    it('returns an empty store when directory is empty', () => {
+      mockReaddirSync.mockReturnValue([] as never);
 
-      const store = await TranslationLoader.load('/empty/dir');
+      const store = TranslationLoader.load('/empty/dir');
       expect(store.size).toBe(0);
     });
 
-    it('ignores non-JSON files', async () => {
-      mockReaddir.mockResolvedValue(['README.md', 'notes.txt'] as never);
+    it('ignores non-JSON files', () => {
+      mockReaddirSync.mockReturnValue(['README.md', 'notes.txt'] as never);
 
-      const store = await TranslationLoader.load('/some/dir');
+      const store = TranslationLoader.load('/some/dir');
       expect(store.size).toBe(0);
-      expect(mockReadFile).not.toHaveBeenCalled();
+      expect(mockReadFileSync).not.toHaveBeenCalled();
     });
 
-    it('loads a single JSON file and stores translations by locale', async () => {
-      mockReaddir.mockResolvedValue(['en.json'] as never);
-      mockReadFile.mockResolvedValue('{"hello":"Hello","bye":"Goodbye"}' as never);
+    it('loads a single JSON file and stores translations by locale', () => {
+      mockReaddirSync.mockReturnValue(['en.json'] as never);
+      mockReadFileSync.mockReturnValue('{"hello":"Hello","bye":"Goodbye"}' as never);
 
-      const store = await TranslationLoader.load('/translations');
+      const store = TranslationLoader.load('/translations');
       expect(store.has('en')).toBe(true);
       expect(store.get('en')).toEqual({ hello: 'Hello', bye: 'Goodbye' });
     });
 
-    it('loads multiple JSON files into separate locale entries', async () => {
-      mockReaddir.mockResolvedValue(['en.json', 'fr.json'] as never);
-      mockReadFile
-        .mockResolvedValueOnce('{"hello":"Hello"}' as never)
-        .mockResolvedValueOnce('{"hello":"Bonjour"}' as never);
+    it('loads multiple JSON files into separate locale entries', () => {
+      mockReaddirSync.mockReturnValue(['en.json', 'fr.json'] as never);
+      mockReadFileSync
+        .mockReturnValueOnce('{"hello":"Hello"}' as never)
+        .mockReturnValueOnce('{"hello":"Bonjour"}' as never);
 
-      const store = await TranslationLoader.load('/translations');
+      const store = TranslationLoader.load('/translations');
       expect(store.size).toBe(2);
       expect(store.get('en')).toEqual({ hello: 'Hello' });
       expect(store.get('fr')).toEqual({ hello: 'Bonjour' });
     });
 
-    it('handles locale codes with hyphens (zh-TW.json)', async () => {
-      mockReaddir.mockResolvedValue(['zh-TW.json'] as never);
-      mockReadFile.mockResolvedValue('{"greeting":"你好"}' as never);
+    it('handles locale codes with hyphens (zh-TW.json)', () => {
+      mockReaddirSync.mockReturnValue(['zh-TW.json'] as never);
+      mockReadFileSync.mockReturnValue('{"greeting":"你好"}' as never);
 
-      const store = await TranslationLoader.load('/translations');
+      const store = TranslationLoader.load('/translations');
       expect(store.has('zh-TW')).toBe(true);
     });
 
-    it('skips malformed JSON files and writes to stderr', async () => {
+    it('skips malformed JSON files and writes to stderr', () => {
       const stderrSpy = jest.spyOn(process.stderr, 'write').mockImplementation(() => true);
-      mockReaddir.mockResolvedValue(['en.json', 'bad.json'] as never);
-      mockReadFile
-        .mockResolvedValueOnce('{"ok":true}' as never)
-        .mockResolvedValueOnce('{ invalid json' as never);
+      mockReaddirSync.mockReturnValue(['en.json', 'bad.json'] as never);
+      mockReadFileSync
+        .mockReturnValueOnce('{"ok":true}' as never)
+        .mockReturnValueOnce('{ invalid json' as never);
 
-      const store = await TranslationLoader.load('/translations');
+      const store = TranslationLoader.load('/translations');
       expect(store.has('en')).toBe(true);
       expect(store.has('bad')).toBe(false);
       expect(stderrSpy).toHaveBeenCalledWith(expect.stringContaining('[@hazeljs/i18n]'));
@@ -82,25 +84,27 @@ describe('TranslationLoader', () => {
       stderrSpy.mockRestore();
     });
 
-    it('writes non-Error exception to stderr as string', async () => {
+    it('writes non-Error exception to stderr as string', () => {
       const stderrSpy = jest.spyOn(process.stderr, 'write').mockImplementation(() => true);
-      mockReaddir.mockResolvedValue(['broken.json'] as never);
-      mockReadFile.mockRejectedValue('string error' as never);
+      mockReaddirSync.mockReturnValue(['broken.json'] as never);
+      mockReadFileSync.mockImplementation(() => {
+        throw 'string error';
+      });
 
-      const store = await TranslationLoader.load('/translations');
+      const store = TranslationLoader.load('/translations');
       expect(store.has('broken')).toBe(false);
       expect(stderrSpy).toHaveBeenCalledWith(expect.stringContaining('string error'));
 
       stderrSpy.mockRestore();
     });
 
-    it('loads nested translation objects', async () => {
-      mockReaddir.mockResolvedValue(['en.json'] as never);
-      mockReadFile.mockResolvedValue(
+    it('loads nested translation objects', () => {
+      mockReaddirSync.mockReturnValue(['en.json'] as never);
+      mockReadFileSync.mockReturnValue(
         JSON.stringify({ errors: { notFound: 'Not found', invalid: 'Invalid' } }) as never
       );
 
-      const store = await TranslationLoader.load('/translations');
+      const store = TranslationLoader.load('/translations');
       expect(store.get('en')).toEqual({
         errors: { notFound: 'Not found', invalid: 'Invalid' },
       });

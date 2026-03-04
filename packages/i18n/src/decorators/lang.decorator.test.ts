@@ -1,5 +1,5 @@
 import 'reflect-metadata';
-import { Lang, extractLang } from './lang.decorator';
+import { Lang, extractLang, LANG_QUERY_KEY } from './lang.decorator';
 import { LOCALE_KEY } from '../i18n.middleware';
 
 jest.mock('../i18n.middleware', () => ({
@@ -22,7 +22,7 @@ describe('Lang() decorator', () => {
 
     const metadata = Reflect.getMetadata(INJECT_METADATA_KEY, TestController, 'greet');
     expect(metadata).toBeDefined();
-    expect(metadata[0]).toEqual({ type: 'custom', key: LOCALE_KEY, source: 'request' });
+    expect(metadata[0]).toEqual({ type: 'query', name: LANG_QUERY_KEY });
   });
 
   it('stores metadata at the correct parameter index', () => {
@@ -34,7 +34,7 @@ describe('Lang() decorator', () => {
     decorator(TwoParamController.prototype, 'doSomething', 1);
 
     const metadata = Reflect.getMetadata(INJECT_METADATA_KEY, TwoParamController, 'doSomething');
-    expect(metadata[1]).toEqual({ type: 'custom', key: LOCALE_KEY, source: 'request' });
+    expect(metadata[1]).toEqual({ type: 'query', name: LANG_QUERY_KEY });
     expect(metadata[0]).toBeUndefined();
   });
 
@@ -51,7 +51,7 @@ describe('Lang() decorator', () => {
 
     const metadata = Reflect.getMetadata(INJECT_METADATA_KEY, MultiController, 'action');
     expect(metadata[0]).toEqual({ type: 'body' });
-    expect(metadata[2]).toEqual({ type: 'custom', key: LOCALE_KEY, source: 'request' });
+    expect(metadata[2]).toEqual({ type: 'query', name: LANG_QUERY_KEY });
   });
 
   it('throws when propertyKey is undefined (constructor usage)', () => {

@@ -80,9 +80,9 @@ export class I18nModule {
         },
         {
           provide: I18nService,
-          useFactory: async (...args: unknown[]): Promise<I18nService> => {
+          useFactory: (...args: unknown[]): I18nService => {
             const opts = args[0] as ResolvedI18nOptions;
-            const store = await TranslationLoader.load(opts.translationsPath);
+            const store = TranslationLoader.load(opts.translationsPath);
             const service = new I18nService();
             service.initialize(store, opts);
             return service;
@@ -119,7 +119,8 @@ export class I18nModule {
    * ```
    */
   static forRootAsync(options: {
-    useFactory: (...args: unknown[]) => Promise<I18nOptions> | I18nOptions;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    useFactory: (...args: any[]) => I18nOptions;
     inject?: unknown[];
   }): {
     module: typeof I18nModule;
@@ -136,17 +137,17 @@ export class I18nModule {
       providers: [
         {
           provide: I18N_OPTIONS_TOKEN,
-          useFactory: async (...args: unknown[]): Promise<ResolvedI18nOptions> => {
-            const userOptions = await options.useFactory(...args);
+          useFactory: (...args: unknown[]): ResolvedI18nOptions => {
+            const userOptions = options.useFactory(...args);
             return resolveOptions(userOptions);
           },
           inject: options.inject ?? [],
         },
         {
           provide: I18nService,
-          useFactory: async (...args: unknown[]): Promise<I18nService> => {
+          useFactory: (...args: unknown[]): I18nService => {
             const opts = args[0] as ResolvedI18nOptions;
-            const store = await TranslationLoader.load(opts.translationsPath);
+            const store = TranslationLoader.load(opts.translationsPath);
             const service = new I18nService();
             service.initialize(store, opts);
             return service;

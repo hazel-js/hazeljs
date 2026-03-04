@@ -23,7 +23,7 @@ export { I18nService, I18nFormatter } from './i18n.service';
 export { LocaleMiddleware, getLocaleFromRequest, LOCALE_KEY } from './i18n.middleware';
 export { I18nInterceptor } from './i18n.interceptor';
 export { TranslationLoader } from './translation.loader';
-export { Lang, extractLang } from './decorators/lang.decorator';
+export { Lang, extractLang, LANG_QUERY_KEY } from './decorators/lang.decorator';
 export type {
   I18nOptions,
   ResolvedI18nOptions,
