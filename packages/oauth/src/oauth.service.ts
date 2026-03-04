@@ -1,4 +1,4 @@
-import { Service } from '@hazeljs/core';
+import { Service, Container, type InjectionToken } from '@hazeljs/core';
 import * as arctic from 'arctic';
 import {
   createGoogleProvider,
@@ -19,6 +19,7 @@ import {
 } from './providers';
 import type {
   OAuthModuleOptions,
+  OAuthCallbackHandler,
   OAuthCallbackResult,
   OAuthAuthorizationResult,
   SupportedProvider,
@@ -252,6 +253,30 @@ export class OAuthService {
       expiresAt,
       user,
     };
+  }
+
+  /**
+   * Called by OAuthController after a successful token exchange and user-profile fetch.
+   *
+   * If the module was configured with a `callbackHandler` class, the handler is
+   * resolved from the global DI container and its `handle()` method is invoked.
+   * This is where you look up / create your application user and issue a JWT.
+   *
+   * When no handler is configured the raw OAuthCallbackResult is returned unchanged,
+   * which preserves backwards-compatible behaviour.
+   */
+  async executeCallback(
+    provider: SupportedProvider,
+    result: OAuthCallbackResult
+  ): Promise<unknown> {
+    const handlerClass = OAuthService.options?.callbackHandler;
+    if (!handlerClass) return result;
+
+    const handler = Container.getInstance().resolve(
+      handlerClass as InjectionToken<OAuthCallbackHandler>
+    ) as OAuthCallbackHandler;
+
+    return handler.handle(result, provider);
   }
 
   /**

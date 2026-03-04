@@ -12,6 +12,7 @@ export { OAuthStateGuard } from './guards/oauth-state.guard';
 export type {
   OAuthModuleOptions,
   OAuthProvidersConfig,
+  OAuthCallbackHandler,
   OAuthCallbackResult,
   OAuthAuthorizationResult,
   OAuthUser,

@@ -89,6 +89,10 @@ export class OAuthController {
     try {
       const result = await this.oauthService.handleCallback(p, code, storedState, codeVerifier);
 
+      // Pass through callbackHandler (if configured) so the app can issue a JWT,
+      // look up the user in its own DB, etc. before responding.
+      const response = await this.oauthService.executeCallback(p, result);
+
       if (query.successRedirect) {
         res.status(302);
         res.setHeader('Location', query.successRedirect);
@@ -96,7 +100,7 @@ export class OAuthController {
         return;
       }
 
-      res.status(200).json(result);
+      res.status(200).json(response);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'OAuth callback failed';
       this.redirectOrJson(res, 401, query.errorRedirect, { error: message });

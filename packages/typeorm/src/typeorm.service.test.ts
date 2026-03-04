@@ -1,15 +1,22 @@
 import { DataSource } from 'typeorm';
 import { TypeOrmService } from './typeorm.service';
 
+interface MockDs {
+  isInitialized: boolean;
+  initialize: jest.Mock;
+  destroy: jest.Mock;
+  getRepository: jest.Mock;
+}
+
 describe('TypeOrmService', () => {
   describe('with provided DataSource', () => {
     it('auto-initialises the DataSource on construction', async () => {
-      const mockDs = {
+      const mockDs: MockDs = {
         isInitialized: false,
-        initialize: jest.fn(async function (this: typeof mockDs) {
+        initialize: jest.fn(async function (this: MockDs) {
           this.isInitialized = true;
         }),
-        destroy: jest.fn(async function (this: typeof mockDs) {
+        destroy: jest.fn(async function (this: MockDs) {
           this.isInitialized = false;
         }),
         getRepository: jest.fn(() => ({ find: jest.fn() })),
@@ -29,10 +36,10 @@ describe('TypeOrmService', () => {
     });
 
     it('skips re-initialization when DataSource is already initialized', async () => {
-      const mockDs = {
+      const mockDs: MockDs = {
         isInitialized: true,
         initialize: jest.fn(),
-        destroy: jest.fn(async function (this: typeof mockDs) {
+        destroy: jest.fn(async function (this: MockDs) {
           this.isInitialized = false;
         }),
         getRepository: jest.fn(() => ({})),
@@ -46,10 +53,10 @@ describe('TypeOrmService', () => {
     });
 
     it('destroys the DataSource on onModuleDestroy', async () => {
-      const mockDs = {
+      const mockDs: MockDs = {
         isInitialized: true,
         initialize: jest.fn(),
-        destroy: jest.fn(async function (this: typeof mockDs) {
+        destroy: jest.fn(async function (this: MockDs) {
           this.isInitialized = false;
         }),
         getRepository: jest.fn(() => ({})),
