@@ -85,12 +85,12 @@ export class UserEntity {
 
 ### 4. Create a repository
 
+`@Repository` implies `@Injectable()` — no need to add both decorators.
+
 ```typescript
-import { Injectable } from '@hazeljs/core';
 import { BaseRepository, Repository, TypeOrmService } from '@hazeljs/typeorm';
 import { UserEntity } from './user.entity';
 
-@Injectable()
 @Repository({ model: 'User' })
 export class UserRepository extends BaseRepository<UserEntity> {
   constructor(typeOrm: TypeOrmService) {
@@ -105,12 +105,14 @@ export class UserRepository extends BaseRepository<UserEntity> {
 
 ### 5. Use in a service
 
+Use `@Service` for service classes — it is the correct decorator for business-logic classes in HazelJS (not `@Injectable`).
+
 ```typescript
-import { Injectable } from '@hazeljs/core';
+import { Service } from '@hazeljs/core';
 import { InjectRepository } from '@hazeljs/typeorm';
 import { UserRepository } from './user.repository';
 
-@Injectable()
+@Service()
 export class UserService {
   constructor(
     @InjectRepository()
@@ -132,9 +134,10 @@ export class UserService {
 Use `TypeOrmService.dataSource` for transactions:
 
 ```typescript
+import { Service } from '@hazeljs/core';
 import { TypeOrmService } from '@hazeljs/typeorm';
 
-@Injectable()
+@Service()
 export class TransferService {
   constructor(private readonly typeOrm: TypeOrmService) {}
 

@@ -17,6 +17,22 @@ describe('Repository decorator', () => {
     const meta = Reflect.getMetadata('hazel:repository', PostRepo);
     expect(meta).toEqual({ model: 'Post' });
   });
+
+  it('should implicitly apply @Injectable so @Injectable() is not needed separately', () => {
+    @Repository({ model: 'Order' })
+    class OrderRepo {}
+
+    const injectable = Reflect.getMetadata('hazel:injectable', OrderRepo);
+    expect(injectable).toBeDefined();
+  });
+
+  it('should forward scope from RepositoryOptions to injectable metadata', () => {
+    @Repository({ model: 'Session', scope: 'transient' })
+    class SessionRepo {}
+
+    const scope = Reflect.getMetadata('hazel:scope', SessionRepo);
+    expect(scope).toBe('transient');
+  });
 });
 
 describe('InjectRepository', () => {

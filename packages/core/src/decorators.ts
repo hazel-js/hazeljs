@@ -54,6 +54,7 @@ export interface InjectableOptions {
 
 export interface RepositoryOptions {
   model: string;
+  scope?: 'singleton' | 'transient' | 'request';
 }
 
 export interface OnModuleInit {
