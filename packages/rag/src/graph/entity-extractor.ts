@@ -19,6 +19,9 @@
  */
 
 import type { ExtractionResult, EntityType, RelationshipType } from './graph.types';
+import { PromptRegistry } from '@hazeljs/prompts';
+import '../prompts/entity-extraction.prompt';
+import { ENTITY_EXTRACTION_KEY } from '../prompts/entity-extraction.prompt';
 
 const ENTITY_TYPES: EntityType[] = [
   'CONCEPT',
@@ -95,33 +98,13 @@ export class EntityExtractor {
   }
 
   private buildExtractionPrompt(text: string): string {
-    return `You are a knowledge graph extraction expert. Extract ALL entities and relationships from the text below.
-
-ENTITY TYPES (use exactly these strings): ${ENTITY_TYPES.join(', ')}
-RELATIONSHIP TYPES (use exactly these strings): ${RELATIONSHIP_TYPES.join(', ')}
-
-Rules:
-- Extract every meaningful named concept, technology, framework, person, organization, or process
-- Use canonical names (e.g. "HazelJS" not "hazel js" or "hazel framework")
-- Descriptions should be 1-2 sentences explaining the entity/relationship in context
-- Relationship weight 1-10: 10 = fundamental/core, 1 = peripheral mention
-- Every relationship source and target MUST be an entity you extracted
-- Return ONLY valid JSON, no markdown, no explanation
-
-TEXT:
-"""
-${text}
-"""
-
-Return this exact JSON structure:
-{
-  "entities": [
-    { "name": "string", "type": "EntityType", "description": "string" }
-  ],
-  "relationships": [
-    { "source": "entity name", "target": "entity name", "type": "RelType", "description": "string", "weight": 5 }
-  ]
-}`;
+    return PromptRegistry.get<{ text: string; entityTypes: string; relationshipTypes: string }>(
+      ENTITY_EXTRACTION_KEY
+    ).render({
+      text,
+      entityTypes: ENTITY_TYPES.join(', '),
+      relationshipTypes: RELATIONSHIP_TYPES.join(', '),
+    });
   }
 
   private parseResponse(raw: string): ExtractionResult {

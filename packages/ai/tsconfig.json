@@ -13,6 +13,9 @@
       ],
       "@hazeljs/cache": [
         "../cache/src"
+      ],
+      "@hazeljs/prompts": [
+        "../prompts/src"
       ]
     },
     "types": [
@@ -34,6 +37,9 @@
     },
     {
       "path": "../cache"
+    },
+    {
+      "path": "../prompts"
     }
   ]
 }

@@ -5,6 +5,9 @@
 
 import 'reflect-metadata';
 import { AgenticLLMProvider } from '../types';
+import { PromptRegistry } from '@hazeljs/prompts';
+import '../../prompts/agentic/query-rewriter.prompt';
+import { QUERY_REWRITER_KEY } from '../../prompts/agentic/query-rewriter.prompt';
 
 export interface QueryRewriterConfig {
   techniques?: ('expansion' | 'clarification' | 'synonym' | 'decomposition')[];
@@ -90,11 +93,13 @@ async function generateWithLLM(
   llmProvider: AgenticLLMProvider,
   maxVariations: number
 ): Promise<string[]> {
-  const prompt = `Generate ${maxVariations} variations of this query using these techniques: ${techniques.join(', ')}
-
-Original Query: ${query}
-
-Generate ${maxVariations} query variations (one per line):`;
+  const prompt = PromptRegistry.get<{ maxVariations: string; techniques: string; query: string }>(
+    QUERY_REWRITER_KEY
+  ).render({
+    maxVariations: String(maxVariations),
+    techniques: techniques.join(', '),
+    query,
+  });
 
   try {
     const response = await llmProvider.generate(prompt, { temperature: 0.7 });

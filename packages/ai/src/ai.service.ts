@@ -2,6 +2,9 @@ import { Service } from '@hazeljs/core';
 import { AITaskConfig, AITaskContext, AITaskResult } from './ai.types';
 import logger from '@hazeljs/core';
 import OpenAI from 'openai';
+import { PromptTemplate } from '@hazeljs/prompts';
+import './prompts/task.prompt';
+import { AI_TASK_FORMAT_KEY } from './prompts/task.prompt';
 
 interface OllamaResponse {
   response: string;
@@ -200,7 +203,6 @@ export class AIService {
     });
   }
 
-  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
   private formatPrompt(config: AITaskConfig, input: unknown): string {
     const context: AITaskContext = {
       taskName: config.name,
@@ -210,9 +212,13 @@ export class AIService {
       input: input,
     };
 
-    return config.prompt.replace(/{{(\w+)}}/g, (_: string, key: string): string => {
-      return String(context[key as keyof AITaskContext] || '');
+    // Normalise legacy {{variable}} to {variable} and render via PromptTemplate
+    const normalizedTemplate = config.prompt.replace(/\{\{(\w+)\}\}/g, '{$1}');
+    const tpl = new PromptTemplate<Record<string, unknown>>(normalizedTemplate, {
+      name: AI_TASK_FORMAT_KEY,
     });
+
+    return tpl.render(context as unknown as Record<string, unknown>);
   }
 
   // eslint-disable-next-line @typescript-eslint/explicit-function-return-type

@@ -19,6 +19,9 @@ import { ToolExecutor } from './tool.executor';
 import { ToolRegistry } from '../registry/tool.registry';
 import { AgentEventType } from '../types/event.types';
 import { LLMProvider } from '../types/llm.types';
+import { PromptRegistry } from '@hazeljs/prompts';
+import '../prompts/agent-system.prompt';
+import { AGENT_SYSTEM_KEY } from '../prompts/agent-system.prompt';
 
 /**
  * Agent Executor
@@ -324,14 +327,26 @@ export class AgentExecutor {
     system: string;
     messages: Array<{ role: 'system' | 'user' | 'assistant' | 'tool'; content: string }>;
   } {
-    let systemPrompt = (context.metadata?.systemPrompt as string) || 'You are a helpful AI agent.';
+    const basePrompt = (context.metadata?.systemPrompt as string) || 'You are a helpful AI agent.';
+    const description = (context.metadata?.agentDescription as string) || '';
+    const ragContext =
+      context.ragContext && context.ragContext.length > 0
+        ? context.ragContext.join('\n\n')
+        : '';
 
-    if (context.metadata?.agentDescription) {
-      systemPrompt += `\n\nAgent description: ${context.metadata.agentDescription}`;
-    }
+    let systemPrompt: string;
 
-    if (context.ragContext && context.ragContext.length > 0) {
-      systemPrompt += '\n\nRelevant context:\n' + context.ragContext.join('\n\n');
+    if (description || ragContext) {
+      systemPrompt = PromptRegistry.get<{
+        systemPrompt: string;
+        description: string;
+        ragContext: string;
+      }>(AGENT_SYSTEM_KEY)
+        .render({ systemPrompt: basePrompt, description, ragContext })
+        .replace(/\n\nAgent description: \n/, '\n')
+        .replace(/\n\nRelevant context:\n$/, '');
+    } else {
+      systemPrompt = basePrompt;
     }
 
     const messages = context.memory.conversationHistory.map((msg) => ({

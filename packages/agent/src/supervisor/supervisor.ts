@@ -44,6 +44,11 @@ import {
 } from '../graph/agent-graph.types';
 import { AgentExecutionResult } from '../types/agent.types';
 import { LLMProvider } from '../types/llm.types';
+import { PromptRegistry } from '@hazeljs/prompts';
+import '../prompts/supervisor-system.prompt';
+import '../prompts/supervisor-routing.prompt';
+import { SUPERVISOR_SYSTEM_KEY } from '../prompts/supervisor-system.prompt';
+import { SUPERVISOR_ROUTING_KEY } from '../prompts/supervisor-routing.prompt';
 
 // Minimal runtime interface (avoids circular dependency with AgentRuntime)
 interface RuntimeLike {
@@ -207,16 +212,9 @@ export class SupervisorAgent {
     const contextSummary =
       context.length > 1 ? '\n\nWork completed so far:\n' + context.slice(1).join('\n\n') : '';
 
-    const userMessage =
-      `Original task: ${originalTask}${contextSummary}\n\n` +
-      `Decide the next action. Respond with ONLY a JSON object (no markdown):
-{
-  "action": "delegate" | "finish",
-  "worker": "<worker name>",    // required when action === "delegate"
-  "subtask": "<instructions>",  // required when action === "delegate"
-  "response": "<final answer>", // required when action === "finish"
-  "thought": "<your reasoning>" // optional
-}`;
+    const userMessage = PromptRegistry.get<{ originalTask: string; contextSummary: string }>(
+      SUPERVISOR_ROUTING_KEY
+    ).render({ originalTask, contextSummary });
 
     try {
       const llmResponse = await this.llmProvider.chat({
@@ -265,16 +263,10 @@ export class SupervisorAgent {
   // ---------------------------------------------------------------------------
 
   private buildDefaultSystemPrompt(workers: SupervisorWorkerInfo[]): string {
-    return (
-      `You are "${this.name}", a supervisor agent responsible for orchestrating a team of ` +
-      `specialized worker agents to complete complex tasks.\n\n` +
-      `Your responsibilities:\n` +
-      `1. Break down the user's task into subtasks\n` +
-      `2. Delegate each subtask to the most appropriate worker\n` +
-      `3. Review worker results and decide what to do next\n` +
-      `4. When all subtasks are done, synthesize a final response\n\n` +
-      this.buildWorkerList(workers)
-    );
+    return PromptRegistry.get<{ name: string; workerList: string }>(SUPERVISOR_SYSTEM_KEY).render({
+      name: this.name,
+      workerList: this.buildWorkerList(workers),
+    });
   }
 
   private buildWorkerList(workers: SupervisorWorkerInfo[]): string {

@@ -8,6 +8,10 @@
     "declarationMap": true,
     "sourceMap": true,
     "skipLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "@hazeljs/prompts": ["../prompts/src"]
+    },
     "types": [
       "jest",
       "node"
@@ -26,6 +30,9 @@
     },
     {
       "path": "../ai"
+    },
+    {
+      "path": "../prompts"
     }
   ]
 }

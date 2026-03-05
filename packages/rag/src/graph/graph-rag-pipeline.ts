@@ -44,6 +44,9 @@ import { GraphStore } from './knowledge-graph';
 import { EntityExtractor } from './entity-extractor';
 import { CommunityDetector } from './community-detector';
 import { CommunitySummarizer } from './community-summarizer';
+import { PromptRegistry } from '@hazeljs/prompts';
+import '../prompts/graph-search.prompt';
+import { GRAPH_SEARCH_KEY } from '../prompts/graph-search.prompt';
 
 let entityCounter = 0;
 let relCounter = 0;
@@ -459,17 +462,9 @@ export class GraphRAGPipeline {
         'Combine the specific entity details and the broad community themes for a comprehensive answer.',
     };
 
-    const prompt = `You are a knowledge graph assistant. Answer the user's question using ONLY the provided context.
-${modeHint[mode]}
-If the context doesn't contain enough information, say so clearly.
-Always be specific and cite entities or communities where relevant.
-
-CONTEXT:
-${context}
-
-QUESTION: ${query}
-
-ANSWER:`;
+    const prompt = PromptRegistry.get<{ modeHint: string; context: string; query: string }>(
+      GRAPH_SEARCH_KEY
+    ).render({ modeHint: modeHint[mode], context, query });
 
     return this.config.llm(prompt);
   }
