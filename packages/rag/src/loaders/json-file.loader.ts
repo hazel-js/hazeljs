@@ -81,7 +81,7 @@ export class JSONFileLoader extends BaseDocumentLoader {
         parsed = parsed[key];
         if (parsed === undefined) {
           throw new Error(
-            `JSONFileLoader: key "${key}" not found at path "${this.opts.jsonPointer}" in ${this.opts.path}`,
+            `JSONFileLoader: key "${key}" not found at path "${this.opts.jsonPointer}" in ${this.opts.path}`
           );
         }
       }
@@ -91,7 +91,10 @@ export class JSONFileLoader extends BaseDocumentLoader {
     const fileName = basename(this.opts.path);
 
     return items.map((item, idx) => {
-      const obj = (typeof item === 'object' && item !== null ? item : {}) as Record<string, unknown>;
+      const obj = (typeof item === 'object' && item !== null ? item : {}) as Record<
+        string,
+        unknown
+      >;
 
       // Build content
       let content: string;

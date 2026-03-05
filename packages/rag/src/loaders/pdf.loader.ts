@@ -84,7 +84,10 @@ export class PdfLoader extends BaseDocumentLoader {
 
   async load(): Promise<Document[]> {
     // Dynamic import so pdf-parse is only required when PdfLoader is actually used
-    let pdfParse: (buffer: Buffer, options?: object) => Promise<{
+    let pdfParse: (
+      buffer: Buffer,
+      options?: object
+    ) => Promise<{
       text: string;
       numpages: number;
       info: Record<string, unknown>;
@@ -99,7 +102,7 @@ export class PdfLoader extends BaseDocumentLoader {
     } catch {
       throw new Error(
         '[PdfLoader] pdf-parse is not installed. Run: npm install pdf-parse\n' +
-        'Alternatively, install pdfjs-dist and use PdfjsLoader.',
+          'Alternatively, install pdfjs-dist and use PdfjsLoader.'
       );
     }
 
@@ -133,7 +136,10 @@ export class PdfLoader extends BaseDocumentLoader {
   }
 
   private async loadByPage(
-    pdfParse: (buf: Buffer, opts?: object) => Promise<{
+    pdfParse: (
+      buf: Buffer,
+      opts?: object
+    ) => Promise<{
       text: string;
       numpages: number;
       info: Record<string, unknown>;
@@ -142,7 +148,7 @@ export class PdfLoader extends BaseDocumentLoader {
     }>,
     buffer: Buffer,
     fileName: string,
-    baseOptions: Record<string, unknown>,
+    baseOptions: Record<string, unknown>
   ): Promise<Document[]> {
     const pages: string[] = [];
 
@@ -151,7 +157,7 @@ export class PdfLoader extends BaseDocumentLoader {
       // pdf-parse page renderer — called once per page
       pagerender: (pageData: {
         getTextContent: () => Promise<{ items: Array<{ str: string; transform: number[] }> }>;
-      }) =>
+      }): Promise<string> =>
         pageData.getTextContent().then((textContent) => {
           const lastY = { y: -1 };
           let text = '';
@@ -183,7 +189,7 @@ export class PdfLoader extends BaseDocumentLoader {
           pdfVersion: result.version,
           ...infoMetadata,
           ...this.opts.metadata,
-        }),
+        })
       )
       .filter((doc) => doc.content.length > 0);
   }

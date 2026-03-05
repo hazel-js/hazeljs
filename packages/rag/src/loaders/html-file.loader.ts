@@ -81,8 +81,11 @@ export class HTMLFileLoader extends BaseDocumentLoader {
 
       if (this.selector) {
         try {
-          const cheerio = await import('cheerio' as string).then((m) => m as typeof import('cheerio'));
-          const $ = (cheerio.load ?? (cheerio as unknown as { default: typeof cheerio.load }).default)(html);
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const cheerio = await import('cheerio' as string).then((m) => m as any);
+          const $ = (
+            cheerio.load ?? (cheerio as unknown as { default: typeof cheerio.load }).default
+          )(html);
           title = $('title').first().text().trim();
           text = this.clean($(this.selector).text());
         } catch {
@@ -101,7 +104,7 @@ export class HTMLFileLoader extends BaseDocumentLoader {
           loaderType: 'html',
           ...(title && { title }),
           ...this.extraMetadata,
-        }),
+        })
       );
     }
 
@@ -152,8 +155,8 @@ export class HTMLFileLoader extends BaseDocumentLoader {
   private clean(text: string): string {
     if (!this.collapseWhitespace) return text.trim();
     return text
-      .replace(/[ \t]+/g, ' ')       // collapse inline spaces
-      .replace(/\n{3,}/g, '\n\n')    // collapse multiple blank lines
+      .replace(/[ \t]+/g, ' ') // collapse inline spaces
+      .replace(/\n{3,}/g, '\n\n') // collapse multiple blank lines
       .trim();
   }
 }

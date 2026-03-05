@@ -93,10 +93,12 @@ export class MarkdownFileLoader extends BaseDocumentLoader {
         const sections = this.splitOnHeading(content, this.splitByHeading);
         for (const section of sections) {
           if (section.text.trim()) {
-            docs.push(this.createDocument(section.text, {
-              ...baseMetadata,
-              heading: section.heading,
-            }));
+            docs.push(
+              this.createDocument(section.text, {
+                ...baseMetadata,
+                heading: section.heading,
+              })
+            );
           }
         }
       }
@@ -132,7 +134,10 @@ export class MarkdownFileLoader extends BaseDocumentLoader {
       const colonIdx = line.indexOf(':');
       if (colonIdx < 1) continue;
       const key = line.slice(0, colonIdx).trim();
-      const value = line.slice(colonIdx + 1).trim().replace(/^["']|["']$/g, '');
+      const value = line
+        .slice(colonIdx + 1)
+        .trim()
+        .replace(/^["']|["']$/g, '');
       result[key] = value;
     }
     return result;
@@ -140,7 +145,7 @@ export class MarkdownFileLoader extends BaseDocumentLoader {
 
   private splitOnHeading(
     text: string,
-    level: 'h1' | 'h2' | 'h3',
+    level: 'h1' | 'h2' | 'h3'
   ): Array<{ heading: string; text: string }> {
     const hashes = { h1: '#', h2: '##', h3: '###' }[level];
     const pattern = new RegExp(`^${hashes}\\s+(.+)$`, 'gm');

@@ -66,7 +66,7 @@ export class TextFileLoader extends BaseDocumentLoader {
           filePath,
           loaderType: 'text',
           ...this.extraMetadata,
-        }),
+        })
       );
     }
 

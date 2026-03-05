@@ -32,6 +32,11 @@ import { join, extname, basename } from 'path';
 import { BaseDocumentLoader, Loader } from './base.loader';
 import type { Document } from '../types';
 import type { BaseDocumentLoader as IBaseDocumentLoader } from './base.loader';
+import { TextFileLoader } from './text-file.loader';
+import { MarkdownFileLoader } from './markdown-file.loader';
+import { JSONFileLoader } from './json-file.loader';
+import { CSVFileLoader } from './csv-file.loader';
+import { HTMLFileLoader } from './html-file.loader';
 
 export type LoaderFactory = (filePath: string) => IBaseDocumentLoader;
 
@@ -103,13 +108,15 @@ export class DirectoryLoader extends BaseDocumentLoader {
         }
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : String(err);
+        // eslint-disable-next-line no-console
         console.warn(`[DirectoryLoader] Skipping ${basename(filePath)}: ${message}`);
       }
 
       if (allDocs.length >= this.opts.maxFiles) {
+        // eslint-disable-next-line no-console
         console.warn(
           `[DirectoryLoader] maxFiles limit (${this.opts.maxFiles}) reached. ` +
-          `Stopping early. Loaded ${allDocs.length} documents.`
+            `Stopping early. Loaded ${allDocs.length} documents.`
         );
         break;
       }
@@ -164,37 +171,23 @@ export class DirectoryLoader extends BaseDocumentLoader {
     return this.autoDetectLoader(filePath, ext);
   }
 
-  private autoDetectLoader(
-    filePath: string,
-    ext: string,
-  ): IBaseDocumentLoader | undefined {
-    // Lazy imports to avoid loading all loaders when unused
+  private autoDetectLoader(filePath: string, ext: string): IBaseDocumentLoader | undefined {
     switch (ext) {
       case '.txt':
       case '.text':
-      case '.log': {
-        const { TextFileLoader } = require('./text-file.loader') as typeof import('./text-file.loader');
+      case '.log':
         return new TextFileLoader({ path: filePath });
-      }
       case '.md':
       case '.markdown':
-      case '.mdx': {
-        const { MarkdownFileLoader } = require('./markdown-file.loader') as typeof import('./markdown-file.loader');
+      case '.mdx':
         return new MarkdownFileLoader({ path: filePath });
-      }
-      case '.json': {
-        const { JSONFileLoader } = require('./json-file.loader') as typeof import('./json-file.loader');
+      case '.json':
         return new JSONFileLoader({ path: filePath });
-      }
-      case '.csv': {
-        const { CSVFileLoader } = require('./csv-file.loader') as typeof import('./csv-file.loader');
+      case '.csv':
         return new CSVFileLoader({ path: filePath });
-      }
       case '.html':
-      case '.htm': {
-        const { HTMLFileLoader } = require('./html-file.loader') as typeof import('./html-file.loader');
+      case '.htm':
         return new HTMLFileLoader({ path: filePath });
-      }
       default:
         return undefined;
     }

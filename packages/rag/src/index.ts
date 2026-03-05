@@ -49,3 +49,6 @@ export * from './rag-pipeline-with-memory';
 
 // Agentic RAG - Advanced autonomous retrieval capabilities
 export * from './agentic';
+
+// GraphRAG - Knowledge graph-based retrieval (entity + community search)
+export * from './graph';

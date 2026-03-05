@@ -53,9 +53,7 @@ export interface DocxLoaderOptions {
   name: 'DocxLoader',
   description: 'Loads Microsoft Word .docx files using mammoth (optional peer dependency).',
   extensions: ['.docx'],
-  mimeTypes: [
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  ],
+  mimeTypes: ['application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
 })
 export class DocxLoader extends BaseDocumentLoader {
   private readonly opts: Required<DocxLoaderOptions>;
@@ -74,7 +72,10 @@ export class DocxLoader extends BaseDocumentLoader {
     // Dynamic import — mammoth is only required when DocxLoader is actually used
     let mammoth: {
       extractRawText: (opts: { buffer: Buffer }) => Promise<{ value: string; messages: unknown[] }>;
-      convertToHtml: (opts: { buffer: Buffer; styleMap?: string[] }) => Promise<{ value: string; messages: unknown[] }>;
+      convertToHtml: (opts: {
+        buffer: Buffer;
+        styleMap?: string[];
+      }) => Promise<{ value: string; messages: unknown[] }>;
     };
 
     try {
@@ -82,9 +83,7 @@ export class DocxLoader extends BaseDocumentLoader {
       const mod = require('mammoth') as typeof mammoth & { default?: typeof mammoth };
       mammoth = mod.default ?? mod;
     } catch {
-      throw new Error(
-        '[DocxLoader] mammoth is not installed. Run: npm install mammoth',
-      );
+      throw new Error('[DocxLoader] mammoth is not installed. Run: npm install mammoth');
     }
 
     const buffer = await readFile(this.opts.path);
@@ -112,6 +111,7 @@ export class DocxLoader extends BaseDocumentLoader {
       .map((m) => m.message);
 
     if (warnings.length > 0) {
+      // eslint-disable-next-line no-console
       console.warn(`[DocxLoader] Conversion warnings for ${fileName}:`, warnings);
     }
 

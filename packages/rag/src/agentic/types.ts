@@ -136,9 +136,10 @@ export interface FeedbackData {
 }
 
 /**
- * Graph Search Result - Knowledge graph retrieval result
+ * Agentic Graph Search Result - Knowledge graph retrieval result (agentic module)
+ * @deprecated Use GraphSearchResult from @hazeljs/rag graph module instead.
  */
-export interface GraphSearchResult extends SearchResult {
+export interface AgenticGraphSearchResult extends SearchResult {
   nodes: GraphNode[];
   edges: GraphEdge[];
   path: string[];

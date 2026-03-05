@@ -109,14 +109,13 @@ export class WebLoader extends BaseDocumentLoader {
     // Process in chunks of `concurrency`
     for (let i = 0; i < this.urls.length; i += this.concurrency) {
       const batch = this.urls.slice(i, i + this.concurrency);
-      const results = await Promise.allSettled(
-        batch.map((url) => this.scrape(url)),
-      );
+      const results = await Promise.allSettled(batch.map((url) => this.scrape(url)));
 
       for (const result of results) {
         if (result.status === 'fulfilled' && result.value) {
           allDocs.push(result.value);
         } else if (result.status === 'rejected') {
+          // eslint-disable-next-line no-console
           console.warn('[WebLoader] Failed to scrape URL:', result.reason);
         }
       }
@@ -137,13 +136,15 @@ export class WebLoader extends BaseDocumentLoader {
     if (this.selector) {
       try {
         // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const cheerio = require('cheerio') as typeof import('cheerio');
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-require-imports
+        const cheerio = require('cheerio') as any;
         const $ = cheerio.load(html);
         title = $('title').first().text().trim();
         text = $(this.selector).text().trim();
         if (!text) {
+          // eslint-disable-next-line no-console
           console.warn(
-            `[WebLoader] Selector "${this.selector}" found no content at ${url}. Falling back to full page.`,
+            `[WebLoader] Selector "${this.selector}" found no content at ${url}. Falling back to full page.`
           );
           text = this.stripTags(html);
         }
@@ -152,8 +153,8 @@ export class WebLoader extends BaseDocumentLoader {
         if (this.selector) {
           throw new Error(
             `[WebLoader] The \`selector\` option requires the optional peer dependency "cheerio". ` +
-            `Run: npm install cheerio\n` +
-            `Or remove the \`selector\` option to use built-in HTML stripping.`,
+              `Run: npm install cheerio\n` +
+              `Or remove the \`selector\` option to use built-in HTML stripping.`
           );
         }
         text = this.stripTags(html);
@@ -193,6 +194,7 @@ export class WebLoader extends BaseDocumentLoader {
 
         const contentType = response.headers.get('content-type') ?? '';
         if (!contentType.includes('text/')) {
+          // eslint-disable-next-line no-console
           console.warn(`[WebLoader] Skipping non-text content at ${url}: ${contentType}`);
           return null;
         }
@@ -210,7 +212,7 @@ export class WebLoader extends BaseDocumentLoader {
     throw new Error(
       `[WebLoader] Failed to fetch ${url} after ${this.retries + 1} attempts: ${
         lastError instanceof Error ? lastError.message : String(lastError)
-      }`,
+      }`
     );
   }
 

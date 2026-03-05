@@ -74,7 +74,7 @@ export interface YouTubeTranscriptLoaderOptions {
 
 interface TranscriptLine {
   text: string;
-  start: number;  // seconds
+  start: number; // seconds
   duration: number;
 }
 
@@ -90,9 +90,9 @@ export class YouTubeTranscriptLoader extends BaseDocumentLoader {
   private readonly extraMetadata: Record<string, unknown>;
 
   private static readonly YOUTUBE_BASE = 'https://www.youtube.com';
-  private static readonly RE_PLAYER_RESPONSE =
-    /ytInitialPlayerResponse\s*=\s*({.+?})\s*;/;
-  private static readonly RE_CAPTION_TEXT = /<text[^>]*start="([^"]*)"[^>]*dur="([^"]*)"[^>]*>([\s\S]*?)<\/text>/g;
+  private static readonly RE_PLAYER_RESPONSE = /ytInitialPlayerResponse\s*=\s*({.+?})\s*;/;
+  private static readonly RE_CAPTION_TEXT =
+    /<text[^>]*start="([^"]*)"[^>]*dur="([^"]*)"[^>]*>([\s\S]*?)<\/text>/g;
 
   constructor(options: YouTubeTranscriptLoaderOptions) {
     super();
@@ -116,6 +116,7 @@ export class YouTubeTranscriptLoader extends BaseDocumentLoader {
         allDocs.push(...docs);
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : String(err);
+        // eslint-disable-next-line no-console
         console.warn(`[YouTubeTranscriptLoader] Skipping ${videoId}: ${message}`);
       }
     }
@@ -158,14 +159,14 @@ export class YouTubeTranscriptLoader extends BaseDocumentLoader {
 
   private extractCaptionInfo(
     html: string,
-    videoId: string,
+    videoId: string
   ): { captionUrl: string; title?: string; channelName?: string } {
     // Extract ytInitialPlayerResponse
     const match = YouTubeTranscriptLoader.RE_PLAYER_RESPONSE.exec(html);
     if (!match) {
       throw new Error(
         `Could not find ytInitialPlayerResponse for video ${videoId}. ` +
-        `The video may be unavailable, age-restricted, or have no captions.`,
+          `The video may be unavailable, age-restricted, or have no captions.`
       );
     }
 
@@ -177,12 +178,9 @@ export class YouTubeTranscriptLoader extends BaseDocumentLoader {
       throw new Error(`Failed to parse ytInitialPlayerResponse for video ${videoId}`);
     }
 
-    const title = (
-      (playerResponse as { videoDetails?: { title?: string } }).videoDetails?.title
-    );
-    const channelName = (
-      (playerResponse as { videoDetails?: { author?: string } }).videoDetails?.author
-    );
+    const title = (playerResponse as { videoDetails?: { title?: string } }).videoDetails?.title;
+    const channelName = (playerResponse as { videoDetails?: { author?: string } }).videoDetails
+      ?.author;
 
     // Navigate: captions → playerCaptionsTracklistRenderer → captionTracks[]
     const captionTracks = (
@@ -198,14 +196,12 @@ export class YouTubeTranscriptLoader extends BaseDocumentLoader {
     if (!captionTracks || captionTracks.length === 0) {
       throw new Error(
         `No caption tracks available for video ${videoId}. ` +
-        `The video may not have captions/subtitles.`,
+          `The video may not have captions/subtitles.`
       );
     }
 
     // Prefer the requested language; fall back to the first available track
-    const track =
-      captionTracks.find((t) => t.languageCode === this.language) ??
-      captionTracks[0];
+    const track = captionTracks.find((t) => t.languageCode === this.language) ?? captionTracks[0];
 
     return {
       captionUrl: `${track.baseUrl}&fmt=xml`,
@@ -233,7 +229,7 @@ export class YouTubeTranscriptLoader extends BaseDocumentLoader {
   private buildSegments(
     lines: TranscriptLine[],
     videoId: string,
-    baseMetadata: Record<string, unknown>,
+    baseMetadata: Record<string, unknown>
   ): Document[] {
     const segments: Document[] = [];
     const duration = this.segmentDuration!;
@@ -248,13 +244,15 @@ export class YouTubeTranscriptLoader extends BaseDocumentLoader {
           const text = buffer.join(' ');
           const startTime = this.formatTime(segStart);
           const endTime = this.formatTime(windowEnd);
-          segments.push(this.createDocument(text, {
-            ...baseMetadata,
-            startTime,
-            endTime,
-            startSeconds: segStart,
-            youtubeUrl: `https://youtu.be/${videoId}?t=${Math.floor(segStart)}`,
-          }));
+          segments.push(
+            this.createDocument(text, {
+              ...baseMetadata,
+              startTime,
+              endTime,
+              startSeconds: segStart,
+              youtubeUrl: `https://youtu.be/${videoId}?t=${Math.floor(segStart)}`,
+            })
+          );
           buffer = [];
         }
         segStart = Math.floor(line.start / duration) * duration;
@@ -265,13 +263,15 @@ export class YouTubeTranscriptLoader extends BaseDocumentLoader {
 
     // Final segment
     if (buffer.length > 0) {
-      segments.push(this.createDocument(buffer.join(' '), {
-        ...baseMetadata,
-        startTime: this.formatTime(segStart),
-        endTime: this.formatTime(windowEnd),
-        startSeconds: segStart,
-        youtubeUrl: `https://youtu.be/${videoId}?t=${Math.floor(segStart)}`,
-      }));
+      segments.push(
+        this.createDocument(buffer.join(' '), {
+          ...baseMetadata,
+          startTime: this.formatTime(segStart),
+          endTime: this.formatTime(windowEnd),
+          startSeconds: segStart,
+          youtubeUrl: `https://youtu.be/${videoId}?t=${Math.floor(segStart)}`,
+        })
+      );
     }
 
     return segments;
@@ -327,8 +327,6 @@ export class YouTubeTranscriptLoader extends BaseDocumentLoader {
     const h = Math.floor(seconds / 3600);
     const m = Math.floor((seconds % 3600) / 60);
     const s = Math.floor(seconds % 60);
-    return [h, m, s]
-      .map((v) => String(v).padStart(2, '0'))
-      .join(':');
+    return [h, m, s].map((v) => String(v).padStart(2, '0')).join(':');
   }
 }

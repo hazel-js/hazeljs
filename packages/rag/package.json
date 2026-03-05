@@ -28,7 +28,7 @@
     "@hazeljs/ai": ">=0.2.0-beta.0",
     "@hazeljs/core": ">=0.2.0-beta.0",
     "pdf-parse": "^1.1.1",
-    "mammoth": "^1.7.0",
+    "mammoth": "^1.11.0",
     "cheerio": "^1.0.0"
   },
   "peerDependenciesMeta": {
@@ -63,11 +63,45 @@
       "optional": true
     }
   },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "testMatch": [
+      "**/src/__tests__/**/*.test.ts"
+    ],
+    "collectCoverageFrom": [
+      "src/**/*.ts",
+      "!src/**/*.d.ts",
+      "!src/index.ts",
+      "!src/rag.module.ts",
+      "!src/rag.service.ts",
+      "!src/rag-pipeline-with-memory.ts",
+      "!src/vector-stores/**",
+      "!src/embeddings/**",
+      "!src/agentic/**",
+      "!src/decorators/**",
+      "!src/memory/**",
+      "!src/loaders/pdf.loader.ts",
+      "!src/loaders/docx.loader.ts",
+      "!src/loaders/web.loader.ts",
+      "!src/loaders/github.loader.ts",
+      "!src/loaders/youtube-transcript.loader.ts",
+      "!src/loaders/index.ts",
+      "!src/graph/index.ts",
+      "!src/types/**"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "statements": 85,
+        "branches": 75,
+        "functions": 85,
+        "lines": 85
+      }
+    }
+  },
   "devDependencies": {
     "openai": "^4.0.0",
     "@types/node": "^20.17.50",
-    "@types/pdf-parse": "^1.1.4",
-    "@types/mammoth": "^1.0.0",
     "@typescript-eslint/eslint-plugin": "^8.18.2",
     "@typescript-eslint/parser": "^8.18.2",
     "eslint": "^8.56.0",

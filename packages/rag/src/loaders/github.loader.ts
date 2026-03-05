@@ -141,8 +141,9 @@ export class GitHubLoader extends BaseDocumentLoader {
     const filtered = this.filterItems(treeItems);
 
     if (filtered.length === 0) {
+      // eslint-disable-next-line no-console
       console.warn(
-        `[GitHubLoader] No files matched the filter criteria in ${this.opts.owner}/${this.opts.repo}`,
+        `[GitHubLoader] No files matched the filter criteria in ${this.opts.owner}/${this.opts.repo}`
       );
       return [];
     }
@@ -165,11 +166,12 @@ export class GitHubLoader extends BaseDocumentLoader {
               sha: item.sha,
               loaderType: 'github',
               ...this.opts.metadata,
-            }),
+            })
           );
         }
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : String(err);
+        // eslint-disable-next-line no-console
         console.warn(`[GitHubLoader] Skipping ${item.path}: ${message}`);
       }
     }
@@ -191,9 +193,10 @@ export class GitHubLoader extends BaseDocumentLoader {
     }>(url);
 
     if (data.truncated) {
+      // eslint-disable-next-line no-console
       console.warn(
         `[GitHubLoader] Repository tree was truncated by the GitHub API ` +
-        `(too many files). Use \`directory\` or \`includePaths\` to narrow the scope.`,
+          `(too many files). Use \`directory\` or \`includePaths\` to narrow the scope.`
       );
     }
 
@@ -214,10 +217,7 @@ export class GitHubLoader extends BaseDocumentLoader {
       const ext = '.' + path.split('.').pop()!.toLowerCase();
 
       // Extension filter
-      if (
-        this.opts.includeExtensions.length > 0 &&
-        !this.opts.includeExtensions.includes(ext)
-      ) {
+      if (this.opts.includeExtensions.length > 0 && !this.opts.includeExtensions.includes(ext)) {
         return false;
       }
 
@@ -236,8 +236,9 @@ export class GitHubLoader extends BaseDocumentLoader {
 
       // File size filter
       if (item.size !== undefined && item.size > this.opts.maxFileSize) {
+        // eslint-disable-next-line no-console
         console.warn(
-          `[GitHubLoader] Skipping ${path} — size ${item.size} bytes exceeds maxFileSize ${this.opts.maxFileSize}`,
+          `[GitHubLoader] Skipping ${path} — size ${item.size} bytes exceeds maxFileSize ${this.opts.maxFileSize}`
         );
         return false;
       }
@@ -272,7 +273,7 @@ export class GitHubLoader extends BaseDocumentLoader {
     const timer = setTimeout(() => controller.abort(), this.opts.timeout);
 
     const headers: Record<string, string> = {
-      'Accept': 'application/vnd.github.v3+json',
+      Accept: 'application/vnd.github.v3+json',
       'User-Agent': 'HazelJS-RAG/1.0',
     };
     if (this.opts.token) {
@@ -284,14 +285,13 @@ export class GitHubLoader extends BaseDocumentLoader {
 
     if (!response.ok) {
       const body = await response.text().catch(() => '');
-      const hint = response.status === 403
-        ? ' (rate limited — provide a GitHub token with the `token` option)'
-        : response.status === 404
-        ? ' (repo or path not found — check owner/repo/ref/directory)'
-        : '';
-      throw new Error(
-        `GitHub API error ${response.status}${hint}: ${body.slice(0, 200)}`,
-      );
+      const hint =
+        response.status === 403
+          ? ' (rate limited — provide a GitHub token with the `token` option)'
+          : response.status === 404
+            ? ' (repo or path not found — check owner/repo/ref/directory)'
+            : '';
+      throw new Error(`GitHub API error ${response.status}${hint}: ${body.slice(0, 200)}`);
     }
 
     return response.text();

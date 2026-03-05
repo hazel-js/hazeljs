@@ -94,25 +94,27 @@ export class CSVFileLoader extends BaseDocumentLoader {
     }
 
     const fileName = basename(this.opts.path);
-    const contentCols = this.opts.contentColumns.length > 0
-      ? this.opts.contentColumns
-      : headers;
-    const metaCols = this.opts.metadataColumns.length > 0
-      ? this.opts.metadataColumns
-      : headers.filter((h) => !contentCols.includes(h));
+    const contentCols = this.opts.contentColumns.length > 0 ? this.opts.contentColumns : headers;
+    const metaCols =
+      this.opts.metadataColumns.length > 0
+        ? this.opts.metadataColumns
+        : headers.filter((h) => !contentCols.includes(h));
 
     return dataRows
       .map((row, rowIdx) => {
         const obj: Record<string, string> = {};
-        headers.forEach((h, i) => { obj[h] = row[i] ?? ''; });
+        headers.forEach((h, i) => {
+          obj[h] = row[i] ?? '';
+        });
 
         // Build content
         const contentParts = contentCols
           .filter((col) => col in obj && obj[col].trim().length > 0)
-          .map((col) =>
-            contentCols.length === 1
-              ? obj[col]                        // single column: raw value
-              : `${col}: ${obj[col]}`           // multiple: key: value
+          .map(
+            (col) =>
+              contentCols.length === 1
+                ? obj[col] // single column: raw value
+                : `${col}: ${obj[col]}` // multiple: key: value
           );
         const content = contentParts.join(this.opts.contentSeparator);
 

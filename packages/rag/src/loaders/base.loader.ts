@@ -104,16 +104,15 @@ export abstract class BaseDocumentLoader implements DocumentLoader {
    * logical section.  Useful for loaders that produce multi-page content
    * (PDF, DOCX) where you want one document per page.
    */
-  protected createDocuments(
-    pages: string[],
-    baseMetadata?: Record<string, unknown>,
-  ): Document[] {
+  protected createDocuments(pages: string[], baseMetadata?: Record<string, unknown>): Document[] {
     return pages
-      .map((page, idx) => this.createDocument(page, {
-        ...baseMetadata,
-        pageNumber: idx + 1,
-        totalPages: pages.length,
-      }))
+      .map((page, idx) =>
+        this.createDocument(page, {
+          ...baseMetadata,
+          pageNumber: idx + 1,
+          totalPages: pages.length,
+        })
+      )
       .filter((doc) => doc.content.length > 0);
   }
 }
@@ -135,21 +134,27 @@ type LoaderFactory<T extends BaseDocumentLoader> = (opts: unknown) => T;
 
 export class DocumentLoaderRegistry {
   private static byExtension = new Map<string, LoaderFactory<BaseDocumentLoader>>();
-  private static byMimeType  = new Map<string, LoaderFactory<BaseDocumentLoader>>();
+  private static byMimeType = new Map<string, LoaderFactory<BaseDocumentLoader>>();
 
   /** Register a loader class and factory for all its declared extensions / MIME types. */
   static register<T extends BaseDocumentLoader>(
     loaderClass: new (...args: unknown[]) => T,
-    factory: LoaderFactory<T>,
+    factory: LoaderFactory<T>
   ): void {
     const config = getLoaderConfig(loaderClass);
     if (!config) return;
 
     for (const ext of config.extensions ?? []) {
-      DocumentLoaderRegistry.byExtension.set(ext.toLowerCase(), factory as LoaderFactory<BaseDocumentLoader>);
+      DocumentLoaderRegistry.byExtension.set(
+        ext.toLowerCase(),
+        factory as LoaderFactory<BaseDocumentLoader>
+      );
     }
     for (const mime of config.mimeTypes ?? []) {
-      DocumentLoaderRegistry.byMimeType.set(mime.toLowerCase(), factory as LoaderFactory<BaseDocumentLoader>);
+      DocumentLoaderRegistry.byMimeType.set(
+        mime.toLowerCase(),
+        factory as LoaderFactory<BaseDocumentLoader>
+      );
     }
   }
 
