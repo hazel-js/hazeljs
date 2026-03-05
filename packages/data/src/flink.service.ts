@@ -98,4 +98,63 @@ export class FlinkService {
   > {
     return this.getClient().listJobs();
   }
+
+  /**
+   * Deploy a stream pipeline by uploading a JAR and running it.
+   * @param pipeline  The @Stream-decorated pipeline instance
+   * @param jarFile   Local path to the compiled pipeline JAR
+   * @param config    Optional Flink job config overrides
+   */
+  async deployStreamWithJar(
+    pipeline: object,
+    jarFile: string,
+    config?: Partial<FlinkJobConfig>
+  ): Promise<DeployStreamResult> {
+    const { jobConfig, jobGraph } = this.streamBuilder.buildConfig(pipeline, config);
+    const client = this.getClient();
+
+    const jobId = await client.submitJob(jobConfig, { jarFile, jobName: jobConfig.jobName, parallelism: jobConfig.parallelism });
+    return {
+      jobId,
+      status: 'submitted',
+      webUI: `${client.url}/#/job/${jobId}`,
+      jobConfig,
+      jobGraph,
+    };
+  }
+
+  /**
+   * Deploy a streaming pipeline using Flink SQL Gateway.
+   * @param sql       The SQL DDL+DML to submit (CREATE TABLE + INSERT INTO)
+   * @param sessionId Optional existing session ID; a new session is created if omitted
+   */
+  async deployStreamWithSql(sql: string, sessionId?: string): Promise<{ operationId: string; sessionId: string }> {
+    const client = this.getClient();
+    const sid = sessionId ?? await client.createSqlSession();
+    const operationId = await client.submitSql(sql, sid);
+    return { operationId, sessionId: sid };
+  }
+
+  async uploadJar(jarFile: string): Promise<string> {
+    return this.getClient().uploadJar(jarFile);
+  }
+
+  async runJar(
+    jarId: string,
+    options: { jobName?: string; parallelism?: number; entryClass?: string; programArgs?: string } = {}
+  ): Promise<string> {
+    return this.getClient().runJar(jarId, options);
+  }
+
+  async listJars(): Promise<Array<{ id: string; name: string; uploaded: number }>> {
+    return this.getClient().listJars();
+  }
+
+  async deleteJar(jarId: string): Promise<void> {
+    return this.getClient().deleteJar(jarId);
+  }
+
+  async createSqlSession(properties?: Record<string, string>): Promise<string> {
+    return this.getClient().createSqlSession(properties);
+  }
 }
