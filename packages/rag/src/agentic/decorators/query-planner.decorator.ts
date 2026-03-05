@@ -5,6 +5,9 @@
 
 import 'reflect-metadata';
 import { QueryPlan, SubQuery, AgenticLLMProvider } from '../types';
+import { PromptRegistry } from '@hazeljs/prompts';
+import '../../prompts/agentic/query-planner.prompt';
+import { QUERY_PLANNER_KEY } from '../../prompts/agentic/query-planner.prompt';
 
 export interface QueryPlannerConfig {
   decompose?: boolean;
@@ -82,24 +85,7 @@ async function decomposeQuery(query: string, config: QueryPlannerConfig): Promis
  * LLM-based query decomposition
  */
 async function decomposeWithLLM(query: string, config: QueryPlannerConfig): Promise<QueryPlan> {
-  const prompt = `Decompose the following complex query into simpler sub-queries.
-Each sub-query should be independent and focused on a specific aspect.
-
-Query: ${query}
-
-Provide the decomposition in the following JSON format:
-{
-  "subQueries": [
-    {
-      "id": "1",
-      "query": "sub-query text",
-      "type": "factual|analytical|comparative|temporal",
-      "dependencies": [],
-      "priority": 1
-    }
-  ],
-  "strategy": "sequential|parallel"
-}`;
+  const prompt = PromptRegistry.get<{ query: string }>(QUERY_PLANNER_KEY).render({ query });
 
   try {
     const result = await config.llmProvider!.generateStructured<{

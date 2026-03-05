@@ -9,6 +9,10 @@
     "sourceMap": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
+    "baseUrl": ".",
+    "paths": {
+      "@hazeljs/prompts": ["../prompts/src"]
+    },
     "types": [
       "jest",
       "node"
@@ -24,6 +28,9 @@
   "references": [
     {
       "path": "../core"
+    },
+    {
+      "path": "../prompts"
     },
     {
       "path": "../rag"

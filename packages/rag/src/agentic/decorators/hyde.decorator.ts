@@ -5,6 +5,9 @@
 
 import 'reflect-metadata';
 import { HyDEResult, AgenticLLMProvider } from '../types';
+import { PromptRegistry } from '@hazeljs/prompts';
+import '../../prompts/agentic/hyde.prompt';
+import { HYDE_KEY } from '../../prompts/agentic/hyde.prompt';
 
 export interface HyDEConfig {
   generateHypothesis?: boolean;
@@ -72,12 +75,10 @@ async function generateHypotheticalDocuments(
   count: number,
   llmProvider: AgenticLLMProvider
 ): Promise<string[]> {
-  const prompt = `Generate ${count} hypothetical documents that would perfectly answer this query.
-Each document should be detailed and comprehensive.
-
-Query: ${query}
-
-Generate ${count} hypothetical documents (one per line):`;
+  const prompt = PromptRegistry.get<{ count: string; query: string }>(HYDE_KEY).render({
+    count: String(count),
+    query,
+  });
 
   try {
     const response = await llmProvider.generate(prompt, {

@@ -15,6 +15,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
+    "@hazeljs/prompts": "file:../prompts",
     "reflect-metadata": "^0.2.1"
   },
   "peerDependencies": {
@@ -69,6 +70,9 @@
     "testMatch": [
       "**/src/__tests__/**/*.test.ts"
     ],
+    "moduleNameMapper": {
+      "^@hazeljs/prompts$": "<rootDir>/../prompts/src/index.ts"
+    },
     "collectCoverageFrom": [
       "src/**/*.ts",
       "!src/**/*.d.ts",
@@ -88,6 +92,7 @@
       "!src/loaders/youtube-transcript.loader.ts",
       "!src/loaders/index.ts",
       "!src/graph/index.ts",
+      "!src/prompts/**",
       "!src/types/**"
     ],
     "coverageThreshold": {

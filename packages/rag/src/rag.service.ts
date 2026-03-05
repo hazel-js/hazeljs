@@ -5,6 +5,9 @@
 
 import { Service } from '@hazeljs/core';
 import { RAGPipeline, LLMFunction } from './rag-pipeline';
+import { PromptRegistry } from '@hazeljs/prompts';
+import './prompts/rag-answer.prompt';
+import { RAG_ANSWER_KEY } from './prompts/rag-answer.prompt';
 import {
   VectorStore,
   EmbeddingProvider,
@@ -85,14 +88,10 @@ export class RAGService {
         ? context
         : context.map((r, idx) => `[${idx + 1}] ${r.content}`).join('\n\n');
 
-    const prompt = `Based on the following context, answer the question.
-
-Context:
-${contextStr}
-
-Question: ${query}
-
-Answer:`;
+    const prompt = PromptRegistry.get<{ context: string; query: string }>(RAG_ANSWER_KEY).render({
+      context: contextStr,
+      query,
+    });
 
     return this.config.llmFunction(prompt);
   }

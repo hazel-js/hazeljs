@@ -6,6 +6,9 @@
 import 'reflect-metadata';
 import { AdaptiveStrategyResult, AgenticLLMProvider } from '../types';
 import { RetrievalStrategy } from '../../types';
+import { PromptRegistry } from '@hazeljs/prompts';
+import '../../prompts/agentic/adaptive-retrieval.prompt';
+import { ADAPTIVE_RETRIEVAL_KEY } from '../../prompts/agentic/adaptive-retrieval.prompt';
 
 export interface AdaptiveRetrievalConfig {
   strategies?: RetrievalStrategy[];
@@ -68,21 +71,7 @@ async function selectStrategyWithLLM(
   strategies: RetrievalStrategy[],
   config: AdaptiveRetrievalConfig
 ): Promise<AdaptiveStrategyResult> {
-  const prompt = `Select the best retrieval strategy for this query:
-
-Query: ${query}
-
-Available strategies:
-- similarity: Best for semantic similarity
-- hybrid: Combines keyword and semantic search
-- mmr: Maximizes diversity while maintaining relevance
-
-Respond in JSON:
-{
-  "selectedStrategy": "similarity|hybrid|mmr",
-  "reason": "explanation",
-  "confidence": 0.0-1.0
-}`;
+  const prompt = PromptRegistry.get<{ query: string }>(ADAPTIVE_RETRIEVAL_KEY).render({ query });
 
   try {
     const result = await config.llmProvider!.generateStructured<{

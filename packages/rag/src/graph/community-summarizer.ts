@@ -19,6 +19,9 @@
 
 import type { GraphCommunity, CommunityReport } from './graph.types';
 import type { GraphStore } from './knowledge-graph';
+import { PromptRegistry } from '@hazeljs/prompts';
+import '../prompts/community-summary.prompt';
+import { COMMUNITY_SUMMARY_KEY } from '../prompts/community-summary.prompt';
 
 export interface CommunitySummarizerConfig {
   llm: (prompt: string) => Promise<string>;
@@ -84,7 +87,7 @@ export class CommunitySummarizer {
 
     const entityDescriptions = entities.map((e) => `- ${e.name} [${e.type}]: ${e.description}`);
 
-    const prompt = this.buildSummaryPrompt(community.id, entityDescriptions, relDescriptions);
+    const prompt = this.buildSummaryPrompt('', entityDescriptions, relDescriptions);
 
     try {
       const raw = await this.llm(prompt);
@@ -99,28 +102,21 @@ export class CommunitySummarizer {
   }
 
   private buildSummaryPrompt(
-    communityId: string,
+    _communityId: string,
     entityDescriptions: string[],
     relDescriptions: string[]
   ): string {
-    return `You are a knowledge base analyst. Analyse the following cluster of related entities and relationships extracted from technical documentation, then write a structured community report.
+    const relText =
+      relDescriptions.length > 0
+        ? relDescriptions.join('\n')
+        : '(no intra-community relationships found)';
 
-ENTITIES IN THIS COMMUNITY:
-${entityDescriptions.join('\n')}
-
-RELATIONSHIPS IN THIS COMMUNITY:
-${relDescriptions.length > 0 ? relDescriptions.join('\n') : '(no intra-community relationships found)'}
-
-Write a community report as JSON with this exact structure:
-{
-  "title": "one-line theme title (max 10 words)",
-  "summary": "2-4 paragraph narrative describing what this community is about, what the entities have in common, and how they relate to each other",
-  "findings": ["finding 1", "finding 2", "finding 3"],
-  "rating": 7
-}
-
-rating = 1-10 importance score (10 = core architecture / central concept, 1 = peripheral detail).
-Return ONLY valid JSON, no markdown.`;
+    return PromptRegistry.get<{ entityDescriptions: string; relDescriptions: string }>(
+      COMMUNITY_SUMMARY_KEY
+    ).render({
+      entityDescriptions: entityDescriptions.join('\n'),
+      relDescriptions: relText,
+    });
   }
 
   private parseReport(communityId: string, entityIds: string[], raw: string): CommunityReport {
