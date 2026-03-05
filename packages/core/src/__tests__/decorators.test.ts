@@ -16,6 +16,12 @@ import {
   UsePipes,
   UseInterceptors,
   UseGuards,
+  Req,
+  Headers,
+  HttpCode,
+  Header,
+  Redirect,
+  AITask,
 } from '../decorators';
 import 'reflect-metadata';
 
@@ -608,6 +614,262 @@ describe('Decorators', () => {
 
       const routes = Reflect.getMetadata('hazel:routes', TestController);
       expect(routes[0].method).toBe('POST');
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // @Req() parameter decorator
+  // -------------------------------------------------------------------------
+
+  describe('Req', () => {
+    it('should register request injection type', () => {
+      class TestController {
+        handleRequest(@Req() req: unknown) {
+          return req;
+        }
+      }
+
+      const injections = Reflect.getMetadata('hazel:inject', TestController, 'handleRequest');
+      expect(injections[0].type).toBe('request');
+    });
+
+    it('should throw error when used outside a method parameter', () => {
+      expect(() => {
+        const decorator = Req();
+        decorator({}, undefined as any, 0);
+      }).toThrow('Req decorator must be used on a method parameter');
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // @Headers() parameter decorator
+  // -------------------------------------------------------------------------
+
+  describe('Headers', () => {
+    it('should register headers injection with a specific header name', () => {
+      class TestController {
+        getAuth(@Headers('authorization') auth: string) {
+          return auth;
+        }
+      }
+
+      const injections = Reflect.getMetadata('hazel:inject', TestController, 'getAuth');
+      expect(injections[0].type).toBe('headers');
+      expect(injections[0].name).toBe('authorization');
+    });
+
+    it('should register headers injection without a name (all headers)', () => {
+      class TestController {
+        getAllHeaders(@Headers() headers: Record<string, string>) {
+          return headers;
+        }
+      }
+
+      const injections = Reflect.getMetadata('hazel:inject', TestController, 'getAllHeaders');
+      expect(injections[0].type).toBe('headers');
+      expect(injections[0].name).toBeUndefined();
+    });
+
+    it('should throw error when used outside a method parameter', () => {
+      expect(() => {
+        const decorator = Headers();
+        decorator({}, undefined as any, 0);
+      }).toThrow('Headers decorator must be used on a method parameter');
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // @HttpCode() method decorator
+  // -------------------------------------------------------------------------
+
+  describe('HttpCode', () => {
+    it('should store the status code in metadata', () => {
+      class TestController {
+        @HttpCode(201)
+        create() {
+          return { id: 1 };
+        }
+      }
+
+      const code = Reflect.getMetadata('hazel:http-code', TestController.prototype, 'create');
+      expect(code).toBe(201);
+    });
+
+    it('should allow 204 for no-content responses', () => {
+      class TestController {
+        @HttpCode(204)
+        remove() {
+          return undefined;
+        }
+      }
+
+      const code = Reflect.getMetadata('hazel:http-code', TestController.prototype, 'remove');
+      expect(code).toBe(204);
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // @Header() method decorator (custom response headers)
+  // -------------------------------------------------------------------------
+
+  describe('Header', () => {
+    it('should store a single custom response header', () => {
+      class TestController {
+        @Header('X-Version', '1.0')
+        getVersion() {
+          return {};
+        }
+      }
+
+      const headers: Array<{ name: string; value: string }> = Reflect.getMetadata(
+        'hazel:headers',
+        TestController.prototype,
+        'getVersion'
+      );
+      expect(headers).toHaveLength(1);
+      expect(headers[0]).toEqual({ name: 'X-Version', value: '1.0' });
+    });
+
+    it('should accumulate multiple @Header decorators on the same method', () => {
+      class TestController {
+        @Header('X-First', 'a')
+        @Header('X-Second', 'b')
+        getData() {
+          return {};
+        }
+      }
+
+      const headers: Array<{ name: string; value: string }> = Reflect.getMetadata(
+        'hazel:headers',
+        TestController.prototype,
+        'getData'
+      );
+      expect(headers).toHaveLength(2);
+      expect(headers.map((h) => h.name)).toContain('X-First');
+      expect(headers.map((h) => h.name)).toContain('X-Second');
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // @Redirect() method decorator
+  // -------------------------------------------------------------------------
+
+  describe('Redirect', () => {
+    it('should store redirect url with default 302 status', () => {
+      class TestController {
+        @Redirect('/new-location')
+        goSomewhere() {
+          return undefined;
+        }
+      }
+
+      const meta = Reflect.getMetadata('hazel:redirect', TestController.prototype, 'goSomewhere');
+      expect(meta).toEqual({ url: '/new-location', statusCode: 302 });
+    });
+
+    it('should store redirect url with custom status code', () => {
+      class TestController {
+        @Redirect('/permanent', 301)
+        movedPermanently() {
+          return undefined;
+        }
+      }
+
+      const meta = Reflect.getMetadata(
+        'hazel:redirect',
+        TestController.prototype,
+        'movedPermanently'
+      );
+      expect(meta).toEqual({ url: '/permanent', statusCode: 301 });
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // @AITask() method decorator
+  // -------------------------------------------------------------------------
+
+  describe('AITask', () => {
+    it('should store AI task options in metadata', () => {
+      const options = {
+        name: 'summarise',
+        prompt: 'Summarise the following text: {{input}}',
+        provider: 'openai',
+        model: 'gpt-4o',
+        outputType: 'string',
+      };
+
+      class TestController {
+        @AITask(options)
+        summarise() {
+          return undefined;
+        }
+      }
+
+      const meta = Reflect.getMetadata('hazel:ai-task', TestController.prototype, 'summarise');
+      expect(meta).toEqual(options);
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // @UsePipes() class-level metadata verification
+  // -------------------------------------------------------------------------
+
+  describe('UsePipes class-level metadata', () => {
+    it('should store pipe metadata on the class itself when used as class decorator', () => {
+      class TrimPipe {
+        transform(value: string) {
+          return value.trim();
+        }
+      }
+
+      @UsePipes(TrimPipe)
+      class TestController {}
+
+      const pipeMeta = Reflect.getMetadata('hazel:pipe', TestController);
+      expect(pipeMeta).toBeDefined();
+      expect(Array.isArray(pipeMeta)).toBe(true);
+      expect(pipeMeta.length).toBeGreaterThan(0);
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // @UseGuards() class-level metadata verification
+  // -------------------------------------------------------------------------
+
+  describe('UseGuards class-level metadata', () => {
+    it('should store guard metadata on the class when used as class decorator', () => {
+      class AuthGuard {
+        canActivate() {
+          return true;
+        }
+      }
+
+      @UseGuards(AuthGuard)
+      class TestController {}
+
+      const guardMeta = Reflect.getMetadata('hazel:guards', TestController);
+      expect(guardMeta).toBeDefined();
+      expect(guardMeta).toContain(AuthGuard);
+    });
+
+    it('should store guard metadata on the method when used as method decorator', () => {
+      class RoleGuard {
+        canActivate() {
+          return true;
+        }
+      }
+
+      class TestController {
+        @UseGuards(RoleGuard)
+        @Get('/protected')
+        getProtected() {
+          return {};
+        }
+      }
+
+      const guardMeta = Reflect.getMetadata('hazel:guards', TestController.prototype, 'getProtected');
+      expect(guardMeta).toBeDefined();
+      expect(guardMeta).toContain(RoleGuard);
     });
   });
 });

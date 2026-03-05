@@ -286,6 +286,10 @@ export class Router {
               // Handle @CurrentUser() decorator — reads from context.user (set by a guard)
               const user = context.user ?? (req as Record<string, unknown>).user;
               args[i] = injection.field ? (user as Record<string, unknown>)?.[injection.field] : user;
+            } else if (injection.type === 'custom' && typeof injection.resolve === 'function') {
+              // Handle custom parameter decorators (e.g. @Ability() from @hazeljs/casl).
+              // The decorator stores a resolver function; call it with request, context, container.
+              args[i] = await (injection.resolve as (req: unknown, ctx: RequestContext, container: Container) => unknown)(req, context, this.container);
             }
           }
         }

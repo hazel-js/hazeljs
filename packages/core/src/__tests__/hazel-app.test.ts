@@ -881,4 +881,151 @@ describe('HazelApp', () => {
       expect(app).toBeDefined();
     });
   });
+
+  // -------------------------------------------------------------------------
+  // getRouter
+  // -------------------------------------------------------------------------
+
+  describe('getRouter', () => {
+    let app: HazelApp;
+
+    beforeEach(() => {
+      class AppModule {}
+      Reflect.defineMetadata('hazel:module', {}, AppModule);
+      app = new HazelApp(AppModule);
+    });
+
+    it('should return the internal Router instance', () => {
+      const router = app.getRouter();
+      expect(router).toBeDefined();
+      expect(typeof router.registerController).toBe('function');
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // registerShutdownHandler
+  // -------------------------------------------------------------------------
+
+  describe('registerShutdownHandler', () => {
+    let app: HazelApp;
+
+    beforeEach(() => {
+      class AppModule {}
+      Reflect.defineMetadata('hazel:module', {}, AppModule);
+      app = new HazelApp(AppModule);
+    });
+
+    it('should register a shutdown handler without throwing', () => {
+      expect(() => {
+        app.registerShutdownHandler({
+          name: 'db',
+          handler: async () => {},
+        });
+      }).not.toThrow();
+    });
+
+    it('should register a shutdown handler with a timeout', () => {
+      expect(() => {
+        app.registerShutdownHandler({
+          name: 'cache',
+          handler: async () => {},
+          timeout: 5000,
+        });
+      }).not.toThrow();
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // registerHealthCheck
+  // -------------------------------------------------------------------------
+
+  describe('registerHealthCheck', () => {
+    let app: HazelApp;
+
+    beforeEach(() => {
+      class AppModule {}
+      Reflect.defineMetadata('hazel:module', {}, AppModule);
+      app = new HazelApp(AppModule);
+    });
+
+    it('should register a health check without throwing', () => {
+      expect(() => {
+        app.registerHealthCheck({
+          name: 'db',
+          check: async () => ({ status: 'healthy' as const }),
+        });
+      }).not.toThrow();
+    });
+
+    it('should register a critical health check with a timeout', () => {
+      expect(() => {
+        app.registerHealthCheck({
+          name: 'redis',
+          check: async () => ({ status: 'healthy' as const, message: 'connected' }),
+          critical: true,
+          timeout: 3000,
+        });
+      }).not.toThrow();
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // addEarlyHandler
+  // -------------------------------------------------------------------------
+
+  describe('addEarlyHandler', () => {
+    let app: HazelApp;
+
+    beforeEach(() => {
+      class AppModule {}
+      Reflect.defineMetadata('hazel:module', {}, AppModule);
+      app = new HazelApp(AppModule);
+    });
+
+    it('should register an early handler without throwing', () => {
+      const handler = jest.fn().mockResolvedValue(false);
+      expect(() => {
+        app.addEarlyHandler('/internal', handler);
+      }).not.toThrow();
+    });
+
+    it('should register multiple early handlers', () => {
+      const h1 = jest.fn().mockResolvedValue(false);
+      const h2 = jest.fn().mockResolvedValue(false);
+      expect(() => {
+        app.addEarlyHandler('/a', h1);
+        app.addEarlyHandler('/b', h2);
+      }).not.toThrow();
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // addProxyHandler
+  // -------------------------------------------------------------------------
+
+  describe('addProxyHandler', () => {
+    let app: HazelApp;
+
+    beforeEach(() => {
+      class AppModule {}
+      Reflect.defineMetadata('hazel:module', {}, AppModule);
+      app = new HazelApp(AppModule);
+    });
+
+    it('should register a proxy handler without throwing', () => {
+      const handler = jest.fn().mockResolvedValue(false);
+      expect(() => {
+        app.addProxyHandler('/api', handler);
+      }).not.toThrow();
+    });
+
+    it('should register multiple proxy handlers for different prefixes', () => {
+      const h1 = jest.fn().mockResolvedValue(false);
+      const h2 = jest.fn().mockResolvedValue(false);
+      expect(() => {
+        app.addProxyHandler('/service-a', h1);
+        app.addProxyHandler('/service-b', h2);
+      }).not.toThrow();
+    });
+  });
 });
