@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/audit",
-  "version": "0.2.0-beta.61",
+  "version": "0.2.0-beta.62",
   "description": "Audit logging and event trail for HazelJS applications",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
