@@ -32,6 +32,9 @@ export * from './vector-stores/chroma.store';
 // Text Splitters
 export * from './text-splitters/recursive-text-splitter';
 
+// Document Loaders
+export * from './loaders';
+
 // Retrieval Strategies
 export * from './retrieval/bm25';
 export * from './retrieval/hybrid-search';

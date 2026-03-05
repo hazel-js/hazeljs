@@ -26,7 +26,10 @@
     "cohere-ai": "^7.0.0",
     "@huggingface/inference": "^2.0.0",
     "@hazeljs/ai": ">=0.2.0-beta.0",
-    "@hazeljs/core": ">=0.2.0-beta.0"
+    "@hazeljs/core": ">=0.2.0-beta.0",
+    "pdf-parse": "^1.1.1",
+    "mammoth": "^1.7.0",
+    "cheerio": "^1.0.0"
   },
   "peerDependenciesMeta": {
     "@pinecone-database/pinecone": {
@@ -49,11 +52,22 @@
     },
     "@huggingface/inference": {
       "optional": true
+    },
+    "pdf-parse": {
+      "optional": true
+    },
+    "mammoth": {
+      "optional": true
+    },
+    "cheerio": {
+      "optional": true
     }
   },
   "devDependencies": {
     "openai": "^4.0.0",
     "@types/node": "^20.17.50",
+    "@types/pdf-parse": "^1.1.4",
+    "@types/mammoth": "^1.0.0",
     "@typescript-eslint/eslint-plugin": "^8.18.2",
     "@typescript-eslint/parser": "^8.18.2",
     "eslint": "^8.56.0",
