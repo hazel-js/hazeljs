@@ -10,15 +10,12 @@ export interface AITaskFormatVariables {
   outputExample: string;
 }
 
-const template = new PromptTemplate<AITaskFormatVariables>(
-  `{description}`,
-  {
-    name: 'AI Task Format',
-    description:
-      'Formats an AI task prompt by substituting context variables into the template string',
-    version: '1.0.0',
-  }
-);
+const template = new PromptTemplate<AITaskFormatVariables>(`{description}`, {
+  name: 'AI Task Format',
+  description:
+    'Formats an AI task prompt by substituting context variables into the template string',
+  version: '1.0.0',
+});
 
 PromptRegistry.register(AI_TASK_FORMAT_KEY, template);
 

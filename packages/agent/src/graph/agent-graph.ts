@@ -145,7 +145,7 @@ export class AgentGraph {
     routeMap?: Record<string, string>
   ): this {
     const condition: RouterFunction = routeMap
-      ? (state) => {
+      ? (state): string => {
           const key = routerFn(state) as string;
           return routeMap[key] ?? key;
         }

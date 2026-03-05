@@ -5,7 +5,13 @@ import { FileStore } from '../../stores/file.store';
 import type { PromptEntry } from '../../stores/store.interface';
 
 function entry(key: string, version = '1.0.0', template = 'Hi {name}'): PromptEntry {
-  return { key, version, template, metadata: { name: key, version }, storedAt: new Date().toISOString() };
+  return {
+    key,
+    version,
+    template,
+    metadata: { name: key, version },
+    storedAt: new Date().toISOString(),
+  };
 }
 
 function tmpFile(): string {
@@ -107,6 +113,6 @@ describe('FileStore', () => {
     await prettyStore.set(entry('pretty:key'));
     const { readFile } = await import('fs/promises');
     const raw = await readFile(filePath, 'utf8');
-    expect(raw).toMatch(/\n  /);
+    expect(raw).toMatch(/\n {2}/);
   });
 });

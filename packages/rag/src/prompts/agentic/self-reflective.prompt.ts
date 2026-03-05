@@ -30,7 +30,8 @@ Provide assessment in JSON format:
 }`,
   {
     name: 'Self-Reflective Quality Assessment',
-    description: 'Evaluates retrieval quality across relevance, completeness, accuracy, and clarity',
+    description:
+      'Evaluates retrieval quality across relevance, completeness, accuracy, and clarity',
     version: '1.0.0',
   }
 );

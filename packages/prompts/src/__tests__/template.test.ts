@@ -55,10 +55,9 @@ describe('PromptTemplate', () => {
     });
 
     it('handles multiline templates', () => {
-      const tpl = new PromptTemplate<{ a: string; b: string }>(
-        'Line 1: {a}\nLine 2: {b}\nDone.',
-        { name: 'ML' }
-      );
+      const tpl = new PromptTemplate<{ a: string; b: string }>('Line 1: {a}\nLine 2: {b}\nDone.', {
+        name: 'ML',
+      });
       const result = tpl.render({ a: 'foo', b: 'bar' });
       expect(result).toBe('Line 1: foo\nLine 2: bar\nDone.');
     });

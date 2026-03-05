@@ -7,10 +7,7 @@ import 'reflect-metadata';
 import { ReasoningChain, ReasoningHop, AgenticLLMProvider } from '../types';
 import { PromptRegistry } from '@hazeljs/prompts';
 import '../../prompts/agentic/multi-hop.prompt';
-import {
-  MULTI_HOP_KEY,
-  MULTI_HOP_SYNTHESIZE_KEY,
-} from '../../prompts/agentic/multi-hop.prompt';
+import { MULTI_HOP_KEY, MULTI_HOP_SYNTHESIZE_KEY } from '../../prompts/agentic/multi-hop.prompt';
 
 export interface MultiHopConfig {
   maxHops?: number;

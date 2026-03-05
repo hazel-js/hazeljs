@@ -330,9 +330,7 @@ export class AgentExecutor {
     const basePrompt = (context.metadata?.systemPrompt as string) || 'You are a helpful AI agent.';
     const description = (context.metadata?.agentDescription as string) || '';
     const ragContext =
-      context.ragContext && context.ragContext.length > 0
-        ? context.ragContext.join('\n\n')
-        : '';
+      context.ragContext && context.ragContext.length > 0 ? context.ragContext.join('\n\n') : '';
 
     let systemPrompt: string;
 

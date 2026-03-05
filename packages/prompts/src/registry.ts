@@ -203,7 +203,10 @@ export class PromptRegistry {
    * @param version - Specific version string; defaults to `'latest'`.
    * @throws When the key is not found in the cache or any configured store.
    */
-  static async getAsync<T extends object>(key: string, version?: string): Promise<PromptTemplate<T>> {
+  static async getAsync<T extends object>(
+    key: string,
+    version?: string
+  ): Promise<PromptTemplate<T>> {
     const cached = this.latest.get(key);
     if (!version && cached) return cached as PromptTemplate<T>;
     if (version && this.versioned.get(key)?.has(version)) {

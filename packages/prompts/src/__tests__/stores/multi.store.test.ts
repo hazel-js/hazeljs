@@ -3,7 +3,13 @@ import { MemoryStore } from '../../stores/memory.store';
 import type { PromptEntry } from '../../stores/store.interface';
 
 function entry(key: string, version = '1.0.0', template = 'Hi {x}'): PromptEntry {
-  return { key, version, template, metadata: { name: key, version }, storedAt: new Date().toISOString() };
+  return {
+    key,
+    version,
+    template,
+    metadata: { name: key, version },
+    storedAt: new Date().toISOString(),
+  };
 }
 
 describe('MultiStore', () => {
