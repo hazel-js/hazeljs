@@ -47,7 +47,8 @@ export interface AnomalyResult {
   message: string;
 }
 
-type CheckFn = (data: unknown) => QualityCheckResult | Promise<QualityCheckResult>;
+export type CheckFn = (data: unknown) => QualityCheckResult | Promise<QualityCheckResult>;
+type SyncCheckFn = (data: unknown) => QualityCheckResult;
 
 /**
  * Quality Service — data quality checks, profiling, and anomaly detection.
@@ -96,14 +97,15 @@ export class QualityService {
 
     const passed = results.every((r) => r.passed);
     const scores = results.map((r) => (r.score !== undefined ? r.score : r.passed ? 100 : 0));
-    const score = scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 100;
+    const score =
+      scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 100;
 
     return { timestamp: new Date(), dataset, totalRows, checks: results, passed, score };
   }
 
   // ─── Built-in check factories ─────────────────────────────────────────────
 
-  completeness(requiredFields: string[]): CheckFn {
+  completeness(requiredFields: string[]): SyncCheckFn {
     return (data: unknown): QualityCheckResult => {
       const items = Array.isArray(data) ? data : [data];
       let totalMissing = 0;
@@ -126,13 +128,16 @@ export class QualityService {
         name: 'completeness',
         passed: totalMissing === 0,
         score,
-        message: totalMissing > 0 ? `${totalMissing} missing values across ${Object.keys(missingByField).length} fields` : undefined,
+        message:
+          totalMissing > 0
+            ? `${totalMissing} missing values across ${Object.keys(missingByField).length} fields`
+            : undefined,
         details: { missingByField, required: requiredFields },
       };
     };
   }
 
-  notNull(fields: string[]): CheckFn {
+  notNull(fields: string[]): SyncCheckFn {
     return (data: unknown): QualityCheckResult => {
       const items = Array.isArray(data) ? data : [data];
       const nullFields: string[] = [];
@@ -150,14 +155,17 @@ export class QualityService {
       return {
         name: 'notNull',
         passed: nullFields.length === 0,
-        score: nullFields.length === 0 ? 100 : Math.round(((fields.length - nullFields.length) / fields.length) * 100),
+        score:
+          nullFields.length === 0
+            ? 100
+            : Math.round(((fields.length - nullFields.length) / fields.length) * 100),
         message: nullFields.length > 0 ? `Null fields: ${nullFields.join(', ')}` : undefined,
         details: { nullFields },
       };
     };
   }
 
-  uniqueness(fields: string[]): CheckFn {
+  uniqueness(fields: string[]): SyncCheckFn {
     return (data: unknown): QualityCheckResult => {
       const items = Array.isArray(data) ? data : [data];
       const seen: Record<string, Set<unknown>> = {};
@@ -179,7 +187,8 @@ export class QualityService {
       }
 
       const totalDups = Object.values(duplicates).reduce((a, b) => a + b, 0);
-      const score = items.length > 0 ? Math.round(((items.length - totalDups) / items.length) * 100) : 100;
+      const score =
+        items.length > 0 ? Math.round(((items.length - totalDups) / items.length) * 100) : 100;
 
       return {
         name: 'uniqueness',
@@ -191,7 +200,7 @@ export class QualityService {
     };
   }
 
-  range(field: string, options: { min?: number; max?: number }): CheckFn {
+  range(field: string, options: { min?: number; max?: number }): SyncCheckFn {
     return (data: unknown): QualityCheckResult => {
       const items = Array.isArray(data) ? data : [data];
       const violations: Array<{ index: number; value: unknown }> = [];
@@ -202,22 +211,29 @@ export class QualityService {
         const v = obj[field];
         if (typeof v !== 'number') return;
         if (options.min !== undefined && v < options.min) violations.push({ index: idx, value: v });
-        else if (options.max !== undefined && v > options.max) violations.push({ index: idx, value: v });
+        else if (options.max !== undefined && v > options.max)
+          violations.push({ index: idx, value: v });
       });
 
-      const score = items.length > 0 ? Math.round(((items.length - violations.length) / items.length) * 100) : 100;
+      const score =
+        items.length > 0
+          ? Math.round(((items.length - violations.length) / items.length) * 100)
+          : 100;
 
       return {
         name: `range:${field}`,
         passed: violations.length === 0,
         score,
-        message: violations.length > 0 ? `${violations.length} values out of range [${options.min ?? '−∞'}, ${options.max ?? '+∞'}]` : undefined,
+        message:
+          violations.length > 0
+            ? `${violations.length} values out of range [${options.min ?? '−∞'}, ${options.max ?? '+∞'}]`
+            : undefined,
         details: { field, violations: violations.slice(0, 10), options },
       };
     };
   }
 
-  pattern(field: string, regex: RegExp, message?: string): CheckFn {
+  pattern(field: string, regex: RegExp, message?: string): SyncCheckFn {
     return (data: unknown): QualityCheckResult => {
       const items = Array.isArray(data) ? data : [data];
       const violations: Array<{ index: number; value: unknown }> = [];
@@ -229,19 +245,25 @@ export class QualityService {
         if (typeof v === 'string' && !regex.test(v)) violations.push({ index: idx, value: v });
       });
 
-      const score = items.length > 0 ? Math.round(((items.length - violations.length) / items.length) * 100) : 100;
+      const score =
+        items.length > 0
+          ? Math.round(((items.length - violations.length) / items.length) * 100)
+          : 100;
 
       return {
         name: `pattern:${field}`,
         passed: violations.length === 0,
         score,
-        message: violations.length > 0 ? (message ?? `${violations.length} values don't match pattern ${regex.source}`) : undefined,
+        message:
+          violations.length > 0
+            ? (message ?? `${violations.length} values don't match pattern ${regex.source}`)
+            : undefined,
         details: { field, regex: regex.source, violations: violations.slice(0, 10) },
       };
     };
   }
 
-  referentialIntegrity(field: string, allowedValues: unknown[]): CheckFn {
+  referentialIntegrity(field: string, allowedValues: unknown[]): SyncCheckFn {
     const allowed = new Set(allowedValues);
     return (data: unknown): QualityCheckResult => {
       const items = Array.isArray(data) ? data : [data];
@@ -256,13 +278,17 @@ export class QualityService {
         }
       });
 
-      const score = items.length > 0 ? Math.round(((items.length - violations.length) / items.length) * 100) : 100;
+      const score =
+        items.length > 0
+          ? Math.round(((items.length - violations.length) / items.length) * 100)
+          : 100;
 
       return {
         name: `referentialIntegrity:${field}`,
         passed: violations.length === 0,
         score,
-        message: violations.length > 0 ? `${violations.length} values not in allowed set` : undefined,
+        message:
+          violations.length > 0 ? `${violations.length} values not in allowed set` : undefined,
         details: { field, violations: violations.slice(0, 10), allowedCount: allowedValues.length },
       };
     };
@@ -355,7 +381,9 @@ export class QualityService {
       if (nums.length < 3) continue;
 
       const mean = nums.reduce((a, b) => a + b.value, 0) / nums.length;
-      const stddev = Math.sqrt(nums.reduce((acc, b) => acc + Math.pow(b.value - mean, 2), 0) / nums.length);
+      const stddev = Math.sqrt(
+        nums.reduce((acc, b) => acc + Math.pow(b.value - mean, 2), 0) / nums.length
+      );
 
       if (stddev === 0) continue;
 

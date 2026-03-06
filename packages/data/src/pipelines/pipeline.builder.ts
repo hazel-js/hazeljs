@@ -26,20 +26,32 @@ export interface PipelineStepConfig {
   };
 }
 
+export interface SerializedStep {
+  name: string;
+  conditional?: boolean;
+  parallel?: boolean;
+  parallelCount?: number;
+  branch?: boolean;
+  retry?: RetryConfig;
+  timeoutMs?: number;
+}
+
 export interface PipelineDefinition {
   name: string;
-  steps: PipelineStepConfig[];
+  steps: SerializedStep[];
 }
 
 async function runWithRetry(
   fn: () => Promise<unknown>,
   retry: RetryConfig,
-  stepName: string
+  _stepName: string
 ): Promise<unknown> {
   const { attempts, delay = 500, backoff = 'fixed' } = retry;
   let lastError: Error = new Error('Unknown');
   for (let attempt = 1; attempt <= attempts; attempt++) {
-    try { return await fn(); } catch (err) {
+    try {
+      return await fn();
+    } catch (err) {
       lastError = err instanceof Error ? err : new Error(String(err));
       if (attempt < attempts) {
         const wait = backoff === 'exponential' ? delay * Math.pow(2, attempt - 1) : delay;
@@ -56,8 +68,20 @@ async function runWithTimeout(
   stepName: string
 ): Promise<unknown> {
   return new Promise((resolve, reject) => {
-    const id = setTimeout(() => reject(new Error(`Step "${stepName}" timed out after ${ms}ms`)), ms);
-    fn().then(v => { clearTimeout(id); resolve(v); }, e => { clearTimeout(id); reject(e); });
+    const id = setTimeout(
+      () => reject(new Error(`Step "${stepName}" timed out after ${ms}ms`)),
+      ms
+    );
+    fn().then(
+      (v) => {
+        clearTimeout(id);
+        resolve(v);
+      },
+      (e) => {
+        clearTimeout(id);
+        reject(e);
+      }
+    );
   });
 }
 
@@ -98,17 +122,15 @@ export class PipelineBuilder {
     transform: TransformFn,
     options: { when?: ConditionFn; retry?: RetryConfig; timeoutMs?: number; dlq?: DLQConfig } = {}
   ): PipelineBuilder {
-    return new PipelineBuilder(this._name, [
-      ...this._steps,
-      { name, transform, ...options },
-    ]);
+    return new PipelineBuilder(this._name, [...this._steps, { name, transform, ...options }]);
   }
 
-  addValidate(name: string, validate: ValidateFn, options: { when?: ConditionFn } = {}): PipelineBuilder {
-    return new PipelineBuilder(this._name, [
-      ...this._steps,
-      { name, validate, ...options },
-    ]);
+  addValidate(
+    name: string,
+    validate: ValidateFn,
+    options: { when?: ConditionFn } = {}
+  ): PipelineBuilder {
+    return new PipelineBuilder(this._name, [...this._steps, { name, validate, ...options }]);
   }
 
   /**
@@ -116,10 +138,7 @@ export class PipelineBuilder {
    * the current data if they are objects, otherwise replaced with an array of results.
    */
   parallel(name: string, transforms: TransformFn[]): PipelineBuilder {
-    return new PipelineBuilder(this._name, [
-      ...this._steps,
-      { name, parallel: transforms },
-    ]);
+    return new PipelineBuilder(this._name, [...this._steps, { name, parallel: transforms }]);
   }
 
   /**
@@ -174,10 +193,12 @@ export class PipelineBuilder {
         }
 
         if (step.parallel && step.parallel.length > 0) {
-          const results = await Promise.all(step.parallel.map((fn) => {
-            const r = fn(data);
-            return r instanceof Promise ? r : Promise.resolve(r);
-          }));
+          const results = await Promise.all(
+            step.parallel.map((fn) => {
+              const r = fn(data);
+              return r instanceof Promise ? r : Promise.resolve(r);
+            })
+          );
           if (results.every((r) => r !== null && typeof r === 'object' && !Array.isArray(r))) {
             return Object.assign({}, data, ...results);
           }
@@ -232,14 +253,16 @@ export class PipelineBuilder {
   toSchema(): PipelineDefinition {
     return {
       name: this._name,
-      steps: this._steps.map((s) => ({
-        name: s.name,
-        ...(s.when ? { conditional: true } : {}),
-        ...(s.parallel ? { parallel: true, count: s.parallel.length } : {}),
-        ...(s.branch ? { branch: true } : {}),
-        ...(s.retry ? { retry: s.retry } : {}),
-        ...(s.timeoutMs ? { timeoutMs: s.timeoutMs } : {}),
-      })),
+      steps: this._steps.map(
+        (s): SerializedStep => ({
+          name: s.name,
+          ...(s.when ? { conditional: true } : {}),
+          ...(s.parallel ? { parallel: true, parallelCount: s.parallel.length } : {}),
+          ...(s.branch ? { branch: true } : {}),
+          ...(s.retry ? { retry: s.retry } : {}),
+          ...(s.timeoutMs ? { timeoutMs: s.timeoutMs } : {}),
+        })
+      ),
     };
   }
 
@@ -260,6 +283,10 @@ export class PipelineBuilder {
     return new PipelineBuilder(this._name);
   }
 
-  get name(): string { return this._name; }
-  get steps(): ReadonlyArray<PipelineStepConfig> { return this._steps; }
+  get name(): string {
+    return this._name;
+  }
+  get steps(): ReadonlyArray<PipelineStepConfig> {
+    return this._steps;
+  }
 }

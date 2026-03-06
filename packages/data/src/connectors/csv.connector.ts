@@ -1,4 +1,4 @@
-import { createReadStream, createWriteStream, existsSync, writeFileSync } from 'fs';
+import { createReadStream, createWriteStream, existsSync } from 'fs';
 import { createInterface } from 'readline';
 import type { DataSource, DataSink } from './connector.interface';
 
@@ -82,7 +82,9 @@ export class CsvSource implements DataSource<Record<string, string>> {
         headers = cols.map((_, i) => `col${i}`);
       }
       const record: Record<string, string> = {};
-      headers.forEach((h, i) => { record[h] = cols[i] ?? ''; });
+      headers.forEach((h, i) => {
+        record[h] = cols[i] ?? '';
+      });
       yield record;
     }
   }
@@ -95,8 +97,12 @@ export class CsvSource implements DataSource<Record<string, string>> {
     for (let i = 0; i < line.length; i++) {
       const ch = line[i];
       if (ch === '"') {
-        if (inQuote && line[i + 1] === '"') { current += '"'; i++; }
-        else { inQuote = !inQuote; }
+        if (inQuote && line[i + 1] === '"') {
+          current += '"';
+          i++;
+        } else {
+          inQuote = !inQuote;
+        }
       } else if (ch === this.delimiter && !inQuote) {
         result.push(current);
         current = '';
@@ -140,8 +146,11 @@ export class CsvSink implements DataSink<Record<string, unknown>> {
 
   async close(): Promise<void> {
     return new Promise((resolve, reject) => {
-      if (!this.stream) { resolve(); return; }
-      this.stream.end((err: Error | null | undefined) => err ? reject(err) : resolve());
+      if (!this.stream) {
+        resolve();
+        return;
+      }
+      this.stream.end((err: Error | null | undefined) => (err ? reject(err) : resolve()));
     });
   }
 
@@ -165,9 +174,14 @@ export class CsvSink implements DataSink<Record<string, unknown>> {
   }
 
   private writeLine(cols: string[]): void {
-    const line = cols
-      .map((c) => (c.includes(this.delimiter) || c.includes('"') || c.includes('\n') ? `"${c.replace(/"/g, '""')}"` : c))
-      .join(this.delimiter) + '\n';
+    const line =
+      cols
+        .map((c) =>
+          c.includes(this.delimiter) || c.includes('"') || c.includes('\n')
+            ? `"${c.replace(/"/g, '""')}"`
+            : c
+        )
+        .join(this.delimiter) + '\n';
     this.stream!.write(line);
   }
 }

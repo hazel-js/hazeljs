@@ -129,8 +129,7 @@ export interface ArraySchema<T = unknown> extends BaseSchema<T[]> {
 
 // ─── Literal Schema ───────────────────────────────────────────────────────────
 
-export interface LiteralSchema<T extends string | number | boolean>
-  extends BaseSchema<T> {
+export interface LiteralSchema<T extends string | number | boolean> extends BaseSchema<T> {
   readonly value: T;
 }
 
@@ -176,7 +175,10 @@ function buildSchema<T>(
 
     optional(): BaseSchema<T | undefined> {
       return buildSchema<T | undefined>(
-        (v) => (v === undefined ? { success: true, data: undefined } : (validate(v) as SyncResult<T | undefined>)),
+        (v) =>
+          v === undefined
+            ? { success: true, data: undefined }
+            : (validate(v) as SyncResult<T | undefined>),
         () => {
           const js = jsonSchemaFn();
           return { ...js, _optional: true };
@@ -203,29 +205,34 @@ function buildSchema<T>(
     },
 
     transform<U>(fn: (value: T) => U): BaseSchema<U> {
-      return buildSchema<U>(
-        (v) => {
-          const result = validate(v);
-          if (!result.success) return result as unknown as SyncResult<U>;
-          try {
-            return { success: true, data: fn(result.data) };
-          } catch (e) {
-            return {
-              success: false,
-              errors: [{ path: '', message: e instanceof Error ? e.message : 'Transform failed' }],
-            };
-          }
-        },
-        jsonSchemaFn
-      );
+      return buildSchema<U>((v) => {
+        const result = validate(v);
+        if (!result.success) return result as unknown as SyncResult<U>;
+        try {
+          return { success: true, data: fn(result.data) };
+        } catch (e) {
+          return {
+            success: false,
+            errors: [{ path: '', message: e instanceof Error ? e.message : 'Transform failed' }],
+          };
+        }
+      }, jsonSchemaFn);
     },
 
     refine(fn: (v: T) => boolean, message: string): BaseSchema<T> {
-      return buildSchema(syncValidate, jsonSchemaFn, [...refinements, { fn, message }], asyncRefinements);
+      return buildSchema(
+        syncValidate,
+        jsonSchemaFn,
+        [...refinements, { fn, message }],
+        asyncRefinements
+      );
     },
 
     refineAsync(fn: (v: T) => Promise<boolean>, message: string): BaseSchema<T> {
-      return buildSchema(syncValidate, jsonSchemaFn, refinements, [...asyncRefinements, { fn, message }]);
+      return buildSchema(syncValidate, jsonSchemaFn, refinements, [
+        ...asyncRefinements,
+        { fn, message },
+      ]);
     },
 
     toJsonSchema(): Record<string, unknown> {
@@ -313,15 +320,28 @@ function createStringSchema(
     },
 
     trim(): StringSchema {
-      return createStringSchema(constraints, [...preprocessors, (v) => v.trim()], refinements, asyncRefinements);
+      return createStringSchema(
+        constraints,
+        [...preprocessors, (v: string): string => v.trim()],
+        refinements,
+        asyncRefinements
+      );
     },
 
     refine(fn: (v: string) => boolean, message: string): StringSchema {
-      return createStringSchema(constraints, preprocessors, [...refinements, { fn, message }], asyncRefinements);
+      return createStringSchema(
+        constraints,
+        preprocessors,
+        [...refinements, { fn, message }],
+        asyncRefinements
+      );
     },
 
     refineAsync(fn: (v: string) => Promise<boolean>, message: string): StringSchema {
-      return createStringSchema(constraints, preprocessors, refinements, [...asyncRefinements, { fn, message }]);
+      return createStringSchema(constraints, preprocessors, refinements, [
+        ...asyncRefinements,
+        { fn, message },
+      ]);
     },
 
     default(value: string): StringSchema {
@@ -329,7 +349,8 @@ function createStringSchema(
       const originalValidate = next.validate.bind(next);
       return {
         ...next,
-        validate: (v: unknown) => (v === undefined ? { success: true, data: value } : originalValidate(v)),
+        validate: (v: unknown) =>
+          v === undefined ? { success: true, data: value } : originalValidate(v),
         toJsonSchema: () => ({ type: 'string', default: value }),
       };
     },
@@ -406,7 +427,8 @@ function createNumberSchema(
       const originalValidate = next.validate.bind(next);
       return {
         ...next,
-        validate: (v: unknown) => (v === undefined ? { success: true, data: value } : originalValidate(v)),
+        validate: (v: unknown) =>
+          v === undefined ? { success: true, data: value } : originalValidate(v),
         toJsonSchema: () => ({ type: 'number', default: value }),
       };
     },
@@ -451,9 +473,7 @@ function createBooleanSchema(): BooleanSchema {
 
 // ─── Date Schema Factory ──────────────────────────────────────────────────────
 
-function createDateSchema(
-  constraints: Array<(v: Date) => string | null> = []
-): DateSchema {
+function createDateSchema(constraints: Array<(v: Date) => string | null> = []): DateSchema {
   const syncValidate = (value: unknown): SyncResult<Date> => {
     let date: Date;
     if (value instanceof Date && !Number.isNaN(value.getTime())) {
@@ -483,15 +503,11 @@ function createDateSchema(
     ...base,
 
     min(date: Date): DateSchema {
-      return addConstraint((v) =>
-        v >= date ? null : `Date must be after ${date.toISOString()}`
-      );
+      return addConstraint((v) => (v >= date ? null : `Date must be after ${date.toISOString()}`));
     },
 
     max(date: Date): DateSchema {
-      return addConstraint((v) =>
-        v <= date ? null : `Date must be before ${date.toISOString()}`
-      );
+      return addConstraint((v) => (v <= date ? null : `Date must be before ${date.toISOString()}`));
     },
 
     default(value: Date): DateSchema {
@@ -562,9 +578,7 @@ function createObjectSchema<S extends Record<string, BaseSchema>>(
 
   const jsonSchemaFn = (): Record<string, unknown> => ({
     type: 'object',
-    properties: Object.fromEntries(
-      Object.entries(shape).map(([k, s]) => [k, s.toJsonSchema()])
-    ),
+    properties: Object.fromEntries(Object.entries(shape).map(([k, s]) => [k, s.toJsonSchema()])),
     required: Object.keys(shape),
     additionalProperties: !strictMode,
   });

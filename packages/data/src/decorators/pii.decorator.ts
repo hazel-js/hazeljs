@@ -44,7 +44,7 @@ export function Mask(fieldsOrOptions: string[] | MaskOptions): MethodDecorator {
     Reflect.defineMetadata(MASK_METADATA_KEY, options, target, propertyKey);
 
     const original = descriptor.value as (...args: unknown[]) => unknown;
-    descriptor.value = function (data: unknown, ...rest: unknown[]) {
+    descriptor.value = function (data: unknown, ...rest: unknown[]): unknown {
       return original.call(this, applyMask(data, options), ...rest);
     };
     return descriptor;
@@ -67,7 +67,12 @@ function applyMask(data: unknown, options: MaskOptions): unknown {
   return result;
 }
 
-function maskNested(obj: Record<string, unknown>, path: string[], replacement: string, showLast: number): void {
+function maskNested(
+  obj: Record<string, unknown>,
+  path: string[],
+  replacement: string,
+  showLast: number
+): void {
   if (path.length === 1) {
     const val = obj[path[0]];
     if (typeof val === 'string' && showLast > 0) {
@@ -106,7 +111,7 @@ export function Redact(fieldsOrOptions: string[] | RedactOptions): MethodDecorat
     Reflect.defineMetadata(REDACT_METADATA_KEY, options, target, propertyKey);
 
     const original = descriptor.value as (...args: unknown[]) => unknown;
-    descriptor.value = function (data: unknown, ...rest: unknown[]) {
+    descriptor.value = function (data: unknown, ...rest: unknown[]): unknown {
       return original.call(this, applyRedact(data, options), ...rest);
     };
     return descriptor;
@@ -156,7 +161,7 @@ export function Encrypt(options: EncryptOptions): MethodDecorator {
     Reflect.defineMetadata(ENCRYPT_METADATA_KEY, options, target, propertyKey);
 
     const original = descriptor.value as (...args: unknown[]) => unknown;
-    descriptor.value = function (data: unknown, ...rest: unknown[]) {
+    descriptor.value = function (data: unknown, ...rest: unknown[]): unknown {
       return original.call(this, applyEncrypt(data, options), ...rest);
     };
     return descriptor;
@@ -195,7 +200,7 @@ function applyEncrypt(data: unknown, options: EncryptOptions): unknown {
 export function Decrypt(options: DecryptOptions): MethodDecorator {
   return (_target: object, _propertyKey: string | symbol, descriptor: PropertyDescriptor) => {
     const original = descriptor.value as (...args: unknown[]) => unknown;
-    descriptor.value = function (data: unknown, ...rest: unknown[]) {
+    descriptor.value = function (data: unknown, ...rest: unknown[]): unknown {
       return original.call(this, applyDecrypt(data, options), ...rest);
     };
     return descriptor;
@@ -227,8 +232,14 @@ function applyDecrypt(data: unknown, options: DecryptOptions): unknown {
       decipher.setAuthTag(authTag);
       if (options.aad) decipher.setAAD(Buffer.from(options.aad));
 
-      const decrypted = Buffer.concat([decipher.update(ciphertext), decipher.final()]).toString('utf8');
-      try { result[field] = JSON.parse(decrypted); } catch { result[field] = decrypted; }
+      const decrypted = Buffer.concat([decipher.update(ciphertext), decipher.final()]).toString(
+        'utf8'
+      );
+      try {
+        result[field] = JSON.parse(decrypted);
+      } catch {
+        result[field] = decrypted;
+      }
     } catch {
       // Leave as-is if decryption fails
     }

@@ -44,7 +44,13 @@ export interface LineageEntry {
   traceId: string;
   pipeline: string;
   input: unknown;
-  steps: Array<{ step: number; name: string; inputHash: string; outputHash: string; durationMs: number }>;
+  steps: Array<{
+    step: number;
+    name: string;
+    inputHash: string;
+    outputHash: string;
+    durationMs: number;
+  }>;
   output: unknown;
   timestamp: Date;
 }
@@ -54,7 +60,9 @@ export type MetricExporter = (metric: MetricPoint) => void | Promise<void>;
 
 function generateId(len = 16): string {
   const chars = '0123456789abcdef';
-  return Array.from({ length: len }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+  return Array.from({ length: len }, () => chars[Math.floor(Math.random() * chars.length)]).join(
+    ''
+  );
 }
 
 function simpleHash(value: unknown): string {
@@ -89,7 +97,9 @@ export class TelemetryService {
   private lineageStore: LineageEntry[] = [];
   private lineageEnabled = false;
   private maxSpansInMemory: number;
-  private otelApi: typeof import('@opentelemetry/api') | null = null;
+  // Loaded lazily if @opentelemetry/api is present in the host app
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private otelApi: Record<string, any> | null = null;
 
   constructor(options: { serviceName?: string; maxSpansInMemory?: number } = {}) {
     this.serviceName = options.serviceName ?? 'hazeljs-pipeline';
@@ -136,13 +146,15 @@ export class TelemetryService {
 
   // ─── Span Tracking ────────────────────────────────────────────────────────
 
-  startTrace(pipelineName: string): { traceId: string; rootSpanId: string } {
+  startTrace(_pipelineName: string): { traceId: string; rootSpanId: string } {
     const traceId = generateId(32);
     const rootSpanId = generateId(16);
     return { traceId, rootSpanId };
   }
 
-  async recordSpan(span: Omit<PipelineSpan, 'traceId' | 'spanId'> & Partial<SpanContext>): Promise<void> {
+  async recordSpan(
+    span: Omit<PipelineSpan, 'traceId' | 'spanId'> & Partial<SpanContext>
+  ): Promise<void> {
     const full: PipelineSpan = {
       traceId: span.traceId ?? generateId(32),
       spanId: span.spanId ?? generateId(16),
@@ -156,32 +168,44 @@ export class TelemetryService {
 
     // OTel integration
     if (this.otelApi) {
-      const tracer = this.otelApi.trace.getTracer(this.serviceName);
-      const otelSpan = tracer.startSpan(`pipeline.${full.pipeline}.step.${full.step}`, {
-        startTime: full.startTime,
-      });
-      otelSpan.setAttributes({
-        'hazel.pipeline': full.pipeline,
-        'hazel.step': full.step,
-        'hazel.step.name': full.stepName,
-        'hazel.service': this.serviceName,
-        ...full.attributes,
-      });
-      if (full.status === 'error' && full.error) {
-        otelSpan.recordException(new Error(full.error));
-        otelSpan.setStatus({ code: 2, message: full.error });
+      try {
+        const tracer = this.otelApi['trace'].getTracer(this.serviceName);
+        const otelSpan = tracer.startSpan(`pipeline.${full.pipeline}.step.${full.step}`, {
+          startTime: full.startTime,
+        });
+        otelSpan.setAttributes({
+          'hazel.pipeline': full.pipeline,
+          'hazel.step': full.step,
+          'hazel.step.name': full.stepName,
+          'hazel.service': this.serviceName,
+          ...full.attributes,
+        });
+        if (full.status === 'error' && full.error) {
+          otelSpan.recordException(new Error(full.error));
+          otelSpan.setStatus({ code: 2, message: full.error });
+        }
+        otelSpan.end(full.endTime);
+      } catch {
+        /* OTel not properly configured */
       }
-      otelSpan.end(full.endTime);
     }
 
     for (const exporter of this.spanExporters) {
-      try { await Promise.resolve(exporter(full)); } catch { /* noop */ }
+      try {
+        await Promise.resolve(exporter(full));
+      } catch {
+        /* noop */
+      }
     }
   }
 
   // ─── Metrics ──────────────────────────────────────────────────────────────
 
-  async recordMetric(name: string, value: number, labels: Record<string, string> = {}): Promise<void> {
+  async recordMetric(
+    name: string,
+    value: number,
+    labels: Record<string, string> = {}
+  ): Promise<void> {
     const point: MetricPoint = {
       name,
       value,
@@ -190,7 +214,11 @@ export class TelemetryService {
     };
     this.metrics.push(point);
     for (const exporter of this.metricExporters) {
-      try { await Promise.resolve(exporter(point)); } catch { /* noop */ }
+      try {
+        await Promise.resolve(exporter(point));
+      } catch {
+        /* noop */
+      }
     }
   }
 
@@ -206,7 +234,11 @@ export class TelemetryService {
     await this.recordMetric('hazel.pipeline.step.records', recordCount, labels);
     await this.recordMetric('hazel.pipeline.step.errors', success ? 0 : 1, labels);
     if (durationMs > 0 && recordCount > 0) {
-      await this.recordMetric('hazel.pipeline.step.throughput', (recordCount / durationMs) * 1000, labels);
+      await this.recordMetric(
+        'hazel.pipeline.step.throughput',
+        (recordCount / durationMs) * 1000,
+        labels
+      );
     }
   }
 
@@ -250,9 +282,7 @@ export class TelemetryService {
   // ─── Inspection ───────────────────────────────────────────────────────────
 
   getSpans(pipeline?: string): PipelineSpan[] {
-    return pipeline
-      ? this.spans.filter((s) => s.pipeline === pipeline)
-      : [...this.spans];
+    return pipeline ? this.spans.filter((s) => s.pipeline === pipeline) : [...this.spans];
   }
 
   getMetrics(name?: string): MetricPoint[] {
@@ -273,7 +303,8 @@ export class TelemetryService {
     p95DurationMs: number;
   } {
     const pipelineSpans = this.spans.filter((s) => s.pipeline === pipeline && s.step === 0);
-    if (pipelineSpans.length === 0) return { totalRuns: 0, successRate: 0, avgDurationMs: 0, p95DurationMs: 0 };
+    if (pipelineSpans.length === 0)
+      return { totalRuns: 0, successRate: 0, avgDurationMs: 0, p95DurationMs: 0 };
 
     const durations = pipelineSpans.map((s) => s.durationMs).sort((a, b) => a - b);
     const successes = pipelineSpans.filter((s) => s.status === 'ok').length;
@@ -282,7 +313,9 @@ export class TelemetryService {
     return {
       totalRuns: pipelineSpans.length,
       successRate: parseFloat(((successes / pipelineSpans.length) * 100).toFixed(2)),
-      avgDurationMs: parseFloat((durations.reduce((a, b) => a + b, 0) / durations.length).toFixed(2)),
+      avgDurationMs: parseFloat(
+        (durations.reduce((a, b) => a + b, 0) / durations.length).toFixed(2)
+      ),
       p95DurationMs: durations[p95Idx] ?? durations[durations.length - 1],
     };
   }

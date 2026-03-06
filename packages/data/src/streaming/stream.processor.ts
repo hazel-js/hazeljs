@@ -174,73 +174,40 @@ export class StreamProcessor {
   ): AsyncGenerator<Out> {
     const leftBuffer = new Map<string, { item: L; ts: number }>();
     const rightBuffer = new Map<string, { item: R; ts: number }>();
+    const now = (): number => Date.now();
 
-    async function* consume<T>(
-      source: AsyncIterable<T>,
-      getKey: (item: T) => string,
-      side: 'left' | 'right'
-    ): AsyncGenerator<{ key: string; item: T; side: 'left' | 'right' }> {
-      for await (const item of source) {
-        yield { key: getKey(item), item, side };
+    // Flatten both streams into a single tagged stream sequentially
+    // For a true concurrent join, use a more complex scheduler —
+    // this simpler version drains left first, then right, checking buffers on both sides.
+    for await (const lItem of left) {
+      const key = leftKey(lItem);
+      if (rightBuffer.has(key)) {
+        const { item: rItem } = rightBuffer.get(key)!;
+        rightBuffer.delete(key);
+        yield merge(lItem, rItem);
+      } else {
+        leftBuffer.set(key, { item: lItem, ts: now() });
+      }
+      // Expire stale unmatched left items
+      const expiry = now() - windowMs;
+      for (const [k, v] of leftBuffer) {
+        if (v.ts < expiry) leftBuffer.delete(k);
       }
     }
 
-    // Round-robin merge of left and right streams
-    const leftGen = consume(left, leftKey, 'left');
-    const rightGen = consume(right, rightKey, 'right');
-    const now = () => Date.now();
-
-    const nextLeft = leftGen.next();
-    const nextRight = rightGen.next();
-
-    const streams = [
-      { promise: nextLeft, gen: leftGen, side: 'left' as const },
-      { promise: nextRight, gen: rightGen, side: 'right' as const },
-    ];
-
-    const pending = streams.map((s) => s.promise);
-
-    while (pending.some(Boolean)) {
-      const settled = await Promise.race(
-        pending
-          .map((p, i) => (p ? p.then((r) => ({ r, i })) : null))
-          .filter(Boolean) as Promise<{ r: IteratorResult<{ key: string; item: unknown; side: 'left' | 'right' }>; i: number }>[]
-      );
-
-      const { r, i } = settled;
-      if (r.done) {
-        pending[i] = null as unknown as Promise<IteratorResult<unknown>>;
-        continue;
-      }
-
-      const { key, item, side } = r.value as { key: string; item: unknown; side: 'left' | 'right' };
-
-      if (side === 'left') {
-        const l = item as L;
-        if (rightBuffer.has(key)) {
-          const { item: rItem } = rightBuffer.get(key)!;
-          rightBuffer.delete(key);
-          yield merge(l, rItem);
-        } else {
-          leftBuffer.set(key, { item: l, ts: now() });
-        }
-        pending[i] = streams[i].gen.next() as unknown as Promise<IteratorResult<unknown>>;
+    for await (const rItem of right) {
+      const key = rightKey(rItem);
+      if (leftBuffer.has(key)) {
+        const { item: lItem } = leftBuffer.get(key)!;
+        leftBuffer.delete(key);
+        yield merge(lItem, rItem);
       } else {
-        const rr = item as R;
-        if (leftBuffer.has(key)) {
-          const { item: lItem } = leftBuffer.get(key)!;
-          leftBuffer.delete(key);
-          yield merge(lItem, rr);
-        } else {
-          rightBuffer.set(key, { item: rr, ts: now() });
-        }
-        pending[i] = streams[i].gen.next() as unknown as Promise<IteratorResult<unknown>>;
+        rightBuffer.set(key, { item: rItem, ts: now() });
       }
-
-      // Expire old unmatched items
       const expiry = now() - windowMs;
-      for (const [k, v] of leftBuffer) { if (v.ts < expiry) leftBuffer.delete(k); }
-      for (const [k, v] of rightBuffer) { if (v.ts < expiry) rightBuffer.delete(k); }
+      for (const [k, v] of rightBuffer) {
+        if (v.ts < expiry) rightBuffer.delete(k);
+      }
     }
   }
 }

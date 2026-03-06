@@ -48,7 +48,7 @@ export class FlinkService {
     const client = this.getClient();
 
     try {
-      const jobId = await client.submitJob(jobConfig, jobGraph);
+      const jobId = await client.submitJob(jobConfig);
       return {
         jobId,
         status: 'submitted',
@@ -57,7 +57,7 @@ export class FlinkService {
         jobGraph,
       };
     } catch {
-      // submitJob throws - return config for manual deployment
+      // submitJob throws without jarFile - return config for manual deployment
       return {
         status: 'config_generated',
         jobConfig,
@@ -113,7 +113,11 @@ export class FlinkService {
     const { jobConfig, jobGraph } = this.streamBuilder.buildConfig(pipeline, config);
     const client = this.getClient();
 
-    const jobId = await client.submitJob(jobConfig, { jarFile, jobName: jobConfig.jobName, parallelism: jobConfig.parallelism });
+    const jobId = await client.submitJob(jobConfig, {
+      jarFile,
+      jobName: jobConfig.jobName,
+      parallelism: jobConfig.parallelism,
+    });
     return {
       jobId,
       status: 'submitted',
@@ -128,9 +132,12 @@ export class FlinkService {
    * @param sql       The SQL DDL+DML to submit (CREATE TABLE + INSERT INTO)
    * @param sessionId Optional existing session ID; a new session is created if omitted
    */
-  async deployStreamWithSql(sql: string, sessionId?: string): Promise<{ operationId: string; sessionId: string }> {
+  async deployStreamWithSql(
+    sql: string,
+    sessionId?: string
+  ): Promise<{ operationId: string; sessionId: string }> {
     const client = this.getClient();
-    const sid = sessionId ?? await client.createSqlSession();
+    const sid = sessionId ?? (await client.createSqlSession());
     const operationId = await client.submitSql(sql, sid);
     return { operationId, sessionId: sid };
   }
@@ -141,7 +148,12 @@ export class FlinkService {
 
   async runJar(
     jarId: string,
-    options: { jobName?: string; parallelism?: number; entryClass?: string; programArgs?: string } = {}
+    options: {
+      jobName?: string;
+      parallelism?: number;
+      entryClass?: string;
+      programArgs?: string;
+    } = {}
   ): Promise<string> {
     return this.getClient().runJar(jarId, options);
   }

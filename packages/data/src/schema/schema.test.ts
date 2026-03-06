@@ -127,4 +127,73 @@ describe('Schema', () => {
       expect(Schema.array(Schema.string()).validate({}).success).toBe(false);
     });
   });
+
+  describe('boolean', () => {
+    it('validates boolean', () => {
+      expect(Schema.boolean().validate(true).success).toBe(true);
+      expect(Schema.boolean().validate(false).success).toBe(true);
+      expect(Schema.boolean().validate(1).success).toBe(false);
+    });
+  });
+
+  describe('literal', () => {
+    it('validates literal value', () => {
+      expect(Schema.literal('active').validate('active').success).toBe(true);
+      expect(Schema.literal('active').validate('inactive').success).toBe(false);
+      expect(Schema.literal(42).validate(42).success).toBe(true);
+    });
+  });
+
+  describe('union', () => {
+    it('validates union of schemas', () => {
+      const schema = Schema.union([Schema.literal('a'), Schema.literal('b')]);
+      expect(schema.validate('a').success).toBe(true);
+      expect(schema.validate('b').success).toBe(true);
+      expect(schema.validate('c').success).toBe(false);
+    });
+  });
+
+  describe('optional and default', () => {
+    it('optional accepts undefined', () => {
+      const schema = Schema.string().optional();
+      expect(schema.validate(undefined).success).toBe(true);
+      expect(schema.validate('x').success).toBe(true);
+    });
+
+    it('default returns default for undefined', () => {
+      const schema = Schema.string().default('fallback');
+      const result = schema.validate(undefined);
+      expect(result.success).toBe(true);
+      if (result.success) expect(result.data).toBe('fallback');
+    });
+  });
+
+  describe('transform and refine', () => {
+    it('transform coerces after validation', () => {
+      const schema = Schema.number().transform((n) => n * 2);
+      const result = schema.validate(21);
+      expect(result.success).toBe(true);
+      if (result.success) expect(result.data).toBe(42);
+    });
+
+    it('refine adds custom constraint', () => {
+      const schema = Schema.number().refine((n) => n % 2 === 0, 'Must be even');
+      expect(schema.validate(4).success).toBe(true);
+      expect(schema.validate(3).success).toBe(false);
+    });
+  });
+
+  describe('toJsonSchema', () => {
+    it('exports string schema', () => {
+      const js = Schema.string().toJsonSchema();
+      expect(js).toMatchObject({ type: 'string' });
+    });
+
+    it('exports object schema', () => {
+      const schema = Schema.object({ name: Schema.string() });
+      const js = schema.toJsonSchema();
+      expect(js).toMatchObject({ type: 'object' });
+      expect(js).toHaveProperty('properties');
+    });
+  });
 });

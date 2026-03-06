@@ -173,14 +173,17 @@ export class FlinkClient {
 
     const headers: Record<string, string> = {};
     if (this.config.auth?.type === 'basic' && this.config.auth.username) {
-      headers['Authorization'] = `Basic ${Buffer.from(`${this.config.auth.username}:${this.config.auth.password ?? ''}`).toString('base64')}`;
+      headers['Authorization'] =
+        `Basic ${Buffer.from(`${this.config.auth.username}:${this.config.auth.password ?? ''}`).toString('base64')}`;
     } else if (this.config.auth?.type === 'token' && this.config.auth.token) {
       headers['Authorization'] = `Bearer ${this.config.auth.token}`;
     }
 
     const boundary = `----HazelJSFormBoundary${Date.now()}`;
     const bodyParts: Buffer[] = [
-      Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="jarfile"; filename="${fileName}"\r\nContent-Type: application/java-archive\r\n\r\n`),
+      Buffer.from(
+        `--${boundary}\r\nContent-Disposition: form-data; name="jarfile"; filename="${fileName}"\r\nContent-Type: application/java-archive\r\n\r\n`
+      ),
       fileBuffer,
       Buffer.from(`\r\n--${boundary}--\r\n`),
     ];
@@ -207,7 +210,7 @@ export class FlinkClient {
         throw new Error(`Flink JAR upload failed ${response.status}: ${await response.text()}`);
       }
 
-      const result = await response.json() as { filename?: string };
+      const result = (await response.json()) as { filename?: string };
       const filename = result.filename ?? '';
       const match = /\/jars\/([^/]+)$/.exec(filename);
       if (!match) throw new Error(`Could not extract JAR ID from Flink response: ${filename}`);
@@ -231,7 +234,8 @@ export class FlinkClient {
     if (request.entryClass) body['entry-class'] = request.entryClass;
     if (request.programArgs) body['program-args'] = request.programArgs;
     if (request.savepointPath) body['savepointPath'] = request.savepointPath;
-    if (request.allowNonRestoredState) body['allowNonRestoredState'] = request.allowNonRestoredState;
+    if (request.allowNonRestoredState)
+      body['allowNonRestoredState'] = request.allowNonRestoredState;
 
     const result = await this.request<{ jobid: string }>('POST', `/jars/${jarId}/run`, body);
     if (!result.jobid) throw new Error('Flink did not return a job ID');
@@ -281,7 +285,7 @@ export class FlinkClient {
     if (!jarFile) {
       throw new Error(
         'submitJob requires a JAR file path. Set request.jarFile to the path of your pipeline JAR, ' +
-        'or use submitSql() for Flink SQL-based pipelines.'
+          'or use submitSql() for Flink SQL-based pipelines.'
       );
     }
 
@@ -300,7 +304,9 @@ export class FlinkClient {
    * List uploaded JARs on the cluster.
    */
   async listJars(): Promise<Array<{ id: string; name: string; uploaded: number }>> {
-    const result = await this.request<{ files?: Array<{ id: string; name: string; uploaded: number }> }>('GET', '/jars');
+    const result = await this.request<{
+      files?: Array<{ id: string; name: string; uploaded: number }>;
+    }>('GET', '/jars');
     return result.files ?? [];
   }
 

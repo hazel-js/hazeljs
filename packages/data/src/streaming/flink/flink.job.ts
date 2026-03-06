@@ -1,5 +1,6 @@
 import { FlinkClient } from './flink.client';
 import type { FlinkJobConfig } from '../../data.types';
+import type { FlinkJobSubmitRequest } from './flink.client';
 
 export interface FlinkJobResult {
   jobId: string;
@@ -31,7 +32,7 @@ export class FlinkJob {
     return this.client.stopJob(jobId, savepointPath);
   }
 
-  async submit(config: FlinkJobConfig, jobGraph?: unknown): Promise<string> {
-    return this.client.submitJob(config, jobGraph);
+  async submit(config: FlinkJobConfig, request?: FlinkJobSubmitRequest): Promise<string> {
+    return this.client.submitJob(config, request);
   }
 }

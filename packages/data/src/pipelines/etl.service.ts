@@ -30,21 +30,35 @@ export interface PipelineExecutionEvent {
 export type PipelineEventHandler = (event: PipelineExecutionEvent) => void;
 
 /** Runs a promise with a per-call timeout. */
-async function withTimeout<T>(promise: Promise<T>, timeoutMs: number, stepName: string): Promise<T> {
+async function withTimeout<T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+  stepName: string
+): Promise<T> {
   return new Promise<T>((resolve, reject) => {
     const id = setTimeout(
       () => reject(new Error(`Step "${stepName}" timed out after ${timeoutMs}ms`)),
       timeoutMs
     );
     promise.then(
-      (v) => { clearTimeout(id); resolve(v); },
-      (e) => { clearTimeout(id); reject(e); }
+      (v) => {
+        clearTimeout(id);
+        resolve(v);
+      },
+      (e) => {
+        clearTimeout(id);
+        reject(e);
+      }
     );
   });
 }
 
 /** Executes fn with retry + exponential/fixed backoff. */
-async function withRetry<T>(fn: () => Promise<T>, retry: RetryConfig, stepName: string): Promise<T> {
+async function withRetry<T>(
+  fn: () => Promise<T>,
+  retry: RetryConfig,
+  stepName: string
+): Promise<T> {
   const { attempts, delay = 500, backoff = 'fixed' } = retry;
   let lastError: Error = new Error('Unknown error');
   for (let attempt = 1; attempt <= attempts; attempt++) {
@@ -86,7 +100,11 @@ export class ETLService {
 
   private emit(event: PipelineExecutionEvent): void {
     for (const h of this.eventHandlers) {
-      try { h(event); } catch { /* noop */ }
+      try {
+        h(event);
+      } catch {
+        /* noop */
+      }
     }
   }
 
@@ -153,7 +171,14 @@ export class ETLService {
       // Conditional skip
       if (step.when && !step.when(data)) {
         logger.debug(`Step "${step.name}" skipped (when predicate returned false)`);
-        this.emit({ pipeline: metadata?.name ?? 'unknown', step: step.step, stepName: step.name, durationMs: 0, success: true, skipped: true });
+        this.emit({
+          pipeline: metadata?.name ?? 'unknown',
+          step: step.step,
+          stepName: step.name,
+          durationMs: 0,
+          success: true,
+          skipped: true,
+        });
         continue;
       }
 
@@ -168,19 +193,30 @@ export class ETLService {
       };
 
       try {
-        let stepPromise = step.retry
-          ? withRetry(runStep, step.retry, step.name)
-          : runStep();
+        let stepPromise = step.retry ? withRetry(runStep, step.retry, step.name) : runStep();
 
         if (step.timeoutMs) {
           stepPromise = withTimeout(stepPromise, step.timeoutMs, step.name);
         }
 
         data = await stepPromise;
-        this.emit({ pipeline: metadata?.name ?? 'unknown', step: step.step, stepName: step.name, durationMs: Date.now() - t0, success: true });
+        this.emit({
+          pipeline: metadata?.name ?? 'unknown',
+          step: step.step,
+          stepName: step.name,
+          durationMs: Date.now() - t0,
+          success: true,
+        });
       } catch (err) {
         const error = err instanceof Error ? err : new Error(String(err));
-        this.emit({ pipeline: metadata?.name ?? 'unknown', step: step.step, stepName: step.name, durationMs: Date.now() - t0, success: false, error: error.message });
+        this.emit({
+          pipeline: metadata?.name ?? 'unknown',
+          step: step.step,
+          stepName: step.name,
+          durationMs: Date.now() - t0,
+          success: false,
+          error: error.message,
+        });
 
         if (step.dlq) {
           logger.debug(`Step "${step.name}" failed — routing to DLQ`);
@@ -218,7 +254,10 @@ export class ETLService {
         if (s.status === 'fulfilled') {
           results.push(s.value);
         } else {
-          errors.push({ item: batch[j], error: s.reason instanceof Error ? s.reason : new Error(String(s.reason)) });
+          errors.push({
+            item: batch[j],
+            error: s.reason instanceof Error ? s.reason : new Error(String(s.reason)),
+          });
         }
       }
     }

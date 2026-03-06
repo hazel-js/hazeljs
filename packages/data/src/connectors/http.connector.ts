@@ -75,9 +75,7 @@ export class HttpSource implements DataSource<unknown> {
 
       const body: unknown = await res.json();
 
-      const items = this.options.dataPath
-        ? getNestedValue(body, this.options.dataPath)
-        : body;
+      const items = this.options.dataPath ? getNestedValue(body, this.options.dataPath) : body;
 
       if (Array.isArray(items)) {
         for (const item of items) yield item;
@@ -87,7 +85,7 @@ export class HttpSource implements DataSource<unknown> {
       }
 
       url = this.options.nextPagePath
-        ? (getNestedValue(body, this.options.nextPagePath) as string | null) ?? null
+        ? ((getNestedValue(body, this.options.nextPagePath) as string | null) ?? null)
         : null;
     }
   }
@@ -150,7 +148,9 @@ export class HttpSink implements DataSink<unknown> {
 
     const payload = this.options.bodyKey
       ? { [this.options.bodyKey]: this.buffer }
-      : this.buffer.length === 1 ? this.buffer[0] : this.buffer;
+      : this.buffer.length === 1
+        ? this.buffer[0]
+        : this.buffer;
 
     const controller = new AbortController();
     if (this.options.timeoutMs) {
