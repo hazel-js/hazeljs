@@ -55,8 +55,8 @@ describe('FlinkClient', () => {
     await expect(client.getJobStatus('bad')).rejects.toThrow('Flink API error');
   });
 
-  it('submitJob throws with helpful message', async () => {
-    await expect(client.submitJob({})).rejects.toThrow('submitJob: Full Flink deployment requires');
+  it('submitJob requires a jarFile path', async () => {
+    await expect(client.submitJob({})).rejects.toThrow('submitJob requires a JAR file path');
   });
 
   it('getClusterInfo', async () => {

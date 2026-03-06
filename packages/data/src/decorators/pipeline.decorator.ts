@@ -26,7 +26,7 @@ export function Pipeline(nameOrOptions?: string | PipelineOptions): ClassDecorat
     const options: PipelineOptions =
       typeof nameOrOptions === 'string' ? { name: nameOrOptions } : nameOrOptions || {};
     const metadata = {
-      name: options.name ?? target.constructor.name,
+      name: options.name ?? (target as { name?: string }).name ?? 'unknown',
       ...options,
     };
     Reflect.defineMetadata(PIPELINE_METADATA_KEY, metadata, target);

@@ -1,12 +1,20 @@
 import 'reflect-metadata';
 import logger from '@hazeljs/core';
-import type { PipelineStepMetadata } from '../data.types';
+import type { PipelineStepMetadata, RetryConfig, DLQConfig } from '../data.types';
 
 const TRANSFORM_METADATA_KEY = 'hazel:data:transform';
 
 export interface TransformOptions {
   step: number;
   name: string;
+  /** Execute step only when this predicate returns true */
+  when?: (data: unknown) => boolean;
+  /** Retry failed step with backoff */
+  retry?: RetryConfig;
+  /** Per-step execution timeout in milliseconds */
+  timeoutMs?: number;
+  /** Dead letter queue — called on failure instead of throwing */
+  dlq?: DLQConfig;
 }
 
 /**
@@ -27,6 +35,10 @@ export function Transform(options: TransformOptions): MethodDecorator {
       step: options.step,
       name: options.name,
       type: 'transform',
+      when: options.when,
+      retry: options.retry,
+      timeoutMs: options.timeoutMs,
+      dlq: options.dlq,
     };
     Reflect.defineMetadata(TRANSFORM_METADATA_KEY, metadata, target, propertyKey);
     logger.debug(

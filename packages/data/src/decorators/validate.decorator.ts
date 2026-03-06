@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import logger from '@hazeljs/core';
-import type { PipelineStepMetadata } from '../data.types';
+import type { PipelineStepMetadata, RetryConfig, DLQConfig } from '../data.types';
 import type { BaseSchema } from '../schema/schema';
 
 const VALIDATE_METADATA_KEY = 'hazel:data:validate';
@@ -9,6 +9,10 @@ export interface ValidateOptions {
   step: number;
   name: string;
   schema: BaseSchema;
+  when?: (data: unknown) => boolean;
+  retry?: RetryConfig;
+  timeoutMs?: number;
+  dlq?: DLQConfig;
 }
 
 /**
@@ -37,6 +41,10 @@ export function Validate(options: ValidateOptions): MethodDecorator {
       name: options.name,
       type: 'validate',
       schema: options.schema,
+      when: options.when,
+      retry: options.retry,
+      timeoutMs: options.timeoutMs,
+      dlq: options.dlq,
     };
     Reflect.defineMetadata(VALIDATE_METADATA_KEY, metadata, target, propertyKey);
     logger.debug(
