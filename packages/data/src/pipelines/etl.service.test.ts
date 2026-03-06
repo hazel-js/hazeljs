@@ -66,7 +66,7 @@ describe('ETLService', () => {
 
   it('throws when step method not found on instance', async () => {
     const pipeline = new TestPipeline();
-    (pipeline as Record<string, unknown>).double = null;
+    (pipeline as unknown as Record<string, unknown>).double = null;
     await expect(etlService.execute(pipeline, { x: 5 })).rejects.toThrow('not found');
   });
 
@@ -183,7 +183,11 @@ class DLQPipeline {
   @Transform({
     step: 1,
     name: 'fail',
-    dlq: { handler: (item, err) => dlqCaptured.push({ item, error: err.message }) },
+    dlq: {
+      handler: (item, err) => {
+        dlqCaptured.push({ item, error: err.message });
+      },
+    },
   })
   failStep(data: unknown) {
     if ((data as { skip?: boolean }).skip) return data;

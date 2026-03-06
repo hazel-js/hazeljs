@@ -403,7 +403,8 @@ describe('Schema', () => {
   describe('object pick filters keys not in shape', () => {
     it('pick ignores keys not in shape', () => {
       const base = Schema.object({ a: Schema.number() });
-      const picked = base.pick(['a', 'nonexistent']);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const picked = (base as any).pick(['a', 'nonexistent']);
       const result = picked.validate({ a: 1 });
       expect(result.success).toBe(true);
       if (result.success) expect(result.data).toEqual({ a: 1 });
