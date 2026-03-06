@@ -215,6 +215,28 @@ export class UserController {
 }
 ```
 
+### Custom metadata and parameter decorators
+
+Attach custom metadata for guards or other layers with **SetMetadata** / **getMetadata**, and build your own parameter decorators with **createParamDecorator**:
+
+```typescript
+import { SetMetadata, getMetadata, createParamDecorator } from '@hazeljs/core';
+
+// Custom metadata (e.g. for guards)
+@SetMetadata('roles', ['admin'])
+class AdminController {}
+
+// Custom parameter decorator
+const CurrentUser = createParamDecorator((_req, ctx) => ctx.user);
+
+@Get('profile')
+getProfile(@CurrentUser user: User) {
+  return user;
+}
+```
+
+Use the custom param decorator **without** parentheses: `@CurrentUser`. See the [full API reference](https://hazeljs.com/docs/api-reference) for `ParamDecoratorContext` and `CUSTOM_METADATA_PREFIX`.
+
 ## Middleware
 
 ### Global Middleware
@@ -504,10 +526,13 @@ Startup and registration logs (controllers, routes, providers) are at `debug` le
 - `@Controller(path)` - Define a controller
 - `@Injectable(options?)` - Mark class as injectable
 - `@Get(path?)`, `@Post(path?)`, `@Put(path?)`, `@Delete(path?)`, `@Patch(path?)` - HTTP methods
-- `@Param(name)`, `@Query(name)`, `@Body()`, `@Headers(name)` - Parameter extraction
-- `@UseMiddleware(middleware)` - Apply middleware
-- `@UseGuard(guard)` - Apply guard
-- `@UseInterceptor(interceptor)` - Apply interceptor
+- `@Param(name)`, `@Query(name)`, `@Body()`, `@Headers(name)`, `@Req()`, `@Res()`, `@Ip()`, `@Host()` - Parameter extraction
+- `@UseGuards(...guards)`, `@UseInterceptors(...interceptors)`, `@UsePipes(...pipes)` - Apply guards, interceptors, pipes
+- `@Public()` / `@SkipAuth()` - Mark route as public
+- `@Timeout(ms)`, `@Retry(options)`, `@Optional()`, `@Session()` - Per-route behavior
+- `@ApiTags(...tags)`, `@ApiOperation(options)` - OpenAPI metadata
+- **SetMetadata(key, value)** - Attach custom metadata to a class or method (read with `getMetadata(key, target, propertyKey?)`)
+- **createParamDecorator(resolve)** - Build custom parameter decorators that inject values from `(req, context, container)`
 
 ### Classes
 
