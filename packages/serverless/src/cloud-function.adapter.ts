@@ -29,6 +29,16 @@ export interface CloudFunctionResponse {
 }
 
 /**
+ * Options for createCloudFunctionHandler
+ */
+export interface CloudFunctionHandlerOptions {
+  /** Called after the HazelJS app is initialized. */
+  onInit?: (app: HazelApp) => Promise<void>;
+  /** Called when the handler throws. */
+  onError?: (error: unknown) => void;
+}
+
+/**
  * Cloud Function adapter for HazelJS
  */
 export class CloudFunctionAdapter {
@@ -36,7 +46,10 @@ export class CloudFunctionAdapter {
   private optimizer: ColdStartOptimizer;
   private isColdStart = true;
 
-  constructor(private moduleClass: Type<unknown>) {
+  constructor(
+    private moduleClass: Type<unknown>,
+    private options: CloudFunctionHandlerOptions = {}
+  ) {
     this.optimizer = ColdStartOptimizer.getInstance();
   }
 
@@ -59,6 +72,10 @@ export class CloudFunctionAdapter {
 
     // Create HazelJS application
     this.app = new HazelApp(this.moduleClass);
+
+    if (this.options.onInit && this.app) {
+      await this.options.onInit(this.app);
+    }
 
     const duration = Date.now() - startTime;
     logger.info(`Cloud Function initialization completed in ${duration}ms`);
@@ -96,6 +113,7 @@ export class CloudFunctionAdapter {
 
         res.send(response.body);
       } catch (error) {
+        this.options.onError?.(error);
         logger.error('Cloud Function handler error:', error);
         res.status(500).json({
           error: 'Internal Server Error',
@@ -106,7 +124,9 @@ export class CloudFunctionAdapter {
   }
 
   /**
-   * Create Cloud Function event handler (for Pub/Sub, Storage, etc.)
+   * Create Cloud Function event handler (for Pub/Sub, Storage, etc.).
+   * Stub: initializes the app and logs the event but does not route to user-defined handlers.
+   * Implement custom event handling in your module or a separate entrypoint and invoke it from here.
    */
   createEventHandler() {
     return async (event: unknown, context: unknown): Promise<void> => {
@@ -125,10 +145,10 @@ export class CloudFunctionAdapter {
           resource: (context as { resource?: string }).resource,
         });
 
-        // Process event
-        // In a real implementation, this would route to appropriate handlers
+        // Stub: extend this to dispatch event to your handlers (e.g. Pub/Sub, Storage)
         logger.info('Event processed successfully');
       } catch (error) {
+        this.options.onError?.(error);
         logger.error('Cloud Function event handler error:', error);
         throw error;
       }
@@ -233,7 +253,7 @@ export class CloudFunctionAdapter {
         url: request.url,
         headers: request.headers,
         query: request.query,
-        params: context.params || {},
+        params: route.context?.params ?? context.params ?? {},
         body: request.body,
       };
 
@@ -271,7 +291,11 @@ export class CloudFunctionAdapter {
         },
       };
 
-      const result = await route.handler(syntheticReq as never, syntheticRes as never);
+      const result = await route.handler(
+        syntheticReq as never,
+        syntheticRes as never,
+        route.context as never
+      );
 
       if (result !== undefined && responseBody === undefined) {
         responseBody = result;
@@ -322,9 +346,10 @@ export class CloudFunctionAdapter {
  * ```
  */
 export function createCloudFunctionHandler(
-  moduleClass: Type<unknown>
+  moduleClass: Type<unknown>,
+  options?: CloudFunctionHandlerOptions
 ): (req: CloudFunctionRequest, res: CloudFunctionResponse) => Promise<void> {
-  const adapter = new CloudFunctionAdapter(moduleClass);
+  const adapter = new CloudFunctionAdapter(moduleClass, options ?? {});
   return adapter.createHttpHandler();
 }
 
@@ -341,8 +366,9 @@ export function createCloudFunctionHandler(
  * ```
  */
 export function createCloudFunctionEventHandler(
-  moduleClass: Type<unknown>
+  moduleClass: Type<unknown>,
+  options?: CloudFunctionHandlerOptions
 ): (event: unknown, context: unknown) => Promise<void> {
-  const adapter = new CloudFunctionAdapter(moduleClass);
+  const adapter = new CloudFunctionAdapter(moduleClass, options ?? {});
   return adapter.createEventHandler();
 }

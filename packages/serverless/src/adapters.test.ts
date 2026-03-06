@@ -174,6 +174,26 @@ describe('LambdaAdapter', () => {
       );
       expect(result.statusCode).toBe(500);
     });
+
+    it('returns base64 body and isBase64Encoded when binaryMimeTypes matches and handler sends Buffer', async () => {
+      const binaryPayload = Buffer.from('fake-png-bytes');
+      mockMatch.mockResolvedValue({
+        handler: async (
+          _req: unknown,
+          res: { setHeader(k: string, v: string): void; send(d: unknown): void }
+        ) => {
+          res.setHeader('Content-Type', 'image/png');
+          res.send(binaryPayload);
+        },
+      });
+      const adapter = new LambdaAdapter(MockModule, {
+        binaryMimeTypes: ['image/png', 'image/*'],
+      });
+      const result = await adapter.createHandler()(makeEvent(), makeContext());
+      expect(result.statusCode).toBe(200);
+      expect(result.isBase64Encoded).toBe(true);
+      expect(Buffer.from(result.body, 'base64').toString()).toBe('fake-png-bytes');
+    });
   });
 
   describe('createHandler() – request conversion', () => {
