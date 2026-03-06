@@ -107,6 +107,89 @@ export class MLController {
 }
 ```
 
+## ML Decorators
+
+The package uses three decorators to declare ML models and their behaviour. The registry and services discover them via reflection—no manual wiring needed.
+
+### `@Model` (class)
+
+Marks a class as an ML model and attaches **registry metadata**. Required so the model can be registered and looked up by name/version.
+
+| Property      | Type     | Required | Description |
+|---------------|----------|----------|-------------|
+| `name`        | string   | Yes      | Unique model id (e.g. `'sentiment-classifier'`). |
+| `version`     | string   | Yes      | Semver (e.g. `'1.0.0'`). |
+| `framework`   | string   | Yes      | `'tensorflow'` \| `'onnx'` \| `'custom'`. |
+| `description` | string   | No       | Human-readable description. |
+| `tags`        | string[] | No       | Tags for filtering (default: `[]`). |
+
+**Example:** One model per class; use `@Injectable()` so the app can construct it.
+
+```typescript
+@Model({
+  name: 'spam-classifier',
+  version: '1.0.0',
+  framework: 'custom',
+  description: 'Binary spam/ham classifier',
+  tags: ['nlp', 'moderation'],
+})
+@Injectable()
+export class SpamClassifier {
+  // ...
+}
+```
+
+---
+
+### `@Train` (method)
+
+Marks the **single method** that trains this model. `TrainerService.train(modelName, data)` will call it. Optional config is for documentation or pipeline wiring.
+
+| Option      | Type   | Default   | Description |
+|-------------|--------|-----------|-------------|
+| `pipeline`  | string | `'default'` | Name of a registered `PipelineService` pipeline to run before training. |
+| `batchSize` | number | `32`     | Hint for batching (your logic can ignore it). |
+| `epochs`    | number | `10`     | Hint for epochs (your logic can ignore it). |
+
+**Example:** Exactly one `@Train()` method per model; it receives training data and can return metrics.
+
+```typescript
+@Train({ pipeline: 'sentiment-preprocessing', epochs: 5 })
+async train(data: { samples: Array<{ text: string; label: string }> }): Promise<TrainingResult> {
+  // Your training logic
+  return { accuracy: 0.95, loss: 0.05 };
+}
+```
+
+---
+
+### `@Predict` (method)
+
+Marks the **single method** that runs inference. `PredictorService.predict(modelName, input)` will call it.
+
+| Option    | Type    | Default    | Description |
+|-----------|---------|------------|-------------|
+| `batch`   | boolean | `false`    | Hint that the method supports batch input (semantic only). |
+| `endpoint`| string  | `'/predict'` | Hint for route naming (semantic only). |
+
+**Example:** Exactly one `@Predict()` method per model; it receives one input and returns a prediction object.
+
+```typescript
+@Predict({ batch: true, endpoint: '/predict' })
+async predict(input: { text: string }): Promise<{ label: string; confidence: number }> {
+  // Your inference logic
+  return { label: 'ham', confidence: 0.92 };
+}
+```
+
+---
+
+### Rules
+
+- **One model class** = one `@Model`, one `@Train` method, one `@Predict` method.
+- **Order:** Put `@Model` on the class, then `@Train` and `@Predict` on the methods. Use `@Injectable()` from `@hazeljs/core` so the app can instantiate the model.
+- **Discovery:** When you pass model classes to `MLModule.forRoot({ models: [...] })`, the bootstrap finds the `@Train` and `@Predict` methods and registers them with the registry.
+
 ## Model registration
 
 Models are registered when passed to `MLModule.forRoot({ models: [...] })`. The bootstrap discovers `@Train` and `@Predict` methods via reflection.
@@ -204,9 +287,10 @@ metricsService.recordEvaluation({
 | `BatchService` | Batch prediction with configurable batch size |
 | `MetricsService` | Model evaluation and metrics tracking |
 
-## Example
+## Examples
 
-See [hazeljs-ml-starter](../../../hazeljs-ml-starter) for a full example with sentiment, spam, intent classifiers, REST API, training pipeline, and metrics.
+- **[hazeljs-ml-starter](../../../hazeljs-ml-starter)** – Full app: sentiment, spam, intent classifiers, REST API, training pipeline, and metrics.
+- **[example/src/ml](../../example/src/ml)** – Minimal runnable example of the three decorators (`npm run ml:decorators` from the example repo).
 
 ## Links
 

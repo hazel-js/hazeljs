@@ -24,6 +24,7 @@
     "memory:chatbot": "ts-node src/memory/chatbot-with-memory-example.ts",
     "kafka": "PORT=3010 ts-node src/kafka/index.ts",
     "kafka:streams": "ts-node src/kafka/stream-only.example.ts",
+    "ml:decorators": "ts-node src/ml/ml-decorators.example.ts",
     "ops:agent": "ts-node src/ops/ops-agent-example.ts"
   },
   "dependencies": {
@@ -34,6 +35,7 @@
     "@hazeljs/config": "file:../packages/config",
     "@hazeljs/core": "file:../packages/core",
     "@hazeljs/discovery": "file:../packages/discovery",
+    "@hazeljs/ml": "file:../packages/ml",
     "@hazeljs/kafka": "file:../packages/kafka",
     "@hazeljs/ops-agent": "file:../packages/ops-agent",
     "@hazeljs/pdf-to-audio": "file:../packages/pdf-to-audio",
