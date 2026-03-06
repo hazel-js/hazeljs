@@ -65,6 +65,8 @@ export interface RequestContext {
     [key: string]: unknown;
   };
   req?: Request; // Express request object
+  /** Set by router from @Retry() metadata; consumed by RetryInterceptor */
+  retryOptions?: { count: number; delay?: number; retryIf?: (err: Error) => boolean };
 }
 
 export interface ValidationRule {

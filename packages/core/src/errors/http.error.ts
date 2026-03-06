@@ -44,6 +44,13 @@ export class ConflictError extends HttpError {
   }
 }
 
+export class RequestTimeoutError extends HttpError {
+  constructor(message: string = 'Request Timeout') {
+    super(408, message);
+    this.name = 'RequestTimeoutError';
+  }
+}
+
 export class InternalServerError extends HttpError {
   constructor(message: string = 'Internal Server Error') {
     super(500, message);

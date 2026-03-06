@@ -14,4 +14,5 @@ export interface RequestContext {
     role: string;
     [key: string]: unknown;
   };
+  retryOptions?: { count: number; delay?: number; retryIf?: (err: Error) => boolean };
 }

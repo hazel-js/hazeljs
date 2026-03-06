@@ -22,6 +22,20 @@ import {
   Header,
   Redirect,
   AITask,
+  Ip,
+  Host,
+  Public,
+  SkipAuth,
+  Timeout,
+  Optional,
+  Session,
+  Retry,
+  ApiTags,
+  ApiOperation,
+  SetMetadata,
+  getMetadata,
+  createParamDecorator,
+  CUSTOM_METADATA_PREFIX,
 } from '../decorators';
 import 'reflect-metadata';
 
@@ -870,6 +884,229 @@ describe('Decorators', () => {
       const guardMeta = Reflect.getMetadata('hazel:guards', TestController.prototype, 'getProtected');
       expect(guardMeta).toBeDefined();
       expect(guardMeta).toContain(RoleGuard);
+    });
+  });
+
+  describe('Ip', () => {
+    it('should register ip injection type', () => {
+      class TestController {
+        @Get('/')
+        get(@Ip() ip: string) {
+          return { ip };
+        }
+      }
+      const injections = Reflect.getMetadata('hazel:inject', TestController, 'get');
+      expect(injections[0]).toEqual({ type: 'ip' });
+    });
+    it('should throw when used outside a method parameter', () => {
+      class Ctrl {
+        get() {}
+      }
+      expect(() => Ip()(Ctrl.prototype, undefined, 0)).toThrow(
+        'Ip decorator must be used on a method parameter'
+      );
+    });
+  });
+
+  describe('Host', () => {
+    it('should register host injection type', () => {
+      class TestController {
+        @Get('/')
+        get(@Host() host: string) {
+          return { host };
+        }
+      }
+      const injections = Reflect.getMetadata('hazel:inject', TestController, 'get');
+      expect(injections[0]).toEqual({ type: 'host' });
+    });
+    it('should throw when used outside a method parameter', () => {
+      class Ctrl {
+        get() {}
+      }
+      expect(() => Host()(Ctrl.prototype, undefined, 0)).toThrow(
+        'Host decorator must be used on a method parameter'
+      );
+    });
+  });
+
+  describe('Public', () => {
+    it('should set public metadata on class', () => {
+      @Public()
+      class TestController {}
+      expect(Reflect.getMetadata('hazel:public', TestController)).toBe(true);
+    });
+    it('should set public metadata on method', () => {
+      class TestController {
+        @Public()
+        @Get('/login')
+        login() {
+          return {};
+        }
+      }
+      expect(Reflect.getMetadata('hazel:public', TestController.prototype, 'login')).toBe(true);
+    });
+  });
+
+  describe('SkipAuth', () => {
+    it('should be an alias for Public', () => {
+      expect(SkipAuth).toBe(Public);
+    });
+  });
+
+  describe('Timeout', () => {
+    it('should store timeout in metadata', () => {
+      class TestController {
+        @Timeout(5000)
+        @Get('/')
+        get() {
+          return {};
+        }
+      }
+      expect(Reflect.getMetadata('hazel:timeout', TestController.prototype, 'get')).toBe(5000);
+    });
+  });
+
+  describe('Optional', () => {
+    it('should add parameter index to optional indices', () => {
+      class TestController {
+        @Get('/')
+        get(@Optional() @Query('q') q: string) {
+          return { q };
+        }
+      }
+      const indices = Reflect.getMetadata('hazel:optional-indices', TestController, 'get');
+      expect(indices).toContain(0);
+    });
+    it('should throw when used outside a method parameter', () => {
+      class Ctrl {
+        get() {}
+      }
+      expect(() => Optional()(Ctrl.prototype, undefined, 0)).toThrow(
+        'Optional decorator must be used on a method parameter'
+      );
+    });
+  });
+
+  describe('Session', () => {
+    it('should register session injection type', () => {
+      class TestController {
+        @Get('/')
+        get(@Session() session: unknown) {
+          return { session };
+        }
+      }
+      const injections = Reflect.getMetadata('hazel:inject', TestController, 'get');
+      expect(injections[0]).toEqual({ type: 'session' });
+    });
+    it('should throw when used outside a method parameter', () => {
+      class Ctrl {
+        get() {}
+      }
+      expect(() => Session()(Ctrl.prototype, undefined, 0)).toThrow(
+        'Session decorator must be used on a method parameter'
+      );
+    });
+  });
+
+  describe('Retry', () => {
+    it('should store retry options and add RetryInterceptor to route', () => {
+      class TestController {
+        @Retry({ count: 3, delay: 100 })
+        @Get('/')
+        get() {
+          return {};
+        }
+      }
+      expect(Reflect.getMetadata('hazel:retry', TestController.prototype, 'get')).toEqual({
+        count: 3,
+        delay: 100,
+      });
+      const routes = Reflect.getMetadata('hazel:routes', TestController);
+      const route = routes.find((r: { propertyKey: string }) => r.propertyKey === 'get');
+      expect(route?.interceptors?.[0]?.type?.name).toBe('RetryInterceptor');
+    });
+  });
+
+  describe('ApiTags', () => {
+    it('should set api tags on class', () => {
+      @ApiTags('users', 'admin')
+      class TestController {}
+      expect(Reflect.getMetadata('hazel:api:tags', TestController)).toEqual(['users', 'admin']);
+    });
+    it('should set api tags on method', () => {
+      class TestController {
+        @ApiTags('auth')
+        @Get('/login')
+        login() {
+          return {};
+        }
+      }
+      expect(Reflect.getMetadata('hazel:api:tags', TestController.prototype, 'login')).toEqual(['auth']);
+    });
+  });
+
+  describe('ApiOperation', () => {
+    it('should store operation options when given object', () => {
+      class TestController {
+        @ApiOperation({ summary: 'Get user', description: 'Returns a user', operationId: 'getUser' })
+        @Get('/')
+        get() {
+          return {};
+        }
+      }
+      expect(Reflect.getMetadata('hazel:api:operation', TestController.prototype, 'get')).toEqual({
+        summary: 'Get user',
+        description: 'Returns a user',
+        operationId: 'getUser',
+      });
+    });
+    it('should accept string as summary', () => {
+      class TestController {
+        @ApiOperation('List users')
+        @Get('/')
+        get() {
+          return {};
+        }
+      }
+      expect(Reflect.getMetadata('hazel:api:operation', TestController.prototype, 'get')).toEqual({
+        summary: 'List users',
+      });
+    });
+  });
+
+  describe('SetMetadata and getMetadata', () => {
+    it('should set and get class-level metadata', () => {
+      @SetMetadata('roles', ['admin'])
+      class AdminController {}
+      expect(getMetadata('roles', AdminController)).toEqual(['admin']);
+      expect(Reflect.getMetadata(`${CUSTOM_METADATA_PREFIX}roles`, AdminController)).toEqual(['admin']);
+    });
+    it('should set and get method-level metadata', () => {
+      class TestController {
+        @SetMetadata('roles', ['user'])
+        @Get('/')
+        get() {
+          return {};
+        }
+      }
+      expect(getMetadata('roles', TestController.prototype, 'get')).toEqual(['user']);
+    });
+  });
+
+  describe('createParamDecorator', () => {
+    it('should register custom inject metadata', () => {
+      const MyParam = createParamDecorator(
+        (_req: unknown, ctx: { query?: Record<string, string> }) => ctx.query?.foo
+      );
+      class TestController {
+        @Get('/')
+        get(@MyParam foo: string) {
+          return { foo };
+        }
+      }
+      const injections = Reflect.getMetadata('hazel:inject', TestController, 'get');
+      expect(injections).toBeDefined();
+      expect(injections[0]).toEqual({ type: 'custom', resolve: expect.any(Function) });
     });
   });
 });
