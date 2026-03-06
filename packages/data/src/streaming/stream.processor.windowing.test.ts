@@ -42,6 +42,19 @@ describe('StreamProcessor windowing', () => {
     expect(batches.length).toBeGreaterThanOrEqual(1);
   });
 
+  it('slidingWindow yields overlapping windows', async () => {
+    const source = itemsWithTs([
+      { value: 1, timestamp: 0 },
+      { value: 2, timestamp: 50 },
+      { value: 3, timestamp: 100 },
+    ]);
+    const batches: number[][] = [];
+    for await (const batch of processor.slidingWindow(source, 100, 50)) {
+      batches.push(batch.items as number[]);
+    }
+    expect(batches.length).toBeGreaterThanOrEqual(1);
+  });
+
   it('joinStreams merges by key', async () => {
     const left = (async function* () {
       yield { id: 'a', name: 'Alice' };

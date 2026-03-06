@@ -37,4 +37,16 @@ describe('TransformerService', () => {
     const result = await filter([1, 2, 3, 4]);
     expect(result).toEqual([3, 4]);
   });
+
+  it('apply returns sync result without awaiting', async () => {
+    service.register('sync', (x) => (x as number) + 1);
+    const result = await service.apply('sync', 10);
+    expect(result).toBe(11);
+  });
+
+  it('filter with async predicate', async () => {
+    const filter = service.filter(async (x) => (x as number) > 1);
+    const result = await filter([1, 2, 3]);
+    expect(result).toEqual([2, 3]);
+  });
 });

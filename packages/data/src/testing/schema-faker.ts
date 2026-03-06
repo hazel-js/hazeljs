@@ -51,8 +51,9 @@ export class SchemaFaker {
 
     if (js.items) {
       const len =
-        Math.floor(Math.random() * (this.options.arrayMaxLength! - this.options.arrayMinLength! + 1)) +
-        this.options.arrayMinLength!;
+        Math.floor(
+          Math.random() * (this.options.arrayMaxLength! - this.options.arrayMinLength! + 1)
+        ) + this.options.arrayMinLength!;
       const itemSchema = js.items as Record<string, unknown>;
       return Array.from({ length: len }, () => this.generateFromJsonSchema(itemSchema));
     }
@@ -90,7 +91,9 @@ export class SchemaFaker {
   private randomString(): string {
     const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
     const len = Math.floor(Math.random() * 10) + 5;
-    return Array.from({ length: len }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+    return Array.from({ length: len }, () => chars[Math.floor(Math.random() * chars.length)]).join(
+      ''
+    );
   }
 
   /** Static convenience method */

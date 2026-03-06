@@ -195,5 +195,255 @@ describe('Schema', () => {
       expect(js).toMatchObject({ type: 'object' });
       expect(js).toHaveProperty('properties');
     });
+
+    it('exports array schema', () => {
+      const schema = Schema.array(Schema.number());
+      const js = schema.toJsonSchema();
+      expect(js).toMatchObject({ type: 'array' });
+      expect(js).toHaveProperty('items');
+    });
+
+    it('exports literal schema', () => {
+      const js = Schema.literal('x').toJsonSchema();
+      expect(js).toMatchObject({ const: 'x' });
+    });
+  });
+
+  describe('nullable', () => {
+    it('accepts null', () => {
+      const schema = Schema.string().nullable();
+      expect(schema.validate(null).success).toBe(true);
+      expect(schema.validate('x').success).toBe(true);
+    });
+  });
+
+  describe('validateAsync', () => {
+    it('validates with async refinements', async () => {
+      const schema = Schema.number().refineAsync(async (n) => n > 0, 'Must be positive');
+      const result = await schema.validateAsync(5);
+      expect(result.success).toBe(true);
+      const fail = await schema.validateAsync(-1);
+      expect(fail.success).toBe(false);
+    });
+  });
+
+  describe('number integer and url', () => {
+    it('integer rejects decimals', () => {
+      expect(Schema.number().integer().validate(5).success).toBe(true);
+      expect(Schema.number().integer().validate(5.5).success).toBe(false);
+    });
+
+    it('string url validates', () => {
+      expect(Schema.string().url().validate('https://example.com').success).toBe(true);
+      expect(Schema.string().url().validate('not-a-url').success).toBe(false);
+    });
+  });
+
+  describe('object pick omit extend strict', () => {
+    const base = Schema.object({ a: Schema.number(), b: Schema.string(), c: Schema.boolean() });
+
+    it('pick selects keys', () => {
+      const picked = base.pick(['a', 'c']);
+      const result = picked.validate({ a: 1, b: 'x', c: true });
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data).toEqual({ a: 1, c: true });
+      }
+    });
+
+    it('omit removes keys', () => {
+      const omitted = base.omit(['b']);
+      const result = omitted.validate({ a: 1, b: 'x', c: true });
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data).toEqual({ a: 1, c: true });
+      }
+    });
+
+    it('extend adds fields', () => {
+      const extended = base.extend({ d: Schema.number() });
+      const result = extended.validate({ a: 1, b: 'x', c: true, d: 4 });
+      expect(result.success).toBe(true);
+      if (result.success) expect(result.data.d).toBe(4);
+    });
+
+    it('strict rejects unknown keys', () => {
+      const strict = base.strict();
+      const result = strict.validate({ a: 1, b: 'x', c: true, extra: 'bad' });
+      expect(result.success).toBe(false);
+    });
+  });
+
+  describe('array min max nonempty', () => {
+    it('min rejects short arrays', () => {
+      const schema = Schema.array(Schema.number()).min(2);
+      expect(schema.validate([1, 2]).success).toBe(true);
+      expect(schema.validate([1]).success).toBe(false);
+    });
+
+    it('nonempty rejects empty', () => {
+      const schema = Schema.array(Schema.string()).nonempty();
+      expect(schema.validate(['x']).success).toBe(true);
+      expect(schema.validate([]).success).toBe(false);
+    });
+  });
+
+  describe('transform throws', () => {
+    it('transform error is caught', () => {
+      const schema = Schema.number().transform((n) => {
+        if (n < 0) throw new Error('Negative');
+        return n;
+      });
+      const result = schema.validate(-1);
+      expect(result.success).toBe(false);
+      if (!result.success) expect(result.errors[0].message).toBe('Negative');
+    });
+
+    it('transform non-Error throw uses generic message', () => {
+      const schema = Schema.number().transform(() => {
+        throw 'string error';
+      });
+      const result = schema.validate(1);
+      expect(result.success).toBe(false);
+      if (!result.success) expect(result.errors[0].message).toBe('Transform failed');
+    });
+  });
+
+  describe('string pattern required trim', () => {
+    it('pattern validates regex', () => {
+      expect(Schema.string().pattern(/^\d+$/).validate('123').success).toBe(true);
+      expect(Schema.string().pattern(/^\d+$/, 'Digits only').validate('abc').success).toBe(false);
+    });
+
+    it('required rejects empty string', () => {
+      expect(Schema.string().required().validate('x').success).toBe(true);
+      expect(Schema.string().required().validate('').success).toBe(false);
+    });
+
+    it('trim preprocesses', () => {
+      const result = Schema.string().trim().validate('  hi  ');
+      expect(result.success).toBe(true);
+      if (result.success) expect(result.data).toBe('hi');
+    });
+  });
+
+  describe('number positive negative multipleOf', () => {
+    it('positive rejects zero and negative', () => {
+      expect(Schema.number().positive().validate(1).success).toBe(true);
+      expect(Schema.number().positive().validate(0).success).toBe(false);
+      expect(Schema.number().positive().validate(-1).success).toBe(false);
+    });
+
+    it('negative rejects zero and positive', () => {
+      expect(Schema.number().negative().validate(-1).success).toBe(true);
+      expect(Schema.number().negative().validate(0).success).toBe(false);
+    });
+
+    it('multipleOf validates', () => {
+      expect(Schema.number().multipleOf(5).validate(10).success).toBe(true);
+      expect(Schema.number().multipleOf(5).validate(7).success).toBe(false);
+    });
+  });
+
+  describe('number and boolean default', () => {
+    it('number default for undefined', () => {
+      const schema = Schema.number().default(42);
+      const result = schema.validate(undefined);
+      expect(result.success).toBe(true);
+      if (result.success) expect(result.data).toBe(42);
+    });
+
+    it('boolean default for undefined', () => {
+      const schema = Schema.boolean().default(true);
+      const result = schema.validate(undefined);
+      expect(result.success).toBe(true);
+      if (result.success) expect(result.data).toBe(true);
+    });
+  });
+
+  describe('date min max default', () => {
+    it('date min max', () => {
+      const min = new Date('2024-01-01');
+      const max = new Date('2024-12-31');
+      const schema = Schema.date().min(min).max(max);
+      expect(schema.validate(new Date('2024-06-15')).success).toBe(true);
+      expect(schema.validate(new Date('2023-06-15')).success).toBe(false);
+      expect(schema.validate(new Date('2025-06-15')).success).toBe(false);
+    });
+
+    it('date default for undefined', () => {
+      const d = new Date('2024-01-01');
+      const schema = Schema.date().default(d);
+      const result = schema.validate(undefined);
+      expect(result.success).toBe(true);
+      if (result.success) expect(result.data).toEqual(d);
+    });
+  });
+
+  describe('nullable toJsonSchema', () => {
+    it('nullable string has type array', () => {
+      const js = Schema.string().nullable().toJsonSchema();
+      expect(js.type).toEqual(['string', 'null']);
+    });
+
+    it('nullable without base type', () => {
+      const schema = Schema.literal('x').nullable();
+      const js = schema.toJsonSchema();
+      expect(js.type).toEqual(['null']);
+    });
+  });
+
+  describe('optional toJsonSchema', () => {
+    it('optional has _optional flag', () => {
+      const js = Schema.string().optional().toJsonSchema();
+      expect(js._optional).toBe(true);
+    });
+  });
+
+  describe('object pick filters keys not in shape', () => {
+    it('pick ignores keys not in shape', () => {
+      const base = Schema.object({ a: Schema.number() });
+      const picked = base.pick(['a', 'nonexistent']);
+      const result = picked.validate({ a: 1 });
+      expect(result.success).toBe(true);
+      if (result.success) expect(result.data).toEqual({ a: 1 });
+    });
+  });
+
+  describe('array max', () => {
+    it('max rejects long arrays', () => {
+      const schema = Schema.array(Schema.number()).max(2);
+      expect(schema.validate([1, 2]).success).toBe(true);
+      expect(schema.validate([1, 2, 3]).success).toBe(false);
+    });
+  });
+
+  describe('refineAsync', () => {
+    it('refineAsync failure path', async () => {
+      const schema = Schema.number().refineAsync(async (n) => n > 10, 'Must be > 10');
+      const result = await schema.validateAsync(5);
+      expect(result.success).toBe(false);
+      if (!result.success) expect(result.errors[0].message).toBe('Must be > 10');
+    });
+  });
+
+  describe('buildSchema refine failure', () => {
+    it('sync refine failure returns error', () => {
+      const schema = Schema.number().refine((n) => n > 0, 'Must be positive');
+      const result = schema.validate(-1);
+      expect(result.success).toBe(false);
+      if (!result.success) expect(result.errors[0].message).toBe('Must be positive');
+    });
+  });
+
+  describe('validateAsync with sync failure', () => {
+    it('returns sync failure without running async refinements', async () => {
+      const schema = Schema.number()
+        .refine((n) => n > 0, 'sync fail')
+        .refineAsync(async () => true, 'async');
+      const result = await schema.validateAsync(-1);
+      expect(result.success).toBe(false);
+      if (!result.success) expect(result.errors[0].message).toBe('sync fail');
+    });
   });
 });

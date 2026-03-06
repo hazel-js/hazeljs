@@ -39,4 +39,38 @@ describe('PipelineTestHarness', () => {
     const result = await harness.runAndAssertSuccess<{ x: number }>({ x: 1 });
     expect(result.x).toBe(3);
   });
+
+  it('runAndAssertSuccess throws when step fails', async () => {
+    @Pipeline('FailingPipeline')
+    class FailingPipeline {
+      @Transform({ step: 1, name: 'fail' })
+      fail() {
+        throw new Error('Step failed');
+      }
+    }
+    const schemaValidator = new SchemaValidator();
+    const etlService = new ETLService(schemaValidator);
+    const harness = PipelineTestHarness.create(etlService, new FailingPipeline());
+
+    await expect(harness.runAndAssertSuccess({})).rejects.toThrow('Step failed');
+  });
+
+  it('runAndAssertSuccess throws when step fails with DLQ (events show failure)', async () => {
+    @Pipeline('DLQFailingPipeline')
+    class DLQFailingPipeline {
+      @Transform({
+        step: 1,
+        name: 'fail',
+        dlq: { handler: () => {} },
+      })
+      fail() {
+        throw new Error('DLQ step failed');
+      }
+    }
+    const schemaValidator = new SchemaValidator();
+    const etlService = new ETLService(schemaValidator);
+    const harness = PipelineTestHarness.create(etlService, new DLQFailingPipeline());
+
+    await expect(harness.runAndAssertSuccess({})).rejects.toThrow('Pipeline steps failed');
+  });
 });

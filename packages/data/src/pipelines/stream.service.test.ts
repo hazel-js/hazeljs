@@ -38,4 +38,45 @@ describe('StreamService', () => {
     }
     expect(results).toEqual([{ v: 1 }, { v: 6 }]);
   });
+
+  it('processStream throws when pipeline not @Stream decorated', async () => {
+    @Pipeline('no-stream')
+    class NoStreamPipeline {
+      @Transform({ step: 1, name: 'x' })
+      x(d: unknown) {
+        return d;
+      }
+    }
+    async function* source() {
+      yield {};
+    }
+    await expect(
+      (async () => {
+        for await (const _ of streamService.processStream(new NoStreamPipeline(), source())) {
+          break;
+        }
+      })()
+    ).rejects.toThrow('not decorated with @Stream');
+  });
+
+  it('processStream throws when item processing fails', async () => {
+    @Pipeline('fail-stream')
+    @Stream({ name: 'fail', source: 'kafka://in', sink: 'kafka://out' })
+    class FailStreamPipeline {
+      @Transform({ step: 1, name: 'fail' })
+      fail() {
+        throw new Error('Item failed');
+      }
+    }
+    async function* source() {
+      yield {};
+    }
+    await expect(
+      (async () => {
+        for await (const _ of streamService.processStream(new FailStreamPipeline(), source())) {
+          break;
+        }
+      })()
+    ).rejects.toThrow('Item failed');
+  });
 });
