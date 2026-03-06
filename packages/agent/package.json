@@ -29,6 +29,9 @@
     "url": "https://github.com/hazeljs/hazeljs",
     "directory": "packages/agent"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "dependencies": {
     "@hazeljs/core": "file:../core",
     "@hazeljs/prompts": "file:../prompts",
