@@ -104,16 +104,21 @@ hazel add prisma
 
 **Available packages:**
 - `ai` - AI Integration (@hazeljs/ai)
+- `agent` - AI Agents (@hazeljs/agent)
 - `audit` - Audit Logging (@hazeljs/audit)
 - `auth` - Authentication (@hazeljs/auth)
 - `cache` - Caching (@hazeljs/cache)
 - `config` - Configuration (@hazeljs/config)
 - `cron` - Cron Jobs (@hazeljs/cron)
+- `data` - Data/ETL (@hazeljs/data)
+- `mcp` - Model Context Protocol (@hazeljs/mcp)
+- `ml` - Machine Learning (@hazeljs/ml)
 - `prisma` - Prisma ORM (@hazeljs/prisma)
-- `typeorm` - TypeORM (@hazeljs/typeorm)
+- `prompts` - Typed prompt templates (@hazeljs/prompts)
 - `rag` - RAG/Vector Search (@hazeljs/rag)
 - `serverless` - Serverless (@hazeljs/serverless)
 - `swagger` - Swagger/OpenAPI (@hazeljs/swagger)
+- `typeorm` - TypeORM (@hazeljs/typeorm)
 - `websocket` - WebSocket (@hazeljs/websocket)
 
 #### Build Project

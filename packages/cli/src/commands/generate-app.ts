@@ -119,6 +119,14 @@ function scaffoldPackageBoilerplate(destPath: string, packages: string[]) {
     // Discovery uses ServiceRegistry/DiscoveryClient programmatically - no module import
   }
 
+  if (packages.includes('@hazeljs/prompts')) {
+    // Prompts is a library (PromptTemplate, PromptRegistry) - no module import
+  }
+
+  if (packages.includes('@hazeljs/mcp')) {
+    // MCP uses createMcpServer() programmatically - no module import
+  }
+
   if (packages.includes('@hazeljs/pdf-to-audio')) {
     imports.push("import { PdfToAudioModule } from '@hazeljs/pdf-to-audio';");
     moduleImports.push('PdfToAudioModule');
@@ -283,7 +291,9 @@ export function generateApp(program: Command) {
                 { name: 'Kafka (@hazeljs/kafka)', value: '@hazeljs/kafka' },
                 { name: 'Messaging - WhatsApp/Telegram (@hazeljs/messaging)', value: '@hazeljs/messaging' },
                 { name: 'Machine Learning (@hazeljs/ml)', value: '@hazeljs/ml' },
+                { name: 'MCP - Model Context Protocol (@hazeljs/mcp)', value: '@hazeljs/mcp' },
                 { name: 'PDF to Audio (@hazeljs/pdf-to-audio)', value: '@hazeljs/pdf-to-audio' },
+                { name: 'Prompts - typed templates (@hazeljs/prompts)', value: '@hazeljs/prompts' },
                 { name: 'Prisma ORM (@hazeljs/prisma)', value: '@hazeljs/prisma' },
                 { name: 'TypeORM (@hazeljs/typeorm)', value: '@hazeljs/typeorm' },
                 { name: 'Queue/BullMQ (@hazeljs/queue)', value: '@hazeljs/queue' },

@@ -72,9 +72,17 @@ const HAZEL_PACKAGES: Record<string, { npm: string; hint: string }> = {
     npm: '@hazeljs/messaging',
     hint: 'import { MessagingModule } from "@hazeljs/messaging";',
   },
+  mcp: {
+    npm: '@hazeljs/mcp',
+    hint: 'import { createMcpServer } from "@hazeljs/mcp";\n  // createMcpServer({ name, version, toolRegistry }).listenStdio();',
+  },
   ml: {
     npm: '@hazeljs/ml',
     hint: 'import { MLModule } from "@hazeljs/ml";',
+  },
+  prompts: {
+    npm: '@hazeljs/prompts',
+    hint: 'import { PromptTemplate, PromptRegistry } from "@hazeljs/prompts";',
   },
   prisma: {
     npm: '@hazeljs/prisma',
