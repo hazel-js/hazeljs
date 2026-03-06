@@ -134,11 +134,16 @@ import { PipelineService } from '@hazeljs/ml';
 
 const pipeline = new PipelineService();
 const steps = [
-  { name: 'normalize', fn: (d: { text: string }) => ({ ...d, text: d.text.toLowerCase() }) },
-  { name: 'filter', fn: (d: { text: string }) => d.text.length > 0 },
+  { name: 'normalize', transform: (d: unknown) => ({ ...(d as object), text: (d as { text: string }).text?.toLowerCase() }) },
+  { name: 'filter', transform: (d: unknown) => (d as { text: string }).text?.length > 0 ? d : null },
 ];
+// Inline steps (no registration required)
 const processed = await pipeline.run(data, steps);
 await model.train(processed);
+
+// Or register a named pipeline
+pipeline.registerPipeline('default', steps);
+const processed2 = await pipeline.run('default', data);
 ```
 
 ## Batch predictions
@@ -149,7 +154,9 @@ import { BatchService } from '@hazeljs/ml';
 const batchService = new BatchService(predictorService);
 const results = await batchService.predictBatch('sentiment-classifier', items, {
   batchSize: 32,
+  concurrency: 4,
 });
+// Results are returned in the same order as inputs
 ```
 
 ## Metrics and evaluation
@@ -157,9 +164,32 @@ const results = await batchService.predictBatch('sentiment-classifier', items, {
 ```typescript
 import { MetricsService } from '@hazeljs/ml';
 
-const metricsService = new MetricsService();
-const evaluation = await metricsService.evaluate(modelName, testData, {
-  metrics: ['accuracy', 'f1', 'precision', 'recall'],
+// Evaluate model on test data (inject MetricsService via MLModule - it receives PredictorService)
+@Injectable()
+class EvaluationService {
+  constructor(private metricsService: MetricsService) {}
+
+  async runEvaluation() {
+    const testData = [
+      { text: 'great product', label: 'positive' },
+      { text: 'terrible', label: 'negative' },
+    ];
+    const evaluation = await this.metricsService.evaluate('sentiment-classifier', testData, {
+      metrics: ['accuracy', 'f1', 'precision', 'recall'],
+      labelKey: 'label',           // key in test sample for ground truth
+      predictionKey: 'sentiment',   // key in prediction result (auto-detect: label, sentiment, class)
+    });
+    // evaluation.metrics: { accuracy, precision, recall, f1Score }
+    // Result is automatically recorded via recordEvaluation()
+  }
+}
+
+// Manual recording
+metricsService.recordEvaluation({
+  modelName: 'my-model',
+  version: '1.0.0',
+  metrics: { accuracy: 0.95, loss: 0.05 },
+  evaluatedAt: new Date(),
 });
 ```
 

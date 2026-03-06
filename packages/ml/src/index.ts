@@ -34,6 +34,8 @@ export {
   MetricsService,
   type ModelMetrics,
   type EvaluationResult,
+  type EvaluateOptions,
+  type EvaluateMetric,
 } from './evaluation/metrics.service';
 
 // Model registration helper

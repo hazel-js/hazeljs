@@ -26,21 +26,28 @@ export class BatchService {
 
     logger.debug(`Batch prediction: ${inputs.length} inputs, batchSize=${batchSize}`);
 
-    const results: PredictionResult<T>[] = [];
-    const batches: unknown[][] = [];
+    const results = new Array<PredictionResult<T>>(inputs.length);
+    const batches: { input: unknown; idx: number }[][] = [];
 
     for (let i = 0; i < inputs.length; i += batchSize) {
-      batches.push(inputs.slice(i, i + batchSize));
+      const batch = inputs.slice(i, i + batchSize).map((input, j) => ({ input, idx: i + j }));
+      batches.push(batch);
     }
 
     for (let i = 0; i < batches.length; i += concurrency) {
       const batchGroup = batches.slice(i, i + concurrency);
       const batchResults = await Promise.all(
         batchGroup.flatMap((batch) =>
-          batch.map((input) => this.predictorService.predict<T>(modelName, input, version))
+          batch.map(({ input, idx }) =>
+            this.predictorService
+              .predict<T>(modelName, input, version)
+              .then((r) => ({ idx, r }) as const)
+          )
         )
       );
-      results.push(...batchResults);
+      for (const { idx, r } of batchResults) {
+        results[idx] = r;
+      }
     }
 
     return results;

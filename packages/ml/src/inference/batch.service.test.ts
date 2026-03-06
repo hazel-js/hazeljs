@@ -39,9 +39,37 @@ describe('BatchService', () => {
     expect(results).toHaveLength(5);
   });
 
+  it('preserves result order matching input order', async () => {
+    const inputs = [10, 20, 30, 40, 50];
+    const results = await batchService.predictBatch('batch-model', inputs, {
+      batchSize: 2,
+      concurrency: 2,
+    });
+    expect(results).toEqual([
+      { value: 20 },
+      { value: 40 },
+      { value: 60 },
+      { value: 80 },
+      { value: 100 },
+    ]);
+  });
+
   it('throws when model not found', async () => {
     await expect(batchService.predictBatch('unknown', [1])).rejects.toThrow(
       'Model not found: unknown'
     );
+  });
+
+  it('uses default batchSize and concurrency when options empty', async () => {
+    const results = await batchService.predictBatch('batch-model', [1, 2], {});
+    expect(results).toHaveLength(2);
+    expect(results).toEqual([{ value: 2 }, { value: 4 }]);
+  });
+
+  it('uses custom concurrency with default batchSize', async () => {
+    const results = await batchService.predictBatch('batch-model', [1, 2, 3], {
+      concurrency: 1,
+    });
+    expect(results).toEqual([{ value: 2 }, { value: 4 }, { value: 6 }]);
   });
 });

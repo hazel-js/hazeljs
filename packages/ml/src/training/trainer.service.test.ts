@@ -65,4 +65,17 @@ describe('TrainerService', () => {
     }
     expect(trainer.discoverTrainMethod(new PlainClass())).toBeUndefined();
   });
+
+  it('throws when train method is not a function', async () => {
+    const fakeInstance = { train: 'not-a-function' };
+    registry.register({
+      metadata: { name: 'broken-train', version: '1.0.0', framework: 'custom' },
+      instance: fakeInstance,
+      trainMethod: 'train',
+      predictMethod: undefined,
+    });
+    await expect(trainer.train('broken-train', {})).rejects.toThrow(
+      'Training method train not found on model'
+    );
+  });
 });

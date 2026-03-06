@@ -20,18 +20,51 @@ export class PipelineService {
     logger.debug(`Registered pipeline: ${name} with ${steps.length} steps`);
   }
 
-  async run(name: string, data: TrainingData): Promise<TrainingData> {
-    const steps = this.pipelines.get(name);
-    if (!steps) {
-      throw new Error(`Pipeline not found: ${name}`);
+  /**
+   * Run a registered pipeline by name.
+   */
+  async run(name: string, data: TrainingData): Promise<TrainingData>;
+
+  /**
+   * Run an ad-hoc pipeline with inline steps (no registration required).
+   */
+  async run(data: TrainingData, steps: PipelineStep[]): Promise<TrainingData>;
+
+  async run(
+    nameOrData: string | TrainingData,
+    dataOrSteps: TrainingData | PipelineStep[]
+  ): Promise<TrainingData> {
+    let data: TrainingData;
+    let steps: PipelineStep[];
+    let label: string;
+
+    if (typeof nameOrData === 'string') {
+      label = nameOrData;
+      data = dataOrSteps as TrainingData;
+      const registered = this.pipelines.get(nameOrData);
+      if (!registered) {
+        throw new Error(`Pipeline not found: ${nameOrData}`);
+      }
+      steps = registered;
+    } else {
+      label = 'inline';
+      data = nameOrData;
+      steps = dataOrSteps as PipelineStep[];
     }
 
+    return this.executeSteps(data, steps, label);
+  }
+
+  private async executeSteps(
+    data: TrainingData,
+    steps: PipelineStep[],
+    label: string
+  ): Promise<TrainingData> {
     let result: unknown = data;
     for (const step of steps) {
-      logger.debug(`Pipeline ${name}: executing step ${step.name}`);
+      logger.debug(`Pipeline ${label}: executing step ${step.name}`);
       result = await Promise.resolve(step.transform(result));
     }
-
     return result as TrainingData;
   }
 
