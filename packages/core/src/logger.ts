@@ -274,6 +274,8 @@ export const requestLogger = (
 ): void => {
   const start = Date.now();
   res.on('finish', () => {
+    const pathname = (req.url ?? '').split('?')[0];
+    if (pathname === '/favicon.ico') return;
     const duration = Date.now() - start;
     const statusColor =
       res.statusCode >= 500
