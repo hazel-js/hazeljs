@@ -16,6 +16,7 @@ import {
   AgentExecutionResult,
   AgentContext,
   AgentState,
+  IGuardrailsService,
 } from '../types/agent.types';
 import { AgentEventType } from '../types/event.types';
 import { LLMProvider } from '../types/llm.types';
@@ -27,6 +28,10 @@ import { Logger, LogLevel } from '../utils/logger';
 import { RetryHandler } from '../utils/retry';
 import { CircuitBreaker } from '../utils/circuit-breaker';
 import { HealthChecker, HealthCheckResult } from '../utils/health-check';
+import { AgentGraph } from '../graph/agent-graph';
+import { SupervisorAgent } from '../supervisor/supervisor';
+import { SupervisorConfig } from '../graph/agent-graph.types';
+import { getDelegatedMethods, getDelegateMetadata } from '../decorators/delegate.decorator';
 
 /**
  * Agent Runtime Configuration
@@ -36,6 +41,7 @@ export interface AgentRuntimeConfig {
   memoryManager?: MemoryManager;
   ragService?: RAGService;
   llmProvider?: LLMProvider;
+  guardrailsService?: IGuardrailsService;
   defaultMaxSteps?: number;
   defaultTimeout?: number;
   enableObservability?: boolean;
@@ -134,7 +140,7 @@ export class AgentRuntime {
 
     this.toolExecutor = new ToolExecutor((type, data) => {
       this.eventEmitter.emit(type, '', '', data);
-    });
+    }, config.guardrailsService);
 
     this.agentExecutor = new AgentExecutor(
       this.stateManager,
@@ -162,11 +168,53 @@ export class AgentRuntime {
   }
 
   /**
-   * Register an agent instance
+   * Register an agent instance.
+   * Also patches any @Delegate-decorated methods so they call the target agent
+   * via this runtime rather than executing the original (stub) method body.
    */
   registerAgentInstance(agentName: string, instance: unknown): void {
     this.agentRegistry.registerInstance(agentName, instance);
+    this.patchDelegateMethods(agentName, instance);
     this.toolRegistry.registerAgentTools(agentName, instance);
+  }
+
+  /**
+   * Replace @Delegate stub methods on an agent instance with real runtime calls.
+   * Called automatically by registerAgentInstance().
+   */
+  private patchDelegateMethods(agentName: string, instance: unknown): void {
+    if (!instance || typeof instance !== 'object') return;
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
+    const agentClass = (instance as any).constructor;
+    const delegatedMethods = getDelegatedMethods(agentClass);
+
+    for (const methodName of delegatedMethods) {
+      const delegateConfig = getDelegateMetadata(instance as object, methodName);
+      if (!delegateConfig) continue;
+
+      const targetAgentName = delegateConfig.agent;
+      const inputField = delegateConfig.inputField ?? 'input';
+
+      // Patch the instance method to delegate to the target agent
+      (instance as Record<string, unknown>)[methodName] = async (
+        args: Record<string, unknown> | string
+      ): Promise<string> => {
+        const agentInput =
+          typeof args === 'string' ? args : ((args[inputField] as string) ?? JSON.stringify(args));
+
+        this.logger.debug(`Delegating from "${agentName}" to "${targetAgentName}"`, {
+          input: agentInput,
+        });
+
+        const result = await this.execute(targetAgentName, agentInput);
+        return result.response ?? '';
+      };
+
+      this.logger.debug(`Patched @Delegate method "${methodName}" on agent "${agentName}"`, {
+        targetAgent: targetAgentName,
+      });
+    }
   }
 
   /**
@@ -449,6 +497,81 @@ export class AgentRuntime {
    */
   getPendingApprovals(): import('../types/tool.types').ToolApprovalRequest[] {
     return this.toolExecutor.getPendingApprovals();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Multi-agent orchestration
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Create a new `AgentGraph` builder for this runtime.
+   *
+   * @param graphId A unique identifier for the graph (used in logs/events).
+   *
+   * @example
+   * ```ts
+   * const graph = runtime.createGraph('research-pipeline')
+   *   .addNode('researcher', { type: 'agent', agentName: 'ResearchAgent' })
+   *   .addNode('writer',     { type: 'agent', agentName: 'WriterAgent' })
+   *   .addEdge('researcher', 'writer')
+   *   .addEdge('writer', '__end__')
+   *   .setEntryPoint('researcher')
+   *   .compile();
+   *
+   * const result = await graph.execute('Write an article about LLMs');
+   * ```
+   */
+  createGraph(graphId: string): AgentGraph {
+    return new AgentGraph(graphId, this);
+  }
+
+  /**
+   * Create a `SupervisorAgent` that orchestrates a team of worker agents.
+   *
+   * Requires an LLM provider to be configured on the runtime.
+   *
+   * @example
+   * ```ts
+   * const supervisor = runtime.createSupervisor({
+   *   name: 'project-manager',
+   *   workers: ['ResearchAgent', 'CoderAgent', 'WriterAgent'],
+   *   maxRounds: 6,
+   * });
+   *
+   * const result = await supervisor.run('Build a REST API for a todo app');
+   * console.log(result.response);
+   * ```
+   */
+  createSupervisor(config: SupervisorConfig): SupervisorAgent {
+    if (!this.config.llmProvider) {
+      throw new Error(
+        'createSupervisor() requires an LLM provider. ' +
+          'Pass `llmProvider` in AgentRuntimeConfig.'
+      );
+    }
+    return new SupervisorAgent(config, this.config.llmProvider, this);
+  }
+
+  /**
+   * Dynamically spawn a new agent execution and return its result.
+   * Useful inside @Tool methods when one agent needs to call another.
+   *
+   * @example
+   * ```ts
+   * @Tool({ description: 'Research and summarize a topic' })
+   * async researchAndSummarize(topic: string) {
+   *   const research = await this.runtime.spawn('ResearchAgent', topic);
+   *   const summary  = await this.runtime.spawn('SummaryAgent', research.response ?? '');
+   *   return summary.response;
+   * }
+   * ```
+   */
+  async spawn(
+    agentName: string,
+    input: string,
+    options: AgentExecutionOptions = {}
+  ): Promise<AgentExecutionResult> {
+    return this.execute(agentName, input, options);
   }
 
   /**

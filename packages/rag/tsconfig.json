@@ -7,12 +7,32 @@
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "@hazeljs/prompts": ["../prompts/src"]
+    },
+    "types": [
+      "jest",
+      "node"
+    ]
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.spec.ts"],
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ],
   "references": [
-    { "path": "../core" },
-    { "path": "../ai" }
+    {
+      "path": "../core"
+    },
+    {
+      "path": "../ai"
+    },
+    {
+      "path": "../prompts"
+    }
   ]
 }

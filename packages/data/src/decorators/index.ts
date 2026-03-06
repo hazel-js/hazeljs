@@ -12,3 +12,15 @@ export {
   hasStreamMetadata,
   type StreamOptions,
 } from './stream.decorator';
+export {
+  Mask,
+  Redact,
+  Encrypt,
+  Decrypt,
+  getMaskMetadata,
+  getRedactMetadata,
+  type MaskOptions,
+  type RedactOptions,
+  type EncryptOptions,
+  type DecryptOptions,
+} from './pii.decorator';

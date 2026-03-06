@@ -1,7 +1,7 @@
 /**
  * Kafka consumer for async message processing - horizontally scalable
  */
-import { Injectable, Inject } from '@hazeljs/core';
+import { Service, Inject } from '@hazeljs/core';
 import { KafkaConsumer, KafkaSubscribe } from '@hazeljs/kafka';
 import { KafkaMessagePayload } from '@hazeljs/kafka';
 import { MessagingService } from './messaging.service';
@@ -10,7 +10,7 @@ import logger from '@hazeljs/core';
 import { MESSAGING_ADAPTERS } from './messaging.controller';
 import { MESSAGING_INCOMING_TOPIC, type MessagingIncomingPayload } from './messaging-kafka.types';
 
-@Injectable()
+@Service()
 @KafkaConsumer({ groupId: 'messaging-bot' })
 export class MessagingKafkaConsumer {
   constructor(

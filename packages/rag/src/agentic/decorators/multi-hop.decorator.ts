@@ -5,6 +5,9 @@
 
 import 'reflect-metadata';
 import { ReasoningChain, ReasoningHop, AgenticLLMProvider } from '../types';
+import { PromptRegistry } from '@hazeljs/prompts';
+import '../../prompts/agentic/multi-hop.prompt';
+import { MULTI_HOP_KEY, MULTI_HOP_SYNTHESIZE_KEY } from '../../prompts/agentic/multi-hop.prompt';
 
 export interface MultiHopConfig {
   maxHops?: number;
@@ -86,17 +89,10 @@ async function generateReasoning(
 
   const resultsStr = JSON.stringify(results, null, 2).slice(0, 1500);
 
-  const prompt = `Analyze these search results and determine if we need more information.
-
-Query: ${query}
-Results: ${resultsStr}
-
-Provide analysis in JSON:
-{
-  "reasoning": "what we learned from these results",
-  "nextQuery": "follow-up query if needed, or null",
-  "shouldStop": true/false
-}`;
+  const prompt = PromptRegistry.get<{ query: string; resultsStr: string }>(MULTI_HOP_KEY).render({
+    query,
+    resultsStr,
+  });
 
   try {
     return await config.llmProvider.generateStructured<{
@@ -122,14 +118,9 @@ async function synthesizeFinalAnswer(
 
   const hopsStr = chain.hops.map((h) => `Hop ${h.hopNumber}: ${h.reasoning}`).join('\n');
 
-  const prompt = `Synthesize a final answer from this multi-hop reasoning chain:
-
-Original Query: ${chain.query}
-
-Reasoning Chain:
-${hopsStr}
-
-Provide a comprehensive final answer:`;
+  const prompt = PromptRegistry.get<{ originalQuery: string; hopsStr: string }>(
+    MULTI_HOP_SYNTHESIZE_KEY
+  ).render({ originalQuery: chain.query, hopsStr });
 
   try {
     return await config.llmProvider.generate(prompt);

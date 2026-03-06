@@ -1,9 +1,9 @@
 import { Command } from 'commander';
 import { Generator } from '../utils/generator';
 
-const SERVICE_TEMPLATE = `import { Injectable } from '@hazeljs/core';
+const SERVICE_TEMPLATE = `import { Service } from '@hazeljs/core';
 
-@Injectable()
+@Service()
 export class {{className}}Service {
   constructor() {}
 

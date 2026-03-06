@@ -1,9 +1,16 @@
 import { RepositoryOptions } from '@hazeljs/core';
 import 'reflect-metadata';
 
-export function Repository(options: RepositoryOptions): ClassDecorator {
+export function Repository(options: RepositoryOptions | string): ClassDecorator {
   return function (target: object): void {
-    Reflect.defineMetadata('hazel:repository', options, target);
+    const opts = typeof options === 'string' ? { model: options } : options;
+    Reflect.defineMetadata('hazel:repository', opts, target);
+    // Implicitly mark the class as injectable — @Injectable() is not needed separately.
+    // Write metadata directly to avoid the ClassDecorator `Function` type constraint.
+    Reflect.defineMetadata('hazel:injectable', opts.scope ? { scope: opts.scope } : {}, target);
+    if (opts.scope) {
+      Reflect.defineMetadata('hazel:scope', opts.scope, target);
+    }
   };
 }
 

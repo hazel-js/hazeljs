@@ -3,7 +3,7 @@
  * Uses IConversationContextStore (memory or Redis) for horizontally scalable context
  * Supports: plain LLM, RAG-augmented, Agent (tools + RAG like CSR), custom handler
  */
-import { Injectable } from '@hazeljs/core';
+import { Service } from '@hazeljs/core';
 import type { IncomingMessage } from './types/message.types';
 import type { IAIProvider } from '@hazeljs/ai';
 import type { AIMessage } from '@hazeljs/ai';
@@ -44,7 +44,7 @@ export interface MessagingServiceOptions {
   contextStore?: IConversationContextStore;
 }
 
-@Injectable()
+@Service()
 export class MessagingService {
   private options: Required<
     Omit<

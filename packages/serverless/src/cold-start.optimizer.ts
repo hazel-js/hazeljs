@@ -2,7 +2,8 @@ import logger from '@hazeljs/core';
 import { Container } from '@hazeljs/core';
 
 /**
- * Cold start optimization strategies
+ * Cold start optimization strategies.
+ * Best-effort and environment-dependent; preloads built-in modules and the DI container.
  */
 export class ColdStartOptimizer {
   private static instance: ColdStartOptimizer;
@@ -82,12 +83,10 @@ export class ColdStartOptimizer {
   }
 
   /**
-   * Setup connection pools
+   * Setup connection pools (placeholder; override or extend for DB/API connection warming).
    */
   private async setupConnectionPools(): Promise<void> {
     logger.debug('Setting up connection pools...');
-    // Connection pools would be initialized here
-    // For now, just a placeholder
   }
 
   /**
@@ -151,14 +150,16 @@ export function OptimizeColdStart(): MethodDecorator {
 }
 
 /**
- * Keep-alive helper to prevent cold starts
+ * Keep-alive helper to schedule periodic pings.
+ * Does not perform an HTTP request; use a cron, external pinger, or implement fetch/http.get in the interval
+ * to actually warm the function.
  */
 export class KeepAliveHelper {
   private intervalId?: NodeJS.Timeout;
   private pingUrl?: string;
 
   /**
-   * Start keep-alive pings
+   * Start keep-alive interval (logs only; implement your own HTTP ping or use provisioned concurrency for warming).
    */
   start(url: string, intervalMs: number = 5 * 60 * 1000): void {
     this.pingUrl = url;
@@ -166,8 +167,7 @@ export class KeepAliveHelper {
     this.intervalId = setInterval(async () => {
       try {
         logger.debug(`Sending keep-alive ping to ${url}`);
-        // In a real implementation, you would make an HTTP request here
-        // For now, just log it
+        // Implement fetch(url) or http.get(url) here to actually warm the function
       } catch (error) {
         logger.error('Keep-alive ping failed:', error);
       }

@@ -11,6 +11,7 @@ export * from './types/rag.types';
 
 export * from './decorators/agent.decorator';
 export * from './decorators/tool.decorator';
+export * from './decorators/delegate.decorator';
 
 export * from './registry/agent.registry';
 export * from './registry/tool.registry';
@@ -34,5 +35,10 @@ export * from './utils/metrics';
 export * from './utils/retry';
 export * from './utils/circuit-breaker';
 export * from './utils/health-check';
+
+// Multi-agent orchestration
+export * from './graph/agent-graph.types';
+export * from './graph/agent-graph';
+export * from './supervisor/supervisor';
 
 export * from './agent.module';

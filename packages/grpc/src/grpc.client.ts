@@ -1,4 +1,4 @@
-import { Injectable } from '@hazeljs/core';
+import { Service } from '@hazeljs/core';
 import * as grpc from '@grpc/grpc-js';
 import * as protoLoader from '@grpc/proto-loader';
 import type { PackageDefinition } from '@grpc/proto-loader';
@@ -17,7 +17,7 @@ type GrpcClientStub = Record<
 /**
  * gRPC Client service - creates and caches gRPC client stubs for calling remote gRPC services
  */
-@Injectable()
+@Service()
 export class GrpcClientService {
   private packageDefinition: PackageDefinition | null = null;
   private protoDescriptor: Record<string, unknown> | null = null;

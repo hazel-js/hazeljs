@@ -1,11 +1,11 @@
-import { Injectable } from '@hazeljs/core';
+import { Service } from '@hazeljs/core';
 import { ConfigModuleOptions, ValidationSchema } from './config.module';
 import * as dotenv from 'dotenv';
 import * as fs from 'fs';
 import * as path from 'path';
 import logger from '@hazeljs/core';
 
-@Injectable()
+@Service()
 export class ConfigService {
   private static options: ConfigModuleOptions = {};
   private config: Record<string, unknown> = {};

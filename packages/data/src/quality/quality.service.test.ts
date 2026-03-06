@@ -36,4 +36,113 @@ describe('QualityService', () => {
     const report = await service.runChecks('ds', [{}, {}]);
     expect(report.totalRows).toBe(2);
   });
+
+  it('report includes quality score', async () => {
+    service.registerCheck('custom', (_data) => ({
+      name: 'custom',
+      passed: true,
+      score: 100,
+    }));
+    const report = await service.runChecks('ds', [{}]);
+    expect(report.score).toBe(100);
+  });
+
+  it('uniqueness check', () => {
+    const check = service.uniqueness(['id']);
+    expect(check([{ id: 1 }, { id: 2 }]).passed).toBe(true);
+    expect(check([{ id: 1 }, { id: 1 }]).passed).toBe(false);
+  });
+
+  it('range check', () => {
+    const check = service.range('age', { min: 0, max: 120 });
+    expect(check([{ age: 25 }]).passed).toBe(true);
+    expect(check([{ age: 150 }]).passed).toBe(false);
+  });
+
+  it('pattern check', () => {
+    const check = service.pattern('phone', /^\d{10}$/);
+    expect(check([{ phone: '1234567890' }]).passed).toBe(true);
+    expect(check([{ phone: '123' }]).passed).toBe(false);
+  });
+
+  it('pattern check with custom message', () => {
+    const check = service.pattern('code', /^[A-Z]+$/, 'Must be uppercase');
+    const result = check([{ code: 'abc' }]);
+    expect(result.passed).toBe(false);
+    expect(result.message).toContain('Must be uppercase');
+  });
+
+  it('range check with only min', () => {
+    const check = service.range('age', { min: 18 });
+    expect(check([{ age: 25 }]).passed).toBe(true);
+    expect(check([{ age: 10 }]).passed).toBe(false);
+  });
+
+  it('range check with only max', () => {
+    const check = service.range('age', { max: 65 });
+    expect(check([{ age: 50 }]).passed).toBe(true);
+    expect(check([{ age: 100 }]).passed).toBe(false);
+  });
+
+  it('referentialIntegrity check', () => {
+    const check = service.referentialIntegrity('status', ['active', 'inactive']);
+    expect(check([{ status: 'active' }]).passed).toBe(true);
+    expect(check([{ status: 'unknown' }]).passed).toBe(false);
+  });
+
+  it('profile returns field stats', () => {
+    const records = [
+      { name: 'a', age: 10 },
+      { name: 'b', age: 20 },
+      { name: 'c', age: 30 },
+    ];
+    const profile = service.profile('test', records);
+    expect(profile.totalRows).toBe(3);
+    expect(profile.fields).toHaveProperty('name');
+    expect(profile.fields).toHaveProperty('age');
+    expect(profile.fields.age.mean).toBe(20);
+  });
+
+  it('detectAnomalies flags outliers', () => {
+    const records = [{ value: 10 }, { value: 11 }, { value: 12 }, { value: 1000 }];
+    const anomalies = service.detectAnomalies(records, ['value'], 1.5);
+    expect(anomalies.length).toBeGreaterThan(0);
+    expect(anomalies.some((a) => a.value === 1000)).toBe(true);
+  });
+
+  it('completeness skips non-object items and returns passed when no objects processed', () => {
+    const check = service.completeness(['email']);
+    const result = check('not an object');
+    expect(result.passed).toBe(true);
+    expect(result.score).toBe(100);
+  });
+
+  it('runChecks handles check throwing', async () => {
+    service.registerCheck('throws', () => {
+      throw new Error('Check failed');
+    });
+    const report = await service.runChecks('ds', [{}]);
+    expect(report.checks).toHaveLength(1);
+    expect(report.checks[0].passed).toBe(false);
+    expect(report.checks[0].message).toBe('Check failed');
+  });
+
+  it('runChecks handles check throwing non-Error', async () => {
+    service.registerCheck('throws', () => {
+      throw 'string error';
+    });
+    const report = await service.runChecks('ds', [{}]);
+    expect(report.checks[0].message).toBe('Check failed');
+  });
+
+  it('runChecks with no checks returns score 100', async () => {
+    const report = await service.runChecks('ds', [{}]);
+    expect(report.score).toBe(100);
+  });
+
+  it('profile returns empty for empty records', () => {
+    const profile = service.profile('empty', []);
+    expect(profile.totalRows).toBe(0);
+    expect(profile.fields).toEqual({});
+  });
 });

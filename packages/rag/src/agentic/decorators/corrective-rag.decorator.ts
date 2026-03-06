@@ -5,6 +5,9 @@
 
 import 'reflect-metadata';
 import { CorrectiveRAGResult, Correction, AgenticLLMProvider } from '../types';
+import { PromptRegistry } from '@hazeljs/prompts';
+import '../../prompts/agentic/corrective-rag.prompt';
+import { CORRECTIVE_RAG_KEY } from '../../prompts/agentic/corrective-rag.prompt';
 
 export interface CorrectiveRAGConfig {
   relevanceThreshold?: number;
@@ -132,17 +135,10 @@ async function correctResults(
     return null;
   }
 
-  const prompt = `The following retrieval results have issues. Suggest corrections:
-
-Query: ${query}
-Issues: ${evaluation.issues.map((i: { description: string }) => i.description).join(', ')}
-
-Provide corrected query or strategy in JSON:
-{
-  "correctedQuery": "improved query",
-  "strategy": "new strategy",
-  "reasoning": "why this helps"
-}`;
+  const prompt = PromptRegistry.get<{ query: string; issues: string }>(CORRECTIVE_RAG_KEY).render({
+    query,
+    issues: evaluation.issues.map((i: { description: string }) => i.description).join(', '),
+  });
 
   try {
     await config.llmProvider.generateStructured<{

@@ -64,4 +64,30 @@ describe('PredictorService', () => {
     const instance = new TestModel();
     expect(predictor.discoverPredictMethod(instance)).toBe('predict');
   });
+
+  it('throws when predict method is not a function', async () => {
+    const fakeInstance = {
+      predict: 'not-a-function',
+    };
+    registry.register({
+      metadata: { name: 'broken-model', version: '1.0.0', framework: 'custom' },
+      instance: fakeInstance,
+      trainMethod: undefined,
+      predictMethod: 'predict',
+    });
+    await expect(predictor.predict('broken-model', {})).rejects.toThrow(
+      'Prediction method predict not found on model'
+    );
+  });
+
+  it('discoverPredictMethod returns undefined when no @Predict method', () => {
+    @Model({ name: 'no-predict-method', version: '1.0.0', framework: 'custom' })
+    class NoPredictClass {
+      @Train()
+      train() {}
+      someMethod() {}
+    }
+    const instance = new NoPredictClass();
+    expect(predictor.discoverPredictMethod(instance)).toBeUndefined();
+  });
 });

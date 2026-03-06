@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/agent",
-  "version": "0.2.0-beta.47",
+  "version": "0.2.0-beta.73",
   "description": "AI-native Agent Runtime for HazelJS - stateful, long-running agents with tools, memory, and human-in-the-loop",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -29,8 +29,12 @@
     "url": "https://github.com/hazeljs/hazeljs",
     "directory": "packages/agent"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "dependencies": {
     "@hazeljs/core": "file:../core",
+    "@hazeljs/prompts": "file:../prompts",
     "@hazeljs/rag": "file:../rag",
     "@hazeljs/resilience": "file:../resilience",
     "reflect-metadata": "^0.2.1"
@@ -45,7 +49,8 @@
   "peerDependencies": {
     "@hazeljs/core": ">=0.2.0-beta.0",
     "@hazeljs/rag": ">=0.1.0",
-    "redis": ">=4.0.0"
+    "redis": ">=4.0.0",
+    "@hazeljs/guardrails": ">=0.2.0-beta.0"
   },
   "peerDependenciesMeta": {
     "redis": {
@@ -55,6 +60,10 @@
     "@prisma/client": {
       "optional": true,
       "description": "Required for DatabaseStateManager"
+    },
+    "@hazeljs/guardrails": {
+      "optional": true,
+      "description": "Optional guardrails for tool input/output validation"
     }
   },
   "bugs": {

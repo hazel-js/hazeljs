@@ -55,6 +55,10 @@ describe('ModelRegistry', () => {
     expect(list.map((m) => m.name)).toContain('b');
   });
 
+  it('getVersions returns empty array for unknown model', () => {
+    expect(registry.getVersions('unknown')).toEqual([]);
+  });
+
   it('getVersions returns version history', () => {
     registry.register({
       metadata: { name: 'model', version: '1.0.0', framework: 'tensorflow' },
@@ -79,5 +83,20 @@ describe('ModelRegistry', () => {
     expect(deleted).toBe(true);
     expect(registry.get('model', '1.0.0')).toBeUndefined();
     expect(registry.unregister('model', '1.0.0')).toBe(false);
+  });
+
+  it('unregister updates versions list when deleting', () => {
+    registry.register({
+      metadata: { name: 'm', version: '1.0.0', framework: 'tensorflow' },
+      instance: {},
+    });
+    registry.register({
+      metadata: { name: 'm', version: '2.0.0', framework: 'tensorflow' },
+      instance: {},
+    });
+    registry.unregister('m', '1.0.0');
+    const versions = registry.getVersions('m');
+    expect(versions).toHaveLength(1);
+    expect(versions[0].version).toBe('2.0.0');
   });
 });

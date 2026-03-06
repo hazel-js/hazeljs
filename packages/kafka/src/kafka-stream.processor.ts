@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@hazeljs/core';
+import { Service, Inject } from '@hazeljs/core';
 import { Kafka } from 'kafkajs';
 import { KafkaStreamTransform } from './kafka.types';
 import logger from '@hazeljs/core';
@@ -15,7 +15,7 @@ interface StreamPipelineConfig {
 /**
  * Lightweight Kafka stream processor: consume from topic, transform, produce to output topic
  */
-@Injectable()
+@Service()
 export class KafkaStreamProcessor {
   private kafka: Kafka;
   private consumer: ReturnType<Kafka['consumer']> | null = null;

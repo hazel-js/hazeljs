@@ -1,4 +1,4 @@
-import { Injectable } from '@hazeljs/core';
+import { Service } from '@hazeljs/core';
 import { KafkaConsumer, KafkaSubscribe, KafkaMessagePayload } from '@hazeljs/kafka';
 import logger from '@hazeljs/core';
 
@@ -6,7 +6,7 @@ import logger from '@hazeljs/core';
  * Example Kafka consumer for order events
  */
 @KafkaConsumer({ groupId: 'order-processor' })
-@Injectable()
+@Service()
 export class OrderConsumer {
   @KafkaSubscribe('orders')
   async handleOrder({ message }: KafkaMessagePayload) {

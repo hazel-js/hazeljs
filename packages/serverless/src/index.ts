@@ -18,6 +18,7 @@ export {
   createLambdaHandler,
   type LambdaEvent,
   type LambdaContext,
+  type LambdaHandlerOptions,
 } from './lambda.adapter';
 export {
   CloudFunctionAdapter,
@@ -25,4 +26,5 @@ export {
   createCloudFunctionEventHandler,
   type CloudFunctionRequest,
   type CloudFunctionResponse,
+  type CloudFunctionHandlerOptions,
 } from './cloud-function.adapter';

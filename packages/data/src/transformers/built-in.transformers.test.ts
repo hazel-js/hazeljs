@@ -23,11 +23,17 @@ describe('built-in transformers', () => {
     it('lowercases string', () => {
       expect(toLowerCase('HELLO')).toBe('hello');
     });
+    it('converts non-string', () => {
+      expect(toLowerCase(123)).toBe('123');
+    });
   });
 
   describe('toUpperCase', () => {
     it('uppercases string', () => {
       expect(toUpperCase('hello')).toBe('HELLO');
+    });
+    it('converts non-string', () => {
+      expect(toUpperCase(123)).toBe('123');
     });
   });
 
@@ -54,6 +60,12 @@ describe('built-in transformers', () => {
     it('handles missing keys', () => {
       expect(pick(['x'])({})).toEqual({});
     });
+    it('returns empty for null', () => {
+      expect(pick(['a'])(null)).toEqual({});
+    });
+    it('returns empty for non-object', () => {
+      expect(pick(['a'])('string')).toEqual({});
+    });
   });
 
   describe('omit', () => {
@@ -61,12 +73,28 @@ describe('built-in transformers', () => {
       const fn = omit(['b']);
       expect(fn({ a: 1, b: 2, c: 3 })).toEqual({ a: 1, c: 3 });
     });
+    it('returns empty for null', () => {
+      expect(omit(['a'])(null)).toEqual({});
+    });
+    it('returns empty for non-object', () => {
+      expect(omit(['a'])(123)).toEqual({});
+    });
   });
 
   describe('renameKeys', () => {
     it('renames keys', () => {
       const fn = renameKeys({ oldName: 'newName' });
       expect(fn({ oldName: 'value', keep: 1 })).toEqual({ newName: 'value', keep: 1 });
+    });
+    it('returns empty for null', () => {
+      expect(renameKeys({ a: 'b' })(null)).toEqual({});
+    });
+    it('returns empty for non-object', () => {
+      expect(renameKeys({ a: 'b' })(123)).toEqual({});
+    });
+    it('keeps keys not in mapping', () => {
+      const fn = renameKeys({ a: 'A' });
+      expect(fn({ a: 1, b: 2 })).toEqual({ A: 1, b: 2 });
     });
   });
 });

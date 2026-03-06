@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { Injectable, Container, Inject, logger } from '@hazeljs/core';
+import { Service, Container, Inject, logger } from '@hazeljs/core';
 import { Worker } from 'bullmq';
 import { QueueService } from '@hazeljs/queue';
 import { PdfToAudioService } from './pdf-to-audio.service';
@@ -14,7 +14,7 @@ export interface PdfToAudioJobData {
   options: PdfToAudioOptions;
 }
 
-@Injectable()
+@Service()
 export class PdfToAudioQueueWorker {
   private worker: Worker<PdfToAudioJobData, string> | null = null;
 

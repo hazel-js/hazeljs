@@ -8,7 +8,7 @@ import {
   AIEmbeddingResponse,
   AIModelConfig,
 } from './ai-enhanced.types';
-import { Injectable } from '@hazeljs/core';
+import { Service } from '@hazeljs/core';
 import { OpenAIProvider } from './providers/openai.provider';
 import { AnthropicProvider } from './providers/anthropic.provider';
 import { GeminiProvider } from './providers/gemini.provider';
@@ -23,7 +23,7 @@ import logger from '@hazeljs/core';
  * Enhanced AI Service
  * Production-ready AI service with provider management, caching, and rate limiting
  */
-@Injectable()
+@Service()
 export class AIEnhancedService {
   private providers: Map<AIProvider, IAIProvider> = new Map();
   private defaultProvider: AIProvider = 'openai';

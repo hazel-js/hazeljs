@@ -5,7 +5,7 @@ import {
   VectorSearchResult,
   VectorDatabase,
 } from '../ai-enhanced.types';
-import { Injectable } from '@hazeljs/core';
+import { Service } from '@hazeljs/core';
 import logger from '@hazeljs/core';
 
 /**
@@ -17,7 +17,7 @@ import logger from '@hazeljs/core';
  * - Qdrant: npm install @qdrant/js-client-rest
  * - Chroma: npm install chromadb
  */
-@Injectable()
+@Service()
 export class VectorService {
   private config?: VectorStoreConfig;
   private documents: Map<string, VectorDocument> = new Map();

@@ -12,9 +12,17 @@ const HAZEL_PACKAGES: Record<string, { npm: string; hint: string }> = {
     npm: '@hazeljs/agent',
     hint: 'import { AgentModule } from "@hazeljs/agent";',
   },
+  audit: {
+    npm: '@hazeljs/audit',
+    hint: 'import { AuditModule, ConsoleAuditTransport } from "@hazeljs/audit";\n  // AuditModule.forRoot({ transports: [new ConsoleAuditTransport()] })',
+  },
   auth: {
     npm: '@hazeljs/auth',
     hint: 'import { JwtModule } from "@hazeljs/auth";\n  // JwtModule.forRoot({ secret: "your-secret", expiresIn: "1d" })',
+  },
+  oauth: {
+    npm: '@hazeljs/oauth',
+    hint: 'import { OAuthModule } from "@hazeljs/oauth";\n  // OAuthModule.forRoot({ providers: { google: {...}, microsoft: {...}, github: {...} } })',
   },
   cache: {
     npm: '@hazeljs/cache',
@@ -28,17 +36,73 @@ const HAZEL_PACKAGES: Record<string, { npm: string; hint: string }> = {
     npm: '@hazeljs/cron',
     hint: 'import { CronModule } from "@hazeljs/cron";',
   },
+  data: {
+    npm: '@hazeljs/data',
+    hint: 'import { DataModule } from "@hazeljs/data";',
+  },
   discovery: {
     npm: '@hazeljs/discovery',
     hint: 'import { ServiceRegistry, DiscoveryClient } from "@hazeljs/discovery";',
+  },
+  'event-emitter': {
+    npm: '@hazeljs/event-emitter',
+    hint: 'import { EventEmitterModule } from "@hazeljs/event-emitter";',
+  },
+  gateway: {
+    npm: '@hazeljs/gateway',
+    hint: 'import { GatewayModule } from "@hazeljs/gateway";',
+  },
+  guardrails: {
+    npm: '@hazeljs/guardrails',
+    hint: 'import { GuardrailsModule } from "@hazeljs/guardrails";\n  // GuardrailsModule.forRoot({ redactPIIByDefault: true })',
+  },
+  graphql: {
+    npm: '@hazeljs/graphql',
+    hint: 'import { GraphQLModule } from "@hazeljs/graphql";',
+  },
+  grpc: {
+    npm: '@hazeljs/grpc',
+    hint: 'import { GrpcModule } from "@hazeljs/grpc";',
+  },
+  kafka: {
+    npm: '@hazeljs/kafka',
+    hint: 'import { KafkaModule } from "@hazeljs/kafka";',
+  },
+  messaging: {
+    npm: '@hazeljs/messaging',
+    hint: 'import { MessagingModule } from "@hazeljs/messaging";',
+  },
+  mcp: {
+    npm: '@hazeljs/mcp',
+    hint: 'import { createMcpServer } from "@hazeljs/mcp";\n  // createMcpServer({ name, version, toolRegistry }).listenStdio();',
+  },
+  ml: {
+    npm: '@hazeljs/ml',
+    hint: 'import { MLModule } from "@hazeljs/ml";',
+  },
+  prompts: {
+    npm: '@hazeljs/prompts',
+    hint: 'import { PromptTemplate, PromptRegistry } from "@hazeljs/prompts";',
   },
   prisma: {
     npm: '@hazeljs/prisma',
     hint: 'import { PrismaModule } from "@hazeljs/prisma";',
   },
+  typeorm: {
+    npm: '@hazeljs/typeorm',
+    hint: 'import { TypeOrmModule } from "@hazeljs/typeorm";',
+  },
+  queue: {
+    npm: '@hazeljs/queue',
+    hint: 'import { QueueModule } from "@hazeljs/queue";',
+  },
   rag: {
     npm: '@hazeljs/rag',
     hint: 'import { RAGPipeline } from "@hazeljs/rag";',
+  },
+  resilience: {
+    npm: '@hazeljs/resilience',
+    hint: 'import { CircuitBreaker, WithRetry, WithTimeout } from "@hazeljs/resilience";',
   },
   'pdf-to-audio': {
     npm: '@hazeljs/pdf-to-audio',

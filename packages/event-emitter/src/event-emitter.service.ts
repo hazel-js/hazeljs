@@ -1,4 +1,4 @@
-import { Injectable } from '@hazeljs/core';
+import { Service } from '@hazeljs/core';
 import EventEmitter2 from 'eventemitter2';
 import type { EventEmitterModuleOptions } from './event-emitter.types';
 
@@ -19,7 +19,7 @@ import type { EventEmitterModuleOptions } from './event-emitter.types';
  * }
  * ```
  */
-@Injectable()
+@Service()
 export class EventEmitterService extends EventEmitter2 {
   constructor(options?: EventEmitterModuleOptions) {
     super(options ?? {});

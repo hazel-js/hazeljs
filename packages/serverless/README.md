@@ -1,8 +1,8 @@
 # @hazeljs/serverless
 
-**Serverless Adapters for HazelJS - AWS Lambda & Google Cloud Functions**
+**Deploy to Lambda or Cloud Functions. Zero code changes.**
 
-Deploy HazelJS applications to serverless platforms with zero configuration changes.
+Same HazelJS app, same controllers, same routing. Wrap it and ship. Cold start optimization, request mapping, env handling — built in.
 
 [![npm version](https://img.shields.io/npm/v/@hazeljs/serverless.svg)](https://www.npmjs.com/package/@hazeljs/serverless)
 [![npm downloads](https://img.shields.io/npm/dm/@hazeljs/serverless)](https://www.npmjs.com/package/@hazeljs/serverless)
@@ -167,6 +167,8 @@ export const hazelApp = createCloudFunctionHandler(AppModule, {
 });
 ```
 
+**Event handler (Pub/Sub, Storage):** `createCloudFunctionEventHandler(Module)` returns a stub that initializes the app and logs the event but does not route to user code. Implement your own event handling and call it from that handler, or use a separate entrypoint for event-triggered functions.
+
 ### Deployment
 
 #### Using gcloud CLI
@@ -204,35 +206,27 @@ gcloud functions deploy hazeljs-app --config function.yaml
 
 ## Decorator-Based Optimization
 
-Mark routes for serverless optimization:
+Mark **controllers** (classes) for serverless optimization with `@Serverless`:
 
 ```typescript
 import { Controller, Get } from '@hazeljs/core';
 import { Serverless } from '@hazeljs/serverless';
 
 @Controller('/api')
+@Serverless({ memory: 512, timeout: 30, coldStartOptimization: true })
 export class ApiController {
   @Get('/hello')
-  @Serverless({ optimize: true })
   hello() {
     return { message: 'Hello from serverless!' };
-  }
-
-  @Get('/data')
-  @Serverless({
-    optimize: true,
-    cache: {
-      enabled: true,
-      ttl: 300, // 5 minutes
-    },
-  })
-  getData() {
-    return { data: 'cached response' };
   }
 }
 ```
 
+> **Note:** The decorator is class-level only. Method-level `@Serverless({ optimize, cache })` and per-route `binaryResponse` are planned for a future release.
+
 ## Cold Start Optimization
+
+**ColdStartOptimizer** preloads the DI container and built-in modules (http, https, crypto, buffer); behavior is best-effort and may vary by Node version. **KeepAliveHelper** runs an interval but does not perform an actual HTTP request—use provisioned concurrency, a cron job, or implement `fetch`/`http.get` in the interval to warm the function.
 
 ### Minimize Bundle Size
 
@@ -328,14 +322,12 @@ getLambdaInfo(@Req() req: any) {
 
 ### Binary Responses
 
+You can pass `binaryMimeTypes` in `createLambdaHandler` options for future use. Automatic base64 encoding of binary response bodies for Lambda is planned.
+
 ```typescript
-@Get('/image')
-@Serverless({ binaryResponse: true })
-async getImage(@Res() res: Response) {
-  const image = await fs.readFile('image.png');
-  res.setHeader('Content-Type', 'image/png');
-  res.send(image);
-}
+export const handler = createLambdaHandler(AppModule, {
+  binaryMimeTypes: ['image/png', 'application/pdf'],
+});
 ```
 
 ## Logging
@@ -497,5 +489,5 @@ Apache 2.0 © [HazelJS](https://hazeljs.com)
 - [AWS Lambda Docs](https://docs.aws.amazon.com/lambda/)
 - [Google Cloud Functions Docs](https://cloud.google.com/functions/docs)
 - [GitHub](https://github.com/hazel-js/hazeljs)
-- [Issues](https://github.com/hazeljs/hazel-js/issues)
-- [Discord](https://discord.gg/hazeljs)
+- [Issues](https://github.com/hazel-js/hazeljs/issues)
+- [Discord](https://discord.com/channels/1448263814238965833/1448263814859456575)

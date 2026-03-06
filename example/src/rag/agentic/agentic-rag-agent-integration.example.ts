@@ -16,11 +16,12 @@ import {
   HyDE,
   ContextAware,
   Cached,
-} from '@hazeljs/rag/src/agentic';
-import { MemoryVectorStore } from '@hazeljs/rag/src/vector-stores/memory-vector-store';
-import { OpenAIEmbeddings } from '@hazeljs/rag/src/embeddings/openai-embeddings';
-import { MemoryManager, BufferMemory } from '@hazeljs/rag';
-import { Document } from '@hazeljs/rag/src/types';
+  MemoryVectorStore,
+  OpenAIEmbeddings,
+  MemoryManager,
+  BufferMemory,
+  Document,
+} from '@hazeljs/rag';
 
 /**
  * Research Agent with Agentic RAG capabilities
@@ -69,13 +70,16 @@ class ResearchAgent {
     ],
   })
   async deepResearch(input: { query: string }) {
-    const chain = await this.agenticRAG.deepRetrieve(input.query);
-    
+    const results = await this.agenticRAG.deepRetrieve(input.query);
+    const answer =
+      results.length > 0
+        ? results.map((r) => r.content).join('\n\n').slice(0, 500)
+        : 'Research completed';
     return {
-      answer: chain.finalAnswer || 'Research completed',
-      hops: chain.hops?.length || 0,
-      confidence: chain.confidence || 0,
-      sources: chain.sources?.slice(0, 5).map(s => s.content.slice(0, 100)),
+      answer,
+      hops: results.length,
+      confidence: results.length > 0 ? 0.9 : 0,
+      sources: results.slice(0, 5).map((s) => s.content.slice(0, 100)),
     };
   }
 
@@ -186,8 +190,8 @@ async function integrationExample() {
     enableObservability: true,
   });
 
-  // 3. Register Research Agent
-  runtime.registerAgent(ResearchAgent);
+  // 3. Register Research Agent (class first for metadata, then instance with constructor deps)
+  runtime.registerAgent(ResearchAgent as new (...args: unknown[]) => unknown);
   const agent = new ResearchAgent(agenticRAG);
   runtime.registerAgentInstance('research-agent', agent);
 

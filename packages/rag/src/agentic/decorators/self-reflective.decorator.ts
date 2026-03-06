@@ -5,6 +5,11 @@
 
 import 'reflect-metadata';
 import { ReflectionResult, QualityAssessment, AgenticLLMProvider } from '../types';
+import { PromptRegistry } from '@hazeljs/prompts';
+import '../../prompts/agentic/self-reflective.prompt';
+import '../../prompts/agentic/self-reflective-improve.prompt';
+import { SELF_REFLECTIVE_KEY } from '../../prompts/agentic/self-reflective.prompt';
+import { SELF_REFLECTIVE_IMPROVE_KEY } from '../../prompts/agentic/self-reflective-improve.prompt';
 
 export interface SelfReflectiveConfig {
   maxIterations?: number;
@@ -106,26 +111,9 @@ async function assessQualityWithLLM(
 ): Promise<QualityAssessment> {
   const resultsStr = JSON.stringify(results, null, 2);
 
-  const prompt = `Evaluate the quality of these search results for the given query.
-
-Query: ${query}
-
-Results: ${resultsStr.slice(0, 2000)}
-
-Assess the following aspects (0-1 scale):
-1. Relevance: How relevant are the results to the query?
-2. Completeness: Do the results fully answer the query?
-3. Accuracy: Are the results factually accurate?
-4. Clarity: Are the results clear and well-structured?
-
-Provide assessment in JSON format:
-{
-  "relevance": 0.0-1.0,
-  "completeness": 0.0-1.0,
-  "accuracy": 0.0-1.0,
-  "clarity": 0.0-1.0,
-  "issues": ["issue1", "issue2"]
-}`;
+  const prompt = PromptRegistry.get<{ query: string; resultsStr: string }>(
+    SELF_REFLECTIVE_KEY
+  ).render({ query, resultsStr: resultsStr.slice(0, 2000) });
 
   try {
     const assessment = await config.llmProvider!.generateStructured<{
@@ -230,18 +218,13 @@ async function improveResults(
     return null;
   }
 
-  const prompt = `The following search results have quality issues. Suggest an improved query or retrieval strategy.
-
-Original Query: ${query}
-Quality Issues: ${quality.issues.join(', ')}
-Current Results: ${JSON.stringify(results, null, 2).slice(0, 1000)}
-
-Suggest improvements in JSON format:
-{
-  "improvedQuery": "better query",
-  "strategy": "similarity|hybrid|mmr",
-  "reasoning": "why this would be better"
-}`;
+  const prompt = PromptRegistry.get<{ query: string; issues: string; resultsStr: string }>(
+    SELF_REFLECTIVE_IMPROVE_KEY
+  ).render({
+    query,
+    issues: quality.issues.join(', '),
+    resultsStr: JSON.stringify(results, null, 2).slice(0, 1000),
+  });
 
   try {
     await config.llmProvider.generateStructured<{

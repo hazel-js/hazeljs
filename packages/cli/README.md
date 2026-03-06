@@ -1,8 +1,8 @@
 # @hazeljs/cli
 
-**Command-Line Interface for HazelJS**
+**From zero to CRUD in one command.**
 
-Scaffold applications and generate components with a powerful CLI tool for rapid development.
+Generate controllers, services, modules, DTOs — or a full CRUD resource. Interactive project setup, package management, and code that follows best practices. Stop copy-pasting, start shipping.
 
 [![npm version](https://img.shields.io/npm/v/@hazeljs/cli.svg)](https://www.npmjs.com/package/@hazeljs/cli)
 [![npm downloads](https://img.shields.io/npm/dm/@hazeljs/cli)](https://www.npmjs.com/package/@hazeljs/cli)
@@ -104,14 +104,21 @@ hazel add prisma
 
 **Available packages:**
 - `ai` - AI Integration (@hazeljs/ai)
+- `agent` - AI Agents (@hazeljs/agent)
+- `audit` - Audit Logging (@hazeljs/audit)
 - `auth` - Authentication (@hazeljs/auth)
 - `cache` - Caching (@hazeljs/cache)
 - `config` - Configuration (@hazeljs/config)
 - `cron` - Cron Jobs (@hazeljs/cron)
+- `data` - Data/ETL (@hazeljs/data)
+- `mcp` - Model Context Protocol (@hazeljs/mcp)
+- `ml` - Machine Learning (@hazeljs/ml)
 - `prisma` - Prisma ORM (@hazeljs/prisma)
+- `prompts` - Typed prompt templates (@hazeljs/prompts)
 - `rag` - RAG/Vector Search (@hazeljs/rag)
 - `serverless` - Serverless (@hazeljs/serverless)
 - `swagger` - Swagger/OpenAPI (@hazeljs/swagger)
+- `typeorm` - TypeORM (@hazeljs/typeorm)
 - `websocket` - WebSocket (@hazeljs/websocket)
 
 #### Build Project
@@ -673,4 +680,4 @@ Apache 2.0 © [HazelJS](https://hazeljs.com)
 - [Documentation](https://hazeljs.com/docs/packages/cli)
 - [GitHub](https://github.com/hazel-js/hazeljs)
 - [Issues](https://github.com/hazel-js/hazeljs/issues)
-- [Discord](https://discord.gg/hazeljs)
+- [Discord](https://discord.com/channels/1448263814238965833/1448263814859456575)

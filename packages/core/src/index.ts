@@ -37,6 +37,8 @@ export {
   Query,
   Req,
   Res,
+  Ip,
+  Host,
   Headers,
   HttpCode,
   Header,
@@ -45,6 +47,19 @@ export {
   UsePipes,
   UseInterceptors,
   UseGuards,
+  Public,
+  SkipAuth,
+  AITask,
+  Timeout,
+  Optional,
+  Session,
+  Retry,
+  ApiTags,
+  ApiOperation,
+  SetMetadata,
+  getMetadata,
+  createParamDecorator,
+  CUSTOM_METADATA_PREFIX,
   type ControllerMetadata,
   type RouteMetadata,
   type ControllerOptions,
@@ -56,6 +71,9 @@ export {
   type OnModuleDestroy,
   type ExecutionContext,
   type CanActivate,
+  type RetryDecoratorOptions,
+  type ApiOperationOptions,
+  type ParamDecoratorContext,
 } from './decorators';
 
 // Container & DI
@@ -80,6 +98,7 @@ export {
   NotFoundException,
   ConflictException,
   InternalServerErrorException,
+  RequestTimeoutError,
 } from './errors/http.error';
 
 // Pipes
@@ -87,7 +106,12 @@ export { PipeTransform, ValidationError, ParseIntPipe, type PipeMetadata } from 
 export { ValidationPipe } from './pipes/validation.pipe';
 
 // Interceptors
-export { Interceptor, type InterceptorMetadata } from './interceptors/interceptor';
+export {
+  Interceptor,
+  RetryInterceptor,
+  type InterceptorMetadata,
+  type RetryOptions,
+} from './interceptors/interceptor';
 
 // Filters
 export {

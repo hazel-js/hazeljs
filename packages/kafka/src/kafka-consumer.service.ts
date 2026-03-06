@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@hazeljs/core';
+import { Service, Inject } from '@hazeljs/core';
 import { Kafka } from 'kafkajs';
 import { getKafkaConsumerMetadata } from './decorators/kafka-consumer.decorator';
 import { getKafkaSubscribeMetadata } from './decorators/kafka-subscribe.decorator';
@@ -16,7 +16,7 @@ interface RunningConsumer {
 /**
  * Kafka consumer service for consuming messages with decorator-driven handlers
  */
-@Injectable()
+@Service()
 export class KafkaConsumerService {
   private runningConsumers: RunningConsumer[] = [];
 

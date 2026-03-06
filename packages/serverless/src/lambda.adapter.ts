@@ -43,6 +43,18 @@ export interface LambdaContext extends ServerlessContext {
 }
 
 /**
+ * Options for createLambdaHandler
+ */
+export interface LambdaHandlerOptions {
+  /** Called after the HazelJS app is initialized (e.g. for custom setup). */
+  onInit?: (app: HazelApp) => Promise<void>;
+  /** Called when the handler throws (e.g. for custom logging or reporting). */
+  onError?: (error: unknown) => void;
+  /** MIME types (e.g. 'image/png', 'image/*') that trigger base64 encoding of Buffer body for Lambda. */
+  binaryMimeTypes?: string[];
+}
+
+/**
  * Lambda adapter for HazelJS
  */
 export class LambdaAdapter {
@@ -50,7 +62,10 @@ export class LambdaAdapter {
   private optimizer: ColdStartOptimizer;
   private isColdStart = true;
 
-  constructor(private moduleClass: Type<unknown>) {
+  constructor(
+    private moduleClass: Type<unknown>,
+    private options: LambdaHandlerOptions = {}
+  ) {
     this.optimizer = ColdStartOptimizer.getInstance();
   }
 
@@ -73,6 +88,10 @@ export class LambdaAdapter {
 
     // Create HazelJS application
     this.app = new HazelApp(this.moduleClass);
+
+    if (this.options.onInit && this.app) {
+      await this.options.onInit(this.app);
+    }
 
     const duration = Date.now() - startTime;
     logger.info(`Lambda initialization completed in ${duration}ms`);
@@ -101,6 +120,7 @@ export class LambdaAdapter {
 
         return response;
       } catch (error) {
+        this.options.onError?.(error);
         logger.error('Lambda handler error:', error);
         return {
           statusCode: 500,
@@ -219,7 +239,7 @@ export class LambdaAdapter {
         url: request.url,
         headers: request.headers,
         query: request.query,
-        params: context.params || {},
+        params: route.context?.params ?? context.params ?? {},
         body: request.body,
       };
 
@@ -257,17 +277,37 @@ export class LambdaAdapter {
         },
       };
 
-      const result = await route.handler(syntheticReq as never, syntheticRes as never);
+      const result = await route.handler(
+        syntheticReq as never,
+        syntheticRes as never,
+        route.context as never
+      );
 
       // If handler returned a value directly, use it
       if (result !== undefined && responseBody === undefined) {
         responseBody = result;
       }
 
+      const contentType = responseHeaders['content-type'] ?? responseHeaders['Content-Type'] ?? '';
+      const isBinary =
+        this.options.binaryMimeTypes?.length &&
+        this.isBinaryContentType(contentType) &&
+        (Buffer.isBuffer(responseBody) || responseBody instanceof Uint8Array);
+
+      let body: string;
+      let isBase64Encoded = false;
+      if (isBinary) {
+        body = Buffer.from(responseBody as Buffer).toString('base64');
+        isBase64Encoded = true;
+      } else {
+        body = typeof responseBody === 'string' ? responseBody : JSON.stringify(responseBody);
+      }
+
       return {
         statusCode: responseStatus,
-        body: typeof responseBody === 'string' ? responseBody : JSON.stringify(responseBody),
+        body,
         headers: responseHeaders,
+        ...(isBase64Encoded && { isBase64Encoded: true }),
       };
     } catch (error) {
       const statusCode = (error as { statusCode?: number }).statusCode || 500;
@@ -279,6 +319,23 @@ export class LambdaAdapter {
         headers: { 'Content-Type': 'application/json' },
       };
     }
+  }
+
+  /**
+   * Whether the given Content-Type matches any of the binaryMimeTypes patterns.
+   */
+  private isBinaryContentType(contentType: string): boolean {
+    if (!this.options.binaryMimeTypes?.length || !contentType) return false;
+    const ct = contentType.split(';')[0].trim().toLowerCase();
+    for (const pattern of this.options.binaryMimeTypes) {
+      const p = pattern.toLowerCase();
+      if (p.endsWith('/*')) {
+        if (ct.startsWith(p.slice(0, -1))) return true;
+      } else if (ct === p || ct.startsWith(p + '/')) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**
@@ -309,8 +366,9 @@ export class LambdaAdapter {
  * ```
  */
 export function createLambdaHandler(
-  moduleClass: Type<unknown>
+  moduleClass: Type<unknown>,
+  options?: LambdaHandlerOptions
 ): (event: LambdaEvent, context: LambdaContext) => Promise<ServerlessResponse> {
-  const adapter = new LambdaAdapter(moduleClass);
+  const adapter = new LambdaAdapter(moduleClass, options ?? {});
   return adapter.createHandler();
 }

@@ -19,7 +19,7 @@ The HazelJS team takes security bugs seriously. We appreciate your efforts to re
 
 Instead, please report them via email to:
 
-**security@hazeljs.com**
+**info@hazeljs.com**
 
 You should receive a response within 48 hours. If for some reason you do not, please follow up via email to ensure we received your original message.
 
@@ -91,40 +91,76 @@ export class CreateUserDto {
 Use proper authentication and authorization:
 
 ```typescript
-import { AuthGuard } from '@hazeljs/core';
+import { Controller, UseGuards } from '@hazeljs/core';
+import { JwtAuthGuard, RoleGuard, TenantGuard } from '@hazeljs/auth';
 
-@Controller('/admin')
-@UseGuards(AuthGuard)
+// JWT verification + role check + tenant isolation
+@UseGuards(JwtAuthGuard, TenantGuard({ source: 'param', key: 'orgId' }), RoleGuard('admin'))
+@Controller('/orgs/:orgId/admin')
 export class AdminController {
-  // Protected routes
+  // Protected routes — only org admins can reach this
 }
 ```
 
 ### 3. Rate Limiting
 
-Implement rate limiting to prevent abuse:
+Implement rate limiting to prevent abuse using `@hazeljs/resilience`:
 
 ```typescript
-// Coming in v1.0.0
-@RateLimit({ points: 10, duration: 60 })
+import { RateLimiter } from '@hazeljs/resilience';
+
+// Token-bucket limiter — 10 requests per 60 seconds
+const loginLimiter = new RateLimiter({
+  strategy: 'sliding-window',
+  max: 10,
+  window: 60_000,
+});
+
 @Post('/login')
-async login() {
-  // Login logic
+async login(@Res() res: Response) {
+  if (!loginLimiter.tryAcquire()) {
+    const retryAfter = Math.ceil(loginLimiter.getRetryAfterMs() / 1000);
+    res.status(429).setHeader('Retry-After', String(retryAfter)).json({ error: 'Too many requests' });
+    return;
+  }
+  // login logic
+}
+```
+
+Or declaratively on any service method:
+
+```typescript
+import { WithRateLimit } from '@hazeljs/resilience';
+
+@Service()
+export class AuthService {
+  @WithRateLimit({ strategy: 'sliding-window', max: 10, window: 60_000 })
+  async login(email: string, password: string) {
+    // login logic
+  }
 }
 ```
 
 ### 4. Security Headers
 
-Add security headers to responses:
+Configure CORS via `HazelApp.enableCors()` in `main.ts`:
 
 ```typescript
-import { CorsMiddleware } from '@hazeljs/core';
+import { HazelApp } from '@hazeljs/core';
+import { AppModule } from './app.module';
 
-// Configure CORS properly
-app.use(CorsMiddleware({
-  origin: ['https://yourdomain.com'],
-  credentials: true
-}));
+async function bootstrap() {
+  const app = new HazelApp(AppModule);
+
+  app.enableCors({
+    origin: ['https://yourdomain.com'],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+    credentials: true,
+  });
+
+  await app.listen(3000);
+}
+bootstrap();
 ```
 
 ### 5. Environment Variables
@@ -142,15 +178,25 @@ const jwtSecret = process.env.JWT_SECRET;
 
 ### 6. SQL Injection Prevention
 
-Use parameterized queries (Prisma does this automatically):
+Use the ORM layer — both Prisma and TypeORM use parameterized queries automatically:
 
 ```typescript
 // Safe with Prisma
 const user = await prisma.user.findUnique({
-  where: { email: userInput }
+  where: { email: userInput },
 });
 
-// Avoid raw SQL unless necessary
+// Safe with TypeORM
+const user = await userRepository.findOne({
+  where: { email: userInput },
+});
+
+// If raw SQL is unavoidable, always use parameters — never string interpolation
+const users = await dataSource.query(
+  'SELECT * FROM users WHERE email = $1',
+  [userInput], // ✅ parameterized
+);
+// Never: `SELECT * FROM users WHERE email = '${userInput}'` ❌
 ```
 
 ### 7. XSS Prevention
@@ -225,7 +271,7 @@ logger.warn('Failed login attempt', { ip, username });
 Security advisories will be published at:
 
 - GitHub Security Advisories: https://github.com/hazel-js/hazeljs/security/advisories
-- npm: https://www.npmjs.com/package/@hazeljs/core\?activeTab\=versions
+- npm: https://www.npmjs.com/package/@hazeljs/core?activeTab=versions
 
 ## Bug Bounty Program
 
@@ -234,7 +280,7 @@ We currently do not have a bug bounty program, but we deeply appreciate security
 ## Contact
 
 For security concerns, contact:
-- Email: security@hazeljs.com
+- Email: info@hazeljs.com
 - PGP Key: (Coming soon)
 
 For general questions:

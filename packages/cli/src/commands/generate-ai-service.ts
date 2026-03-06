@@ -1,10 +1,10 @@
 import { Command } from 'commander';
 import { Generator } from '../utils/generator';
 
-const AI_SERVICE_TEMPLATE = `import { Injectable } from '@hazeljs/core';
+const AI_SERVICE_TEMPLATE = `import { Service } from '@hazeljs/core';
 import { AIService, AIFunction, AIPrompt } from '@hazeljs/ai';
 
-@Injectable()
+@Service()
 export class {{className}}AIService {
   constructor(private readonly aiService: AIService) {}
 

@@ -1,8 +1,8 @@
 # @hazeljs/queue
 
-**Redis-backed Job Queue Module for HazelJS**
+**Background jobs that don't get lost.**
 
-Add and process background jobs using BullMQ with Redis. Ideal for distributed systems, cron-triggered workloads, and long-running agent tasks.
+BullMQ + Redis. Add jobs from controllers, process with `@Queue`. Delay, retry, priority, backoff. Works with CronModule for distributed cron. Agent tasks, emails, exports — queue it and forget it.
 
 [![npm version](https://img.shields.io/npm/v/@hazeljs/queue.svg)](https://www.npmjs.com/package/@hazeljs/queue)
 [![npm downloads](https://img.shields.io/npm/dm/@hazeljs/queue)](https://www.npmjs.com/package/@hazeljs/queue)

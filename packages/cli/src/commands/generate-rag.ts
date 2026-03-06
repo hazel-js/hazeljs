@@ -2,10 +2,10 @@ import { Command } from 'commander';
 import { Generator } from '../utils/generator';
 import chalk from 'chalk';
 
-const RAG_SERVICE_TEMPLATE = `import { Injectable } from '@hazeljs/core';
+const RAG_SERVICE_TEMPLATE = `import { Service } from '@hazeljs/core';
 import { RAGPipeline, MemoryVectorStore } from '@hazeljs/rag';
 
-@Injectable()
+@Service()
 export class {{className}}RagService {
   private pipeline: RAGPipeline;
 

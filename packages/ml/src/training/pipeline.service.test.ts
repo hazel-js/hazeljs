@@ -40,4 +40,19 @@ describe('PipelineService', () => {
     service.registerPipeline('b', []);
     expect(service.listPipelines()).toEqual(['a', 'b']);
   });
+
+  it('run with inline steps (no registration)', async () => {
+    const steps = [
+      {
+        name: 'lower',
+        transform: (d: unknown) => ({
+          ...(d as object),
+          x: (d as { x?: string }).x?.toLowerCase() ?? '',
+        }),
+      },
+      { name: 'add', transform: (d: unknown) => ({ ...(d as object), y: 1 }) },
+    ];
+    const result = await service.run({ x: 'HELLO' }, steps);
+    expect(result).toEqual({ x: 'hello', y: 1 });
+  });
 });

@@ -1,4 +1,4 @@
-import { Injectable } from '@hazeljs/core';
+import { Service } from '@hazeljs/core';
 import { ModelMetadata, ModelVersion } from '../ml.types';
 import logger from '@hazeljs/core';
 
@@ -13,7 +13,7 @@ export interface RegisteredModel {
  * Model Registry - Handles model versioning and storage
  * Integrates with TensorFlow.js, ONNX Runtime for model persistence
  */
-@Injectable()
+@Service()
 export class ModelRegistry {
   private models: Map<string, RegisteredModel> = new Map();
   private versions: Map<string, ModelVersion[]> = new Map();

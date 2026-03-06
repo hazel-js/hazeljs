@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@hazeljs/core';
+import { Service, Inject } from '@hazeljs/core';
 import { KafkaStreamProcessor, KAFKA_CLIENT_TOKEN } from '@hazeljs/kafka';
 import { Kafka } from 'kafkajs';
 import logger from '@hazeljs/core';
@@ -10,7 +10,7 @@ import logger from '@hazeljs/core';
  * Each pipeline uses a dedicated KafkaStreamProcessor instance since one processor
  * handles a single input->transform->output flow.
  */
-@Injectable()
+@Service()
 export class StreamPipelinesService {
   private processors: KafkaStreamProcessor[] = [];
 

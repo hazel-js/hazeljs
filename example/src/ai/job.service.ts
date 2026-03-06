@@ -1,8 +1,8 @@
-import { Injectable } from '@hazeljs/core';
+import { Service } from '@hazeljs/core';
 import { AIService, AITask } from '@hazeljs/ai';
 import logger from '@hazeljs/core';
 
-@Injectable()
+@Service()
 export class JobService {
   constructor(private aiService: AIService) {
     logger.debug('JobService initialized with AIService:', {

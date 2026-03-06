@@ -2,10 +2,10 @@ import { Command } from 'commander';
 import { Generator } from '../utils/generator';
 import chalk from 'chalk';
 
-const DISCOVERY_TEMPLATE = `import { Injectable } from '@hazeljs/core';
+const DISCOVERY_TEMPLATE = `import { Service } from '@hazeljs/core';
 import { ServiceRegistry, DiscoveryClient } from '@hazeljs/discovery';
 
-@Injectable()
+@Service()
 export class {{className}}DiscoveryService {
   constructor(
     private readonly registry: ServiceRegistry,

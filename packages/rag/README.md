@@ -1,8 +1,8 @@
 # @hazeljs/rag
 
-**Retrieval-Augmented Generation (RAG) and Vector Search for HazelJS**
+**Your docs. Your data. AI that actually knows them.**
 
-Build powerful AI applications with semantic search, document retrieval, and LLM-augmented responses.
+Load documents from any source, build a knowledge graph, embed into vector stores, and retrieve answers with semantic, hybrid, or graph-based search. Full RAG + GraphRAG pipeline — no PhD required.
 
 [![npm version](https://img.shields.io/npm/v/@hazeljs/rag.svg)](https://www.npmjs.com/package/@hazeljs/rag)
 [![npm downloads](https://img.shields.io/npm/dm/@hazeljs/rag)](https://www.npmjs.com/package/@hazeljs/rag)
@@ -10,14 +10,18 @@ Build powerful AI applications with semantic search, document retrieval, and LLM
 
 ## Features
 
-- 🔍 **Vector Search** - Semantic similarity search using embeddings
-- 📚 **Document Management** - Load, split, and index documents
-- 🤖 **RAG Pipeline** - Complete retrieval-augmented generation workflow
-- 🎯 **Multiple Strategies** - Similarity, MMR (Maximal Marginal Relevance), Hybrid search
-- 🔌 **Pluggable Backends** - Support for Pinecone, Weaviate, Qdrant, ChromaDB, and in-memory
-- 🌐 **Multiple Embedding Providers** - OpenAI, Cohere, HuggingFace
-- ✂️ **Smart Text Splitting** - Recursive text splitter with overlap
-- 📊 **Metadata Filtering** - Filter results by custom metadata
+- 📂 **11 Document Loaders** — TXT, Markdown, JSON, CSV, HTML, PDF, DOCX, web scraping, YouTube transcripts, GitHub repos, and inline text. All return the same `Document[]` interface.
+- 🕸️ **GraphRAG** — Extract entities and relationships from documents, build a knowledge graph, detect communities, and answer questions with entity-centric (local), thematic (global), or hybrid search.
+- 🔍 **Vector Search** — Semantic similarity search with configurable embeddings and vector stores
+- 🤖 **RAG Pipeline** — Complete load → split → embed → retrieve → augment workflow
+- 🎯 **Multiple Strategies** — Similarity, Hybrid (vector + BM25), Multi-Query retrieval
+- 🔌 **5 Vector Stores** — Memory, Pinecone, Qdrant, Weaviate, ChromaDB (unified interface)
+- 🌐 **Embedding Providers** — OpenAI and Cohere, easily extensible
+- ✂️ **Smart Text Splitting** — Recursive, character, and token splitters
+- 📊 **Metadata Filtering** — Filter results by any metadata field
+- 🧠 **Memory System** — Conversation history, entity memory, fact storage, working memory
+
+---
 
 ## Installation
 
@@ -25,28 +29,34 @@ Build powerful AI applications with semantic search, document retrieval, and LLM
 npm install @hazeljs/rag
 ```
 
-### Optional Peer Dependencies
+### Optional peer dependencies
 
-Install the vector store and embedding provider you want to use:
+Install only what you need:
 
 ```bash
-# OpenAI Embeddings
+# LLM (required for GraphRAG and RAG query synthesis)
 npm install openai
 
-# Vector Stores (choose one or more)
-npm install @pinecone-database/pinecone  # Pinecone
-npm install weaviate-ts-client            # Weaviate
+# Vector stores
+npm install @pinecone-database/pinecone   # Pinecone
 npm install @qdrant/js-client-rest        # Qdrant
+npm install weaviate-ts-client            # Weaviate
 npm install chromadb                      # ChromaDB
 
-# Additional Embedding Providers
-npm install cohere-ai                     # Cohere
-npm install @huggingface/inference        # HuggingFace
+# Alternative embedding providers
+npm install cohere-ai
+
+# Document loaders
+npm install pdf-parse   # PdfLoader
+npm install mammoth     # DocxLoader
+npm install cheerio     # HtmlFileLoader / WebLoader CSS selectors
 ```
+
+---
 
 ## Quick Start
 
-### Basic RAG Pipeline
+### Basic RAG pipeline
 
 ```typescript
 import {
@@ -54,271 +64,400 @@ import {
   MemoryVectorStore,
   OpenAIEmbeddings,
   RecursiveTextSplitter,
+  DirectoryLoader,
 } from '@hazeljs/rag';
 
-// 1. Setup embedding provider
-const embeddings = new OpenAIEmbeddings({
-  apiKey: process.env.OPENAI_API_KEY!,
-  model: 'text-embedding-3-small',
-});
-
-// 2. Setup vector store
+const embeddings = new OpenAIEmbeddings({ apiKey: process.env.OPENAI_API_KEY });
 const vectorStore = new MemoryVectorStore(embeddings);
 
-// 3. Setup text splitter
-const textSplitter = new RecursiveTextSplitter({
-  chunkSize: 1000,
-  chunkOverlap: 200,
-});
-
-// 4. Create RAG pipeline
 const rag = new RAGPipeline({
   vectorStore,
   embeddingProvider: embeddings,
-  textSplitter,
+  textSplitter: new RecursiveTextSplitter({ chunkSize: 800, chunkOverlap: 150 }),
   topK: 5,
 });
-
-// 5. Initialize
 await rag.initialize();
 
-// 6. Add documents
-await rag.addDocuments([
-  {
-    content: 'HazelJS is a modern TypeScript framework for building scalable applications.',
-    metadata: { source: 'docs', category: 'intro' },
-  },
-  {
-    content: 'The framework includes built-in support for microservices, caching, and AI.',
-    metadata: { source: 'docs', category: 'features' },
-  },
-]);
+// Load from disk — auto-detects file types
+const docs = await new DirectoryLoader({ dirPath: './knowledge-base', recursive: true }).load();
+await rag.addDocuments(docs);
 
-// 7. Query
-const result = await rag.query('What is HazelJS?', {
-  topK: 3,
-  filter: { source: 'docs' },
-});
-
+const result = await rag.query('What is HazelJS?', { topK: 3 });
 console.log(result.answer);
 console.log(result.sources);
 ```
 
-### With LLM Integration
+---
+
+## Document Loaders
+
+Every loader extends `BaseDocumentLoader` and returns `Document[]` ready for chunking and indexing.
+
+### Built-in loaders
+
+| Loader | Source | Extra install |
+|--------|--------|:---:|
+| `TextFileLoader` | `.txt` files | — |
+| `MarkdownFileLoader` | `.md` / `.mdx` with heading splits and YAML front-matter | — |
+| `JSONFileLoader` | `.json` with `textKey` / JSON Pointer extraction | — |
+| `CSVFileLoader` | `.csv` rows mapped to documents | — |
+| `HtmlFileLoader` | `.html` tag stripping; optional CSS selector via cheerio | opt. |
+| `DirectoryLoader` | Recursive walk; auto-detects loader by extension | — |
+| `PdfLoader` | PDFs; split by page or full document | `pdf-parse` |
+| `DocxLoader` | Word documents; plain text or HTML output | `mammoth` |
+| `WebLoader` | HTTP scraping with retry/timeout; optional CSS selector | opt. |
+| `YouTubeTranscriptLoader` | YouTube transcripts; no API key; segment by duration | — |
+| `GitHubLoader` | GitHub REST API; filter by path, extension, `maxFiles` | — |
+
+### Examples
+
+```typescript
+import {
+  TextFileLoader,
+  MarkdownFileLoader,
+  JSONFileLoader,
+  CSVFileLoader,
+  PdfLoader,
+  DocxLoader,
+  WebLoader,
+  YouTubeTranscriptLoader,
+  GitHubLoader,
+  DirectoryLoader,
+} from '@hazeljs/rag';
+
+// Plain text
+const textDocs = await new TextFileLoader({ filePath: './notes.txt' }).load();
+
+// Markdown — one document per heading section
+const mdDocs = await new MarkdownFileLoader({
+  filePath: './guide.md',
+  splitByHeading: true,
+  parseYamlFrontMatter: true,
+}).load();
+
+// JSON — extract the 'body' field from each element
+const jsonDocs = await new JSONFileLoader({ filePath: './articles.json', textKey: 'body' }).load();
+
+// CSV — map columns to content / metadata
+const csvDocs = await new CSVFileLoader({
+  filePath: './faqs.csv',
+  contentColumns: ['question', 'answer'],
+  metadataColumns: ['category'],
+}).load();
+
+// PDF — one document per page
+const pdfDocs = await new PdfLoader({ filePath: './report.pdf', splitByPage: true }).load();
+
+// DOCX
+const wordDocs = await new DocxLoader({ filePath: './agreement.docx' }).load();
+
+// Web scraping
+const webDocs = await new WebLoader({
+  urls: ['https://hazeljs.com/docs', 'https://hazeljs.com/blog'],
+  timeout: 10_000,
+  maxRetries: 3,
+}).load();
+
+// YouTube transcript (no API key needed)
+const ytDocs = await new YouTubeTranscriptLoader({
+  videoUrl: 'https://www.youtube.com/watch?v=VIDEO_ID',
+  segmentDuration: 60,   // group into 60-second chunks
+}).load();
+
+// GitHub repository
+const githubDocs = await new GitHubLoader({
+  owner: 'hazeljs',
+  repo: 'hazel',
+  directory: 'docs',
+  extensions: ['.md'],
+  token: process.env.GITHUB_TOKEN,
+}).load();
+
+// Directory — auto-detects every file type
+const allDocs = await new DirectoryLoader({
+  dirPath: './knowledge-base',
+  recursive: true,
+  extensions: ['.md', '.txt', '.pdf'],
+}).load();
+```
+
+### Custom loaders
+
+```typescript
+import { BaseDocumentLoader, Loader, DocumentLoaderRegistry } from '@hazeljs/rag';
+
+@Loader({ name: 'NotionLoader', extensions: [] })
+export class NotionLoader extends BaseDocumentLoader {
+  constructor(private readonly databaseId: string) { super(); }
+
+  async load() {
+    const pages = await fetchNotionPages(this.databaseId);
+    return pages.map(p =>
+      this.createDocument(p.content, { source: `notion:${p.id}`, title: p.title }),
+    );
+  }
+}
+
+// Register so DirectoryLoader can auto-detect it
+DocumentLoaderRegistry.register(NotionLoader, (id: string) => new NotionLoader(id));
+```
+
+---
+
+## GraphRAG
+
+GraphRAG builds a **knowledge graph** from your documents — entities, relationships, and community clusters — and enables three complementary search modes that go far beyond cosine similarity.
+
+### Why GraphRAG?
+
+| Question type | Traditional RAG | GraphRAG |
+|---|---|---|
+| "What does X do?" | ✅ Good | ✅ Excellent (entity traversal) |
+| "How do X and Y relate?" | ❌ Poor | ✅ Excellent (relationships) |
+| "What are the main architectural layers?" | ❌ Poor | ✅ Excellent (community reports) |
+| Multi-document cross-referencing | ❌ Fragmented | ✅ Native |
+
+### Build the graph
 
 ```typescript
 import OpenAI from 'openai';
+import { GraphRAGPipeline, DirectoryLoader } from '@hazeljs/rag';
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-// Create LLM function
-const llmFunction = async (prompt: string) => {
-  const response = await openai.chat.completions.create({
-    model: 'gpt-4',
-    messages: [{ role: 'user', content: prompt }],
-  });
-  return response.choices[0].message.content || '';
-};
-
-// Create RAG pipeline with LLM
-const rag = new RAGPipeline(config, llmFunction);
-
-// Query with custom prompt
-const result = await rag.query('What is HazelJS?', {
-  llmPrompt: `Based on the following context, answer the question.
-
-Context:
-{context}
-
-Question: {query}
-
-Answer:`,
+const graphRag = new GraphRAGPipeline({
+  // Provider-agnostic: any LLM that accepts a string prompt
+  llm: async (prompt) => {
+    const res = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      temperature: 0,
+      messages: [{ role: 'user', content: prompt }],
+    });
+    return res.choices[0].message.content ?? '';
+  },
+  extractionChunkSize: 2000,      // chars per LLM extraction call
+  generateCommunityReports: true, // LLM summaries per community cluster
+  maxCommunitySize: 15,           // split clusters larger than this
+  localSearchDepth: 2,            // BFS hops for local search
+  localSearchTopK: 5,             // seed entities per query
+  globalSearchTopK: 5,            // community reports for global search
 });
+
+const docs = await new DirectoryLoader({ dirPath: './knowledge-base', recursive: true }).load();
+const stats = await graphRag.build(docs);
+// { documentsProcessed, entitiesExtracted, relationshipsExtracted,
+//   communitiesDetected, communityReportsGenerated, duration }
 ```
+
+### Search modes
+
+```typescript
+// LOCAL — entity-centric, BFS graph traversal
+// Best for: specific questions about named concepts, classes, or technologies
+const local = await graphRag.search(
+  'How does dependency injection work?',
+  { mode: 'local' },
+);
+console.log(local.answer);
+console.log(local.entities);      // entities found and traversed
+console.log(local.relationships); // evidence relationships
+
+// GLOBAL — community report ranking
+// Best for: broad thematic questions, architecture overviews
+const global = await graphRag.search(
+  'What are the main architectural layers of this system?',
+  { mode: 'global' },
+);
+console.log(global.communities);  // ranked community reports used
+
+// HYBRID — runs both in parallel, single synthesis call (recommended default)
+const result = await graphRag.search('What vector stores does @hazeljs/rag support?');
+// mode defaults to 'hybrid'
+console.log(`${result.mode} search in ${result.duration}ms`);
+```
+
+### Incremental updates
+
+```typescript
+const newDocs = await new WebLoader({ urls: ['https://hazeljs.com/blog/new'] }).load();
+await graphRag.addDocuments(newDocs);
+// Re-runs community detection and regenerates reports automatically
+```
+
+### Inspect the graph
+
+```typescript
+const graph = graphRag.getGraph();
+
+// Entities, relationships, community reports
+console.log([...graph.entities.values()].slice(0, 5));
+console.log([...graph.relationships.values()].slice(0, 5));
+console.log([...graph.communityReports.values()].map(r => r.title));
+
+// Statistics
+const stats = graphRag.getStats();
+console.log(stats.entityTypeBreakdown);   // { TECHNOLOGY: 14, CONCEPT: 12, ... }
+console.log(stats.topEntities.slice(0, 5)); // most-connected entities
+```
+
+---
 
 ## Vector Stores
 
-### Memory Vector Store (Development)
+All stores implement the same interface — swap them with a one-line change.
 
 ```typescript
 import { MemoryVectorStore, OpenAIEmbeddings } from '@hazeljs/rag';
 
-const embeddings = new OpenAIEmbeddings({ apiKey: process.env.OPENAI_API_KEY! });
+// Development
 const vectorStore = new MemoryVectorStore(embeddings);
-```
 
-### Pinecone (Production)
-
-```typescript
-import { Pinecone } from '@pinecone-database/pinecone';
+// Pinecone (production, serverless)
 import { PineconeVectorStore } from '@hazeljs/rag';
+const vectorStore = new PineconeVectorStore(embeddings, {
+  apiKey: process.env.PINECONE_API_KEY,
+  indexName: 'my-knowledge-base',
+});
 
-const pinecone = new Pinecone({ apiKey: process.env.PINECONE_API_KEY! });
-const index = pinecone.index('my-index');
-
-const vectorStore = new PineconeVectorStore(index, embeddings);
-```
-
-### Qdrant
-
-```typescript
-import { QdrantClient } from '@qdrant/js-client-rest';
+// Qdrant (high-performance, self-hosted)
 import { QdrantVectorStore } from '@hazeljs/rag';
+const vectorStore = new QdrantVectorStore(embeddings, {
+  url: process.env.QDRANT_URL || 'http://localhost:6333',
+  collectionName: 'my-collection',
+});
 
-const client = new QdrantClient({ url: 'http://localhost:6333' });
-const vectorStore = new QdrantVectorStore(client, embeddings, {
+// Weaviate (GraphQL, flexible)
+import { WeaviateVectorStore } from '@hazeljs/rag';
+const vectorStore = new WeaviateVectorStore(embeddings, {
+  host: process.env.WEAVIATE_HOST || 'http://localhost:8080',
+  className: 'MyKnowledgeBase',
+});
+
+// ChromaDB (prototyping)
+import { ChromaVectorStore } from '@hazeljs/rag';
+const vectorStore = new ChromaVectorStore(embeddings, {
+  url: process.env.CHROMA_URL || 'http://localhost:8000',
   collectionName: 'my-collection',
 });
 ```
 
+### Vector store comparison
+
+| | Memory | Pinecone | Qdrant | Weaviate | ChromaDB |
+|---|:---:|:---:|:---:|:---:|:---:|
+| Setup | None | API Key | Docker | Docker | Docker |
+| Persistence | ❌ | ✅ | ✅ | ✅ | ✅ |
+| Best for | Dev/Test | Production | High-perf | GraphQL | Prototyping |
+| Cost | Free | Paid | OSS | OSS | OSS |
+
+---
+
 ## Embedding Providers
 
-### OpenAI
-
 ```typescript
-import { OpenAIEmbeddings } from '@hazeljs/rag';
+import { OpenAIEmbeddings, CohereEmbeddings } from '@hazeljs/rag';
 
-const embeddings = new OpenAIEmbeddings({
-  apiKey: process.env.OPENAI_API_KEY!,
-  model: 'text-embedding-3-small', // or 'text-embedding-3-large'
-  dimensions: 1536,
+// OpenAI
+const openaiEmbed = new OpenAIEmbeddings({
+  apiKey: process.env.OPENAI_API_KEY,
+  model: 'text-embedding-3-small',  // 1536 dims
+  // model: 'text-embedding-3-large', // 3072 dims, highest quality
+});
+
+// Cohere (multilingual)
+const cohereEmbed = new CohereEmbeddings({
+  apiKey: process.env.COHERE_API_KEY,
+  model: 'embed-multilingual-v3.0',
 });
 ```
 
-### Cohere
+---
+
+## Retrieval Strategies
 
 ```typescript
-import { CohereEmbeddings } from '@hazeljs/rag';
+import { HybridSearchRetrieval, MultiQueryRetrieval } from '@hazeljs/rag';
 
-const embeddings = new CohereEmbeddings({
-  apiKey: process.env.COHERE_API_KEY!,
-  model: 'embed-english-v3.0',
+// Hybrid — vector + BM25 keyword fusion
+const hybrid = new HybridSearchRetrieval(vectorStore, {
+  vectorWeight: 0.7,
+  keywordWeight: 0.3,
+  topK: 10,
 });
+const results = await hybrid.search('machine learning algorithms', { topK: 5 });
+
+// Multi-query — LLM generates N query variations, deduplicates results
+const multiQuery = new MultiQueryRetrieval(vectorStore, {
+  llmApiKey: process.env.OPENAI_API_KEY,
+  numQueries: 3,
+  topK: 10,
+});
+const results2 = await multiQuery.search('How do I deploy my app?', { topK: 5 });
 ```
 
-### HuggingFace
-
-```typescript
-import { HuggingFaceEmbeddings } from '@hazeljs/rag';
-
-const embeddings = new HuggingFaceEmbeddings({
-  apiKey: process.env.HUGGINGFACE_API_KEY!,
-  model: 'sentence-transformers/all-MiniLM-L6-v2',
-});
-```
+---
 
 ## Text Splitting
-
-### Recursive Text Splitter
 
 ```typescript
 import { RecursiveTextSplitter } from '@hazeljs/rag';
 
 const splitter = new RecursiveTextSplitter({
-  chunkSize: 1000,
-  chunkOverlap: 200,
-  separators: ['\n\n', '\n', '. ', ' ', ''],
+  chunkSize: 1000,      // target chars per chunk
+  chunkOverlap: 200,    // overlap for context continuity
+  separators: ['\n\n', '\n', '. ', ' '],
 });
 
-const chunks = splitter.split(longText);
+const chunks = splitter.split(longDocument);
 ```
 
-## Retrieval Strategies
+---
 
-### Similarity Search (Default)
+## Memory System
 
 ```typescript
-const results = await rag.retrieve('query', {
-  topK: 5,
-  strategy: RetrievalStrategy.SIMILARITY,
-});
+import {
+  RAGPipelineWithMemory,
+  MemoryManager,
+  HybridMemory,
+  BufferMemory,
+  VectorMemory,
+} from '@hazeljs/rag';
+
+const buffer = new BufferMemory({ maxSize: 20 });
+const vectorMemory = new VectorMemory(vectorStore, embeddings);
+const memory = new MemoryManager(new HybridMemory(buffer, vectorMemory));
+
+const rag = new RAGPipelineWithMemory(config, memory, llmFunction);
+
+const response = await rag.queryWithMemory(
+  'What did we discuss about deployment?',
+  'session-123',
+  'user-456',
+);
+console.log(response.answer);
+console.log(response.memories);
 ```
 
-### MMR (Maximal Marginal Relevance)
-
-Balances relevance and diversity to avoid redundant results:
-
-```typescript
-const results = await rag.retrieve('query', {
-  topK: 5,
-  strategy: RetrievalStrategy.MMR,
-});
-```
-
-### Hybrid Search
-
-Combines keyword and semantic search:
-
-```typescript
-const results = await rag.retrieve('query', {
-  topK: 5,
-  strategy: RetrievalStrategy.HYBRID,
-});
-```
-
-## Metadata Filtering
-
-```typescript
-await rag.addDocuments([
-  {
-    content: 'Document 1',
-    metadata: { category: 'tech', year: 2024 },
-  },
-  {
-    content: 'Document 2',
-    metadata: { category: 'science', year: 2023 },
-  },
-]);
-
-// Filter by metadata
-const results = await rag.query('query', {
-  filter: { category: 'tech', year: 2024 },
-});
-```
-
-## Advanced Usage
-
-### Custom Document Loaders
-
-```typescript
-import { DocumentLoader, Document } from '@hazeljs/rag';
-
-class PDFLoader implements DocumentLoader {
-  constructor(private filePath: string) {}
-
-  async load(): Promise<Document[]> {
-    // Load and parse PDF
-    const text = await this.parsePDF(this.filePath);
-    return [{ content: text, metadata: { source: this.filePath } }];
-  }
-
-  private async parsePDF(path: string): Promise<string> {
-    // PDF parsing logic
-    return '';
-  }
-}
-
-const loader = new PDFLoader('./document.pdf');
-const documents = await loader.load();
-await rag.addDocuments(documents);
-```
-
-### Batch Operations
-
-```typescript
-// Add multiple documents efficiently
-const ids = await rag.addDocuments(documents);
-
-// Delete multiple documents
-await rag.deleteDocuments(ids);
-
-// Clear all documents
-await rag.clear();
-```
+---
 
 ## API Reference
 
-### RAGPipeline
+### `GraphRAGPipeline`
+
+```typescript
+class GraphRAGPipeline {
+  constructor(config: GraphRAGConfig);
+  build(docs: Document[]): Promise<GraphBuildStats>;
+  addDocuments(docs: Document[]): Promise<GraphBuildStats>;
+  search(query: string, options?: GraphSearchOptions): Promise<GraphSearchResult>;
+  getGraph(): KnowledgeGraph;
+  getStats(): GraphStats;
+  clear(): void;
+}
+```
+
+### `RAGPipeline`
 
 ```typescript
 class RAGPipeline {
@@ -326,53 +465,35 @@ class RAGPipeline {
   initialize(): Promise<void>;
   addDocuments(documents: Document[]): Promise<string[]>;
   query(query: string, options?: RAGQueryOptions): Promise<RAGResponse>;
-  retrieve(query: string, options?: QueryOptions, strategy?: RetrievalStrategy): Promise<SearchResult[]>;
+  search(query: string, options?: QueryOptions): Promise<SearchResult[]>;
   deleteDocuments(ids: string[]): Promise<void>;
   clear(): Promise<void>;
 }
 ```
 
-### Types
+### `Document`
 
 ```typescript
 interface Document {
   id?: string;
   content: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   embedding?: number[];
-}
-
-interface SearchResult {
-  id: string;
-  content: string;
-  metadata?: Record<string, any>;
-  score: number;
-  embedding?: number[];
-}
-
-interface RAGResponse {
-  answer: string;
-  sources: SearchResult[];
-  context: string;
 }
 ```
 
+---
+
 ## Use Cases
 
-- 📖 **Documentation Search** - Semantic search across documentation
-- 💬 **Chatbots** - Context-aware conversational AI
-- 🔍 **Knowledge Base** - Internal knowledge management
-- 📝 **Content Recommendations** - Similar content discovery
-- 🎓 **Educational Tools** - Q&A systems with source citations
-- 🏢 **Enterprise Search** - Semantic search across company data
+- 📖 **Documentation Q&A** — Index all your docs and answer developer questions
+- 🕸️ **Codebase Understanding** — GraphRAG over a repo to explain architecture and dependencies
+- 💬 **Context-Aware Chatbots** — RAG + memory for multi-turn conversations
+- 🔍 **Enterprise Knowledge Base** — Combine web, GitHub, PDFs, and internal wikis
+- 🎓 **Research Assistants** — Multi-document reasoning with knowledge graph traversal
+- 📝 **Content Intelligence** — Semantic search + relationship mapping across articles
 
-## Performance Tips
-
-1. **Batch Operations** - Add documents in batches for better performance
-2. **Chunk Size** - Balance between context and precision (500-1500 tokens)
-3. **Overlap** - Use 10-20% overlap for better context continuity
-4. **Caching** - Cache embeddings for frequently accessed documents
-5. **Filtering** - Use metadata filters to reduce search space
+---
 
 ## License
 
@@ -380,4 +501,4 @@ Apache 2.0
 
 ## Contributing
 
-Contributions are welcome! Please see [CONTRIBUTING.md](../../CONTRIBUTING.md) for details.
+Contributions are welcome! See [CONTRIBUTING.md](../../CONTRIBUTING.md) for details.

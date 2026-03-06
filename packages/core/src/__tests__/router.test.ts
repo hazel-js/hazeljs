@@ -946,5 +946,748 @@ describe('Router', () => {
         );
       }
     });
+
+    // -----------------------------------------------------------------------
+    // Parameter injection — extended types
+    // -----------------------------------------------------------------------
+
+    it('should inject named header via { type: "headers", name }', async () => {
+      class TestController {
+        getHeader(authHeader: string) {
+          return { auth: authHeader };
+        }
+      }
+
+      container.register(TestController, new TestController());
+      Reflect.defineMetadata('hazel:controller', { path: '/test' }, TestController);
+      Reflect.defineMetadata(
+        'hazel:routes',
+        [{ method: 'GET', path: '/header-named', propertyKey: 'getHeader' }],
+        TestController
+      );
+      Reflect.defineMetadata(
+        'hazel:inject',
+        [{ type: 'headers', name: 'authorization' }],
+        TestController,
+        'getHeader'
+      );
+
+      router.registerController(TestController);
+
+      const context = {
+        params: {},
+        query: {},
+        body: {},
+        headers: { authorization: 'Bearer token123' },
+        method: 'GET',
+        url: '/test/header-named',
+      };
+
+      const route = await router.match('GET', '/test/header-named', context);
+      expect(route).toBeDefined();
+
+      if (route) {
+        await route.handler(mockReq as any, mockRes as any, context);
+        expect(mockRes.json).toHaveBeenCalledWith({ auth: 'Bearer token123' });
+      }
+    });
+
+    it('should inject all headers when { type: "headers" } has no name', async () => {
+      class TestController {
+        getAllHeaders(headers: Record<string, string>) {
+          return headers;
+        }
+      }
+
+      container.register(TestController, new TestController());
+      Reflect.defineMetadata('hazel:controller', { path: '/test' }, TestController);
+      Reflect.defineMetadata(
+        'hazel:routes',
+        [{ method: 'GET', path: '/headers-all', propertyKey: 'getAllHeaders' }],
+        TestController
+      );
+      Reflect.defineMetadata(
+        'hazel:inject',
+        [{ type: 'headers' }],
+        TestController,
+        'getAllHeaders'
+      );
+
+      router.registerController(TestController);
+
+      const context = {
+        params: {},
+        query: {},
+        body: {},
+        headers: { 'x-custom': 'value' },
+        method: 'GET',
+        url: '/test/headers-all',
+      };
+
+      const route = await router.match('GET', '/test/headers-all', context);
+      expect(route).toBeDefined();
+
+      if (route) {
+        await route.handler(mockReq as any, mockRes as any, context);
+        expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({ 'x-custom': 'value' }));
+      }
+    });
+
+    it('should inject user object via { type: "user" } without field', async () => {
+      class TestController {
+        whoAmI(user: unknown) {
+          return user;
+        }
+      }
+
+      container.register(TestController, new TestController());
+      Reflect.defineMetadata('hazel:controller', { path: '/test' }, TestController);
+      Reflect.defineMetadata(
+        'hazel:routes',
+        [{ method: 'GET', path: '/me', propertyKey: 'whoAmI' }],
+        TestController
+      );
+      Reflect.defineMetadata(
+        'hazel:inject',
+        [{ type: 'user' }],
+        TestController,
+        'whoAmI'
+      );
+
+      router.registerController(TestController);
+
+      const context = {
+        params: {},
+        query: {},
+        body: {},
+        headers: {},
+        method: 'GET',
+        url: '/test/me',
+      };
+
+      const reqWithUser = { ...mockReq, user: { sub: 'u1', role: 'admin' } };
+
+      const route = await router.match('GET', '/test/me', context);
+      expect(route).toBeDefined();
+
+      if (route) {
+        await route.handler(reqWithUser as any, mockRes as any, context);
+        expect(mockRes.json).toHaveBeenCalledWith({ sub: 'u1', role: 'admin' });
+      }
+    });
+
+    it('should inject specific user field via { type: "user", field }', async () => {
+      class TestController {
+        getRole(role: string) {
+          return { role };
+        }
+      }
+
+      container.register(TestController, new TestController());
+      Reflect.defineMetadata('hazel:controller', { path: '/test' }, TestController);
+      Reflect.defineMetadata(
+        'hazel:routes',
+        [{ method: 'GET', path: '/role', propertyKey: 'getRole' }],
+        TestController
+      );
+      Reflect.defineMetadata(
+        'hazel:inject',
+        [{ type: 'user', field: 'role' }],
+        TestController,
+        'getRole'
+      );
+
+      router.registerController(TestController);
+
+      const context = {
+        params: {},
+        query: {},
+        body: {},
+        headers: {},
+        method: 'GET',
+        url: '/test/role',
+      };
+
+      const reqWithUser = { ...mockReq, user: { sub: 'u1', role: 'manager' } };
+
+      const route = await router.match('GET', '/test/role', context);
+      expect(route).toBeDefined();
+
+      if (route) {
+        await route.handler(reqWithUser as any, mockRes as any, context);
+        expect(mockRes.json).toHaveBeenCalledWith({ role: 'manager' });
+      }
+    });
+
+    it('should invoke a custom resolver via { type: "custom", resolve }', async () => {
+      const resolvedValue = { custom: 'injected' };
+      const resolveFn = jest.fn().mockReturnValue(resolvedValue);
+
+      class TestController {
+        getCustom(val: unknown) {
+          return val;
+        }
+      }
+
+      container.register(TestController, new TestController());
+      Reflect.defineMetadata('hazel:controller', { path: '/test' }, TestController);
+      Reflect.defineMetadata(
+        'hazel:routes',
+        [{ method: 'GET', path: '/custom', propertyKey: 'getCustom' }],
+        TestController
+      );
+      Reflect.defineMetadata(
+        'hazel:inject',
+        [{ type: 'custom', resolve: resolveFn }],
+        TestController,
+        'getCustom'
+      );
+
+      router.registerController(TestController);
+
+      const context = {
+        params: {},
+        query: {},
+        body: {},
+        headers: {},
+        method: 'GET',
+        url: '/test/custom',
+      };
+
+      const route = await router.match('GET', '/test/custom', context);
+      expect(route).toBeDefined();
+
+      if (route) {
+        await route.handler(mockReq as any, mockRes as any, context);
+        expect(resolveFn).toHaveBeenCalled();
+        expect(mockRes.json).toHaveBeenCalledWith(resolvedValue);
+      }
+    });
+
+    it('should auto-inject RequestContext for undecorated parameters', async () => {
+      class TestController {
+        contextReceiver(ctx: RequestContext) {
+          return { url: ctx.url };
+        }
+      }
+
+      container.register(TestController, new TestController());
+      Reflect.defineMetadata('hazel:controller', { path: '/test' }, TestController);
+      Reflect.defineMetadata(
+        'hazel:routes',
+        [{ method: 'GET', path: '/ctx', propertyKey: 'contextReceiver' }],
+        TestController
+      );
+      // No injection metadata — relies on design:paramtypes auto-inject
+      Reflect.defineMetadata('hazel:inject', [], TestController, 'contextReceiver');
+      Reflect.defineMetadata(
+        'design:paramtypes',
+        [Object], // one undecorated parameter
+        TestController.prototype,
+        'contextReceiver'
+      );
+
+      router.registerController(TestController);
+
+      const context = {
+        params: {},
+        query: {},
+        body: {},
+        headers: {},
+        method: 'GET',
+        url: '/test/ctx',
+      };
+
+      const route = await router.match('GET', '/test/ctx', context);
+      expect(route).toBeDefined();
+
+      if (route) {
+        await route.handler(mockReq as any, mockRes as any, context);
+        expect(mockRes.json).toHaveBeenCalledWith({ url: '/test/ctx' });
+      }
+    });
+
+    // -----------------------------------------------------------------------
+    // @Redirect metadata
+    // -----------------------------------------------------------------------
+
+    it('should send a redirect response when @Redirect metadata is set', async () => {
+      class TestController {
+        goHome() {
+          return undefined;
+        }
+      }
+
+      container.register(TestController, new TestController());
+      Reflect.defineMetadata('hazel:controller', { path: '/test' }, TestController);
+      Reflect.defineMetadata(
+        'hazel:routes',
+        [{ method: 'GET', path: '/redirect', propertyKey: 'goHome' }],
+        TestController
+      );
+      Reflect.defineMetadata('hazel:inject', [], TestController, 'goHome');
+      // Simulate @Redirect('/home', 301) on the prototype
+      Reflect.defineMetadata(
+        'hazel:redirect',
+        { url: '/home', statusCode: 301 },
+        TestController.prototype,
+        'goHome'
+      );
+
+      router.registerController(TestController);
+
+      const context = {
+        params: {},
+        query: {},
+        body: {},
+        headers: {},
+        method: 'GET',
+        url: '/test/redirect',
+      };
+
+      const route = await router.match('GET', '/test/redirect', context);
+      expect(route).toBeDefined();
+
+      if (route) {
+        (mockRes as any).setHeader = jest.fn();
+        await route.handler(mockReq as any, mockRes as any, context);
+        expect(mockRes.status).toHaveBeenCalledWith(301);
+        expect(mockRes.setHeader).toHaveBeenCalledWith('Location', '/home');
+      }
+    });
+
+    // -----------------------------------------------------------------------
+    // @Header metadata (custom response headers)
+    // -----------------------------------------------------------------------
+
+    it('should set custom response headers when @Header metadata is set', async () => {
+      class TestController {
+        headered() {
+          return { ok: true };
+        }
+      }
+
+      container.register(TestController, new TestController());
+      Reflect.defineMetadata('hazel:controller', { path: '/test' }, TestController);
+      Reflect.defineMetadata(
+        'hazel:routes',
+        [{ method: 'GET', path: '/headered', propertyKey: 'headered' }],
+        TestController
+      );
+      Reflect.defineMetadata('hazel:inject', [], TestController, 'headered');
+      Reflect.defineMetadata(
+        'hazel:headers',
+        [{ name: 'X-Custom', value: 'hello' }],
+        TestController.prototype,
+        'headered'
+      );
+
+      router.registerController(TestController);
+
+      const context = {
+        params: {},
+        query: {},
+        body: {},
+        headers: {},
+        method: 'GET',
+        url: '/test/headered',
+      };
+
+      const route = await router.match('GET', '/test/headered', context);
+      expect(route).toBeDefined();
+
+      if (route) {
+        await route.handler(mockReq as any, mockRes as any, context);
+        expect(mockRes.setHeader).toHaveBeenCalledWith('X-Custom', 'hello');
+        expect(mockRes.json).toHaveBeenCalledWith({ ok: true });
+      }
+    });
+
+    // -----------------------------------------------------------------------
+    // @HttpCode metadata
+    // -----------------------------------------------------------------------
+
+    it('should use custom HTTP status code from @HttpCode when result is defined', async () => {
+      class TestController {
+        create() {
+          return { created: true };
+        }
+      }
+
+      container.register(TestController, new TestController());
+      Reflect.defineMetadata('hazel:controller', { path: '/test' }, TestController);
+      Reflect.defineMetadata(
+        'hazel:routes',
+        [{ method: 'POST', path: '/http-code', propertyKey: 'create' }],
+        TestController
+      );
+      Reflect.defineMetadata('hazel:inject', [], TestController, 'create');
+      Reflect.defineMetadata(
+        'hazel:http-code',
+        201,
+        TestController.prototype,
+        'create'
+      );
+
+      router.registerController(TestController);
+
+      const context = {
+        params: {},
+        query: {},
+        body: {},
+        headers: {},
+        method: 'POST',
+        url: '/test/http-code',
+      };
+
+      const route = await router.match('POST', '/test/http-code', context);
+      expect(route).toBeDefined();
+
+      if (route) {
+        await route.handler(mockReq as any, mockRes as any, context);
+        expect(mockRes.status).toHaveBeenCalledWith(201);
+        expect(mockRes.json).toHaveBeenCalledWith({ created: true });
+      }
+    });
+
+    it('should use custom HTTP status code from @HttpCode when result is undefined', async () => {
+      class TestController {
+        noContent() {
+          return undefined;
+        }
+      }
+
+      container.register(TestController, new TestController());
+      Reflect.defineMetadata('hazel:controller', { path: '/test' }, TestController);
+      Reflect.defineMetadata(
+        'hazel:routes',
+        [{ method: 'DELETE', path: '/no-content', propertyKey: 'noContent' }],
+        TestController
+      );
+      Reflect.defineMetadata('hazel:inject', [], TestController, 'noContent');
+      Reflect.defineMetadata(
+        'hazel:http-code',
+        204,
+        TestController.prototype,
+        'noContent'
+      );
+
+      router.registerController(TestController);
+
+      const context = {
+        params: {},
+        query: {},
+        body: {},
+        headers: {},
+        method: 'DELETE',
+        url: '/test/no-content',
+      };
+
+      const route = await router.match('DELETE', '/test/no-content', context);
+      expect(route).toBeDefined();
+
+      if (route) {
+        await route.handler(mockReq as any, mockRes as any, context);
+        expect(mockRes.status).toHaveBeenCalledWith(204);
+        expect(mockRes.end).toHaveBeenCalled();
+      }
+    });
+
+    // -----------------------------------------------------------------------
+    // Guard execution
+    // -----------------------------------------------------------------------
+
+    it('should throw UnauthorizedError when guard canActivate returns false', async () => {
+      class DenyGuard {
+        canActivate() {
+          return false;
+        }
+      }
+      container.register(DenyGuard, new DenyGuard());
+
+      class TestController {
+        secret() {
+          return { secret: true };
+        }
+      }
+
+      container.register(TestController, new TestController());
+      Reflect.defineMetadata('hazel:controller', { path: '/test' }, TestController);
+      Reflect.defineMetadata(
+        'hazel:routes',
+        [{ method: 'GET', path: '/secret', propertyKey: 'secret' }],
+        TestController
+      );
+      Reflect.defineMetadata('hazel:inject', [], TestController, 'secret');
+      Reflect.defineMetadata('hazel:guards', [DenyGuard], TestController);
+
+      router.registerController(TestController);
+
+      const context = {
+        params: {},
+        query: {},
+        body: {},
+        headers: {},
+        method: 'GET',
+        url: '/test/secret',
+      };
+
+      const route = await router.match('GET', '/test/secret', context);
+      expect(route).toBeDefined();
+
+      if (route) {
+        await route.handler(mockReq as any, mockRes as any, context);
+        expect(mockRes.status).toHaveBeenCalledWith(401);
+      }
+    });
+
+    it('should propagate req.user to context.user after guards pass', async () => {
+      class AllowGuard {
+        canActivate() {
+          return true;
+        }
+      }
+      container.register(AllowGuard, new AllowGuard());
+
+      class TestController {
+        whoAmI(user: unknown) {
+          return user;
+        }
+      }
+
+      container.register(TestController, new TestController());
+      Reflect.defineMetadata('hazel:controller', { path: '/test' }, TestController);
+      Reflect.defineMetadata(
+        'hazel:routes',
+        [{ method: 'GET', path: '/user-propagate', propertyKey: 'whoAmI' }],
+        TestController
+      );
+      Reflect.defineMetadata(
+        'hazel:inject',
+        [{ type: 'user' }],
+        TestController,
+        'whoAmI'
+      );
+      Reflect.defineMetadata('hazel:guards', [AllowGuard], TestController);
+
+      router.registerController(TestController);
+
+      const context = {
+        params: {},
+        query: {},
+        body: {},
+        headers: {},
+        method: 'GET',
+        url: '/test/user-propagate',
+      };
+
+      const reqWithUser = { ...mockReq, user: { sub: 'u99' } };
+
+      const route = await router.match('GET', '/test/user-propagate', context);
+      expect(route).toBeDefined();
+
+      if (route) {
+        await route.handler(reqWithUser as any, mockRes as any, context);
+        expect(mockRes.json).toHaveBeenCalledWith({ sub: 'u99' });
+      }
+    });
+
+    // -----------------------------------------------------------------------
+    // Legacy string-based injection
+    // -----------------------------------------------------------------------
+
+    it('should handle legacy string injection "body"', async () => {
+      class TestController {
+        legacyBody(body: unknown) {
+          return body;
+        }
+      }
+
+      container.register(TestController, new TestController());
+      Reflect.defineMetadata('hazel:controller', { path: '/test' }, TestController);
+      Reflect.defineMetadata(
+        'hazel:routes',
+        [{ method: 'POST', path: '/legacy-body', propertyKey: 'legacyBody' }],
+        TestController
+      );
+      Reflect.defineMetadata('hazel:inject', ['body'], TestController, 'legacyBody');
+
+      router.registerController(TestController);
+
+      const context = {
+        params: {},
+        query: {},
+        body: { name: 'legacy' },
+        headers: {},
+        method: 'POST',
+        url: '/test/legacy-body',
+      };
+
+      const route = await router.match('POST', '/test/legacy-body', context);
+      if (route) {
+        await route.handler(mockReq as any, mockRes as any, context);
+        expect(mockRes.json).toHaveBeenCalledWith({ name: 'legacy' });
+      }
+    });
+
+    it('should handle legacy string injection "param"', async () => {
+      class TestController {
+        legacyParam(params: unknown) {
+          return params;
+        }
+      }
+
+      container.register(TestController, new TestController());
+      Reflect.defineMetadata('hazel:controller', { path: '/test' }, TestController);
+      Reflect.defineMetadata(
+        'hazel:routes',
+        [{ method: 'GET', path: '/legacy-param/:id', propertyKey: 'legacyParam' }],
+        TestController
+      );
+      Reflect.defineMetadata('hazel:inject', ['param'], TestController, 'legacyParam');
+
+      router.registerController(TestController);
+
+      const context = {
+        params: { id: '42' },
+        query: {},
+        body: {},
+        headers: {},
+        method: 'GET',
+        url: '/test/legacy-param/42',
+      };
+
+      const route = await router.match('GET', '/test/legacy-param/42', context);
+      if (route) {
+        await route.handler(mockReq as any, mockRes as any, context);
+        expect(mockRes.json).toHaveBeenCalledWith({ id: '42' });
+      }
+    });
+
+    it('should handle legacy string injection "query"', async () => {
+      class TestController {
+        legacyQuery(query: unknown) {
+          return query;
+        }
+      }
+
+      container.register(TestController, new TestController());
+      Reflect.defineMetadata('hazel:controller', { path: '/test' }, TestController);
+      Reflect.defineMetadata(
+        'hazel:routes',
+        [{ method: 'GET', path: '/legacy-query', propertyKey: 'legacyQuery' }],
+        TestController
+      );
+      Reflect.defineMetadata('hazel:inject', ['query'], TestController, 'legacyQuery');
+
+      router.registerController(TestController);
+
+      const context = {
+        params: {},
+        query: { filter: 'active' },
+        body: {},
+        headers: {},
+        method: 'GET',
+        url: '/test/legacy-query',
+      };
+
+      const route = await router.match('GET', '/test/legacy-query', context);
+      if (route) {
+        await route.handler(mockReq as any, mockRes as any, context);
+        expect(mockRes.json).toHaveBeenCalledWith({ filter: 'active' });
+      }
+    });
+
+    it('should handle legacy string injection "headers"', async () => {
+      class TestController {
+        legacyHeaders(headers: unknown) {
+          return headers;
+        }
+      }
+
+      container.register(TestController, new TestController());
+      Reflect.defineMetadata('hazel:controller', { path: '/test' }, TestController);
+      Reflect.defineMetadata(
+        'hazel:routes',
+        [{ method: 'GET', path: '/legacy-headers', propertyKey: 'legacyHeaders' }],
+        TestController
+      );
+      Reflect.defineMetadata('hazel:inject', ['headers'], TestController, 'legacyHeaders');
+
+      router.registerController(TestController);
+
+      const context = {
+        params: {},
+        query: {},
+        body: {},
+        headers: { 'x-trace': 'abc' },
+        method: 'GET',
+        url: '/test/legacy-headers',
+      };
+
+      const route = await router.match('GET', '/test/legacy-headers', context);
+      if (route) {
+        await route.handler(mockReq as any, mockRes as any, context);
+        expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({ 'x-trace': 'abc' }));
+      }
+    });
+
+    // -----------------------------------------------------------------------
+    // handleRequest edge cases
+    // -----------------------------------------------------------------------
+
+    it('should return "Internal Server Error" when a non-Error is thrown in handleRequest', async () => {
+      jest.spyOn(router as any, 'match').mockRejectedValue('string-error');
+
+      mockReq.method = 'GET';
+      mockReq.url = '/test';
+
+      await router.handleRequest(mockReq as Request, mockRes as Response);
+
+      expect(mockRes.status).toHaveBeenCalledWith(500);
+      expect(mockRes.json).toHaveBeenCalledWith({ error: 'Internal Server Error' });
+    });
+
+    it('should use production error message when NODE_ENV is production', async () => {
+      const originalEnv = process.env.NODE_ENV;
+      process.env.NODE_ENV = 'production';
+
+      class TestController {
+        throwInProd() {
+          throw new Error('Sensitive internal details');
+        }
+      }
+
+      container.register(TestController, new TestController());
+      Reflect.defineMetadata('hazel:controller', { path: '/test' }, TestController);
+      Reflect.defineMetadata(
+        'hazel:routes',
+        [{ method: 'GET', path: '/prod-error', propertyKey: 'throwInProd' }],
+        TestController
+      );
+      Reflect.defineMetadata('hazel:inject', [], TestController, 'throwInProd');
+
+      router.registerController(TestController);
+
+      const context = {
+        params: {},
+        query: {},
+        body: {},
+        headers: {},
+        method: 'GET',
+        url: '/test/prod-error',
+      };
+
+      const route = await router.match('GET', '/test/prod-error', context);
+      if (route) {
+        await route.handler(mockReq as any, mockRes as any, context);
+        expect(mockRes.status).toHaveBeenCalledWith(500);
+        expect(mockRes.json).toHaveBeenCalledWith(
+          expect.objectContaining({ message: 'Internal server error' })
+        );
+      }
+
+      process.env.NODE_ENV = originalEnv;
+    });
   });
 });

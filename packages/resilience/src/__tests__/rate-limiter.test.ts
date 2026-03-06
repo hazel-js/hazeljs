@@ -23,11 +23,13 @@ describe('TokenBucketLimiter', () => {
   });
 
   it('should refill tokens over time', async () => {
-    const limiter = new TokenBucketLimiter(1, 100); // 100 tokens/sec
+    jest.useFakeTimers({ advanceTimers: true });
+    const limiter = new TokenBucketLimiter(1, 100); // 100 tokens/sec = 1 token per 10ms
     expect(limiter.tryAcquire()).toBe(true);
-    expect(limiter.tryAcquire()).toBe(false);
-    await new Promise((r) => setTimeout(r, 15)); // ~1.5 tokens
+    expect(limiter.tryAcquire()).toBe(false); // no time advanced, still 0 tokens
+    jest.advanceTimersByTime(15); // ~1.5 tokens refilled
     expect(limiter.tryAcquire()).toBe(true);
+    jest.useRealTimers();
   });
 
   it('getRetryAfterMs should return 0 when token available', () => {

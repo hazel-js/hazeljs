@@ -59,4 +59,34 @@ export class CacheInterceptor implements Interceptor {
   }
 }
 
+export interface RetryOptions {
+  count: number;
+  delay?: number;
+  retryIf?: (err: Error) => boolean;
+}
+
+export class RetryInterceptor implements Interceptor {
+  async intercept(context: RequestContext, next: () => Promise<unknown>): Promise<unknown> {
+    const opts = context.retryOptions;
+    if (!opts || opts.count < 1) {
+      return next();
+    }
+    const delayMs = opts.delay ?? 100;
+    const shouldRetry = opts.retryIf ?? ((): boolean => true);
+    let lastError: Error | undefined;
+    for (let attempt = 0; attempt <= opts.count; attempt++) {
+      try {
+        return await next();
+      } catch (err) {
+        lastError = err instanceof Error ? err : new Error(String(err));
+        if (attempt === opts.count || !shouldRetry(lastError)) {
+          throw lastError;
+        }
+        await new Promise((r) => setTimeout(r, delayMs));
+      }
+    }
+    throw lastError;
+  }
+}
+
 export type Type<T = unknown> = new (...args: unknown[]) => T;

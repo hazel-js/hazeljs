@@ -1,4 +1,4 @@
-import { Injectable } from '@hazeljs/core';
+import { Service } from '@hazeljs/core';
 import { KafkaConsumer, KafkaSubscribe, KafkaMessagePayload } from '@hazeljs/kafka';
 import logger from '@hazeljs/core';
 
@@ -7,7 +7,7 @@ import logger from '@hazeljs/core';
  * Demonstrates the full flow: produce -> stream -> consume
  */
 @KafkaConsumer({ groupId: 'stream-output-reader' })
-@Injectable()
+@Service()
 export class StreamOutputConsumer {
   @KafkaSubscribe('enriched-orders')
   async handleEnrichedOrder({ message }: KafkaMessagePayload) {

@@ -195,6 +195,7 @@ example/
   │   ├── index.ts            # Application entry point
   │   ├── user/               # User module
   │   ├── auth/               # Authentication module
+  │   ├── ml/                 # ML decorators example (@Model, @Train, @Predict)
   │   ├── rag/                # RAG (Retrieval-Augmented Generation) examples
   │   ├── ai/                 # AI integration examples
   │   ├── microservices/      # Microservices examples
@@ -208,6 +209,22 @@ example/
 ```
 
 ## Advanced Features
+
+### ML (Machine Learning) – Decorators
+
+The `@hazeljs/ml` package uses three decorators to define models and their behaviour:
+
+- **`@Model`** (class) – Registers the model with name, version, and framework. Required for lookup by `TrainerService` and `PredictorService`.
+- **`@Train`** (method) – Marks the single method that trains the model. Optional: `pipeline`, `batchSize`, `epochs`.
+- **`@Predict`** (method) – Marks the single method that runs inference. Optional: `batch`, `endpoint`.
+
+**Run the example:**
+
+```bash
+npm run ml:decorators
+```
+
+See **`src/ml/README.md`** for a full decorator reference and **`src/ml/ml-decorators.example.ts`** for a minimal runnable model. For a full app (REST API, pipelines, metrics), use [hazeljs-ml-starter](https://github.com/hazel-js/hazeljs/tree/main/hazeljs-ml-starter).
 
 ### RAG (Retrieval-Augmented Generation)
 

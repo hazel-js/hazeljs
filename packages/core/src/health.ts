@@ -37,7 +37,7 @@ export class HealthCheckManager {
    */
   registerCheck(check: HealthCheck): void {
     this.checks.set(check.name, check);
-    logger.info(`Registered health check: ${check.name}`);
+    logger.debug(`Registered health check: ${check.name}`);
   }
 
   /**

@@ -12,6 +12,7 @@ import {
   ToolMetadata,
 } from '../types/tool.types';
 import { AgentEventType } from '../types/event.types';
+import type { IGuardrailsService } from '../types/agent.types';
 
 /**
  * Tool Executor
@@ -21,7 +22,10 @@ export class ToolExecutor {
   private pendingApprovals: Map<string, ToolApprovalRequest> = new Map();
   private executionContexts: Map<string, ToolExecutionContext> = new Map();
 
-  constructor(private eventEmitter?: (type: AgentEventType, data: unknown) => void) {}
+  constructor(
+    private eventEmitter?: (type: AgentEventType, data: unknown) => void,
+    private guardrailsService?: IGuardrailsService
+  ) {}
 
   /**
    * Execute a tool
@@ -55,6 +59,31 @@ export class ToolExecutor {
     });
 
     try {
+      if (this.guardrailsService) {
+        const inputResult = this.guardrailsService.checkInput(input);
+        if (!inputResult.allowed) {
+          context.status = ToolExecutionStatus.FAILED;
+          context.completedAt = new Date();
+          context.duration = Date.now() - startTime;
+
+          this.emitEvent(AgentEventType.TOOL_EXECUTION_FAILED, {
+            toolName: tool.name,
+            input,
+            error: inputResult.blockedReason ?? 'Input blocked by guardrails',
+            duration: context.duration,
+          });
+
+          return {
+            success: false,
+            error: new Error(inputResult.blockedReason ?? 'Input blocked by guardrails'),
+            duration: context.duration,
+          };
+        }
+        if (inputResult.modified !== undefined) {
+          Object.assign(input, inputResult.modified as Record<string, unknown>);
+        }
+      }
+
       if (tool.requiresApproval) {
         const approved = await this.requestApproval(tool, input, agentId, executionId);
 
@@ -161,7 +190,7 @@ export class ToolExecutor {
   ): Promise<unknown> {
     let timeoutId: NodeJS.Timeout | undefined;
     try {
-      return await Promise.race([
+      const result = await Promise.race([
         tool.method.call(tool.target, input),
         new Promise((_, reject) => {
           timeoutId = setTimeout(
@@ -170,6 +199,16 @@ export class ToolExecutor {
           );
         }),
       ]);
+
+      if (this.guardrailsService && result !== undefined && result !== null) {
+        const outputResult = this.guardrailsService.checkOutput(result as string | object);
+        if (!outputResult.allowed) {
+          throw new Error(outputResult.blockedReason ?? 'Output blocked by guardrails');
+        }
+        return outputResult.modified ?? result;
+      }
+
+      return result;
     } finally {
       if (timeoutId) {
         clearTimeout(timeoutId);

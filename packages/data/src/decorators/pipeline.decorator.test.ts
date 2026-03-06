@@ -21,6 +21,13 @@ describe('Pipeline decorator', () => {
 
     expect(getPipelineMetadata(CustomPipeline)?.name).toBe('custom');
   });
+
+  it('applies metadata with no args (uses class name)', () => {
+    @Pipeline()
+    class DefaultPipeline {}
+
+    expect(getPipelineMetadata(DefaultPipeline)?.name).toBe('DefaultPipeline');
+  });
 });
 
 describe('Transform decorator', () => {

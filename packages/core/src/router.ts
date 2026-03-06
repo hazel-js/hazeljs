@@ -4,7 +4,7 @@ import { Container } from './container';
 import { MiddlewareHandler } from './middleware';
 import { PipeTransform, ValidationError } from './pipes/pipe';
 import { Interceptor } from './interceptors/interceptor';
-import { HttpError, UnauthorizedError } from './errors/http.error';
+import { HttpError, UnauthorizedError, RequestTimeoutError } from './errors/http.error';
 import { CanActivate, ExecutionContext } from './decorators';
 import 'reflect-metadata';
 import logger from './logger';
@@ -17,6 +17,8 @@ const CONTROLLER_METADATA_KEY = 'hazel:controller';
 const HTTP_CODE_METADATA_KEY = 'hazel:http-code';
 const HEADER_METADATA_KEY = 'hazel:headers';
 const REDIRECT_METADATA_KEY = 'hazel:redirect';
+const TIMEOUT_METADATA_KEY = 'hazel:timeout';
+const OPTIONAL_INDICES_METADATA_KEY = 'hazel:optional-indices';
 
 interface RouteMatch {
   handler: RouteHandler;
@@ -41,7 +43,7 @@ export class Router {
   }
 
   registerController(controller: Type<unknown>): void {
-    logger.info(`Registering controller: ${controller.name}`);
+    logger.debug(`Registering controller: ${controller.name}`);
     const controllerMetadata = Reflect.getMetadata(CONTROLLER_METADATA_KEY, controller) || {};
     const routes = Reflect.getMetadata(ROUTE_METADATA_KEY, controller) || [];
     logger.debug('Controller metadata:', controllerMetadata);
@@ -52,7 +54,7 @@ export class Router {
       const basePath = controllerMetadata.path || '';
       const routePath = path || '';
       const fullPath = this.normalizePath(`${basePath}${routePath}`);
-      logger.info(`Registering route: ${method} ${fullPath} (handler: ${String(propertyKey)})`);
+      logger.debug(`Registering route: ${method} ${fullPath} (handler: ${String(propertyKey)})`);
 
       // Get parameter types from TypeScript metadata
       const paramTypes =
@@ -183,6 +185,7 @@ export class Router {
           method: req.method || 'GET',
           url: req.url || '/',
         };
+        context.retryOptions = Reflect.getMetadata('hazel:retry', controllerClass.prototype, methodName);
 
         // Execute guards (class-level + method-level)
         const classGuards: Type<CanActivate>[] =
@@ -196,6 +199,7 @@ export class Router {
             switchToHttp: () => ({
               getRequest: () => req,
               getResponse: () => res,
+              getContext: () => context,
             }),
           };
 
@@ -281,7 +285,36 @@ export class Router {
               } else {
                 args[i] = queryValue;
               }
+            } else if (injection.type === 'user') {
+              // Handle @CurrentUser() decorator — reads from context.user (set by a guard)
+              const user = context.user ?? (req as Record<string, unknown>).user;
+              args[i] = injection.field ? (user as Record<string, unknown>)?.[injection.field] : user;
+            } else if (injection.type === 'ip') {
+              const r = req as { socket?: { remoteAddress?: string }; headers?: Record<string, string | string[] | undefined> };
+              const forwarded = r.headers?.['x-forwarded-for'];
+              const ip = typeof forwarded === 'string'
+                ? forwarded.split(',')[0].trim()
+                : Array.isArray(forwarded)
+                  ? forwarded[0]?.trim()
+                  : r.socket?.remoteAddress;
+              args[i] = ip ?? undefined;
+            } else if (injection.type === 'host') {
+              const host = (req as { headers?: Record<string, string | string[] | undefined> }).headers?.['host'];
+              args[i] = typeof host === 'string' ? host : Array.isArray(host) ? host[0] : undefined;
+            } else if (injection.type === 'session') {
+              args[i] = (req as { session?: unknown }).session;
+            } else if (injection.type === 'custom' && typeof injection.resolve === 'function') {
+              // Handle custom parameter decorators (e.g. @Ability() from @hazeljs/casl).
+              // The decorator stores a resolver function; call it with request, context, container.
+              args[i] = await (injection.resolve as (req: unknown, ctx: RequestContext, container: Container) => unknown)(req, context, this.container);
             }
+          }
+        }
+
+        const optionalIndices: number[] = Reflect.getMetadata(OPTIONAL_INDICES_METADATA_KEY, controllerClass, methodName) || [];
+        for (const i of optionalIndices) {
+          if (i < args.length && (args[i] === undefined || args[i] === null)) {
+            args[i] = undefined;
           }
         }
 
@@ -317,14 +350,23 @@ export class Router {
           ...args: unknown[]
         ) => Promise<unknown>;
 
-        // Execute the controller method with interceptors
-        const result = await this.applyInterceptors(
+        const timeoutMs = Reflect.getMetadata(TIMEOUT_METADATA_KEY, controllerClass.prototype, methodName) as number | undefined;
+        let handlerPromise = this.applyInterceptors(
           Reflect.getMetadata('hazel:interceptors', controllerClass, methodName) || [],
           context,
           async () => {
             return method.apply(controller, args);
           }
         );
+        if (timeoutMs != null && timeoutMs > 0) {
+          handlerPromise = Promise.race([
+            handlerPromise,
+            new Promise<never>((_, reject) => {
+              setTimeout(() => reject(new RequestTimeoutError(`Request timed out after ${timeoutMs}ms`)), timeoutMs);
+            }),
+          ]);
+        }
+        const result = await handlerPromise;
 
         // Apply @Redirect metadata
         const redirectMeta = Reflect.getMetadata(REDIRECT_METADATA_KEY, controllerClass.prototype, methodName);
@@ -528,7 +570,7 @@ export class Router {
       // Match the request method and URL
       const match = await this.match(req.method || 'GET', req.url || '/', context);
       if (!match) {
-        logger.warn(`No route found for ${req.method} ${req.url}`);
+        logger.debug(`No route found for ${req.method} ${req.url}`);
         res.status(404).json({ error: 'Not Found' });
         return;
       }

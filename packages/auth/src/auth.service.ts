@@ -1,4 +1,4 @@
-import { Injectable } from '@hazeljs/core';
+import { Service } from '@hazeljs/core';
 import { JwtService, JwtPayload } from './jwt/jwt.service';
 
 export interface AuthUser {
@@ -8,7 +8,7 @@ export interface AuthUser {
   [key: string]: unknown;
 }
 
-@Injectable()
+@Service()
 export class AuthService {
   constructor(private readonly jwtService: JwtService) {}
 

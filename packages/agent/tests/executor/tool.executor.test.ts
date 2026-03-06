@@ -182,6 +182,114 @@ describe('ToolExecutor', () => {
       expect(result.output).toBe('success');
     }, 10000);
 
+    it('should block input when guardrails reject', async () => {
+      const mockGuardrails = {
+        checkInput: jest.fn().mockReturnValue({
+          allowed: false,
+          blockedReason: 'Prompt injection detected',
+        }),
+        checkOutput: jest.fn().mockReturnValue({ allowed: true }),
+      };
+
+      const guardedExecutor = new ToolExecutor(eventEmitter, mockGuardrails);
+      const tool: ToolMetadata = {
+        name: 'testTool',
+        description: 'Test tool',
+        parameters: [],
+        method: jest.fn().mockResolvedValue('result'),
+        target: {},
+        propertyKey: 'testTool',
+        agentClass: class {},
+      };
+
+      const result = await guardedExecutor.execute(tool, { input: 'bad' }, 'agent-1', 'session-1');
+
+      expect(result.success).toBe(false);
+      expect(result.error?.message).toContain('Prompt injection');
+      expect(tool.method).not.toHaveBeenCalled();
+    });
+
+    it('should apply modified input when guardrails redact', async () => {
+      const mockGuardrails = {
+        checkInput: jest.fn().mockReturnValue({
+          allowed: true,
+          modified: { input: 'redacted' },
+        }),
+        checkOutput: jest.fn().mockReturnValue({ allowed: true }),
+      };
+
+      const guardedExecutor = new ToolExecutor(eventEmitter, mockGuardrails);
+      const input = { email: 'test@example.com' };
+      const tool: ToolMetadata = {
+        name: 'testTool',
+        description: 'Test tool',
+        parameters: [],
+        method: jest.fn().mockResolvedValue('result'),
+        target: {},
+        propertyKey: 'testTool',
+        agentClass: class {},
+      };
+
+      await guardedExecutor.execute(tool, input, 'agent-1', 'session-1');
+
+      // Object.assign merges modified into input, so input gets input: 'redacted'
+      expect(tool.method).toHaveBeenCalledWith(
+        expect.objectContaining({ input: 'redacted' })
+      );
+    });
+
+    it('should block output when guardrails reject', async () => {
+      const mockGuardrails = {
+        checkInput: jest.fn().mockReturnValue({ allowed: true }),
+        checkOutput: jest.fn().mockReturnValue({
+          allowed: false,
+          blockedReason: 'Toxic output',
+        }),
+      };
+
+      const guardedExecutor = new ToolExecutor(eventEmitter, mockGuardrails);
+      const tool: ToolMetadata = {
+        name: 'testTool',
+        description: 'Test tool',
+        parameters: [],
+        method: jest.fn().mockResolvedValue('toxic response'),
+        target: {},
+        propertyKey: 'testTool',
+        agentClass: class {},
+      };
+
+      const result = await guardedExecutor.execute(tool, {}, 'agent-1', 'session-1');
+
+      expect(result.success).toBe(false);
+      expect(result.error?.message).toContain('Toxic output');
+    });
+
+    it('should return modified output when guardrails redact', async () => {
+      const mockGuardrails = {
+        checkInput: jest.fn().mockReturnValue({ allowed: true }),
+        checkOutput: jest.fn().mockReturnValue({
+          allowed: true,
+          modified: 'redacted output',
+        }),
+      };
+
+      const guardedExecutor = new ToolExecutor(eventEmitter, mockGuardrails);
+      const tool: ToolMetadata = {
+        name: 'testTool',
+        description: 'Test tool',
+        parameters: [],
+        method: jest.fn().mockResolvedValue('original with PII'),
+        target: {},
+        propertyKey: 'testTool',
+        agentClass: class {},
+      };
+
+      const result = await guardedExecutor.execute(tool, {}, 'agent-1', 'session-1');
+
+      expect(result.success).toBe(true);
+      expect(result.output).toBe('redacted output');
+    });
+
     it('should handle timeout', async () => {
       const tool: ToolMetadata = {
         name: 'timeoutTool',
