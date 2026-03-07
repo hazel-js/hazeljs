@@ -1,7 +1,6 @@
 /**
  * Branching flow example - conditional edges (decorator-based)
- * Run with: npx ts-node src/examples/branching.ts
- * Requires DATABASE_URL
+ * Run: npm run example:branching  |  or from source: npx tsx src/examples/branching.ts
  */
 import { FlowEngine, Flow, Entry, Node, Edge, buildFlowDefinition } from '../index.js';
 import type { FlowContext, NodeResult } from '../index.js';

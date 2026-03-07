@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeAll, afterEach } from 'vitest';
-import { FlowEngine, Flow, Entry, Node, Edge, buildFlowDefinition, createFlowPrismaClient, resetFlowPrismaClient } from '../src/index.js';
+import { describe, it, expect } from 'vitest';
+import { FlowEngine, Flow, Entry, Node, Edge, buildFlowDefinition } from '../src/index.js';
 import type { FlowContext, NodeResult } from '../src/index.js';
 
 @Flow('wait-flow', '1.0.0')
@@ -22,20 +22,8 @@ class WaitFlow {
 }
 
 describe('FlowEngine - wait/resume', () => {
-  let engine: FlowEngine;
-
-  beforeAll(async () => {
-    const prisma = createFlowPrismaClient();
-    await prisma.$executeRawUnsafe('TRUNCATE "FlowRunEvent", "FlowIdempotency", "FlowRun", "FlowDefinition" CASCADE');
-    await prisma.$disconnect();
-  });
-
-  afterEach(() => {
-    resetFlowPrismaClient();
-  });
-
   it('stops at WAIT and resumes with payload', async () => {
-    engine = new FlowEngine();
+    const engine = new FlowEngine();
     const def = buildFlowDefinition(WaitFlow);
 
     await engine.registerDefinition(def);

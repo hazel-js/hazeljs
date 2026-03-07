@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeAll, afterEach } from 'vitest';
-import { FlowEngine, Flow, Entry, Node, Edge, buildFlowDefinition, createFlowPrismaClient, resetFlowPrismaClient } from '../src/index.js';
+import { describe, it, expect, beforeEach } from 'vitest';
+import { FlowEngine, Flow, Entry, Node, Edge, buildFlowDefinition } from '../src/index.js';
 import type { FlowContext, NodeResult } from '../src/index.js';
 
 let sideEffectCount = 0;
@@ -21,21 +21,12 @@ class IdempotentFlow {
 }
 
 describe('FlowEngine - idempotency', () => {
-  let engine: FlowEngine;
-
-  beforeAll(async () => {
-    const prisma = createFlowPrismaClient();
-    await prisma.$executeRawUnsafe('TRUNCATE "FlowRunEvent", "FlowIdempotency", "FlowRun", "FlowDefinition" CASCADE');
-    await prisma.$disconnect();
-  });
-
-  afterEach(() => {
-    resetFlowPrismaClient();
+  beforeEach(() => {
     sideEffectCount = 0;
   });
 
   it('caches node output when idempotencyKey matches', async () => {
-    engine = new FlowEngine();
+    const engine = new FlowEngine();
     const def = buildFlowDefinition(IdempotentFlow);
 
     await engine.registerDefinition(def);

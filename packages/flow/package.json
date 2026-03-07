@@ -1,12 +1,16 @@
 {
   "name": "@hazeljs/flow",
   "version": "0.2.0-beta.47",
-  "description": "Durable execution graph engine with Prisma persistence - workflow OS kernel",
+  "description": "Durable execution graph engine - in-memory by default, optional Prisma persistence",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" },
+    "./prisma": { "types": "./dist/prisma.d.ts", "default": "./dist/prisma.js" }
+  },
   "files": ["dist"],
   "scripts": {
-    "build": "prisma generate && tsc && cp -r src/generated dist/",
+    "build": "tsc && (test -d src/generated && cp -r src/generated dist/ || true)",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",
@@ -16,16 +20,22 @@
     "prisma:studio": "prisma studio",
     "lint": "eslint \"src/**/*.ts\" --ignore-pattern \"src/generated/**\"",
     "lint:fix": "eslint \"src/**/*.ts\" --fix --ignore-pattern \"src/generated/**\"",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "example:simple": "npm run build && node dist/examples/simple.js",
+    "example:branching": "npm run build && node dist/examples/branching.js",
+    "example:wait_resume": "npm run build && node dist/examples/wait_resume.js"
   },
   "dependencies": {
-    "@prisma/client": "^6.8.2",
     "reflect-metadata": "^0.2.2"
+  },
+  "optionalDependencies": {
+    "@prisma/client": "^6.8.2"
   },
   "devDependencies": {
     "@types/node": "^20.17.50",
     "@vitest/coverage-v8": "^2.1.0",
     "prisma": "^6.8.2",
+    "tsx": "^4.19.0",
     "typescript": "^5.3.3",
     "vitest": "^2.1.0"
   },

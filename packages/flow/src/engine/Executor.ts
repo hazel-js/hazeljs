@@ -2,8 +2,7 @@
  * Executes a single node within a flow run
  */
 import type { FlowContext, NodeDefinition, NodeResult } from '../types/FlowTypes.js';
-import type { FlowEventRepo } from '../persistence/FlowEventRepo.js';
-import type { IdempotencyRepo } from '../persistence/IdempotencyRepo.js';
+import type { IFlowEventRepo, IIdempotencyRepo } from '../persistence/storage.js';
 import { checkIdempotency, storeIdempotency } from './Idempotency.js';
 import { withTimeout } from './Timeout.js';
 import { getRetryDelayMs, delay } from './Retry.js';
@@ -14,8 +13,8 @@ const RETRYABLE_ERROR_CODES = new Set(['TIMEOUT', 'NETWORK_ERROR', 'RATE_LIMIT']
 export async function executeNode(
   node: NodeDefinition,
   ctx: FlowContext,
-  eventRepo: FlowEventRepo,
-  idempotencyRepo: IdempotencyRepo
+  eventRepo: IFlowEventRepo,
+  idempotencyRepo: IIdempotencyRepo
 ): Promise<{ result: NodeResult; cached: boolean }> {
   const attempt = (ctx.meta.attempts[node.id] ?? 0) + 1;
   ctx.meta.attempts[node.id] = attempt;

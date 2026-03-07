@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeAll, afterEach } from 'vitest';
-import { FlowEngine, Flow, Entry, Node, Edge, buildFlowDefinition, createFlowPrismaClient, resetFlowPrismaClient } from '../src/index.js';
+import { describe, it, expect } from 'vitest';
+import { FlowEngine, Flow, Entry, Node, Edge, buildFlowDefinition } from '../src/index.js';
 import type { FlowContext, NodeResult } from '../src/index.js';
 
 @Flow('branch-flow', '1.0.0')
@@ -45,20 +45,8 @@ class AmbiguousFlow {
 }
 
 describe('FlowEngine - branching', () => {
-  let engine: FlowEngine;
-
-  beforeAll(async () => {
-    const prisma = createFlowPrismaClient();
-    await prisma.$executeRawUnsafe('TRUNCATE "FlowRunEvent", "FlowIdempotency", "FlowRun", "FlowDefinition" CASCADE');
-    await prisma.$disconnect();
-  });
-
-  afterEach(() => {
-    resetFlowPrismaClient();
-  });
-
   it('chooses correct edge based on when()', async () => {
-    engine = new FlowEngine();
+    const engine = new FlowEngine();
     const def = buildFlowDefinition(BranchFlow);
 
     await engine.registerDefinition(def);
@@ -89,7 +77,7 @@ describe('FlowEngine - branching', () => {
   });
 
   it('fails with AMBIGUOUS_EDGE when multiple edges match at same priority', async () => {
-    engine = new FlowEngine();
+    const engine = new FlowEngine();
     const def = buildFlowDefinition(AmbiguousFlow);
 
     await engine.registerDefinition(def);

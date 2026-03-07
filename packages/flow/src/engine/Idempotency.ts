@@ -1,10 +1,10 @@
 /**
  * Idempotency check and store helpers
  */
-import type { IdempotencyRepo } from '../persistence/IdempotencyRepo.js';
+import type { IIdempotencyRepo } from '../persistence/storage.js';
 
 export async function checkIdempotency(
-  repo: IdempotencyRepo,
+  repo: IIdempotencyRepo,
   key: string
 ): Promise<{ output?: unknown; patch?: Record<string, unknown> } | null> {
   const record = await repo.get(key);
@@ -16,7 +16,7 @@ export async function checkIdempotency(
 }
 
 export async function storeIdempotency(
-  repo: IdempotencyRepo,
+  repo: IIdempotencyRepo,
   key: string,
   runId: string,
   nodeId: string,

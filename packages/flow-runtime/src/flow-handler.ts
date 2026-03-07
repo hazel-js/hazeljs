@@ -54,6 +54,31 @@ export function createFlowHandler(engine: FlowEngine) {
         });
         writeJson(res, 200, result);
       } catch (err) {
+        // eslint-disable-next-line no-console -- request error reporting in handler
+        console.error(err);
+        writeJson(res, 500, { error: String(err) });
+      }
+      return true;
+    }
+
+    // POST /v1/runs/:runId/tick
+    if (method === 'POST' && pathname.match(/^\/v1\/runs\/[^/]+\/tick$/)) {
+      const runId = extractRunId(pathname);
+      if (!runId) {
+        writeJson(res, 400, { error: 'runId is required' });
+        return true;
+      }
+      try {
+        const run = await engine.tick(runId);
+        writeJson(res, 200, {
+          runId: run.runId,
+          status: run.status,
+          flowId: run.flowId,
+          flowVersion: run.flowVersion,
+          outputsJson: run.outputsJson,
+        });
+      } catch (err) {
+        // eslint-disable-next-line no-console -- request error reporting in handler
         console.error(err);
         writeJson(res, 500, { error: String(err) });
       }
@@ -79,6 +104,7 @@ export function createFlowHandler(engine: FlowEngine) {
           outputsJson: run.outputsJson,
         });
       } catch (err) {
+        // eslint-disable-next-line no-console -- request error reporting in handler
         console.error(err);
         writeJson(res, 500, { error: String(err) });
       }
@@ -100,6 +126,7 @@ export function createFlowHandler(engine: FlowEngine) {
         }
         writeJson(res, 200, run);
       } catch (err) {
+        // eslint-disable-next-line no-console -- request error reporting in handler
         console.error(err);
         writeJson(res, 500, { error: String(err) });
       }
@@ -117,6 +144,7 @@ export function createFlowHandler(engine: FlowEngine) {
         const timeline = await engine.getTimeline(runId);
         writeJson(res, 200, timeline);
       } catch (err) {
+        // eslint-disable-next-line no-console -- request error reporting in handler
         console.error(err);
         writeJson(res, 500, { error: String(err) });
       }
@@ -129,6 +157,7 @@ export function createFlowHandler(engine: FlowEngine) {
         const list = await engine.listFlows();
         writeJson(res, 200, list);
       } catch (err) {
+        // eslint-disable-next-line no-console -- request error reporting in handler
         console.error(err);
         writeJson(res, 500, { error: String(err) });
       }

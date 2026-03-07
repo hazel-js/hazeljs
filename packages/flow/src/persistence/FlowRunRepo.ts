@@ -1,28 +1,8 @@
 import type { PrismaClient } from './prisma.js';
-import { FlowRunStatus } from './prisma.js';
+import { FlowRunStatus as PrismaFlowRunStatus } from './prisma.js';
+import type { FlowRunRow, CreateRunInput } from './storage.js';
 
-export interface FlowRunRow {
-  runId: string;
-  flowId: string;
-  flowVersion: string;
-  tenantId: string | null;
-  status: FlowRunStatus;
-  currentNodeId: string | null;
-  inputJson: unknown;
-  stateJson: unknown;
-  outputsJson: unknown;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface CreateRunInput {
-  runId: string;
-  flowId: string;
-  flowVersion: string;
-  tenantId?: string | null;
-  input: unknown;
-  initialState?: Record<string, unknown>;
-}
+export type { FlowRunRow, CreateRunInput } from './storage.js';
 
 export class FlowRunRepo {
   constructor(private readonly prisma: PrismaClient) {}
@@ -34,7 +14,7 @@ export class FlowRunRepo {
         flowId: input.flowId,
         flowVersion: input.flowVersion,
         tenantId: input.tenantId ?? null,
-        status: FlowRunStatus.RUNNING,
+        status: PrismaFlowRunStatus.RUNNING,
         currentNodeId: null,
         inputJson: input.input as object,
         stateJson: (input.initialState ?? {}) as object,
@@ -66,7 +46,7 @@ export class FlowRunRepo {
 
   async findRunning(): Promise<FlowRunRow[]> {
     const rows = await this.prisma.flowRun.findMany({
-      where: { status: FlowRunStatus.RUNNING },
+      where: { status: PrismaFlowRunStatus.RUNNING },
     });
     return rows as FlowRunRow[];
   }

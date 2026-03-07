@@ -1,6 +1,6 @@
 /**
  * @hazeljs/flow - Durable execution graph engine
- * Self-contained, independent of Hazel core
+ * Default: in-memory (no DB). For DB persistence use createPrismaStorage(prisma) from '@hazeljs/flow/prisma'.
  */
 
 export { FlowEngine } from './engine/FlowEngine.js';
@@ -16,21 +16,21 @@ export type {
   FlowContext,
   NodeResult,
   RetryPolicy,
+  FlowRunStatus,
 } from './types/FlowTypes.js';
 
-export {
-  createFlowPrismaClient,
-  getFlowPrismaClient,
-  resetFlowPrismaClient,
-} from './persistence/prismaClient.js';
-
-export { FlowDefinitionRepo } from './persistence/FlowDefinitionRepo.js';
-export { FlowRunRepo } from './persistence/FlowRunRepo.js';
-export type { FlowRunRow } from './persistence/FlowRunRepo.js';
-export { FlowEventRepo } from './persistence/FlowEventRepo.js';
-export { IdempotencyRepo } from './persistence/IdempotencyRepo.js';
-
-export { runIdToLockKey, withAdvisoryLock } from './engine/Locks.js';
+export { createMemoryStorage } from './persistence/memory.js';
+export type {
+  FlowStorage,
+  FlowRunRow,
+  CreateRunInput,
+  IFlowDefinitionRepo,
+  IFlowRunRepo,
+  IFlowEventRepo,
+  IIdempotencyRepo,
+  IdempotencyRecord,
+  WithLockFn,
+} from './persistence/storage.js';
 
 export {
   FlowError,

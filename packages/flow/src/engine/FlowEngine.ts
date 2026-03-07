@@ -1,23 +1,19 @@
 /**
  * FlowEngine - framework-agnostic execution graph engine
+ * Default storage is in-memory (no DB). For DB persistence, pass storage from createPrismaStorage(prisma) via @hazeljs/flow/prisma.
  */
-import type { PrismaClient } from '../persistence/prisma.js';
-import { FlowRunStatus } from '../persistence/prisma.js';
 import { randomUUID } from 'crypto';
-import type { FlowDefinition, FlowContext } from '../types/FlowTypes.js';
-import type { FlowRunRow } from '../persistence/FlowRunRepo.js';
-import { FlowDefinitionRepo } from '../persistence/FlowDefinitionRepo.js';
-import { FlowRunRepo } from '../persistence/FlowRunRepo.js';
-import { FlowEventRepo } from '../persistence/FlowEventRepo.js';
-import { IdempotencyRepo } from '../persistence/IdempotencyRepo.js';
-import { getFlowPrismaClient } from '../persistence/prismaClient.js';
-import { withAdvisoryLock } from './Locks.js';
+import type { FlowDefinition, FlowContext, FlowRunStatus } from '../types/FlowTypes.js';
+import type { FlowRunRow } from '../persistence/storage.js';
+import type { FlowStorage } from '../persistence/storage.js';
+import { createMemoryStorage } from '../persistence/memory.js';
 import { executeNode } from './Executor.js';
 import { selectNextNode } from './Transition.js';
 import { FlowNotFoundError, RunNotFoundError } from '../types/Errors.js';
 
 export interface FlowEngineOptions {
-  prisma?: PrismaClient;
+  /** Storage (default: in-memory). Use createPrismaStorage(prisma) from @hazeljs/flow/prisma for DB. */
+  storage?: FlowStorage;
   services?: Record<string, unknown>;
 }
 
@@ -34,27 +30,24 @@ export interface StartRunResult {
   status: FlowRunStatus;
 }
 
+const RUNNING: FlowRunStatus = 'RUNNING';
+const WAITING: FlowRunStatus = 'WAITING';
+const COMPLETED: FlowRunStatus = 'COMPLETED';
+const FAILED: FlowRunStatus = 'FAILED';
+
 export class FlowEngine {
-  private readonly prisma: PrismaClient;
-  private readonly defRepo: FlowDefinitionRepo;
-  private readonly runRepo: FlowRunRepo;
-  private readonly eventRepo: FlowEventRepo;
-  private readonly idempotencyRepo: IdempotencyRepo;
+  private readonly storage: FlowStorage;
   private readonly services: Record<string, unknown>;
   private readonly defRegistry = new Map<string, FlowDefinition>();
 
   constructor(options: FlowEngineOptions = {}) {
-    this.prisma = options.prisma ?? getFlowPrismaClient();
-    this.defRepo = new FlowDefinitionRepo(this.prisma);
-    this.runRepo = new FlowRunRepo(this.prisma);
-    this.eventRepo = new FlowEventRepo(this.prisma);
-    this.idempotencyRepo = new IdempotencyRepo(this.prisma);
+    this.storage = options.storage ?? createMemoryStorage();
     this.services = options.services ?? {};
   }
 
   async registerDefinition(def: FlowDefinition): Promise<void> {
     this.defRegistry.set(`${def.flowId}@${def.version}`, def);
-    await this.defRepo.save(def);
+    await this.storage.definitionRepo.save(def);
   }
 
   private getDefinition(flowId: string, version: string): FlowDefinition | null {
@@ -68,7 +61,7 @@ export class FlowEngine {
     }
 
     const runId = randomUUID();
-    await this.runRepo.create({
+    await this.storage.runRepo.create({
       runId,
       flowId: args.flowId,
       flowVersion: args.version,
@@ -77,23 +70,23 @@ export class FlowEngine {
       initialState: args.initialState,
     });
 
-    await this.eventRepo.append(runId, 'RUN_STARTED', {});
+    await this.storage.eventRepo.append(runId, 'RUN_STARTED', {});
 
-    await this.runRepo.update(runId, {
+    await this.storage.runRepo.update(runId, {
       currentNodeId: def.entry,
     });
 
-    return { runId, status: FlowRunStatus.RUNNING };
+    return { runId, status: RUNNING };
   }
 
   async tick(runId: string): Promise<FlowRunRow> {
-    return withAdvisoryLock(this.prisma, runId, () => this.tickCore(runId));
+    return this.storage.withLock(runId, () => this.tickCore(runId));
   }
 
   private async tickCore(runId: string): Promise<FlowRunRow> {
-    const run = await this.runRepo.get(runId);
+    const run = await this.storage.runRepo.get(runId);
     if (!run) throw new RunNotFoundError(runId);
-    if (run.status !== FlowRunStatus.RUNNING && run.status !== FlowRunStatus.WAITING) {
+    if (run.status !== RUNNING && run.status !== WAITING) {
       return run;
     }
 
@@ -103,11 +96,11 @@ export class FlowEngine {
     const currentNodeId = run.currentNodeId ?? def.entry;
     const node = def.nodes[currentNodeId];
     if (!node) {
-      await this.runRepo.update(runId, { status: FlowRunStatus.FAILED });
-      await this.eventRepo.append(runId, 'RUN_ABORTED', {
+      await this.storage.runRepo.update(runId, { status: FAILED });
+      await this.storage.eventRepo.append(runId, 'RUN_ABORTED', {
         error: { code: 'NODE_NOT_FOUND', message: `Node ${currentNodeId} not found` },
       });
-      return (await this.runRepo.get(runId))!;
+      return (await this.storage.runRepo.get(runId))!;
     }
 
     const ctx: FlowContext = {
@@ -122,17 +115,22 @@ export class FlowEngine {
       services: this.services,
     };
 
-    const { result, cached } = await executeNode(node, ctx, this.eventRepo, this.idempotencyRepo);
+    const { result, cached } = await executeNode(
+      node,
+      ctx,
+      this.storage.eventRepo,
+      this.storage.idempotencyRepo
+    );
 
     if (result.status === 'error') {
-      await this.runRepo.update(runId, {
-        status: FlowRunStatus.FAILED,
+      await this.storage.runRepo.update(runId, {
+        status: FAILED,
         currentNodeId: null,
       });
-      await this.eventRepo.append(runId, 'RUN_ABORTED', {
+      await this.storage.eventRepo.append(runId, 'RUN_ABORTED', {
         error: result.error,
       });
-      return (await this.runRepo.get(runId))!;
+      return (await this.storage.runRepo.get(runId))!;
     }
 
     if (result.status === 'wait') {
@@ -142,18 +140,18 @@ export class FlowEngine {
         newState = applyPatch(ctx.state, result.patch);
       }
       const newOutputs = { ...ctx.outputs, [currentNodeId]: result.output };
-      await this.runRepo.update(runId, {
-        status: FlowRunStatus.WAITING,
+      await this.storage.runRepo.update(runId, {
+        status: WAITING,
         stateJson: newState,
         outputsJson: newOutputs,
         currentNodeId,
       });
-      await this.eventRepo.append(runId, 'RUN_WAITING', {
+      await this.storage.eventRepo.append(runId, 'RUN_WAITING', {
         nodeId: currentNodeId,
         reason: result.reason,
         until: result.until,
       });
-      return (await this.runRepo.get(runId))!;
+      return (await this.storage.runRepo.get(runId))!;
     }
 
     // result.status === 'ok'
@@ -177,40 +175,40 @@ export class FlowEngine {
       const code =
         err instanceof Error && 'code' in err ? (err as { code: string }).code : 'UNKNOWN';
       const message = err instanceof Error ? err.message : String(err);
-      await this.runRepo.update(runId, {
-        status: FlowRunStatus.FAILED,
+      await this.storage.runRepo.update(runId, {
+        status: FAILED,
         currentNodeId: null,
       });
-      await this.eventRepo.append(runId, 'RUN_ABORTED', {
+      await this.storage.eventRepo.append(runId, 'RUN_ABORTED', {
         error: { code, message },
       });
-      return (await this.runRepo.get(runId))!;
+      return (await this.storage.runRepo.get(runId))!;
     }
 
     if (nextNodeId === null) {
-      await this.runRepo.update(runId, {
-        status: FlowRunStatus.COMPLETED,
+      await this.storage.runRepo.update(runId, {
+        status: COMPLETED,
         stateJson: newState,
         outputsJson: newOutputs,
         currentNodeId: null,
       });
-      await this.eventRepo.append(runId, 'RUN_COMPLETED', {});
-      return (await this.runRepo.get(runId))!;
+      await this.storage.eventRepo.append(runId, 'RUN_COMPLETED', {});
+      return (await this.storage.runRepo.get(runId))!;
     }
 
-    await this.runRepo.update(runId, {
+    await this.storage.runRepo.update(runId, {
       stateJson: newState,
       outputsJson: newOutputs,
       currentNodeId: nextNodeId,
     });
-    return (await this.runRepo.get(runId))!;
+    return (await this.storage.runRepo.get(runId))!;
   }
 
   async resumeRun(runId: string, payload?: unknown): Promise<FlowRunRow> {
-    return withAdvisoryLock(this.prisma, runId, async () => {
-      const run = await this.runRepo.get(runId);
+    return this.storage.withLock(runId, async () => {
+      const run = await this.storage.runRepo.get(runId);
       if (!run) throw new RunNotFoundError(runId);
-      if (run.status !== FlowRunStatus.WAITING) {
+      if (run.status !== WAITING) {
         return run;
       }
 
@@ -220,8 +218,8 @@ export class FlowEngine {
       const currentNodeId = run.currentNodeId!;
       const node = def.nodes[currentNodeId];
       if (!node) {
-        await this.runRepo.update(runId, { status: FlowRunStatus.FAILED });
-        return (await this.runRepo.get(runId))!;
+        await this.storage.runRepo.update(runId, { status: FAILED });
+        return (await this.storage.runRepo.get(runId))!;
       }
 
       // Merge payload into state (e.g. for wait/resume flows)
@@ -230,8 +228,8 @@ export class FlowEngine {
         newState = { ...newState, _resumePayload: payload };
       }
 
-      await this.runRepo.update(runId, {
-        status: FlowRunStatus.RUNNING,
+      await this.storage.runRepo.update(runId, {
+        status: RUNNING,
         stateJson: newState,
       });
 
@@ -240,16 +238,16 @@ export class FlowEngine {
   }
 
   async getRun(runId: string): Promise<FlowRunRow | null> {
-    return this.runRepo.get(runId);
+    return this.storage.runRepo.get(runId);
   }
 
   async getRunningRunIds(): Promise<string[]> {
-    const runs = await this.runRepo.findRunning();
+    const runs = await this.storage.runRepo.findRunning();
     return runs.map((r) => r.runId);
   }
 
   async listFlows(): Promise<Array<{ flowId: string; version: string; definitionJson: unknown }>> {
-    return this.defRepo.list();
+    return this.storage.definitionRepo.list();
   }
 
   async getTimeline(runId: string): Promise<
@@ -261,6 +259,6 @@ export class FlowEngine {
       payloadJson: unknown;
     }>
   > {
-    return this.eventRepo.getTimeline(runId);
+    return this.storage.eventRepo.getTimeline(runId);
   }
 }

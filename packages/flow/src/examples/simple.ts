@@ -1,7 +1,6 @@
 /**
  * Simple linear flow example (decorator-based)
- * Run with: npx ts-node src/examples/simple.ts (or tsx)
- * Requires DATABASE_URL
+ * Run with: npm run example:simple  (or: npm run build && node dist/examples/simple.js)
  */
 import { FlowEngine, Flow, Entry, Node, Edge, buildFlowDefinition } from '../index.js';
 import type { FlowContext, NodeResult } from '../index.js';

@@ -4,18 +4,20 @@
 [![npm downloads](https://img.shields.io/npm/dm/@hazeljs/flow)](https://www.npmjs.com/package/@hazeljs/flow)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 
-Durable execution graph engine ("workflow OS kernel") with Prisma persistence. Fully independent of Hazel core.
+Durable execution graph engine ("workflow OS kernel"). Fully independent of Hazel core.
+
+**Storage:** By default the engine uses **in-memory storage** (no database). For durable persistence, install `@prisma/client` and use the Prisma storage adapter (see [Persistence](#persistence)).
 
 ## Features
 
 - Flow definitions (nodes + edges)
 - Flow runs with stateful execution
-- Postgres persistence via Prisma
+- **In-memory by default**; optional Postgres persistence via Prisma
 - Audit event timeline
 - Retry/backoff, timeouts
 - Idempotency keys
 - WAIT state + resume
-- Postgres advisory locks for concurrency safety
+- Optional Postgres advisory locks when using Prisma storage
 
 ## Installation
 
@@ -23,16 +25,7 @@ Durable execution graph engine ("workflow OS kernel") with Prisma persistence. F
 pnpm add @hazeljs/flow
 ```
 
-## Setup
-
-1. Set `DATABASE_URL` in your environment
-2. Run migrations:
-
-```bash
-pnpm prisma:migrate   # dev
-# or
-pnpm prisma:deploy    # production
-```
+No database or env vars are required for the default in-memory mode.
 
 ## Usage
 
@@ -85,6 +78,25 @@ const def = flow('my-flow', '1.0.0')
   .edge('start', 'end')
   .build();
 ```
+
+## Persistence
+
+By default the engine uses in-memory storage. To persist runs and definitions to Postgres:
+
+1. Install Prisma client: `pnpm add @prisma/client`
+2. Set `DATABASE_URL` and run migrations (from this package’s `prisma/` schema).
+3. Create the engine with Prisma storage:
+
+```typescript
+import { FlowEngine, buildFlowDefinition } from '@hazeljs/flow';
+import { createPrismaStorage, createFlowPrismaClient } from '@hazeljs/flow/prisma';
+
+const prisma = createFlowPrismaClient();
+const engine = new FlowEngine({ storage: createPrismaStorage(prisma) });
+// ... register definitions, start runs, etc.
+```
+
+The migration SQL in `prisma/migrations/` is only needed when you use this adapter.
 
 ## Scripts
 

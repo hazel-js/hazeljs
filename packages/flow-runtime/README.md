@@ -24,6 +24,7 @@ pnpm dev
 ## API
 
 - `POST /v1/runs/start` - Start a flow run
+- `POST /v1/runs/:runId/tick` - Advance a running run (one step)
 - `POST /v1/runs/:runId/resume` - Resume a waiting run
 - `GET /v1/runs/:runId` - Get run status
 - `GET /v1/runs/:runId/timeline` - Get run event timeline

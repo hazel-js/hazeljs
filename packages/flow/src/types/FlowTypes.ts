@@ -4,6 +4,9 @@
 
 export type NodeId = string;
 
+/** Run status (used by storage; DB enum matches these values) */
+export type FlowRunStatus = 'RUNNING' | 'WAITING' | 'COMPLETED' | 'FAILED';
+
 export interface FlowContext {
   runId: string;
   flowId: string;

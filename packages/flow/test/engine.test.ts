@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeAll, afterEach } from 'vitest';
-import { FlowEngine, Flow, Entry, Node, Edge, buildFlowDefinition, createFlowPrismaClient, resetFlowPrismaClient } from '../src/index.js';
+import { describe, it, expect } from 'vitest';
+import { FlowEngine, Flow, Entry, Node, Edge, buildFlowDefinition } from '../src/index.js';
 import type { FlowContext, NodeResult } from '../src/index.js';
 
 @Flow('linear-flow', '1.0.0')
@@ -24,20 +24,8 @@ class LinearFlow {
 }
 
 describe('FlowEngine - linear flow', () => {
-  let engine: FlowEngine;
-
-  beforeAll(async () => {
-    const prisma = createFlowPrismaClient();
-    await prisma.$executeRawUnsafe('TRUNCATE "FlowRunEvent", "FlowIdempotency", "FlowRun", "FlowDefinition" CASCADE');
-    await prisma.$disconnect();
-  });
-
-  afterEach(() => {
-    resetFlowPrismaClient();
-  });
-
   it('completes a simple linear flow', async () => {
-    engine = new FlowEngine();
+    const engine = new FlowEngine();
     const def = buildFlowDefinition(LinearFlow);
 
     await engine.registerDefinition(def);

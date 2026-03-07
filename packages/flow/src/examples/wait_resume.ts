@@ -1,8 +1,7 @@
 /**
  * Wait/resume flow example (decorator-based)
  * Node returns WAIT, then we resume with payload
- * Run with: npx ts-node src/examples/wait_resume.ts
- * Requires DATABASE_URL
+ * Run with: npm run example:wait_resume  (or: npm run build && node dist/examples/wait_resume.js)
  */
 import { FlowEngine, Flow, Entry, Node, Edge, buildFlowDefinition } from '../index.js';
 import type { FlowContext, NodeResult } from '../index.js';

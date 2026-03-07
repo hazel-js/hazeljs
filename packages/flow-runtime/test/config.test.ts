@@ -27,8 +27,10 @@ describe('getConfig', () => {
     expect(config.port).toBe(3000);
   });
 
-  it('throws when DATABASE_URL is missing', () => {
+  it('returns undefined databaseUrl when DATABASE_URL not set (in-memory mode)', () => {
     delete process.env.DATABASE_URL;
-    expect(() => getConfig()).toThrow('DATABASE_URL is required');
+    const config = getConfig();
+    expect(config.databaseUrl).toBeUndefined();
+    expect(config.port).toBe(3000);
   });
 });

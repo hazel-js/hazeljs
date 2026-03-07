@@ -198,6 +198,7 @@ example/
   │   ├── ml/                 # ML decorators example (@Model, @Train, @Predict)
   │   ├── rag/                # RAG (Retrieval-Augmented Generation) examples
   │   ├── ai/                 # AI integration examples
+  │   ├── flow/               # Flow engine examples (in-memory, Prisma, flow-runtime client)
   │   ├── microservices/      # Microservices examples
   │   ├── serverless/         # Serverless examples
   │   ├── realtime/           # Real-time features (WebSocket, SSE)
@@ -225,6 +226,17 @@ npm run ml:decorators
 ```
 
 See **`src/ml/README.md`** for a full decorator reference and **`src/ml/ml-decorators.example.ts`** for a minimal runnable model. For a full app (REST API, pipelines, metrics), use [hazeljs-ml-starter](https://github.com/hazel-js/hazeljs/tree/main/hazeljs-ml-starter).
+
+### Flow (workflow engine)
+
+The `@hazeljs/flow` package provides a durable execution graph engine. Examples in **`src/flow/`**:
+
+- **`npm run flow:in-memory`** – Run a flow with in-memory storage (no database).
+- **`npm run flow:with-prisma`** – Run a flow with Prisma persistence (requires `DATABASE_URL` and flow migrations).
+- **`npm run flow:runtime`** – Start the flow-runtime HTTP service (from `packages/flow-runtime`).
+- **`npm run flow:runtime:client`** – Client that calls the flow-runtime API (start run, tick until complete).
+
+See **`src/flow/README.md`** for details.
 
 ### RAG (Retrieval-Augmented Generation)
 
