@@ -1,10 +1,12 @@
 {
   "name": "@hazeljs/flow-runtime",
-  "version": "0.2.0-beta.47",
+  "version": "0.2.0-beta.75",
   "description": "Standalone deployable flow runtime service (HazelJS)",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc",
     "dev": "tsx watch src/main.ts",
@@ -36,7 +38,12 @@
     "url": "git+https://github.com/hazel-js/hazeljs.git",
     "directory": "packages/flow-runtime"
   },
-  "keywords": ["hazeljs", "flow", "runtime", "workflow"],
+  "keywords": [
+    "hazeljs",
+    "flow",
+    "runtime",
+    "workflow"
+  ],
   "author": "Muhammad Arslan <muhammad.arslan@hazeljs.com>",
   "license": "Apache-2.0",
   "engines": {
