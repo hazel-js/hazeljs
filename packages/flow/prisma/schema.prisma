@@ -1,0 +1,70 @@
+// @hazeljs/flow - Flow engine Prisma schema
+// Uses its own database/schema - independent of Hazel core
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model FlowDefinition {
+  flowId         String
+  version        String
+  definitionJson Json
+  createdAt      DateTime @default(now())
+
+  @@id([flowId, version])
+}
+
+enum FlowRunStatus {
+  RUNNING
+  WAITING
+  COMPLETED
+  FAILED
+}
+
+model FlowRun {
+  runId         String        @id @default(uuid())
+  flowId        String
+  flowVersion   String
+  tenantId      String?
+  status        FlowRunStatus
+  currentNodeId String?
+  inputJson     Json
+  stateJson     Json
+  outputsJson   Json
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([flowId, flowVersion])
+  @@index([tenantId])
+  @@index([status])
+}
+
+model FlowRunEvent {
+  id          String   @id @default(uuid())
+  runId       String
+  at          DateTime @default(now())
+  type        String
+  nodeId      String?
+  attempt     Int?
+  payloadJson Json
+
+  @@index([runId])
+  @@index([runId, at])
+}
+
+model FlowIdempotency {
+  key        String   @id
+  runId      String
+  nodeId     String
+  outputJson Json?
+  patchJson  Json?
+  createdAt  DateTime @default(now())
+
+  @@index([runId])
+}

@@ -107,6 +107,8 @@
     },
     {
       "path": "./packages/audit"
-    }
+    },
+    { "path": "./packages/flow"},
+    { "path": "./packages/flow-runtime"}
   ]
 }

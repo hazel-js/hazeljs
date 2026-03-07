@@ -1,0 +1,51 @@
+/**
+ * Simple linear flow example (decorator-based)
+ * Run with: npm run example:simple  (or: npm run build && node dist/examples/simple.js)
+ */
+import { FlowEngine, Flow, Entry, Node, Edge, buildFlowDefinition } from '../index.js';
+import type { FlowContext, NodeResult } from '../index.js';
+
+@Flow('simple-flow', '1.0.0')
+class SimpleFlow {
+  @Entry()
+  @Node('a')
+  @Edge('b')
+  async a(ctx: FlowContext): Promise<NodeResult> {
+    const input = ctx.input as number;
+    return { status: 'ok', output: { value: input + 1 }, patch: { step: 'a' } };
+  }
+
+  @Node('b')
+  async b(ctx: FlowContext): Promise<NodeResult> {
+    return { status: 'ok', output: { value: (ctx.state.step as string) + '-done' } };
+  }
+}
+
+async function main(): Promise<void> {
+  const engine = new FlowEngine();
+  const def = buildFlowDefinition(SimpleFlow);
+
+  await engine.registerDefinition(def);
+
+  const { runId } = await engine.startRun({
+    flowId: 'simple-flow',
+    version: '1.0.0',
+    input: 42,
+  });
+
+  let run = await engine.getRun(runId);
+  while (run?.status === 'RUNNING') {
+    run = await engine.tick(runId);
+  }
+
+  const timeline = await engine.getTimeline(runId);
+  // eslint-disable-next-line no-console
+  console.log('Run:', run);
+  // eslint-disable-next-line no-console
+  console.log('Timeline:', JSON.stringify(timeline, null, 2));
+}
+
+main().catch((err) => {
+  // eslint-disable-next-line no-console
+  console.error(err);
+});

@@ -25,7 +25,11 @@
     "kafka": "PORT=3010 ts-node src/kafka/index.ts",
     "kafka:streams": "ts-node src/kafka/stream-only.example.ts",
     "ml:decorators": "ts-node src/ml/ml-decorators.example.ts",
-    "ops:agent": "ts-node src/ops/ops-agent-example.ts"
+    "ops:agent": "ts-node src/ops/ops-agent-example.ts",
+    "flow:in-memory": "ts-node src/flow/flow-in-memory.example.ts",
+    "flow:with-prisma": "ts-node src/flow/flow-with-prisma.example.ts",
+    "flow:runtime": "cd ../packages/flow-runtime && npm run dev",
+    "flow:runtime:client": "ts-node src/flow/flow-runtime-client.example.ts"
   },
   "dependencies": {
     "@hazeljs/agent": "file:../packages/agent",
@@ -35,6 +39,7 @@
     "@hazeljs/config": "file:../packages/config",
     "@hazeljs/core": "file:../packages/core",
     "@hazeljs/discovery": "file:../packages/discovery",
+    "@hazeljs/flow": "file:../packages/flow",
     "@hazeljs/ml": "file:../packages/ml",
     "@hazeljs/kafka": "file:../packages/kafka",
     "@hazeljs/ops-agent": "file:../packages/ops-agent",
