@@ -103,21 +103,25 @@ jobs:
         run: |
           RELEASE_TAG="${{ steps.release-tag.outputs.tag }}"
           echo "Publishing with tag: $RELEASE_TAG using Lerna"
-          CI=true npx lerna publish from-package --yes --dist-tag "$RELEASE_TAG" --no-git-reset --no-git-tag-version --no-verify-access --concurrency 1
+          # Prevent any process from blocking on stdin; force non-interactive
+          export CI=true
+          export NPM_CONFIG_YES=true
+          export npm_config_loglevel=verbose
+          npx lerna publish from-package --yes --dist-tag "$RELEASE_TAG" --no-git-reset --no-git-tag-version --no-verify-access --concurrency 1 </dev/null
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Update latest dist-tag to current version
-        timeout-minutes: 5
+        timeout-minutes: 10
         run: |
           VERSION="${{ steps.version.outputs.version }}"
           PKGS="core cli ai agent auth cache config cron casl mcp flow flow-runtime prompts i18n typeorm graphql discovery audit oauth kafka gateway guardrails resilience grpc messaging ops-agent data ml rag event-emitter pdf-to-audio prisma queue serverless swagger websocket"
           TOTAL=$(echo $PKGS | wc -w)
-          echo "Updating latest dist-tag to $VERSION for $TOTAL packages (8 parallel)"
+          echo "Updating latest dist-tag to $VERSION for $TOTAL packages (8 parallel, 60s timeout per package)"
           i=0
           for pkg in $PKGS; do
             i=$((i+1))
-            (echo "[$i/$TOTAL] @hazeljs/$pkg" && npm dist-tag add "@hazeljs/$pkg@$VERSION" latest || true) &
+            (echo "[$i/$TOTAL] @hazeljs/$pkg" && timeout 60 npm dist-tag add "@hazeljs/$pkg@$VERSION" latest || true) &
             if [ $((i % 8)) -eq 0 ]; then wait; fi
           done
           wait
