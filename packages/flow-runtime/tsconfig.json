@@ -9,7 +9,8 @@
     "types": ["node"],
     "lib": ["ES2020", "DOM"],
     "paths": {
-      "@hazeljs/flow/prisma": ["../flow/dist/prisma"]
+      "@hazeljs/flow": ["../flow/dist/index.d.ts"],
+      "@hazeljs/flow/prisma": ["../flow/dist/prisma.d.ts"]
     }
   },
   "include": ["src/**/*"],

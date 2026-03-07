@@ -11,7 +11,7 @@ export async function recovery(engine: FlowEngine): Promise<void> {
 
   const limit = pLimit(CONCURRENCY);
   await Promise.all(
-    runIds.map((runId) =>
+    runIds.map((runId: string) =>
       limit(async () => {
         try {
           await engine.tick(runId);

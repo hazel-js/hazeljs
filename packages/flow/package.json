@@ -10,7 +10,7 @@
   },
   "files": ["dist"],
   "scripts": {
-    "build": "tsc && (test -d src/generated && cp -r src/generated dist/ || true)",
+    "build": "prisma generate && tsc && (test -d src/generated && cp -r src/generated dist/ || true)",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",
