@@ -99,15 +99,31 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish packages to NPM with Lerna
-        timeout-minutes: 45
+        timeout-minutes: 50
         run: |
           RELEASE_TAG="${{ steps.release-tag.outputs.tag }}"
           echo "Publishing with tag: $RELEASE_TAG using Lerna"
-          # Prevent any process from blocking on stdin; force non-interactive
           export CI=true
           export NPM_CONFIG_YES=true
           export npm_config_loglevel=verbose
-          npx lerna publish from-package --yes --dist-tag "$RELEASE_TAG" --no-git-reset --no-git-tag-version --no-verify-access --concurrency 1 </dev/null
+          LOG=$(mktemp)
+          # Run Lerna in background; tee to log so we can detect success and avoid hanging on post-publish work
+          ( npx lerna publish from-package --yes --dist-tag "$RELEASE_TAG" --no-git-reset --no-git-tag-version --no-verify-access --concurrency 1 </dev/null 2>&1 | tee "$LOG" ) &
+          LERNA_PID=$!
+          # Once we see success, stop waiting (Lerna sometimes never exits after printing success)
+          while true; do
+            if grep -q "lerna success published" "$LOG" 2>/dev/null; then
+              echo "Detected lerna success published; finishing step."
+              kill $LERNA_PID 2>/dev/null || true
+              wait $LERNA_PID 2>/dev/null || true
+              exit 0
+            fi
+            if ! kill -0 $LERNA_PID 2>/dev/null; then
+              wait $LERNA_PID
+              exit $?
+            fi
+            sleep 10
+          done
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
