@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/memory",
-  "version": "0.2.0-alpha.3",
+  "version": "0.2.0-alpha.4",
   "description": "Pluggable user memory for HazelJS - profile, preferences, behavioral patterns, emotional state, episodic and semantic memory with multi-store support",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
