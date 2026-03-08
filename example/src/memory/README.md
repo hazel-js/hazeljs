@@ -47,7 +47,20 @@ Complete chatbot implementation with memory:
 
 **Run:**
 ```bash
-npm run example:memory:chatbot
+npm run memory:chatbot
+```
+
+### 4. Shared Memory: RAG + Agent (`shared-memory-rag-agent.example.ts`)
+
+In-process shared memory: one `MemoryManager` used by both RAG and Agent (same session = same conversation and context). No HTTP, no separate service.
+
+- One store (e.g. `BufferMemory` or `createHazelMemoryStoreAdapter` from `@hazeljs/rag/memory-hazel`)
+- One `MemoryManager` passed to `RAGPipelineWithMemory` and `AgentRuntime`
+- Same `sessionId` so RAG and Agent see the same conversation history
+
+**Run (from example directory, after `npm install` from monorepo root):**
+```bash
+cd example && npm run memory:shared
 ```
 
 ## Quick Start

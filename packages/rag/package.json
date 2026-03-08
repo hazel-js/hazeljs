@@ -4,6 +4,10 @@
   "description": "Retrieval-Augmented Generation (RAG) and vector search for HazelJS framework",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" },
+    "./memory-hazel": { "types": "./dist/memory-hazel.d.ts", "default": "./dist/memory-hazel.js" }
+  },
   "files": [
     "dist"
   ],
@@ -30,7 +34,8 @@
     "@hazeljs/core": ">=0.2.0-beta.0",
     "pdf-parse": "^1.1.1",
     "mammoth": "^1.11.0",
-    "cheerio": "^1.0.0"
+    "cheerio": "^1.0.0",
+    "@hazeljs/memory": ">=0.2.0-beta.0"
   },
   "peerDependenciesMeta": {
     "@pinecone-database/pinecone": {
@@ -62,6 +67,9 @@
     },
     "cheerio": {
       "optional": true
+    },
+    "@hazeljs/memory": {
+      "optional": true
     }
   },
   "jest": {
@@ -71,7 +79,9 @@
       "**/src/__tests__/**/*.test.ts"
     ],
     "moduleNameMapper": {
-      "^@hazeljs/prompts$": "<rootDir>/../prompts/src/index.ts"
+      "^@hazeljs/prompts$": "<rootDir>/../prompts/src/index.ts",
+      "^@hazeljs/memory$": "<rootDir>/../memory/src/index.ts",
+      "^@hazeljs/memory/prisma$": "<rootDir>/../memory/src/prisma.ts"
     },
     "collectCoverageFrom": [
       "src/**/*.ts",
@@ -105,6 +115,7 @@
     }
   },
   "devDependencies": {
+    "@hazeljs/memory": "file:../memory",
     "openai": "^4.0.0",
     "@types/node": "^20.17.50",
     "@typescript-eslint/eslint-plugin": "^8.18.2",

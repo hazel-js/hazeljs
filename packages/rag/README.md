@@ -50,6 +50,9 @@ npm install cohere-ai
 npm install pdf-parse   # PdfLoader
 npm install mammoth     # DocxLoader
 npm install cheerio     # HtmlFileLoader / WebLoader CSS selectors
+
+# Memory backend (for createHazelMemoryStoreAdapter from @hazeljs/rag/memory-hazel)
+npm install @hazeljs/memory
 ```
 
 ---
@@ -438,6 +441,34 @@ const response = await rag.queryWithMemory(
 console.log(response.answer);
 console.log(response.memories);
 ```
+
+### Using @hazeljs/memory as the backend
+
+To back RAG (and agent) memory with **@hazeljs/memory** (in-memory, Prisma, Redis, etc.) in-process, install the optional peer and use the adapter:
+
+```bash
+npm install @hazeljs/memory
+```
+
+```typescript
+import { MemoryManager, RAGPipelineWithMemory } from '@hazeljs/rag';
+import { createHazelMemoryStoreAdapter } from '@hazeljs/rag/memory-hazel';
+import { MemoryService, createDefaultMemoryStore } from '@hazeljs/memory';
+
+// One store and one MemoryManager at app level (in-process, no separate service)
+const hazelStore = createDefaultMemoryStore();
+const memoryService = new MemoryService(hazelStore);
+const ragStore = createHazelMemoryStoreAdapter(memoryService);
+const memoryManager = new MemoryManager(ragStore);
+
+// Pass the same MemoryManager to RAG and to every AgentRuntime for shared memory
+const rag = new RAGPipelineWithMemory(config, memoryManager, llmFunction);
+// agentRuntime = new AgentRuntime({ ..., memoryManager });
+```
+
+- **In-process:** RAG, agents, and memory run in the same Node.js process; no HTTP, no separate memory service.
+- **Shared memory:** Create one store and one `MemoryManager` once, then pass the same instance into `RAGPipelineWithMemory` and every `AgentRuntime`.
+- For Prisma or other backends, use `createPrismaMemoryStore` (or the appropriate factory) from `@hazeljs/memory` and pass it to `MemoryService` before wrapping with `createHazelMemoryStoreAdapter`.
 
 ---
 
