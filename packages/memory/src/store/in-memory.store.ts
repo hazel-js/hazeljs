@@ -5,12 +5,7 @@
 import { randomUUID } from 'crypto';
 import { MemoryCategory } from '../types/category.types';
 import { MemoryItem } from '../types/memory-item.types';
-import {
-  MemoryQuery,
-  MemorySearchOptions,
-  MemoryStats,
-  PruneOptions,
-} from '../types/store.types';
+import { MemoryQuery, MemorySearchOptions, MemoryStats, PruneOptions } from '../types/store.types';
 import { MemoryStore } from './memory-store.interface';
 import { DEFAULT_CATEGORY_CONFIG } from '../types/category.types';
 
@@ -39,7 +34,8 @@ export class InMemoryStore implements MemoryStore {
   constructor(options: InMemoryStoreOptions = {}) {
     this.options = {
       maxTotalItems: options.maxTotalItems ?? DEFAULT_MAX_TOTAL,
-      maxItemsPerUserPerCategory: options.maxItemsPerUserPerCategory ?? DEFAULT_MAX_PER_USER_PER_CATEGORY,
+      maxItemsPerUserPerCategory:
+        options.maxItemsPerUserPerCategory ?? DEFAULT_MAX_PER_USER_PER_CATEGORY,
       defaultEmotionalTtlMs: options.defaultEmotionalTtlMs ?? 30 * 60 * 1000,
     };
   }
@@ -195,16 +191,18 @@ export class InMemoryStore implements MemoryStore {
 
   async query(options: MemoryQuery): Promise<MemoryItem[]> {
     const now = Date.now();
-    const categories = options.category != null
-      ? Array.isArray(options.category)
-        ? options.category
-        : [options.category]
-      : Object.values(MemoryCategory);
-    const sources = options.source != null
-      ? Array.isArray(options.source)
-        ? options.source
-        : [options.source]
-      : null;
+    const categories =
+      options.category != null
+        ? Array.isArray(options.category)
+          ? options.category
+          : [options.category]
+        : Object.values(MemoryCategory);
+    const sources =
+      options.source != null
+        ? Array.isArray(options.source)
+          ? options.source
+          : [options.source]
+        : null;
 
     let ids: string[] = [];
     for (const cat of categories) {
@@ -227,7 +225,8 @@ export class InMemoryStore implements MemoryStore {
       }
       if (sources && !sources.includes(item.source)) continue;
       if (options.minConfidence != null && item.confidence < options.minConfidence) continue;
-      if (options.notExpired !== false && item.expiresAt && item.expiresAt.getTime() < now) continue;
+      if (options.notExpired !== false && item.expiresAt && item.expiresAt.getTime() < now)
+        continue;
       seen.add(id);
       items.push(item);
     }
@@ -257,7 +256,9 @@ export class InMemoryStore implements MemoryStore {
           (Array.isArray(options.category)
             ? options.category.includes(m.category)
             : m.category === options.category)) &&
-        (typeof m.value === 'string' ? m.value.toLowerCase().includes(q) : m.key.toLowerCase().includes(q))
+        (typeof m.value === 'string'
+          ? m.value.toLowerCase().includes(q)
+          : m.key.toLowerCase().includes(q))
     );
     const topK = options.topK ?? 10;
     items.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
@@ -273,9 +274,7 @@ export class InMemoryStore implements MemoryStore {
     let oldest: number | null = null;
     let newest: number | null = null;
 
-    const iterate = userId
-      ? (this.byUser.get(userId) ?? [])
-      : Array.from(this.items.keys());
+    const iterate = userId ? (this.byUser.get(userId) ?? []) : Array.from(this.items.keys());
 
     for (const id of iterate) {
       const item = this.items.get(id);

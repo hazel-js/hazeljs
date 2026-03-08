@@ -1,0 +1,32 @@
+// @hazeljs/memory - User memory Prisma schema
+// Use with createPrismaMemoryStore(prisma) from '@hazeljs/memory/prisma'
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model MemoryItem {
+  id          String    @id
+  userId      String    @map("user_id")
+  category    String
+  key         String
+  value       Json
+  confidence  Float
+  source      String
+  evidence    Json // string[]
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  expiresAt   DateTime? @map("expires_at")
+  accessCount Int       @default(0) @map("access_count")
+  sessionId   String?   @map("session_id")
+
+  @@index([userId, category])
+  @@index([expiresAt])
+  @@map("memory_items")
+}

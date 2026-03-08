@@ -89,7 +89,7 @@ function memoryToKey(memory: Memory): string {
 }
 
 function itemToMemory(item: MemoryItem): Memory {
-  const value = item.value as StoredValue;
+  const value = item.value as unknown as StoredValue;
   if (typeof value === 'object' && value !== null && 'type' in value && 'content' in value) {
     return {
       id: item.id,
@@ -143,7 +143,7 @@ export class HazelMemoryStoreAdapter implements RAGMemoryStore {
       userId: sessionId,
       category: ragTypeToCategory(memory.type),
       key: memoryToKey(memory),
-      value: memoryToStoredValue(memory),
+      value: memoryToStoredValue(memory) as unknown as MemoryItemInput['value'],
       confidence: memory.metadata.importance ?? 0.5,
       source: 'explicit',
       evidence: [],
@@ -220,7 +220,7 @@ export class HazelMemoryStoreAdapter implements RAGMemoryStore {
   async update(id: string, updates: Partial<Memory>): Promise<void> {
     const item = await this.memoryService.get(id);
     if (!item) return;
-    const value = item.value as StoredValue;
+    const value = item.value as unknown as StoredValue;
     const merged: StoredValue = {
       type: updates.type ?? value.type,
       content: updates.content ?? value.content,
@@ -228,7 +228,7 @@ export class HazelMemoryStoreAdapter implements RAGMemoryStore {
       embedding: updates.embedding ?? value.embedding,
     };
     await this.memoryService.update(id, {
-      value: merged,
+      value: merged as unknown as MemoryItem['value'],
       confidence: updates.metadata?.importance ?? item.confidence,
     });
   }
@@ -361,6 +361,8 @@ export class HazelMemoryStoreAdapter implements RAGMemoryStore {
  *
  * @param memoryService - MemoryService from @hazeljs/memory (e.g. from createDefaultMemoryStore or createPrismaMemoryStore)
  */
-export function createHazelMemoryStoreAdapter(memoryService: MemoryService): HazelMemoryStoreAdapter {
+export function createHazelMemoryStoreAdapter(
+  memoryService: MemoryService
+): HazelMemoryStoreAdapter {
   return new HazelMemoryStoreAdapter(memoryService);
 }

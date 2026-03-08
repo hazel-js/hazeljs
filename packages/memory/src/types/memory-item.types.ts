@@ -30,8 +30,10 @@ export interface MemoryItem {
 /**
  * Input for creating a memory (id and timestamps can be omitted).
  */
-export interface MemoryItemInput
-  extends Omit<MemoryItem, 'id' | 'createdAt' | 'updatedAt' | 'accessCount'> {
+export interface MemoryItemInput extends Omit<
+  MemoryItem,
+  'id' | 'createdAt' | 'updatedAt' | 'accessCount'
+> {
   id?: string;
   accessCount?: number;
 }

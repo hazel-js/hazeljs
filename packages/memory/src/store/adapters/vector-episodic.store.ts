@@ -140,11 +140,7 @@ export class VectorEpisodicStore implements MemoryStore {
       updatedAt: new Date(),
     };
     this.items.set(id, updated);
-    if (
-      this.vectorStore &&
-      Array.isArray(updated.value) &&
-      updated.value.length > 0
-    ) {
+    if (this.vectorStore && Array.isArray(updated.value) && updated.value.length > 0) {
       await this.vectorStore.delete(id);
       await this.vectorStore.add(id, updated.value as number[], {
         userId: updated.userId,
@@ -184,9 +180,7 @@ export class VectorEpisodicStore implements MemoryStore {
     }
     ids = [...new Set(ids)];
 
-    let items = ids
-      .map((id) => this.items.get(id))
-      .filter((m): m is MemoryItem => m != null);
+    let items = ids.map((id) => this.items.get(id)).filter((m): m is MemoryItem => m != null);
 
     if (options.source != null) {
       const srcs = Array.isArray(options.source) ? options.source : [options.source];
@@ -213,10 +207,7 @@ export class VectorEpisodicStore implements MemoryStore {
     return items.slice(offset, offset + limit);
   }
 
-  async search(
-    query: string | number[],
-    options: MemorySearchOptions
-  ): Promise<MemoryItem[]> {
+  async search(query: string | number[], options: MemorySearchOptions): Promise<MemoryItem[]> {
     if (!this.vectorStore || !Array.isArray(query) || query.length === 0) {
       if (typeof query === 'string') {
         const items = await this.query({
@@ -239,9 +230,7 @@ export class VectorEpisodicStore implements MemoryStore {
       topK: options.topK ?? 10,
       filter: {
         userId: options.userId,
-        category: Array.isArray(options.category)
-          ? options.category[0]
-          : options.category,
+        category: Array.isArray(options.category) ? options.category[0] : options.category,
       },
     });
     const items: MemoryItem[] = [];
@@ -257,9 +246,7 @@ export class VectorEpisodicStore implements MemoryStore {
       (acc, cat) => ({ ...acc, [cat]: 0 }),
       {} as Record<MemoryCategory, number>
     );
-    const iterate = userId
-      ? (this.byUser.get(userId) ?? [])
-      : Array.from(this.items.keys());
+    const iterate = userId ? (this.byUser.get(userId) ?? []) : Array.from(this.items.keys());
     let oldest: number | null = null;
     let newest: number | null = null;
     for (const id of iterate) {
@@ -280,9 +267,7 @@ export class VectorEpisodicStore implements MemoryStore {
 
   async prune(options?: PruneOptions): Promise<number> {
     const now = Date.now();
-    const userIds = options?.userId
-      ? [options.userId]
-      : Array.from(this.byUser.keys());
+    const userIds = options?.userId ? [options.userId] : Array.from(this.byUser.keys());
     let removed = 0;
     for (const uid of userIds) {
       const ids = this.byUser.get(uid) ?? [];

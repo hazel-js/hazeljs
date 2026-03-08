@@ -79,7 +79,9 @@
       "**/src/__tests__/**/*.test.ts"
     ],
     "moduleNameMapper": {
-      "^@hazeljs/prompts$": "<rootDir>/../prompts/src/index.ts"
+      "^@hazeljs/prompts$": "<rootDir>/../prompts/src/index.ts",
+      "^@hazeljs/memory$": "<rootDir>/../memory/src/index.ts",
+      "^@hazeljs/memory/prisma$": "<rootDir>/../memory/src/prisma.ts"
     },
     "collectCoverageFrom": [
       "src/**/*.ts",

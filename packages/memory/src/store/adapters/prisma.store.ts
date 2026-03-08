@@ -8,24 +8,28 @@ export interface MemoryPrismaClient {
   memoryItem: {
     upsert(args: { where: { id: string }; create: object; update: object }): Promise<unknown>;
     findUnique(args: { where: { id: string } }): Promise<unknown>;
-    findMany(args: { where?: object; orderBy?: object; take?: number; skip?: number }): Promise<unknown[]>;
+    findMany(args: {
+      where?: object;
+      orderBy?: object;
+      take?: number;
+      skip?: number;
+    }): Promise<unknown[]>;
     update(args: { where: { id: string }; data: object }): Promise<unknown>;
     delete(args: { where: { id: string } }): Promise<unknown>;
     deleteMany(args: { where: object }): Promise<{ count: number }>;
     groupBy(args: { by: string[]; where?: object; _count?: object }): Promise<unknown[]>;
-    aggregate(args: { where?: object; _min?: object; _max?: object }): Promise<{ _min: { updatedAt: Date | null }; _max: { updatedAt: Date | null } }>;
+    aggregate(args: {
+      where?: object;
+      _min?: object;
+      _max?: object;
+    }): Promise<{ _min: { updatedAt: Date | null }; _max: { updatedAt: Date | null } }>;
   };
   $connect(): Promise<void>;
   $disconnect(): Promise<void>;
 }
 import { MemoryCategory } from '../../types/category.types';
 import { MemoryItem, MemorySource } from '../../types/memory-item.types';
-import {
-  MemoryQuery,
-  MemorySearchOptions,
-  MemoryStats,
-  PruneOptions,
-} from '../../types/store.types';
+import { MemoryQuery, MemoryStats, PruneOptions } from '../../types/store.types';
 import { MemoryStore } from '../memory-store.interface';
 
 export interface PrismaMemoryStoreOptions {
@@ -188,10 +192,7 @@ export class PrismaMemoryStore implements MemoryStore {
     if (sources) where.source = { in: sources };
     if (options.minConfidence != null) where.confidence = { gte: options.minConfidence };
     if (options.notExpired !== false) {
-      where.OR = [
-        { expiresAt: null },
-        { expiresAt: { gt: new Date() } },
-      ];
+      where.OR = [{ expiresAt: null }, { expiresAt: { gt: new Date() } }];
     }
 
     const orderBy = options.orderBy === 'createdAt' ? 'createdAt' : 'updatedAt';

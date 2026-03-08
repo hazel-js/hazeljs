@@ -3,6 +3,7 @@
  * Run `pnpm prisma:generate` to generate the real client (then this file is shadowed by generated/prisma/).
  */
 export class PrismaClient {
+  constructor(options?: { datasources?: { db?: { url: string } } });
   memoryItem: {
     upsert(args: unknown): Promise<unknown>;
     findUnique(args: unknown): Promise<unknown>;

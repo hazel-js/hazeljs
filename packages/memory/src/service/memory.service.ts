@@ -5,12 +5,7 @@
 import { randomUUID } from 'crypto';
 import { MemoryCategory } from '../types/category.types';
 import { MemoryItem, MemoryItemInput } from '../types/memory-item.types';
-import {
-  MemoryQuery,
-  MemorySearchOptions,
-  MemoryStats,
-  PruneOptions,
-} from '../types/store.types';
+import { MemoryQuery, MemorySearchOptions, MemoryStats, PruneOptions } from '../types/store.types';
 import { MemoryStore } from '../store/memory-store.interface';
 import {
   MemoryServiceConfig,
@@ -46,7 +41,8 @@ export class MemoryService {
       getDefaultTtlForCategory(MemoryCategory.EMOTIONAL)
     ) {
       expiresAt = new Date(
-        Date.now() + (this.config.defaultEmotionalTtlMs ?? getDefaultTtlForCategory(MemoryCategory.EMOTIONAL)!)
+        Date.now() +
+          (this.config.defaultEmotionalTtlMs ?? getDefaultTtlForCategory(MemoryCategory.EMOTIONAL)!)
       );
     }
     const item: MemoryItem = {
@@ -88,7 +84,12 @@ export class MemoryService {
   async getByUserAndCategory(
     userId: string,
     category: MemoryCategory,
-    options?: { limit?: number; offset?: number; orderBy?: 'createdAt' | 'updatedAt'; order?: 'asc' | 'desc' }
+    options?: {
+      limit?: number;
+      offset?: number;
+      orderBy?: 'createdAt' | 'updatedAt';
+      order?: 'asc' | 'desc';
+    }
   ): Promise<MemoryItem[]> {
     return this.store.query({
       userId,
@@ -142,10 +143,7 @@ export class MemoryService {
   /**
    * Search memories (text or vector). No-op if store does not support search.
    */
-  async search(
-    query: string | number[],
-    options: MemorySearchOptions
-  ): Promise<MemoryItem[]> {
+  async search(query: string | number[], options: MemorySearchOptions): Promise<MemoryItem[]> {
     if (typeof this.store.search !== 'function') return [];
     return this.store.search(query, options);
   }

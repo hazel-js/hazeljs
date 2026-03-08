@@ -5,21 +5,13 @@
 
 import { MemoryCategory } from '../../types/category.types';
 import { MemoryItem, MemorySource } from '../../types/memory-item.types';
-import {
-  MemoryQuery,
-  MemorySearchOptions,
-  MemoryStats,
-  PruneOptions,
-} from '../../types/store.types';
+import { MemoryQuery, MemoryStats, PruneOptions } from '../../types/store.types';
 import { MemoryStore } from '../memory-store.interface';
 
 export interface PostgresStoreOptions {
   /** A pool-like client with query(sql, params?) returning rows and optional rowCount. */
   pool: {
-    query: (
-      sql: string,
-      params?: unknown[]
-    ) => Promise<{ rows: unknown[]; rowCount?: number }>;
+    query: (sql: string, params?: unknown[]) => Promise<{ rows: unknown[]; rowCount?: number }>;
   };
   /** Table name. Default: memory_items. */
   tableName?: string;
@@ -47,7 +39,9 @@ function rowToItem(row: Record<string, unknown>): MemoryItem {
     value: parseValue((row.value as string) ?? 'null'),
     confidence: Number(row.confidence),
     source: row.source as MemorySource,
-    evidence: Array.isArray(row.evidence) ? (row.evidence as string[]) : JSON.parse((row.evidence as string) || '[]'),
+    evidence: Array.isArray(row.evidence)
+      ? (row.evidence as string[])
+      : JSON.parse((row.evidence as string) || '[]'),
     createdAt: new Date(row.created_at as string),
     updatedAt: new Date(row.updated_at as string),
     expiresAt: row.expires_at ? new Date(row.expires_at as string) : undefined,
@@ -117,9 +111,10 @@ export class PostgresStore implements MemoryStore {
   }
 
   async save(item: MemoryItem): Promise<string> {
-    const valueStr = typeof item.value === 'object' && item.value !== null
-      ? JSON.stringify(item.value)
-      : String(item.value);
+    const valueStr =
+      typeof item.value === 'object' && item.value !== null
+        ? JSON.stringify(item.value)
+        : String(item.value);
     const evidenceStr = JSON.stringify(item.evidence ?? []);
     await this.pool.query(
       `INSERT INTO ${this.table} (id, user_id, category, key, value, confidence, source, evidence, created_at, updated_at, expires_at, access_count, session_id)
@@ -155,10 +150,7 @@ export class PostgresStore implements MemoryStore {
   }
 
   async get(id: string): Promise<MemoryItem | null> {
-    const { rows } = await this.pool.query(
-      `SELECT * FROM ${this.table} WHERE id = $1`,
-      [id]
-    );
+    const { rows } = await this.pool.query(`SELECT * FROM ${this.table} WHERE id = $1`, [id]);
     const row = rows[0] as Record<string, unknown> | undefined;
     if (!row) return null;
     const item = rowToItem(row);
@@ -173,10 +165,18 @@ export class PostgresStore implements MemoryStore {
     const existing = await this.get(id);
     if (!existing) return;
 
-    const valueStr = updates.value !== undefined
-      ? (typeof updates.value === 'object' && updates.value !== null ? JSON.stringify(updates.value) : String(updates.value))
-      : (typeof existing.value === 'object' ? JSON.stringify(existing.value) : String(existing.value));
-    const evidenceStr = updates.evidence !== undefined ? JSON.stringify(updates.evidence) : JSON.stringify(existing.evidence);
+    const valueStr =
+      updates.value !== undefined
+        ? typeof updates.value === 'object' && updates.value !== null
+          ? JSON.stringify(updates.value)
+          : String(updates.value)
+        : typeof existing.value === 'object'
+          ? JSON.stringify(existing.value)
+          : String(existing.value);
+    const evidenceStr =
+      updates.evidence !== undefined
+        ? JSON.stringify(updates.evidence)
+        : JSON.stringify(existing.evidence);
 
     await this.pool.query(
       `UPDATE ${this.table} SET
@@ -251,7 +251,9 @@ export class PostgresStore implements MemoryStore {
       {} as Record<MemoryCategory, number>
     );
 
-    const where = userId ? 'WHERE user_id = $1 AND (expires_at IS NULL OR expires_at > NOW())' : 'WHERE expires_at IS NULL OR expires_at > NOW()';
+    const where = userId
+      ? 'WHERE user_id = $1 AND (expires_at IS NULL OR expires_at > NOW())'
+      : 'WHERE expires_at IS NULL OR expires_at > NOW()';
     const params = userId ? [userId] : [];
 
     const { rows } = await this.pool.query(
@@ -259,7 +261,8 @@ export class PostgresStore implements MemoryStore {
       params
     );
     for (const row of rows as { category: string; cnt: string }[]) {
-      if (row.category in byCategory) byCategory[row.category as MemoryCategory] = parseInt(row.cnt, 10);
+      if (row.category in byCategory)
+        byCategory[row.category as MemoryCategory] = parseInt(row.cnt, 10);
     }
 
     const { rows: agg } = await this.pool.query(
@@ -305,10 +308,7 @@ export class PostgresStore implements MemoryStore {
     conditions.push('(expires_at IS NOT NULL AND expires_at < NOW())');
 
     const where = conditions.length ? 'WHERE ' + conditions.join(' AND ') : '';
-    const result = await this.pool.query(
-      `DELETE FROM ${this.table} ${where}`,
-      params
-    );
+    const result = await this.pool.query(`DELETE FROM ${this.table} ${where}`, params);
     return typeof result.rowCount === 'number' ? result.rowCount : 0;
   }
 }

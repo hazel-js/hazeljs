@@ -18,16 +18,10 @@ export {
 } from './store/in-memory.store';
 
 // Store factory
-export {
-  createMemoryStore,
-  type MemoryStoreConfig,
-} from './store/create-memory-store';
+export { createMemoryStore, type MemoryStoreConfig } from './store/create-memory-store';
 
 // Composite store
-export {
-  CompositeMemoryStore,
-  type CompositeMemoryStoreOptions,
-} from './store/composite.store';
+export { CompositeMemoryStore, type CompositeMemoryStoreOptions } from './store/composite.store';
 
 // Adapters
 export { PostgresStore, type PostgresStoreOptions } from './store/adapters/postgres.store';

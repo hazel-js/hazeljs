@@ -2,14 +2,9 @@
  * Composite memory store — routes by category to primary and optional episodic (vector) store.
  */
 
-import { MemoryCategory, VECTOR_CATEGORIES } from '../types/category.types';
+import { MemoryCategory } from '../types/category.types';
 import { MemoryItem } from '../types/memory-item.types';
-import {
-  MemoryQuery,
-  MemorySearchOptions,
-  MemoryStats,
-  PruneOptions,
-} from '../types/store.types';
+import { MemoryQuery, MemorySearchOptions, MemoryStats, PruneOptions } from '../types/store.types';
 import { MemoryStore } from './memory-store.interface';
 
 export interface CompositeMemoryStoreOptions {
@@ -37,9 +32,7 @@ export class CompositeMemoryStore implements MemoryStore {
   constructor(options: CompositeMemoryStoreOptions) {
     this.primary = options.primary;
     this.episodic = options.episodic;
-    this.episodicCategories = new Set(
-      options.episodicCategories ?? DEFAULT_EPISODIC_CATEGORIES
-    );
+    this.episodicCategories = new Set(options.episodicCategories ?? DEFAULT_EPISODIC_CATEGORIES);
   }
 
   private route(category: MemoryCategory): MemoryStore {
@@ -93,11 +86,12 @@ export class CompositeMemoryStore implements MemoryStore {
   }
 
   async query(options: MemoryQuery): Promise<MemoryItem[]> {
-    const categories = options.category != null
-      ? Array.isArray(options.category)
-        ? options.category
-        : [options.category]
-      : Object.values(MemoryCategory);
+    const categories =
+      options.category != null
+        ? Array.isArray(options.category)
+          ? options.category
+          : [options.category]
+        : Object.values(MemoryCategory);
 
     const primaryCats = categories.filter((c) => !this.episodicCategories.has(c));
     const episodicCats = categories.filter((c) => this.episodicCategories.has(c));
@@ -133,10 +127,7 @@ export class CompositeMemoryStore implements MemoryStore {
     return results.slice(offset, offset + limit);
   }
 
-  async search(
-    query: string | number[],
-    options: MemorySearchOptions
-  ): Promise<MemoryItem[]> {
+  async search(query: string | number[], options: MemorySearchOptions): Promise<MemoryItem[]> {
     if (this.episodic && typeof this.episodic.search === 'function') {
       return this.episodic.search(query, options);
     }
@@ -159,21 +150,15 @@ export class CompositeMemoryStore implements MemoryStore {
     const oldest =
       primaryStats.oldestMemory && episodicStats.oldestMemory
         ? new Date(
-            Math.min(
-              primaryStats.oldestMemory.getTime(),
-              episodicStats.oldestMemory.getTime()
-            )
+            Math.min(primaryStats.oldestMemory.getTime(), episodicStats.oldestMemory.getTime())
           )
-        : primaryStats.oldestMemory ?? episodicStats.oldestMemory;
+        : (primaryStats.oldestMemory ?? episodicStats.oldestMemory);
     const newest =
       primaryStats.newestMemory && episodicStats.newestMemory
         ? new Date(
-            Math.max(
-              primaryStats.newestMemory.getTime(),
-              episodicStats.newestMemory.getTime()
-            )
+            Math.max(primaryStats.newestMemory.getTime(), episodicStats.newestMemory.getTime())
           )
-        : primaryStats.newestMemory ?? episodicStats.newestMemory;
+        : (primaryStats.newestMemory ?? episodicStats.newestMemory);
 
     return {
       total,

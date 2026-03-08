@@ -3,12 +3,7 @@
  */
 
 import { MemoryItem } from '../types/memory-item.types';
-import {
-  MemoryQuery,
-  MemorySearchOptions,
-  MemoryStats,
-  PruneOptions,
-} from '../types/store.types';
+import { MemoryQuery, MemorySearchOptions, MemoryStats, PruneOptions } from '../types/store.types';
 
 /**
  * Interface for memory storage backends.

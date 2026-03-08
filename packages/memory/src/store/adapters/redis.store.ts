@@ -4,7 +4,7 @@
  */
 
 import { MemoryCategory } from '../../types/category.types';
-import { MemoryItem, MemorySource } from '../../types/memory-item.types';
+import { MemoryItem } from '../../types/memory-item.types';
 import {
   MemoryQuery,
   MemorySearchOptions,
@@ -184,7 +184,8 @@ export class RedisStore implements MemoryStore {
         if (!srcs.includes(item.source)) continue;
       }
       if (options.minConfidence != null && item.confidence < options.minConfidence) continue;
-      if (options.notExpired !== false && item.expiresAt && item.expiresAt.getTime() < now) continue;
+      if (options.notExpired !== false && item.expiresAt && item.expiresAt.getTime() < now)
+        continue;
       items.push(item);
     }
 
@@ -201,10 +202,7 @@ export class RedisStore implements MemoryStore {
     return items.slice(offset, offset + limit);
   }
 
-  async search(
-    query: string | number[],
-    options: MemorySearchOptions
-  ): Promise<MemoryItem[]> {
+  async search(query: string | number[], options: MemorySearchOptions): Promise<MemoryItem[]> {
     if (typeof query !== 'string') return [];
     const q = query.toLowerCase();
     const items = await this.query({
@@ -228,10 +226,12 @@ export class RedisStore implements MemoryStore {
 
     const iterateUserIds = userId
       ? [userId]
-      : (await this.client.keys(`${this.prefix}:user:*:ids`)).map((k) => {
-          const m = k.match(new RegExp(`^${this.prefix}:user:(.+):ids$`));
-          return m ? m[1] : '';
-        }).filter(Boolean);
+      : (await this.client.keys(`${this.prefix}:user:*:ids`))
+          .map((k) => {
+            const m = k.match(new RegExp(`^${this.prefix}:user:(.+):ids$`));
+            return m ? m[1] : '';
+          })
+          .filter(Boolean);
 
     const now = Date.now();
     for (const uid of iterateUserIds) {
@@ -277,10 +277,12 @@ export class RedisStore implements MemoryStore {
     const now = Date.now();
     const userIds = options?.userId
       ? [options.userId]
-      : (await this.client.keys(`${this.prefix}:user:*:ids`)).map((k) => {
-          const m = k.match(new RegExp(`^${this.prefix}:user:(.+):ids$`));
-          return m ? m[1] : '';
-        }).filter(Boolean);
+      : (await this.client.keys(`${this.prefix}:user:*:ids`))
+          .map((k) => {
+            const m = k.match(new RegExp(`^${this.prefix}:user:(.+):ids$`));
+            return m ? m[1] : '';
+          })
+          .filter(Boolean);
 
     let removed = 0;
     for (const uid of userIds) {
