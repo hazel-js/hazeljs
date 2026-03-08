@@ -76,6 +76,9 @@
       "path": "./packages/agent"
     },
     {
+      "path": "./packages/memory"
+    },
+    {
       "path": "./packages/resilience"
     },
     {
