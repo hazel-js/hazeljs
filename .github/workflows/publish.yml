@@ -101,28 +101,12 @@ jobs:
       - name: Publish packages to NPM with Lerna
         timeout-minutes: 50
         run: |
-          # Lerna prints "lerna success published N packages" then keeps dumping "lerna notice" (tarball/file
-          # listings) and often never exits. Run in PTY (script) so stdout flushes; watch log and exit on success.
+          # Use Lerna 8.2.0 (pinned in package.json): 8.2.1+ and some 9.x hang after "Successfully published"
           RELEASE_TAG="${{ steps.release-tag.outputs.tag }}"
-          echo "Publishing with tag: $RELEASE_TAG using Lerna (concurrency 4)"
+          echo "Publishing with tag: $RELEASE_TAG using Lerna"
           export CI=true
           export NPM_CONFIG_YES=true
-          LOG=$(mktemp)
-          ( script -q -c "npx lerna publish from-package --yes --dist-tag $RELEASE_TAG --no-git-reset --no-git-tag-version --no-verify-access --concurrency 4 --loglevel warn" /dev/null </dev/null 2>&1 | tee "$LOG" ) &
-          LERNA_PID=$!
-          while true; do
-            if grep -q "lerna success published" "$LOG" 2>/dev/null; then
-              echo "Publish finished; completing step."
-              kill $LERNA_PID 2>/dev/null || true
-              wait $LERNA_PID 2>/dev/null || true
-              exit 0
-            fi
-            if ! kill -0 $LERNA_PID 2>/dev/null; then
-              wait $LERNA_PID
-              exit $?
-            fi
-            sleep 5
-          done
+          npx lerna publish from-package --yes --dist-tag "$RELEASE_TAG" --no-git-reset --no-git-tag-version --concurrency 4 </dev/null
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
