@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/memory",
-  "version": "0.2.0-beta.80",
+  "version": "0.2.0-alpha.2",
   "description": "Pluggable user memory for HazelJS - profile, preferences, behavioral patterns, emotional state, episodic and semantic memory with multi-store support",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -47,8 +47,12 @@
     "ioredis": "^5.0.0"
   },
   "peerDependenciesMeta": {
-    "pg": { "optional": true },
-    "ioredis": { "optional": true }
+    "pg": {
+      "optional": true
+    },
+    "ioredis": {
+      "optional": true
+    }
   },
   "publishConfig": {
     "access": "public"

@@ -1,12 +1,18 @@
 {
   "name": "@hazeljs/rag",
-  "version": "0.2.0-alpha.1",
+  "version": "0.2.0-alpha.2",
   "description": "Retrieval-Augmented Generation (RAG) and vector search for HazelJS framework",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
-    ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" },
-    "./memory-hazel": { "types": "./dist/memory-hazel.d.ts", "default": "./dist/memory-hazel.js" }
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./memory-hazel": {
+      "types": "./dist/memory-hazel.d.ts",
+      "default": "./dist/memory-hazel.js"
+    }
   },
   "files": [
     "dist"
