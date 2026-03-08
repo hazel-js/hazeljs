@@ -115,6 +115,7 @@
     }
   },
   "devDependencies": {
+    "@hazeljs/memory": "file:../memory",
     "openai": "^4.0.0",
     "@types/node": "^20.17.50",
     "@typescript-eslint/eslint-plugin": "^8.18.2",

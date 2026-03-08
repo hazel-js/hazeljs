@@ -10,7 +10,9 @@
     "skipLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@hazeljs/prompts": ["../prompts/src"]
+      "@hazeljs/prompts": ["../prompts/src"],
+      "@hazeljs/memory": ["../memory/src/index.ts"],
+      "@hazeljs/memory/prisma": ["../memory/src/prisma.ts"]
     },
     "types": [
       "jest",
@@ -33,6 +35,9 @@
     },
     {
       "path": "../prompts"
+    },
+    {
+      "path": "../memory"
     }
   ]
 }

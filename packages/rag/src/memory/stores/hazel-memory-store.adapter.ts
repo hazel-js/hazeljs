@@ -184,7 +184,7 @@ export class HazelMemoryStoreAdapter implements RAGMemoryStore {
     };
     const items = await this.memoryService.query(hazelQuery);
     const prefixSet = new Set(types.map(keyPrefixForType));
-    const filtered = items.filter((item) => {
+    const filtered = items.filter((item: MemoryItem) => {
       for (const prefix of prefixSet) {
         if (item.key.startsWith(prefix)) return true;
       }
@@ -207,7 +207,7 @@ export class HazelMemoryStoreAdapter implements RAGMemoryStore {
     const memories = results.map(itemToMemory);
     const queryLower = query.toLowerCase();
     const scored = memories
-      .filter((m) => m.content.toLowerCase().includes(queryLower) || true)
+      .filter((m: Memory) => m.content.toLowerCase().includes(queryLower) || true)
       .slice(0, options.topK ?? 10);
     return scored;
   }
@@ -249,7 +249,7 @@ export class HazelMemoryStoreAdapter implements RAGMemoryStore {
       notExpired: true,
       limit: 10_000,
     });
-    const ragItems = items.filter((i) => i.key.startsWith(RAG_KEY_PREFIX));
+    const ragItems = items.filter((i: MemoryItem) => i.key.startsWith(RAG_KEY_PREFIX));
     for (const item of ragItems) {
       await this.memoryService.delete(item.id);
     }
@@ -296,7 +296,7 @@ export class HazelMemoryStoreAdapter implements RAGMemoryStore {
         notExpired: true,
         limit: 10_000,
       });
-      const ragItems = items.filter((i) => i.key.startsWith(RAG_KEY_PREFIX));
+      const ragItems = items.filter((i: MemoryItem) => i.key.startsWith(RAG_KEY_PREFIX));
       const byType: Record<MemoryType, number> = {
         [MemoryType.CONVERSATION]: 0,
         [MemoryType.ENTITY]: 0,
