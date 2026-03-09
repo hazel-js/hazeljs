@@ -39,13 +39,15 @@ describe('AgentExecutor', () => {
       // Mock the executeStep to return a completed step
       const originalExecuteStep = (executor as any).executeStep;
       (executor as any).executeStep = jest.fn().mockResolvedValue({
-        id: 'step-1',
-        agentId: 'agent-1',
-        executionId: context.executionId,
-        stepNumber: 1,
-        state: AgentState.COMPLETED,
-        action: { type: 'respond' as any, response: 'Hello response' },
-        timestamp: new Date(),
+        step: {
+          id: 'step-1',
+          agentId: 'agent-1',
+          executionId: context.executionId,
+          stepNumber: 1,
+          state: AgentState.COMPLETED,
+          action: { type: 'respond' as any, response: 'Hello response' },
+          timestamp: new Date(),
+        },
       });
 
       try {
@@ -82,12 +84,14 @@ describe('AgentExecutor', () => {
       // Mock executeStep to keep returning thinking state
       const originalExecuteStep = (executor as any).executeStep;
       (executor as any).executeStep = jest.fn().mockResolvedValue({
-        id: 'step-1',
-        agentId: 'agent-1',
-        executionId: context.executionId,
-        stepNumber: 1,
-        state: AgentState.THINKING,
-        timestamp: new Date(),
+        step: {
+          id: 'step-1',
+          agentId: 'agent-1',
+          executionId: context.executionId,
+          stepNumber: 1,
+          state: AgentState.THINKING,
+          timestamp: new Date(),
+        },
       });
 
       // Add a step to trigger max steps check
@@ -120,13 +124,15 @@ describe('AgentExecutor', () => {
 
       const originalExecuteStep = (executor as any).executeStep;
       (executor as any).executeStep = jest.fn().mockResolvedValue({
-        id: 'step-1',
-        agentId: 'agent-1',
-        executionId: context.executionId,
-        stepNumber: 1,
-        state: AgentState.WAITING_FOR_APPROVAL,
-        action: { type: 'wait' as any },
-        timestamp: new Date(),
+        step: {
+          id: 'step-1',
+          agentId: 'agent-1',
+          executionId: context.executionId,
+          stepNumber: 1,
+          state: AgentState.WAITING_FOR_APPROVAL,
+          action: { type: 'wait' as any },
+          timestamp: new Date(),
+        },
       });
 
       try {
@@ -144,13 +150,15 @@ describe('AgentExecutor', () => {
 
       const originalExecuteStep = (executor as any).executeStep;
       (executor as any).executeStep = jest.fn().mockResolvedValue({
-        id: 'step-1',
-        agentId: 'agent-1',
-        executionId: context.executionId,
-        stepNumber: 1,
-        state: AgentState.WAITING_FOR_INPUT,
-        action: { type: 'ask_user' as any, question: 'What do you need?' },
-        timestamp: new Date(),
+        step: {
+          id: 'step-1',
+          agentId: 'agent-1',
+          executionId: context.executionId,
+          stepNumber: 1,
+          state: AgentState.WAITING_FOR_INPUT,
+          action: { type: 'ask_user' as any, question: 'What do you need?' },
+          timestamp: new Date(),
+        },
       });
 
       try {
@@ -168,13 +176,15 @@ describe('AgentExecutor', () => {
 
       const originalExecuteStep = (executor as any).executeStep;
       (executor as any).executeStep = jest.fn().mockResolvedValue({
-        id: 'step-1',
-        agentId: 'agent-1',
-        executionId: context.executionId,
-        stepNumber: 1,
-        state: AgentState.FAILED,
-        error: new Error('Step failed'),
-        timestamp: new Date(),
+        step: {
+          id: 'step-1',
+          agentId: 'agent-1',
+          executionId: context.executionId,
+          stepNumber: 1,
+          state: AgentState.FAILED,
+          error: new Error('Step failed'),
+          timestamp: new Date(),
+        },
       });
 
       try {
@@ -209,14 +219,16 @@ describe('AgentExecutor', () => {
 
       const originalExecuteStep = (executor as any).executeStep;
       (executor as any).executeStep = jest.fn().mockResolvedValue({
-        id: 'step-1',
-        agentId: 'agent-1',
-        executionId: context.executionId,
-        stepNumber: 1,
-        state: AgentState.USING_TOOL,
-        action: { type: AgentActionType.USE_TOOL, toolName: 'test-tool', toolInput: {} },
-        result: { success: true, output: 'Tool result' },
-        timestamp: new Date(),
+        step: {
+          id: 'step-1',
+          agentId: 'agent-1',
+          executionId: context.executionId,
+          stepNumber: 1,
+          state: AgentState.USING_TOOL,
+          action: { type: AgentActionType.USE_TOOL, toolName: 'test-tool', toolInput: {} },
+          result: { success: true, output: 'Tool result' },
+          timestamp: new Date(),
+        },
       });
 
       try {
@@ -234,14 +246,16 @@ describe('AgentExecutor', () => {
 
       const originalExecuteStep = (executor as any).executeStep;
       (executor as any).executeStep = jest.fn().mockResolvedValue({
-        id: 'step-1',
-        agentId: 'agent-1',
-        executionId: context.executionId,
-        stepNumber: 1,
-        state: AgentState.COMPLETED,
-        action: { type: AgentActionType.COMPLETE, response: 'Complete response' },
-        result: { success: true, output: 'Complete response' },
-        timestamp: new Date(),
+        step: {
+          id: 'step-1',
+          agentId: 'agent-1',
+          executionId: context.executionId,
+          stepNumber: 1,
+          state: AgentState.COMPLETED,
+          action: { type: AgentActionType.COMPLETE, response: 'Complete response' },
+          result: { success: true, output: 'Complete response' },
+          timestamp: new Date(),
+        },
       });
 
       try {
@@ -258,7 +272,7 @@ describe('AgentExecutor', () => {
   describe('decideNextAction', () => {
     it('should return RESPOND when no LLM provider', async () => {
       const context = stateManager.createContext('agent-1', 'session-1', 'Hello');
-      const action = await (executor as any).decideNextAction(context);
+      const { action } = await (executor as any).decideNextAction(context);
 
       expect(action.type).toBe(AgentActionType.RESPOND);
       expect(action.response).toBe('No LLM provider configured');
@@ -289,7 +303,7 @@ describe('AgentExecutor', () => {
       );
 
       const context = stateManager.createContext('agent-1', 'session-1', 'Hello');
-      const action = await (executorWithLLM as any).decideNextAction(context);
+      const { action } = await (executorWithLLM as any).decideNextAction(context);
 
       expect(action.type).toBe(AgentActionType.USE_TOOL);
       expect(action.toolName).toBe('test-tool');
@@ -312,13 +326,14 @@ describe('AgentExecutor', () => {
       );
 
       const context = stateManager.createContext('agent-1', 'session-1', 'Hello');
-      const action = await (executorWithLLM as any).decideNextAction(context);
+      const { action } = await (executorWithLLM as any).decideNextAction(context);
 
       expect(action.type).toBe(AgentActionType.RESPOND);
       expect(action.response).toBe('Hello response');
     });
 
-    it('should handle LLM errors gracefully', async () => {
+    it('should throw AgentError when LLM errors', async () => {
+      const { AgentError: AgentErrorClass } = await import('../../src/errors/agent.error');
       const mockLLMProvider: LLMProvider = {
         chat: jest.fn().mockRejectedValue(new Error('LLM error')),
       } as any;
@@ -333,10 +348,7 @@ describe('AgentExecutor', () => {
       );
 
       const context = stateManager.createContext('agent-1', 'session-1', 'Hello');
-      const action = await (executorWithLLM as any).decideNextAction(context);
-
-      expect(action.type).toBe(AgentActionType.RESPOND);
-      expect(action.response).toContain('error');
+      await expect((executorWithLLM as any).decideNextAction(context)).rejects.toThrow(AgentErrorClass);
     });
   });
 
@@ -427,9 +439,11 @@ describe('AgentExecutor', () => {
 
       const originalDecideNextAction = (executor as any).decideNextAction;
       (executor as any).decideNextAction = jest.fn().mockResolvedValue({
-        type: AgentActionType.USE_TOOL,
-        toolName: 'test-tool',
-        toolInput: {},
+        action: {
+          type: AgentActionType.USE_TOOL,
+          toolName: 'test-tool',
+          toolInput: {},
+        },
       });
 
       const originalExecuteTool = (executor as any).executeTool;
@@ -439,7 +453,7 @@ describe('AgentExecutor', () => {
       });
 
       try {
-        const step = await (executor as any).executeStep(context, 1);
+        const { step } = await (executor as any).executeStep(context, 1);
         expect(step.state).toBe(AgentState.USING_TOOL);
         expect(step.result).toBeDefined();
       } catch {
@@ -455,12 +469,14 @@ describe('AgentExecutor', () => {
 
       const originalDecideNextAction = (executor as any).decideNextAction;
       (executor as any).decideNextAction = jest.fn().mockResolvedValue({
-        type: AgentActionType.ASK_USER,
-        question: 'What do you need?',
+        action: {
+          type: AgentActionType.ASK_USER,
+          question: 'What do you need?',
+        },
       });
 
       try {
-        const step = await (executor as any).executeStep(context, 1);
+        const { step } = await (executor as any).executeStep(context, 1);
         expect(step.state).toBe(AgentState.WAITING_FOR_INPUT);
         expect(eventEmitter).toHaveBeenCalledWith(
           AgentEventType.USER_INPUT_REQUESTED,
@@ -481,7 +497,7 @@ describe('AgentExecutor', () => {
       (executor as any).decideNextAction = jest.fn().mockRejectedValue(new Error('Step error'));
 
       try {
-        const step = await (executor as any).executeStep(context, 1);
+        const { step } = await (executor as any).executeStep(context, 1);
         expect(step.state).toBe(AgentState.FAILED);
         expect(step.error).toBeDefined();
         expect(eventEmitter).toHaveBeenCalledWith(

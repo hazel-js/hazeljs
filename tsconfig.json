@@ -67,6 +67,9 @@
       "path": "./packages/config"
     },
     {
+      "path": "./packages/feature-toggle"
+    },
+    {
       "path": "./packages/cron"
     },
     {

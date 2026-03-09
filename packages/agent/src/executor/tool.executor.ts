@@ -14,13 +14,22 @@ import {
 import { AgentEventType } from '../types/event.types';
 import type { IGuardrailsService } from '../types/agent.types';
 
+/** Resolver for event-driven approval: resolve(true) = approved, resolve(false) = rejected/expired */
+interface PendingApprovalResolver {
+  resolve: (approved: boolean) => void;
+  timeoutId?: NodeJS.Timeout;
+}
+
 /**
  * Tool Executor
  * Handles tool execution with approval and retry logic
  */
 export class ToolExecutor {
   private pendingApprovals: Map<string, ToolApprovalRequest> = new Map();
+  private approvalResolvers: Map<string, PendingApprovalResolver> = new Map();
   private executionContexts: Map<string, ToolExecutionContext> = new Map();
+
+  private static readonly DEFAULT_APPROVAL_TTL_MS = 300_000;
 
   constructor(
     private eventEmitter?: (type: AgentEventType, data: unknown) => void,
@@ -85,13 +94,14 @@ export class ToolExecutor {
       }
 
       if (tool.requiresApproval) {
-        const approved = await this.requestApproval(tool, input, agentId, executionId);
+        const { promise, requestId } = this.requestApproval(tool, input, agentId, executionId);
+        const approved = await promise;
 
         if (!approved) {
           context.status = ToolExecutionStatus.REJECTED;
 
           this.emitEvent(AgentEventType.TOOL_APPROVAL_DENIED, {
-            requestId: executionId,
+            requestId,
             toolName: tool.name,
             input,
           });
@@ -105,7 +115,7 @@ export class ToolExecutor {
 
         context.status = ToolExecutionStatus.APPROVED;
         this.emitEvent(AgentEventType.TOOL_APPROVAL_GRANTED, {
-          requestId: executionId,
+          requestId,
           toolName: tool.name,
           input,
         });
@@ -217,15 +227,17 @@ export class ToolExecutor {
   }
 
   /**
-   * Request approval for tool execution
+   * Request approval for tool execution (event-driven: resolves when approve/reject/expire is called).
+   * Returns { promise, requestId } so callers can emit events with the correct requestId.
    */
-  private async requestApproval(
+  private requestApproval(
     tool: ToolMetadata,
     input: Record<string, unknown>,
     agentId: string,
     executionId: string
-  ): Promise<boolean> {
+  ): { promise: Promise<boolean>; requestId: string } {
     const requestId = randomUUID();
+    const expiresAt = new Date(Date.now() + ToolExecutor.DEFAULT_APPROVAL_TTL_MS);
 
     const request: ToolApprovalRequest = {
       requestId,
@@ -234,7 +246,8 @@ export class ToolExecutor {
       agentId,
       input,
       requestedAt: new Date(),
-      expiresAt: new Date(Date.now() + 300000),
+      expiresAt,
+      status: 'pending',
     };
 
     this.pendingApprovals.set(requestId, request);
@@ -245,62 +258,53 @@ export class ToolExecutor {
       input,
     });
 
-    return new Promise((resolve) => {
-      const checkInterval = setInterval(() => {
+    const promise = new Promise<boolean>((resolve) => {
+      const timeoutId = setTimeout(() => {
         const req = this.pendingApprovals.get(requestId);
-
-        if (!req) {
-          // Request was removed unexpectedly
-          clearInterval(checkInterval);
-          resolve(false);
-          return;
-        }
-
-        // Check if approved
-        if ((req as ToolApprovalRequest & { status?: string }).status === 'approved') {
+        if (req && req.status === 'pending') {
+          req.status = 'expired';
           this.pendingApprovals.delete(requestId);
-          clearInterval(checkInterval);
-          resolve(true);
-          return;
-        }
-
-        // Check if rejected
-        if ((req as ToolApprovalRequest & { status?: string }).status === 'rejected') {
-          this.pendingApprovals.delete(requestId);
-          clearInterval(checkInterval);
-          resolve(false);
-          return;
-        }
-
-        // Check if expired
-        if (req.expiresAt && req.expiresAt < new Date()) {
-          this.pendingApprovals.delete(requestId);
-          clearInterval(checkInterval);
+          this.approvalResolvers.delete(requestId);
           resolve(false);
         }
-      }, 1000);
+      }, ToolExecutor.DEFAULT_APPROVAL_TTL_MS);
+
+      this.approvalResolvers.set(requestId, { resolve, timeoutId });
     });
+
+    return { promise, requestId };
   }
 
   /**
-   * Approve a tool execution
+   * Approve a tool execution (event-driven: resolves the pending Promise immediately).
    */
   approveExecution(requestId: string, approvedBy: string): void {
     const request = this.pendingApprovals.get(requestId);
-    if (request) {
-      (request as ToolApprovalRequest & { status?: string; approvedBy?: string }).status =
-        'approved';
-      (request as ToolApprovalRequest & { approvedBy?: string }).approvedBy = approvedBy;
+    const resolver = this.approvalResolvers.get(requestId);
+    if (request && request.status === 'pending' && resolver) {
+      request.status = 'approved';
+      request.approvedBy = approvedBy;
+      request.approvedAt = new Date();
+      if (resolver.timeoutId) clearTimeout(resolver.timeoutId);
+      this.approvalResolvers.delete(requestId);
+      this.pendingApprovals.delete(requestId);
+      resolver.resolve(true);
     }
   }
 
   /**
-   * Reject a tool execution
+   * Reject a tool execution (event-driven: resolves the pending Promise immediately).
    */
   rejectExecution(requestId: string): void {
     const request = this.pendingApprovals.get(requestId);
-    if (request) {
-      (request as ToolApprovalRequest & { status?: string }).status = 'rejected';
+    const resolver = this.approvalResolvers.get(requestId);
+    if (request && request.status === 'pending' && resolver) {
+      request.status = 'rejected';
+      request.rejectedAt = new Date();
+      if (resolver.timeoutId) clearTimeout(resolver.timeoutId);
+      this.approvalResolvers.delete(requestId);
+      this.pendingApprovals.delete(requestId);
+      resolver.resolve(false);
     }
   }
 

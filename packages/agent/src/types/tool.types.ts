@@ -83,6 +83,11 @@ export interface ToolExecutionResult {
 }
 
 /**
+ * Tool approval request status
+ */
+export type ToolApprovalStatus = 'pending' | 'approved' | 'rejected' | 'expired';
+
+/**
  * Tool approval request
  */
 export interface ToolApprovalRequest {
@@ -95,6 +100,13 @@ export interface ToolApprovalRequest {
   requestedAt: Date;
   expiresAt?: Date;
   metadata?: Record<string, unknown>;
+  /** Set when approval flow completes. */
+  status: ToolApprovalStatus;
+  /** Set when status is 'approved'. */
+  approvedBy?: string;
+  approvedAt?: Date;
+  /** Set when status is 'rejected'. */
+  rejectedAt?: Date;
 }
 
 /**

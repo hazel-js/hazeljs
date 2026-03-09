@@ -52,6 +52,15 @@ export interface LLMChatResponse {
 }
 
 /**
+ * Chunk yielded by streamChat (e.g. delta content)
+ */
+export interface LLMStreamChunk {
+  content?: string;
+  done?: boolean;
+  usage?: { promptTokens?: number; completionTokens?: number; totalTokens?: number };
+}
+
+/**
  * LLM Provider Interface
  * All LLM providers must implement this interface
  */
@@ -60,6 +69,11 @@ export interface LLMProvider {
    * Send a chat completion request
    */
   chat(request: LLMChatRequest): Promise<LLMChatResponse>;
+
+  /**
+   * Optional: Stream chat completion. If implemented, used when options.streaming is true.
+   */
+  streamChat?(request: LLMChatRequest): AsyncIterable<LLMStreamChunk>;
 
   /**
    * Optional: Check if the provider is available

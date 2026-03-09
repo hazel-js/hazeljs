@@ -8,6 +8,7 @@ export * from './types/tool.types';
 export * from './types/event.types';
 export * from './types/llm.types';
 export * from './types/rag.types';
+export * from './errors/agent.error';
 
 export * from './decorators/agent.decorator';
 export * from './decorators/tool.decorator';

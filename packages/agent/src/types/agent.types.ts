@@ -160,11 +160,16 @@ export interface AgentExecutionOptions {
   sessionId?: string;
   userId?: string;
   maxSteps?: number;
+  /** Execution timeout in ms. Enforced in single-agent run when set. */
   timeout?: number;
+  /** Optional abort signal to cancel execution. */
+  signal?: AbortSignal;
   enableMemory?: boolean;
   enableRAG?: boolean;
   initialContext?: Record<string, unknown>;
   metadata?: Record<string, unknown>;
+  /** When true and LLM supports streamChat, tokens are streamed for final response. */
+  streaming?: boolean;
 }
 
 /**
@@ -181,3 +186,11 @@ export interface AgentExecutionResult {
   duration: number;
   completedAt: Date;
 }
+
+/**
+ * Chunk yielded by executeStream()
+ */
+export type AgentStreamChunk =
+  | { type: 'step'; step: AgentStep }
+  | { type: 'token'; content: string }
+  | { type: 'done'; result: AgentExecutionResult };

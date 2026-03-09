@@ -6,6 +6,7 @@
 import { Service, Inject, HazelModule } from '@hazeljs/core';
 import { AgentRuntime, AgentRuntimeConfig } from './runtime/agent.runtime';
 import { AgentEventType } from './types/event.types';
+import type { AgentContext, AgentExecutionResult, AgentStreamChunk } from './types/agent.types';
 
 type NewableFunction = new (...args: unknown[]) => unknown;
 
@@ -76,16 +77,42 @@ export class AgentService {
     agentName: string,
     input: string,
     options?: Record<string, unknown>
-  ): Promise<unknown> {
-    return this.runtime.execute(agentName, input, options);
+  ): Promise<AgentExecutionResult> {
+    return this.runtime.execute(
+      agentName,
+      input,
+      options as Parameters<AgentRuntime['execute']>[2]
+    );
   }
 
-  async resume(executionId: string, input?: string): Promise<unknown> {
+  async resume(executionId: string, input?: string): Promise<AgentExecutionResult> {
     return this.runtime.resume(executionId, input);
   }
 
-  getContext(executionId: string): unknown {
+  async getContext(executionId: string): Promise<AgentContext | undefined> {
     return this.runtime.getContext(executionId);
+  }
+
+  /**
+   * Execute with streaming; yields step and token chunks when LLM supports streamChat.
+   */
+  async *executeStream(
+    agentName: string,
+    input: string,
+    options?: Record<string, unknown>
+  ): AsyncGenerator<AgentStreamChunk> {
+    yield* this.runtime.executeStream(
+      agentName,
+      input,
+      options as Parameters<AgentRuntime['executeStream']>[2]
+    );
+  }
+
+  /**
+   * Cancel an in-flight execution by executionId.
+   */
+  cancel(executionId: string): void {
+    this.runtime.cancel(executionId);
   }
 
   on(type: AgentEventType, handler: (event: unknown) => void): void {

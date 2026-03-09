@@ -17,7 +17,9 @@ import {
   AgentContext,
   AgentState,
   IGuardrailsService,
+  AgentStreamChunk,
 } from '../types/agent.types';
+import { AgentError } from '../errors/agent.error';
 import { AgentEventType } from '../types/event.types';
 import { LLMProvider } from '../types/llm.types';
 import { RAGService } from '../types/rag.types';
@@ -71,6 +73,8 @@ export class AgentRuntime {
   private retryHandler?: RetryHandler;
   private circuitBreaker?: CircuitBreaker;
   private healthChecker: HealthChecker;
+  /** AbortControllers for in-flight executions, keyed by executionId (for cancel()). */
+  private executionAbortControllers: Map<string, AbortController> = new Map();
 
   constructor(config: AgentRuntimeConfig = {}) {
     this.config = {
@@ -230,7 +234,7 @@ export class AgentRuntime {
       const allowed = await this.rateLimiter.waitForToken(5000);
       if (!allowed) {
         this.logger.error('Rate limit exceeded', undefined, { agentName });
-        throw new Error('Rate limit exceeded - too many requests');
+        throw AgentError.rateLimitExceeded();
       }
     }
 
@@ -321,13 +325,29 @@ export class AgentRuntime {
         Object.assign(context.memory.workingMemory, options.initialContext);
       }
 
-      const result = await this.agentExecutor.execute(context, maxSteps);
-
-      if (this.config.memoryManager) {
-        await this.contextBuilder.persistToMemory(context);
+      let controller: AbortController | undefined;
+      if (!options.signal) {
+        controller = new AbortController();
+        this.executionAbortControllers.set(context.executionId, controller);
       }
+      const signal = options.signal ?? controller?.signal;
+      const timeoutMs = options.timeout ?? this.config.defaultTimeout;
 
-      return result;
+      try {
+        const result = await this.agentExecutor.execute(context, maxSteps, {
+          timeoutMs,
+          signal,
+          streaming: options.streaming,
+        });
+        if (this.config.memoryManager) {
+          await this.contextBuilder.persistToMemory(context);
+        }
+        return result;
+      } finally {
+        if (controller) {
+          this.executionAbortControllers.delete(context.executionId);
+        }
+      }
     };
 
     // Apply circuit breaker if enabled
@@ -352,6 +372,69 @@ export class AgentRuntime {
   }
 
   /**
+   * Execute an agent and stream step/token chunks. Use when options.streaming is true and LLM supports streamChat.
+   */
+  async *executeStream(
+    agentName: string,
+    input: string,
+    options: AgentExecutionOptions = {}
+  ): AsyncGenerator<AgentStreamChunk> {
+    const agent = this.agentRegistry.getAgent(agentName);
+    if (!agent) {
+      throw new Error(`Agent ${agentName} not found`);
+    }
+
+    const sessionId = options.sessionId || this.generateSessionId();
+    const maxSteps = options.maxSteps || this.config.defaultMaxSteps || 10;
+
+    const contextResult = this.stateManager.createContext(
+      agentName,
+      sessionId,
+      input,
+      options.userId,
+      {
+        ...options.metadata,
+        systemPrompt: agent.systemPrompt,
+        agentDescription: agent.description,
+      }
+    );
+    const context = contextResult instanceof Promise ? await contextResult : contextResult;
+
+    if (options.enableMemory !== false && this.config.memoryManager) {
+      await this.contextBuilder.buildWithMemory(context);
+    }
+    if (options.enableRAG !== false && this.config.ragService) {
+      await this.contextBuilder.buildWithRAG(context, this.config.ragService, agent.ragTopK || 5);
+    }
+    if (options.initialContext) {
+      Object.assign(context.memory.workingMemory, options.initialContext);
+    }
+
+    let controller: AbortController | undefined;
+    if (!options.signal) {
+      controller = new AbortController();
+      this.executionAbortControllers.set(context.executionId, controller);
+    }
+    const signal = options.signal ?? controller?.signal;
+    const timeoutMs = options.timeout ?? this.config.defaultTimeout;
+
+    try {
+      yield* this.agentExecutor.executeStream(context, maxSteps, {
+        timeoutMs,
+        signal,
+        streaming: options.streaming,
+      });
+    } finally {
+      if (controller) {
+        this.executionAbortControllers.delete(context.executionId);
+      }
+      if (this.config.memoryManager) {
+        await this.contextBuilder.persistToMemory(context);
+      }
+    }
+  }
+
+  /**
    * Resume a paused execution
    */
   async resume(executionId: string, input?: string): Promise<AgentExecutionResult> {
@@ -364,6 +447,19 @@ export class AgentRuntime {
   async getContext(executionId: string): Promise<AgentContext | undefined> {
     const result = this.stateManager.getContext(executionId);
     return result instanceof Promise ? await result : result;
+  }
+
+  /**
+   * Cancel an in-flight execution by executionId.
+   * The running execute() will throw AgentError (CANCELLED) when it next checks the signal.
+   */
+  cancel(executionId: string): void {
+    const controller = this.executionAbortControllers.get(executionId);
+    if (controller) {
+      controller.abort();
+      this.executionAbortControllers.delete(executionId);
+      this.logger.info('Execution cancelled', { executionId });
+    }
   }
 
   /**

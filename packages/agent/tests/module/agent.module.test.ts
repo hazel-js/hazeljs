@@ -66,8 +66,7 @@ describe('AgentService', () => {
 
   describe('getContext', () => {
     it('should get execution context', async () => {
-      const contextPromise = service.getContext('non-existent');
-      const context = contextPromise instanceof Promise ? await contextPromise : contextPromise;
+      const context = await service.getContext('non-existent');
       expect(context).toBeUndefined();
     });
   });
