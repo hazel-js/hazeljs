@@ -406,7 +406,8 @@ export class Router {
           res.status(httpCode).end();
         }
       } catch (error) {
-        logger.error('Request handler error:', error);
+        const message = error instanceof Error ? error.message : String(error);
+        logger.error(`Request handler error: ${message}`);
         if (error instanceof ValidationError) {
           const errorResponse = error.toJSON();
           logger.error('Validation error response:', errorResponse);
@@ -421,14 +422,8 @@ export class Router {
             message: error.message,
           });
         } else {
-          // Log unhandled errors with full context
-          logger.error('Unhandled error:', {
-            error: error instanceof Error ? error.message : String(error),
-            stack: error instanceof Error ? error.stack : undefined,
-            requestId,
-            method: req.method,
-            url: req.url,
-          });
+          // Log unhandled errors (message only; no stack to keep logs clean)
+          logger.error(`Unhandled error: ${message}`, { requestId, method: req.method, url: req.url });
           res.status(500).json({
             statusCode: 500,
             message: process.env.NODE_ENV === 'production' 
