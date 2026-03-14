@@ -19,7 +19,7 @@ The HazelJS team takes security bugs seriously. We appreciate your efforts to re
 
 Instead, please report them via email to:
 
-**info@hazeljs.com**
+**info@hazeljs.ai**
 
 You should receive a response within 48 hours. If for some reason you do not, please follow up via email to ensure we received your original message.
 
@@ -280,7 +280,7 @@ We currently do not have a bug bounty program, but we deeply appreciate security
 ## Contact
 
 For security concerns, contact:
-- Email: info@hazeljs.com
+- Email: info@hazeljs.ai
 - PGP Key: (Coming soon)
 
 For general questions:
