@@ -69,6 +69,7 @@ export {
   type RepositoryOptions,
   type OnModuleInit,
   type OnModuleDestroy,
+  type OnApplicationBootstrap,
   type ExecutionContext,
   type CanActivate,
   type RetryDecoratorOptions,

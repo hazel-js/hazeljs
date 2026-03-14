@@ -395,7 +395,7 @@ export class HazelApp {
         }
       });
 
-      this.server.listen(port, () => {
+      this.server.listen(port, async () => {
         const localIp = getLocalIp();
         logger.info(chalk.green.bold('Server listening on:'));
         logger.info('');
@@ -411,10 +411,13 @@ export class HazelApp {
         logger.info(chalk.gray(`  → /ready   - Readiness probe`));
         logger.info(chalk.gray(`  → /startup - Startup probe`));
         logger.info('');
-        
+
+        // Run OnApplicationBootstrap handlers (e.g. attach WebSocket gateways)
+        await this.runApplicationBootstrap();
+
         // Setup graceful shutdown
         this.shutdownManager.setupSignalHandlers();
-        
+
         // Register server shutdown handler
         this.shutdownManager.registerHandler({
           name: 'http-server',
@@ -425,7 +428,7 @@ export class HazelApp {
           },
           timeout: 10000,
         });
-        
+
         resolve();
       });
     });
@@ -490,6 +493,25 @@ export class HazelApp {
           message: 'Internal Server Error',
         })
       );
+    }
+  }
+
+  /**
+   * Run all OnApplicationBootstrap handlers (e.g. attach WebSocket gateways).
+   * Called automatically after the HTTP server starts listening.
+   */
+  private async runApplicationBootstrap(): Promise<void> {
+    const tokens = this.container.getTokens();
+    for (const token of tokens) {
+      if (typeof token !== 'function' || !token.prototype) continue;
+      try {
+        const instance = this.container.resolve(token);
+        if (instance && typeof (instance as { onApplicationBootstrap?: unknown }).onApplicationBootstrap === 'function') {
+          await (instance as { onApplicationBootstrap: (app: HazelApp) => void | Promise<void> }).onApplicationBootstrap(this);
+        }
+      } catch {
+        // Skip request-scoped or unresolvable providers
+      }
     }
   }
 
@@ -565,6 +587,14 @@ export class HazelApp {
 
   getContainer(): Container {
     return this.container;
+  }
+
+  /**
+   * Get the HTTP server (available after listen() resolves).
+   * Use to attach WebSocket gateways (e.g. RealtimeGateway.attachToServer(server)).
+   */
+  getServer(): Server | null {
+    return this.server;
   }
 
   getRouter(): Router {

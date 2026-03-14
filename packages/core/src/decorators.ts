@@ -73,6 +73,14 @@ export interface OnModuleDestroy {
   onModuleDestroy(): Promise<void>;
 }
 
+/**
+ * Lifecycle hook invoked after the HTTP server is listening.
+ * Use to attach WebSocket gateways, connect to external services, etc.
+ */
+export interface OnApplicationBootstrap {
+  onApplicationBootstrap(app: HazelApp): Promise<void> | void;
+}
+
 export interface ExecutionContext {
   switchToHttp(): {
     getRequest(): unknown;

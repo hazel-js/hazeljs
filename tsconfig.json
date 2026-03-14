@@ -118,6 +118,7 @@
       "path": "./packages/audit"
     },
     { "path": "./packages/flow"},
-    { "path": "./packages/flow-runtime"}
+    { "path": "./packages/flow-runtime"},
+    { "path": "./packages/realtime"}
   ]
 }
