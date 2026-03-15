@@ -47,6 +47,72 @@ export function getModuleMetadata(target: object): ModuleOptions | undefined {
   return undefined;
 }
 
+/** Module ref for inspection (name + whether it's a dynamic module) */
+export interface ModuleRef {
+  moduleType: Type<unknown> | DynamicModule;
+  name: string;
+  isDynamic: boolean;
+}
+
+/**
+ * Recursively collect all modules from the module tree.
+ * Useful for inspection, debugging, and tooling.
+ */
+export function collectModulesFromModule(
+  moduleRef: Type<unknown> | DynamicModule,
+  visited = new Set<Type<unknown> | DynamicModule>()
+): ModuleRef[] {
+  if (visited.has(moduleRef as Type<unknown>)) return [];
+  visited.add(moduleRef as Type<unknown>);
+
+  const metadata = getModuleMetadata(moduleRef as object);
+  const moduleType = (moduleRef as DynamicModule).module ?? moduleRef;
+  const name = (moduleType as { name?: string })?.name ?? 'DynamicModule';
+  const isDynamic = !!(moduleRef as DynamicModule).module;
+
+  const results: ModuleRef[] = [{ moduleType: moduleRef, name, isDynamic }];
+
+  if (metadata?.imports) {
+    for (const imported of metadata.imports) {
+      results.push(...collectModulesFromModule(imported as Type<unknown>, visited));
+    }
+  }
+
+  return results;
+}
+
+/**
+ * Recursively collect all controller classes from the module tree.
+ * Used by HazelApp for route registration and by inspector/tooling.
+ */
+export function collectControllersFromModule(
+  moduleRef: Type<unknown> | DynamicModule,
+  visited = new Set<Type<unknown> | DynamicModule>()
+): Type<unknown>[] {
+  if (visited.has(moduleRef as Type<unknown>)) return [];
+  visited.add(moduleRef as Type<unknown>);
+
+  const metadata = getModuleMetadata(moduleRef as object) || {};
+  const controllers: Type<unknown>[] = [];
+
+  if (metadata.imports) {
+    for (const imported of metadata.imports) {
+      controllers.push(...collectControllersFromModule(imported as Type<unknown>, visited));
+    }
+  }
+
+  if (metadata.controllers) {
+    for (const ctrl of metadata.controllers) {
+      const cls = (ctrl as { useClass?: Type<unknown> }).useClass ?? ctrl;
+      if (cls && typeof cls === 'function') {
+        controllers.push(cls as Type<unknown>);
+      }
+    }
+  }
+
+  return controllers;
+}
+
 export class HazelModuleInstance {
   private container: Container;
 

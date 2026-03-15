@@ -1,5 +1,5 @@
 import { Type } from './types';
-import { HazelModuleInstance, getModuleMetadata, type DynamicModule } from './hazel-module';
+import { HazelModuleInstance, collectControllersFromModule } from './hazel-module';
 import { Container } from './container';
 import { Router } from './router';
 import { RequestParser } from './request-parser';
@@ -14,8 +14,6 @@ import { ShutdownManager } from './shutdown';
 import { HealthCheckManager, BuiltInHealthChecks } from './health';
 import { TimeoutMiddleware, TimeoutOptions } from './middleware/timeout.middleware';
 import { CorsOptions } from './middleware/cors.middleware';
-
-const MODULE_METADATA_KEY = 'hazel:module';
 
 /** Early HTTP handler (e.g. for GraphQL) - receives raw req/res before body parsing */
 export type EarlyHttpHandler = (
@@ -113,13 +111,9 @@ export class HazelApp {
 
   private initialize(): void {
     logger.debug('Initializing module:', { moduleName: this.moduleType.name });
-    const metadata = Reflect.getMetadata(MODULE_METADATA_KEY, this.moduleType) || {};
-    logger.debug('Module metadata:', metadata);
 
-    // Collect all controllers from the module tree (root + imports, recursively)
-    const allControllers = this.collectControllers(this.moduleType);
+    const allControllers = collectControllersFromModule(this.moduleType);
 
-    // Register all controllers with the router
     if (allControllers.length > 0) {
       logger.debug('Registering controllers:', {
         controllers: allControllers.map((c: Type<unknown>) => c.name),
@@ -130,29 +124,9 @@ export class HazelApp {
     }
   }
 
-  private collectControllers(
-    moduleRef: Type<unknown> | DynamicModule,
-    visited = new Set<Type<unknown> | DynamicModule>()
-  ): Type<unknown>[] {
-    if (visited.has(moduleRef)) return [];
-    visited.add(moduleRef);
-
-    const metadata = getModuleMetadata(moduleRef as object) || {};
-    const controllers: Type<unknown>[] = [];
-
-    // Collect from imported modules first
-    if (metadata.imports) {
-      for (const importedModule of metadata.imports) {
-        controllers.push(...this.collectControllers(importedModule, visited));
-      }
-    }
-
-    // Then collect from this module
-    if (metadata.controllers) {
-      controllers.push(...metadata.controllers);
-    }
-
-    return controllers;
+  /** Get the root module type (for inspector and tooling) */
+  getModuleType(): Type<unknown> {
+    return this.moduleType;
   }
 
   register<T>(component: Type<T>): HazelApp {

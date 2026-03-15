@@ -1,4 +1,11 @@
-import { HazelModule, Module, getModuleMetadata, HazelModuleInstance } from '../hazel-module';
+import {
+  HazelModule,
+  Module,
+  getModuleMetadata,
+  HazelModuleInstance,
+  collectControllersFromModule,
+  collectModulesFromModule,
+} from '../hazel-module';
 import 'reflect-metadata';
 
 // Mock logger
@@ -97,6 +104,92 @@ describe('HazelModule', () => {
 
       expect(metadata).toBeDefined();
       expect(metadata?.providers).toEqual([]);
+    });
+  });
+
+  describe('collectControllersFromModule', () => {
+    it('should collect controllers from a module', () => {
+      class Ctrl1 {}
+      class Ctrl2 {}
+
+      @HazelModule({
+        controllers: [Ctrl1, Ctrl2],
+      })
+      class TestModule {}
+
+      const controllers = collectControllersFromModule(TestModule);
+
+      expect(controllers).toHaveLength(2);
+      expect(controllers).toContain(Ctrl1);
+      expect(controllers).toContain(Ctrl2);
+    });
+
+    it('should collect controllers from imported modules', () => {
+      class ChildCtrl {}
+
+      @HazelModule({
+        controllers: [ChildCtrl],
+      })
+      class ChildModule {}
+
+      @HazelModule({
+        imports: [ChildModule],
+        controllers: [],
+      })
+      class ParentModule {}
+
+      const controllers = collectControllersFromModule(ParentModule);
+
+      expect(controllers).toHaveLength(1);
+      expect(controllers).toContain(ChildCtrl);
+    });
+
+    it('should avoid duplicates when same module is imported multiple times', () => {
+      class Ctrl {}
+
+      @HazelModule({
+        controllers: [Ctrl],
+      })
+      class ChildModule {}
+
+      @HazelModule({
+        imports: [ChildModule, ChildModule],
+        controllers: [],
+      })
+      class ParentModule {}
+
+      const controllers = collectControllersFromModule(ParentModule);
+
+      expect(controllers).toHaveLength(1);
+      expect(controllers).toContain(Ctrl);
+    });
+  });
+
+  describe('collectModulesFromModule', () => {
+    it('should collect modules from the tree', () => {
+      @HazelModule({})
+      class ChildModule {}
+
+      @HazelModule({
+        imports: [ChildModule],
+      })
+      class ParentModule {}
+
+      const modules = collectModulesFromModule(ParentModule);
+
+      expect(modules).toHaveLength(2);
+      expect(modules.map((m) => m.name)).toContain('ParentModule');
+      expect(modules.map((m) => m.name)).toContain('ChildModule');
+    });
+
+    it('should mark dynamic modules', () => {
+      @HazelModule({})
+      class StaticModule {}
+
+      const modules = collectModulesFromModule(StaticModule);
+
+      expect(modules).toHaveLength(1);
+      expect(modules[0].isDynamic).toBe(false);
     });
   });
 
