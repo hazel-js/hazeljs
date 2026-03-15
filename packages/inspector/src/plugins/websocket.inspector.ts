@@ -4,7 +4,11 @@
  */
 
 import 'reflect-metadata';
-import type { InspectorContext, InspectorEntry, WebSocketInspectorEntry, HazelInspectorPlugin } from '../contracts/types';
+import type {
+  InspectorEntry,
+  WebSocketInspectorEntry,
+  HazelInspectorPlugin,
+} from '../contracts/types';
 
 function createId(...parts: string[]): string {
   return parts.filter(Boolean).join(':');
@@ -25,15 +29,15 @@ function tryGetWebSocketModule(): {
 export const websocketInspector: HazelInspectorPlugin = {
   name: 'websocket',
   version: '1.0.0',
-  supports: (context) => {
+  supports: (_context) => {
     return tryGetWebSocketModule() !== null;
   },
-  inspect: async (context): Promise<InspectorEntry[]> => {
+  inspect: async (_context): Promise<InspectorEntry[]> => {
     const wsMod = tryGetWebSocketModule();
     if (!wsMod) return [];
 
     const entries: WebSocketInspectorEntry[] = [];
-    const tokens = (context.container as { getTokens?: () => unknown[] }).getTokens?.() ?? [];
+    const tokens = (_context.container as { getTokens?: () => unknown[] }).getTokens?.() ?? [];
 
     for (const token of tokens) {
       if (typeof token !== 'function') continue;
@@ -56,7 +60,9 @@ export const websocketInspector: HazelInspectorPlugin = {
       // Scan for @Subscribe handlers
       const proto = token.prototype;
       if (proto) {
-        const methods = Object.getOwnPropertyNames(proto).filter((n) => n !== 'constructor' && typeof proto[n] === 'function');
+        const methods = Object.getOwnPropertyNames(proto).filter(
+          (n) => n !== 'constructor' && typeof proto[n] === 'function'
+        );
         for (const methodName of methods) {
           const event = wsMod.getSubscribeMetadata(proto, methodName);
           if (event) {

@@ -26,6 +26,7 @@ import { dataInspector } from './plugins/data.inspector';
 import { serverlessInspector } from './plugins/serverless.inspector';
 import { mlInspector } from './plugins/ml.inspector';
 import { mergeInspectorConfig, shouldExposeInspector } from './config/inspector.config';
+import { InspectorRuntime } from './runtime/inspector-runtime';
 
 /** Eagerly resolves InspectorBootstrap so the early handler gets registered */
 @Injectable()
@@ -55,7 +56,7 @@ export const InspectorModule = {
 
     const inspectorProvider = {
       provide: 'InspectorBootstrap',
-      useFactory: () => {
+      useFactory: (): boolean | null => {
         if (!shouldExposeInspector(config)) return null;
 
         const container = Container.getInstance();
@@ -96,7 +97,9 @@ export const InspectorModule = {
   },
 };
 
-function readJsonBody(req: { on: (e: string, cb: (chunk?: Buffer) => void) => void }): Promise<Record<string, unknown>> {
+function readJsonBody(req: {
+  on: (e: string, cb: (chunk?: Buffer) => void) => void;
+}): Promise<Record<string, unknown>> {
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = [];
     req.on('data', (chunk?: Buffer) => chunk && chunks.push(chunk));
@@ -116,10 +119,21 @@ function createInspectorHandler(
   service: HazelInspectorService,
   config: ReturnType<typeof mergeInspectorConfig>,
   app: { getContainer: () => unknown; getRouter: () => unknown; getModuleType: () => unknown }
-) {
+): (
+  req: { url?: string; method?: string; on?: (e: string, cb: (chunk?: Buffer) => void) => void },
+  res: {
+    writeHead: (c: number, h?: Record<string, string>) => void;
+    setHeader: (k: string, v: string) => void;
+    end: (b?: string) => void;
+  }
+) => Promise<void> {
   return async (
     req: { url?: string; method?: string; on?: (e: string, cb: (chunk?: Buffer) => void) => void },
-    res: { writeHead: (c: number, h?: Record<string, string>) => void; setHeader: (k: string, v: string) => void; end: (b?: string) => void }
+    res: {
+      writeHead: (c: number, h?: Record<string, string>) => void;
+      setHeader: (k: string, v: string) => void;
+      end: (b?: string) => void;
+    }
   ) => {
     const url = req.url?.split('?')[0] ?? '/';
     const basePath = config.inspectorBasePath ?? '/__hazel';
@@ -140,9 +154,15 @@ function createInspectorHandler(
 
       if (config.exposeUi && pathSeg.startsWith('/assets/')) {
         const assetPath = path.join(__dirname, '..', 'ui-dist', pathSeg);
-        if (fs.existsSync(assetPath) && assetPath.startsWith(path.join(__dirname, '..', 'ui-dist'))) {
+        if (
+          fs.existsSync(assetPath) &&
+          assetPath.startsWith(path.join(__dirname, '..', 'ui-dist'))
+        ) {
           const ext = path.extname(assetPath);
-          const types: Record<string, string> = { '.js': 'application/javascript', '.css': 'text/css' };
+          const types: Record<string, string> = {
+            '.js': 'application/javascript',
+            '.css': 'text/css',
+          };
           res.setHeader('Content-Type', types[ext] ?? 'application/octet-stream');
           res.writeHead(200);
           res.end(fs.readFileSync(assetPath, 'utf-8'));
@@ -182,7 +202,10 @@ function createInspectorHandler(
         return;
       }
 
-      if ((pathSeg === '/prompts/render' || pathSeg === '/prompts/render/') && req.method === 'POST') {
+      if (
+        (pathSeg === '/prompts/render' || pathSeg === '/prompts/render/') &&
+        req.method === 'POST'
+      ) {
         const body = await readJsonBody(req as Parameters<typeof readJsonBody>[0]);
         const key = body?.key;
         const variables = body?.variables ?? {};
@@ -219,8 +242,29 @@ function createInspectorHandler(
       const snapshot = {
         ...rawSnapshot,
         entries: Array.isArray(rawSnapshot?.entries) ? rawSnapshot.entries : [],
-        summary: rawSnapshot?.summary && typeof rawSnapshot.summary === 'object' ? rawSnapshot.summary : {},
+        summary:
+          rawSnapshot?.summary && typeof rawSnapshot.summary === 'object'
+            ? rawSnapshot.summary
+            : {},
       };
+
+      // Augment with gateway, discovery, resilience overview when available
+      const overview: Record<string, unknown> = {};
+      try {
+        const [gatewayData, discoveryData, resilienceData] = await Promise.all([
+          InspectorRuntime.getGatewayOverview(),
+          InspectorRuntime.getDiscoveryOverview(),
+          InspectorRuntime.getResilienceOverview(),
+        ]);
+        if (gatewayData) overview.gateway = gatewayData;
+        if (discoveryData) overview.discovery = discoveryData;
+        if (resilienceData) overview.resilience = resilienceData;
+      } catch {
+        // ignore
+      }
+      if (Object.keys(overview).length > 0) {
+        (snapshot as Record<string, unknown>).overview = overview;
+      }
 
       if (pathSeg === '/inspect' || pathSeg === '/inspect/') {
         res.writeHead(200);
@@ -277,13 +321,19 @@ function createInspectorHandler(
         try {
           const { AgentService } = require('@hazeljs/agent');
           const container = app.getContainer() as { resolve: (t: unknown) => unknown };
-          const svc = container.resolve(AgentService) as { execute?: (name: string, input: string) => Promise<unknown> };
+          const svc = container.resolve(AgentService) as {
+            execute?: (name: string, input: string) => Promise<unknown>;
+          };
           if (!svc?.execute) {
             res.writeHead(503);
-            res.end(JSON.stringify({ error: 'AgentService not found. Ensure AgentModule is configured.' }));
+            res.end(
+              JSON.stringify({ error: 'AgentService not found. Ensure AgentModule is configured.' })
+            );
             return;
           }
-          const result = await (svc as { execute: (name: string, input: string) => Promise<unknown> }).execute(agentName, input);
+          const result = await (
+            svc as { execute: (name: string, input: string) => Promise<unknown> }
+          ).execute(agentName, input);
           res.writeHead(200);
           res.end(JSON.stringify({ result }));
         } catch (err) {
@@ -300,19 +350,35 @@ function createInspectorHandler(
       }
       const ragSearchMatch = pathSeg.match(/^\/rag\/([^/]+)\/search\/?$/);
       if (ragSearchMatch && req.method === 'GET') {
-        const pipeline = decodeURIComponent(ragSearchMatch[1]);
-        const q = (req.url?.includes('?') ? new URL(req.url, 'http://localhost').searchParams.get('q') : null) ?? '';
+        const _pipeline = decodeURIComponent(ragSearchMatch[1]);
+        const q =
+          (req.url?.includes('?')
+            ? new URL(req.url, 'http://localhost').searchParams.get('q')
+            : null) ?? '';
         try {
-          const ragMod = require('@hazeljs/rag');
-          const container = app.getContainer() as { resolve: (t: unknown) => unknown; getTokens?: () => unknown[] };
+          const _ragMod = require('@hazeljs/rag');
+          const container = app.getContainer() as {
+            resolve: (t: unknown) => unknown;
+            getTokens?: () => unknown[];
+          };
           const tokensRaw = container.getTokens?.() ?? [];
           const tokens = Array.isArray(tokensRaw) ? tokensRaw : [];
-          let ragService: { search?: (query: string, opts?: { topK?: number }) => Promise<{ content?: string; score?: number; metadata?: unknown }[]> } | null = null;
+          let ragService: {
+            search?: (
+              query: string,
+              opts?: { topK?: number }
+            ) => Promise<{ content?: string; score?: number; metadata?: unknown }[]>;
+          } | null = null;
           for (const token of tokens) {
             try {
               const svc = container.resolve(token);
               if (svc && typeof (svc as { search?: unknown }).search === 'function') {
-                ragService = svc as { search: (query: string, opts?: { topK?: number }) => Promise<{ content?: string; score?: number; metadata?: unknown }[]> };
+                ragService = svc as {
+                  search: (
+                    query: string,
+                    opts?: { topK?: number }
+                  ) => Promise<{ content?: string; score?: number; metadata?: unknown }[]>;
+                };
                 break;
               }
             } catch {
@@ -321,7 +387,11 @@ function createInspectorHandler(
           }
           if (!ragService?.search) {
             res.writeHead(503);
-            res.end(JSON.stringify({ error: 'RAG service not found. Ensure a RAG pipeline is registered.' }));
+            res.end(
+              JSON.stringify({
+                error: 'RAG service not found. Ensure a RAG pipeline is registered.',
+              })
+            );
             return;
           }
           const results = await ragService.search(q, { topK: 10 });
@@ -339,7 +409,10 @@ function createInspectorHandler(
         res.end(JSON.stringify({ entries: prompts }));
         return;
       }
-      if ((pathSeg === '/prompts/render' || pathSeg === '/prompts/render/') && req.method === 'POST') {
+      if (
+        (pathSeg === '/prompts/render' || pathSeg === '/prompts/render/') &&
+        req.method === 'POST'
+      ) {
         const body = await readJsonBody(req as Parameters<typeof readJsonBody>[0]);
         const key = body?.key;
         const variables = body?.variables ?? {};
@@ -362,7 +435,9 @@ function createInspectorHandler(
         return;
       }
       if (pathSeg === '/aifunctions' || pathSeg === '/aifunctions/') {
-        const aifunctions = snapshot.entries.filter((e: { kind?: string }) => e.kind === 'aifunction');
+        const aifunctions = snapshot.entries.filter(
+          (e: { kind?: string }) => e.kind === 'aifunction'
+        );
         res.writeHead(200);
         res.end(JSON.stringify({ entries: aifunctions }));
         return;
@@ -404,7 +479,9 @@ function createInspectorHandler(
         return;
       }
       if (pathSeg === '/serverless' || pathSeg === '/serverless/') {
-        const serverless = snapshot.entries.filter((e: { kind?: string }) => e.kind === 'serverless');
+        const serverless = snapshot.entries.filter(
+          (e: { kind?: string }) => e.kind === 'serverless'
+        );
         res.writeHead(200);
         res.end(JSON.stringify({ entries: serverless }));
         return;
@@ -421,7 +498,28 @@ function createInspectorHandler(
           JSON.stringify({
             inspector: true,
             summary: snapshot.summary,
-            endpoints: ['/inspect', '/routes', '/modules', '/providers', '/jobs', '/queues', '/websocket', '/agents', '/rag', '/prompts', '/aifunctions', '/events', '/graphql', '/grpc', '/kafka', '/flows', '/data', '/serverless', '/ml', '/stats'],
+            endpoints: [
+              '/inspect',
+              '/routes',
+              '/modules',
+              '/providers',
+              '/jobs',
+              '/queues',
+              '/websocket',
+              '/agents',
+              '/rag',
+              '/prompts',
+              '/aifunctions',
+              '/events',
+              '/graphql',
+              '/grpc',
+              '/kafka',
+              '/flows',
+              '/data',
+              '/serverless',
+              '/ml',
+              '/stats',
+            ],
           })
         );
         return;

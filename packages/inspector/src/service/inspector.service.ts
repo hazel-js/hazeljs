@@ -153,9 +153,25 @@ export class HazelInspectorService {
 
   getGroupedSnapshot(entries: InspectorEntry[]): GroupedSnapshot {
     const knownKinds = [
-      'route', 'decorator', 'module', 'provider', 'websocket', 'cron', 'queue',
-      'agent', 'rag', 'prompt', 'aifunction', 'event', 'graphql', 'grpc', 'kafka',
-      'flow', 'data', 'serverless', 'ml',
+      'route',
+      'decorator',
+      'module',
+      'provider',
+      'websocket',
+      'cron',
+      'queue',
+      'agent',
+      'rag',
+      'prompt',
+      'aifunction',
+      'event',
+      'graphql',
+      'grpc',
+      'kafka',
+      'flow',
+      'data',
+      'serverless',
+      'ml',
     ];
     return {
       routes: this.getRoutes(entries),

@@ -4,12 +4,7 @@
  */
 
 import 'reflect-metadata';
-import type {
-  InspectorContext,
-  InspectorEntry,
-  KafkaInspectorEntry,
-  HazelInspectorPlugin,
-} from '../contracts/types';
+import type { InspectorEntry, KafkaInspectorEntry, HazelInspectorPlugin } from '../contracts/types';
 
 function createId(...parts: string[]): string {
   return parts.filter(Boolean).join(':');

@@ -3,6 +3,12 @@
  */
 
 export { InspectorModule } from './inspector.module';
+export { InspectorRuntime } from './runtime/inspector-runtime';
+export type {
+  GatewayOverview,
+  DiscoveryOverview,
+  ResilienceOverview,
+} from './runtime/inspector-runtime';
 export { HazelInspectorRegistry, type HazelInspectorPlugin } from './registry/registry';
 export { HazelInspectorService } from './service/inspector.service';
 export type {

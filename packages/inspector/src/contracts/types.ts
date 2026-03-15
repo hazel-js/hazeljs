@@ -258,7 +258,30 @@ export type InspectorEntry =
   | DataPipelineInspectorEntry
   | ServerlessInspectorEntry
   | MLModelInspectorEntry
-  | (InspectorEntryBase & { kind: Exclude<InspectorEntryKind, 'route' | 'decorator' | 'module' | 'provider' | 'websocket' | 'cron' | 'queue' | 'agent' | 'rag' | 'prompt' | 'aifunction' | 'event' | 'graphql' | 'grpc' | 'kafka' | 'flow' | 'data' | 'serverless' | 'ml'> });
+  | (InspectorEntryBase & {
+      kind: Exclude<
+        InspectorEntryKind,
+        | 'route'
+        | 'decorator'
+        | 'module'
+        | 'provider'
+        | 'websocket'
+        | 'cron'
+        | 'queue'
+        | 'agent'
+        | 'rag'
+        | 'prompt'
+        | 'aifunction'
+        | 'event'
+        | 'graphql'
+        | 'grpc'
+        | 'kafka'
+        | 'flow'
+        | 'data'
+        | 'serverless'
+        | 'ml'
+      >;
+    });
 
 /** Full inspector snapshot */
 export interface InspectorSnapshot {

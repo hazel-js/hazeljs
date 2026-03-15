@@ -5,19 +5,21 @@
 
 import 'reflect-metadata';
 import type {
-  InspectorContext,
   InspectorEntry,
   DataPipelineInspectorEntry,
   HazelInspectorPlugin,
 } from '../contracts/types';
 
-const PIPELINE_METADATA_KEY = 'hazel:data:pipeline';
+const _PIPELINE_METADATA_KEY = 'hazel:data:pipeline';
 
 function createId(...parts: string[]): string {
   return parts.filter(Boolean).join(':');
 }
 
-function tryGetDataModule(): { hasPipelineMetadata: (t: object) => boolean; getPipelineMetadata: (t: object) => { name?: string } | undefined } | null {
+function tryGetDataModule(): {
+  hasPipelineMetadata: (t: object) => boolean;
+  getPipelineMetadata: (t: object) => { name?: string } | undefined;
+} | null {
   try {
     return require('@hazeljs/data');
   } catch {

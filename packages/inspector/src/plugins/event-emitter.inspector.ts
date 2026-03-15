@@ -4,18 +4,17 @@
  */
 
 import 'reflect-metadata';
-import type {
-  InspectorContext,
-  InspectorEntry,
-  EventInspectorEntry,
-  HazelInspectorPlugin,
-} from '../contracts/types';
+import type { InspectorEntry, EventInspectorEntry, HazelInspectorPlugin } from '../contracts/types';
 
 function createId(...parts: string[]): string {
   return parts.filter(Boolean).join(':');
 }
 
-function tryGetEventEmitterModule(): { getOnEventMetadata: (t: object) => Array<{ event: string | symbol | string[]; methodName: string }> } | null {
+function tryGetEventEmitterModule(): {
+  getOnEventMetadata: (
+    t: object
+  ) => Array<{ event: string | symbol | string[]; methodName: string }>;
+} | null {
   try {
     return require('@hazeljs/event-emitter');
   } catch {

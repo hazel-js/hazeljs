@@ -5,7 +5,6 @@
 
 import 'reflect-metadata';
 import type {
-  InspectorContext,
   InspectorEntry,
   MLModelInspectorEntry,
   HazelInspectorPlugin,

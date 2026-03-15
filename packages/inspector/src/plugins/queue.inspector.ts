@@ -4,14 +4,16 @@
  */
 
 import 'reflect-metadata';
-import type { InspectorContext, InspectorEntry, QueueInspectorEntry, HazelInspectorPlugin } from '../contracts/types';
+import type { InspectorEntry, QueueInspectorEntry, HazelInspectorPlugin } from '../contracts/types';
 
 function createId(...parts: string[]): string {
   return parts.filter(Boolean).join(':');
 }
 
 function tryGetQueueModule(): {
-  getQueueProcessorMetadata: (t: object) => Array<{ queueName: string; methodName: string; options?: { name?: string } }>;
+  getQueueProcessorMetadata: (
+    t: object
+  ) => Array<{ queueName: string; methodName: string; options?: { name?: string } }>;
 } | null {
   try {
     return require('@hazeljs/queue');
@@ -23,15 +25,15 @@ function tryGetQueueModule(): {
 export const queueInspector: HazelInspectorPlugin = {
   name: 'queue',
   version: '1.0.0',
-  supports: (context) => {
+  supports: (_context) => {
     return tryGetQueueModule() !== null;
   },
-  inspect: async (context): Promise<InspectorEntry[]> => {
+  inspect: async (_context): Promise<InspectorEntry[]> => {
     const queueMod = tryGetQueueModule();
     if (!queueMod) return [];
 
     const entries: QueueInspectorEntry[] = [];
-    const tokens = (context.container as { getTokens?: () => unknown[] }).getTokens?.() ?? [];
+    const tokens = (_context.container as { getTokens?: () => unknown[] }).getTokens?.() ?? [];
 
     for (const token of tokens) {
       if (typeof token !== 'function') continue;

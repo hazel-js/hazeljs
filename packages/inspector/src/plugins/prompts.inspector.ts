@@ -4,7 +4,6 @@
  */
 
 import type {
-  InspectorContext,
   InspectorEntry,
   PromptInspectorEntry,
   HazelInspectorPlugin,

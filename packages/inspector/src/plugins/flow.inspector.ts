@@ -4,12 +4,7 @@
  */
 
 import 'reflect-metadata';
-import type {
-  InspectorContext,
-  InspectorEntry,
-  FlowInspectorEntry,
-  HazelInspectorPlugin,
-} from '../contracts/types';
+import type { InspectorEntry, FlowInspectorEntry, HazelInspectorPlugin } from '../contracts/types';
 
 function createId(...parts: string[]): string {
   return parts.filter(Boolean).join(':');
@@ -101,7 +96,9 @@ export const flowInspector: HazelInspectorPlugin = {
             const nodeId = nodeMeta.id ?? methodName;
             const nodeEdgesRaw = Reflect.getMetadata(EDGE_METADATA_KEY, proto, methodName);
             const nodeEdges = Array.isArray(nodeEdgesRaw) ? nodeEdgesRaw : [];
-            const edgesStr = nodeEdges.map((e: { from: string; to: string }) => `${e.from}→${e.to}`).join(', ');
+            const edgesStr = nodeEdges
+              .map((e: { from: string; to: string }) => `${e.from}→${e.to}`)
+              .join(', ');
             const isEntry = Reflect.getMetadata(ENTRY_METADATA_KEY, proto, methodName);
 
             entries.push({

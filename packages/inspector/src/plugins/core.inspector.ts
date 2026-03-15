@@ -10,7 +10,6 @@ import {
   getModuleMetadata,
 } from '@hazeljs/core';
 import type {
-  InspectorContext,
   InspectorEntry,
   RouteInspectorEntry,
   ModuleInspectorEntry,
@@ -102,16 +101,19 @@ export const coreInspector: HazelInspectorPlugin = {
         dynamicModule: isDynamic,
         imports: (metadata?.imports?.map((m: unknown) =>
           m && typeof m === 'object' && 'module' in m
-            ? (m as { module: { name?: string } }).module?.name ?? 'DynamicModule'
-            : (m as { name?: string })?.name ?? 'DynamicModule'
+            ? ((m as { module: { name?: string } }).module?.name ?? 'DynamicModule')
+            : ((m as { name?: string })?.name ?? 'DynamicModule')
         ) ?? []) as string[],
         providers: (metadata?.providers?.map((p: unknown) =>
           p && typeof p === 'object' && 'provide' in p
             ? String((p as { provide: unknown }).provide)
-            : (p as { name?: string })?.name ?? 'Unknown'
+            : ((p as { name?: string })?.name ?? 'Unknown')
         ) ?? []) as string[],
-        controllers: metadata?.controllers?.map((c: unknown) => (c as { name?: string })?.name ?? 'Unknown') ?? [],
-        exports: metadata?.exports?.map((e: unknown) => (e as { name?: string })?.name ?? String(e)) ?? [],
+        controllers:
+          metadata?.controllers?.map((c: unknown) => (c as { name?: string })?.name ?? 'Unknown') ??
+          [],
+        exports:
+          metadata?.exports?.map((e: unknown) => (e as { name?: string })?.name ?? String(e)) ?? [],
       };
       entries.push(moduleEntry);
     }
@@ -124,12 +126,20 @@ export const coreInspector: HazelInspectorPlugin = {
 
       if (providerList) {
         for (const provider of providerList) {
-          if (provider && typeof provider === 'object' && ('provide' in provider || 'token' in provider)) {
-            const p = provider as { provide?: unknown; token?: unknown; useClass?: { name?: string } };
+          if (
+            provider &&
+            typeof provider === 'object' &&
+            ('provide' in provider || 'token' in provider)
+          ) {
+            const p = provider as {
+              provide?: unknown;
+              token?: unknown;
+              useClass?: { name?: string };
+            };
             const token = p.token ?? p.provide;
             const displayName: string =
               typeof token === 'function'
-                ? (token as { name?: string }).name ?? 'Unknown'
+                ? ((token as { name?: string }).name ?? 'Unknown')
                 : typeof token === 'symbol'
                   ? token.toString()
                   : String(token);
@@ -137,8 +147,9 @@ export const coreInspector: HazelInspectorPlugin = {
             if (!seenProviders.has(providerName)) {
               seenProviders.add(providerName);
               const scope =
-                (typeof token === 'function' ? Reflect.getMetadata('hazel:scope', token) : undefined) ??
-                'singleton';
+                (typeof token === 'function'
+                  ? Reflect.getMetadata('hazel:scope', token)
+                  : undefined) ?? 'singleton';
               entries.push({
                 id: createId('provider', providerName),
                 kind: 'provider',
@@ -154,8 +165,7 @@ export const coreInspector: HazelInspectorPlugin = {
             const name = cls?.name ?? 'Unknown';
             if (!seenProviders.has(name)) {
               seenProviders.add(name);
-              const scope =
-                Reflect.getMetadata('hazel:scope', provider as object) ?? 'singleton';
+              const scope = Reflect.getMetadata('hazel:scope', provider as object) ?? 'singleton';
               entries.push({
                 id: createId('provider', name),
                 kind: 'provider',
@@ -184,7 +194,8 @@ export const coreInspector: HazelInspectorPlugin = {
               : typeof token === 'string'
                 ? token
                 : null;
-        if (!displayName || seenProviders.has(displayName) || displayName.includes('Object')) continue;
+        if (!displayName || seenProviders.has(displayName) || displayName.includes('Object'))
+          continue;
         seenProviders.add(displayName);
         const scope =
           (typeof token === 'function' ? Reflect.getMetadata('hazel:scope', token) : undefined) ??

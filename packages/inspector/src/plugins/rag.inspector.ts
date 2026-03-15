@@ -4,19 +4,18 @@
  */
 
 import 'reflect-metadata';
-import type {
-  InspectorContext,
-  InspectorEntry,
-  RagInspectorEntry,
-  HazelInspectorPlugin,
-} from '../contracts/types';
+import type { InspectorEntry, RagInspectorEntry, HazelInspectorPlugin } from '../contracts/types';
 import { collectModulesFromModule } from '@hazeljs/core';
 
 function createId(...parts: string[]): string {
   return parts.filter(Boolean).join(':');
 }
 
-function tryGetRagModule(): { getRAGConfig: (t: object) => { vectorDB?: string; embeddingModel?: string; chunkSize?: number } | undefined } | null {
+function tryGetRagModule(): {
+  getRAGConfig: (
+    t: object
+  ) => { vectorDB?: string; embeddingModel?: string; chunkSize?: number } | undefined;
+} | null {
   try {
     return require('@hazeljs/rag');
   } catch {

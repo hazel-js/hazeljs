@@ -4,18 +4,17 @@
  */
 
 import 'reflect-metadata';
-import type {
-  InspectorContext,
-  InspectorEntry,
-  GrpcInspectorEntry,
-  HazelInspectorPlugin,
-} from '../contracts/types';
+import type { InspectorEntry, GrpcInspectorEntry, HazelInspectorPlugin } from '../contracts/types';
 
 function createId(...parts: string[]): string {
   return parts.filter(Boolean).join(':');
 }
 
-function tryGetGrpcModule(): { getGrpcMethodMetadata: (t: object) => Array<{ service: string; method: string; methodName: string }> } | null {
+function tryGetGrpcModule(): {
+  getGrpcMethodMetadata: (
+    t: object
+  ) => Array<{ service: string; method: string; methodName: string }>;
+} | null {
   try {
     return require('@hazeljs/grpc');
   } catch {

@@ -5,20 +5,23 @@
 
 import 'reflect-metadata';
 import type {
-  InspectorContext,
   InspectorEntry,
   ServerlessInspectorEntry,
   HazelInspectorPlugin,
 } from '../contracts/types';
 import { collectControllersFromModule } from '@hazeljs/core';
 
-const SERVERLESS_METADATA_KEY = 'hazel:serverless';
+const _SERVERLESS_METADATA_KEY = 'hazel:serverless';
 
 function createId(...parts: string[]): string {
   return parts.filter(Boolean).join(':');
 }
 
-function tryGetServerlessModule(): { getServerlessMetadata: (t: object) => { memory?: number; timeout?: number; runtime?: string } | undefined } | null {
+function tryGetServerlessModule(): {
+  getServerlessMetadata: (
+    t: object
+  ) => { memory?: number; timeout?: number; runtime?: string } | undefined;
+} | null {
   try {
     return require('@hazeljs/serverless');
   } catch {

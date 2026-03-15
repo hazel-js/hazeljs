@@ -5,12 +5,12 @@ const BASE = (() => {
 
 const APP_BASE = window.location.origin;
 
-let snapshot: { entries: unknown[]; summary?: Record<string, number> } | null = null;
+let snapshot: { entries: unknown[]; summary?: Record<string, number>; overview?: Record<string, unknown> } | null = null;
 let fetchInFlight = false;
 let memoryHistory: { heap: number; rss: number; t: number }[] = [];
 const MEMORY_HISTORY_MAX = 60;
 
-async function fetchSnapshot(refresh = false): Promise<{ entries: unknown[]; summary?: Record<string, number> }> {
+async function fetchSnapshot(refresh = false): Promise<{ entries: unknown[]; summary?: Record<string, number>; overview?: Record<string, unknown> }> {
   const url = `${BASE}/inspect${refresh ? '?refresh=1' : ''}`;
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Failed to fetch: ${res.status}`);
@@ -46,6 +46,30 @@ async function fetchHealth(endpoint: string): Promise<{ status: string; ok: bool
 function setLoading(loading: boolean) {
   const el = document.getElementById('loading-overlay');
   if (el) el.classList.toggle('hidden', !loading);
+}
+
+function updateStatusBar(health: { health?: { ok: boolean }; ready?: { ok: boolean }; startup?: { ok: boolean } }, stats: { uptimeSeconds?: number }) {
+  const dot = document.getElementById('status-dot');
+  const text = document.getElementById('status-text');
+  const uptime = document.getElementById('status-uptime');
+  if (!dot || !text || !uptime) return;
+  const allOk = health?.health?.ok && health?.ready?.ok && health?.startup?.ok;
+  const anyOk = health?.health?.ok || health?.ready?.ok || health?.startup?.ok;
+  dot.className = 'status-dot' + (allOk ? ' healthy' : anyOk ? '' : ' unhealthy');
+  text.textContent = allOk ? 'All systems operational' : anyOk ? 'Degraded' : 'Offline';
+  uptime.textContent = stats.uptimeSeconds != null ? `Uptime: ${formatUptime(stats.uptimeSeconds)}` : '';
+}
+
+function updateQuickStats(summary: Record<string, number>) {
+  const el = document.getElementById('quick-stats');
+  if (!el) return;
+  const s = summary && typeof summary === 'object' ? summary : {};
+  const parts: string[] = [];
+  if ((s.route ?? 0) > 0) parts.push(`<span class="quick-stat"><strong>${s.route}</strong> routes</span>`);
+  if ((s.module ?? 0) > 0) parts.push(`<span class="quick-stat"><strong>${s.module}</strong> modules</span>`);
+  if ((s.provider ?? 0) > 0) parts.push(`<span class="quick-stat"><strong>${s.provider}</strong> providers</span>`);
+  if ((s.cron ?? 0) > 0) parts.push(`<span class="quick-stat"><strong>${s.cron}</strong> jobs</span>`);
+  el.innerHTML = parts.join('') || '<span class="quick-stat muted">No data</span>';
 }
 
 function showOfflineBanner(show: boolean) {
@@ -210,6 +234,64 @@ function renderEnv(env: { nodeVersion?: string; nodeEnv?: string; inspectorVersi
   `;
 }
 
+function renderGatewayOverview(data: { routes: string[]; totalRoutes: number; metrics?: { totalCalls: number; successCalls: number; failureCalls: number; failureRate: number; averageResponseTime: number } }) {
+  const el = document.getElementById('overview-gateway');
+  if (!el) return;
+  const routes = Array.isArray(data.routes) ? data.routes : [];
+  const m = data.metrics;
+  el.innerHTML = `
+    <h3 class="overview-block-title">Gateway</h3>
+    <div class="overview-gateway-stats">
+      <div class="overview-stat"><span class="stat-value">${routes.length}</span><span class="stat-label">Routes</span></div>
+      ${m ? `
+      <div class="overview-stat"><span class="stat-value">${m.totalCalls}</span><span class="stat-label">Total Calls</span></div>
+      <div class="overview-stat"><span class="stat-value">${m.successCalls}</span><span class="stat-label">Success</span></div>
+      <div class="overview-stat"><span class="stat-value">${(m.failureRate ?? 0).toFixed(1)}%</span><span class="stat-label">Failure Rate</span></div>
+      <div class="overview-stat"><span class="stat-value">${(m.averageResponseTime ?? 0).toFixed(0)}ms</span><span class="stat-label">Avg Latency</span></div>
+      ` : ''}
+    </div>
+    ${routes.length ? `<div class="overview-gateway-routes"><strong>Routes:</strong> ${routes.slice(0, 8).map((r) => `<code>${escapeHtml(r)}</code>`).join(', ')}${routes.length > 8 ? ` <span class="muted">+${routes.length - 8} more</span>` : ''}</div>` : ''}
+  `;
+  el.classList.remove('hidden');
+}
+
+function renderDiscoveryOverview(data: { services: string[]; totalServices: number; totalInstances: number; instancesByService: Record<string, number> }) {
+  const el = document.getElementById('overview-discovery');
+  if (!el) return;
+  const services = Array.isArray(data.services) ? data.services : [];
+  const bySvc = data.instancesByService && typeof data.instancesByService === 'object' ? data.instancesByService : {};
+  const instancesList = services
+    .slice(0, 6)
+    .map((s) => `<span class="discovery-service"><code>${escapeHtml(s)}</code>: ${bySvc[s] ?? 0} instance(s)</span>`)
+    .join(', ');
+  el.innerHTML = `
+    <h3 class="overview-block-title">Discovery</h3>
+    <div class="overview-discovery-stats">
+      <div class="overview-stat"><span class="stat-value">${data.totalServices ?? 0}</span><span class="stat-label">Services</span></div>
+      <div class="overview-stat"><span class="stat-value">${data.totalInstances ?? 0}</span><span class="stat-label">Connected Instances</span></div>
+    </div>
+    ${services.length ? `<div class="overview-discovery-services">${instancesList}${services.length > 6 ? ` <span class="muted">+${services.length - 6} more</span>` : ''}</div>` : '<p class="muted">No services registered</p>'}
+  `;
+  el.classList.remove('hidden');
+}
+
+function renderResilienceOverview(data: { circuitBreakers: number; circuitBreakerStates: { name: string; state: string }[] }) {
+  const el = document.getElementById('overview-resilience');
+  if (!el) return;
+  const states = Array.isArray(data.circuitBreakerStates) ? data.circuitBreakerStates : [];
+  const statesList = states
+    .map((s) => `<span class="cb-state ${(s.state || '').toLowerCase()}"><code>${escapeHtml(s.name)}</code>: ${escapeHtml(s.state)}</span>`)
+    .join(', ');
+  el.innerHTML = `
+    <h3 class="overview-block-title">Resilience</h3>
+    <div class="overview-resilience-stats">
+      <div class="overview-stat"><span class="stat-value">${data.circuitBreakers ?? 0}</span><span class="stat-label">Circuit Breakers</span></div>
+    </div>
+    ${states.length ? `<div class="overview-resilience-states">${statesList}</div>` : ''}
+  `;
+  el.classList.remove('hidden');
+}
+
 function renderHealth(health: { health?: { status: string; ok: boolean }; ready?: { status: string; ok: boolean }; startup?: { status: string; ok: boolean } }) {
   const el = document.getElementById('health-cards');
   if (!el) return;
@@ -292,6 +374,117 @@ function renderMemoryChart() {
 const tableSortState: Record<string, { col: string; dir: 'asc' | 'desc' }> = {};
 const PAGE_SIZE = 50;
 
+interface FlowGraph {
+  nodes: string[];
+  edges: { from: string; to: string }[];
+  entryNode: string;
+}
+
+function buildFlowGraphs(flows: Record<string, unknown>[]): Map<string, FlowGraph> {
+  const byFlowId = new Map<string, Record<string, unknown>[]>();
+  for (const f of flows) {
+    const fid = String((f as Record<string, string>).flowId ?? '');
+    if (!byFlowId.has(fid)) byFlowId.set(fid, []);
+    byFlowId.get(fid)!.push(f);
+  }
+  const byFlow = new Map<string, FlowGraph>();
+  for (const [fid, entries] of byFlowId) {
+    const flowDef = entries.find((e) => !!String((e as Record<string, string>).nodes ?? '').trim());
+    const f = (flowDef ?? entries[0]) as Record<string, string>;
+    const nodesStr = f.nodes ?? '';
+    let nodes = nodesStr
+      .split(/[,]/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+    if (nodes.length === 0) {
+      nodes = entries
+        .map((e) => (e as Record<string, string>).nodeName)
+        .filter((n): n is string => !!n);
+    }
+    const edgesStr = (f.edges ?? '').toString();
+    const edgeParts = edgesStr.split(/[;,]/).map((s) => s.trim()).filter(Boolean);
+    const edges = edgeParts
+      .map((p) => {
+        const idx = p.indexOf('→');
+        if (idx < 0) return null;
+        const from = p.slice(0, idx).trim();
+        const to = p.slice(idx + 1).trim();
+        return from && to ? { from, to } : null;
+      })
+      .filter((e): e is { from: string; to: string } => e != null);
+    for (const e of entries) {
+      const nodeEdges = ((e as Record<string, string>).edges ?? '').toString().split(/[;,]/);
+      for (const p of nodeEdges) {
+        const idx = p.indexOf('→');
+        if (idx >= 0) {
+          const from = p.slice(0, idx).trim();
+          const to = p.slice(idx + 1).trim();
+          if (from && to && !edges.some((x) => x.from === from && x.to === to)) {
+            edges.push({ from, to });
+          }
+        }
+      }
+    }
+    const entryNode = String(f.entryNode ?? nodes[0] ?? '');
+    byFlow.set(fid, { nodes: [...new Set(nodes)], edges, entryNode });
+  }
+  return byFlow;
+}
+
+const FLOW_NODE_W = 48;
+const FLOW_NODE_H = 24;
+const FLOW_PAD_X = 6;
+const FLOW_PAD_Y = 4;
+const FLOW_MARGIN = 6;
+
+function layoutFlowGraph(graph: FlowGraph): Map<string, { x: number; y: number }> {
+  const pos = new Map<string, { x: number; y: number }>();
+  const levels = new Map<string, number>();
+  const entry = graph.entryNode || graph.nodes[0];
+  if (!entry) return pos;
+  levels.set(entry, 0);
+  const queue = [entry];
+  const visited = new Set<string>([entry]);
+  while (queue.length > 0) {
+    const u = queue.shift()!;
+    const l = levels.get(u) ?? 0;
+    for (const e of graph.edges) {
+      if (e.from !== u) continue;
+      if (!visited.has(e.to)) {
+        visited.add(e.to);
+        levels.set(e.to, l + 1);
+        queue.push(e.to);
+      } else {
+        const existing = levels.get(e.to) ?? 0;
+        if (l + 1 > existing) levels.set(e.to, l + 1);
+      }
+    }
+  }
+  const maxLevel = Math.max(0, ...Array.from(levels.values()));
+  for (const n of graph.nodes) {
+    if (!levels.has(n)) levels.set(n, maxLevel + 1);
+  }
+  const byLevel = new Map<number, string[]>();
+  for (const [n, l] of levels) {
+    if (!byLevel.has(l)) byLevel.set(l, []);
+    byLevel.get(l)!.push(n);
+  }
+  const levelW = FLOW_NODE_W + FLOW_PAD_X;
+  const levelH = FLOW_NODE_H + FLOW_PAD_Y;
+  const sortedLevels = [...byLevel.keys()].sort((a, b) => a - b);
+  for (let li = 0; li < sortedLevels.length; li++) {
+    const level = sortedLevels[li];
+    const nodesAtLevel = byLevel.get(level) ?? [];
+    for (let ni = 0; ni < nodesAtLevel.length; ni++) {
+      const n = nodesAtLevel[ni];
+      const x = FLOW_MARGIN + li * levelW;
+      const y = FLOW_MARGIN + ni * levelH;
+      pos.set(n, { x, y });
+    }
+  }
+  return pos;
+}
+
 function renderFlowDiagram(flows: Record<string, unknown>[]) {
   const el = document.getElementById('flow-diagram');
   const flowList = Array.isArray(flows) ? flows : [];
@@ -299,21 +492,48 @@ function renderFlowDiagram(flows: Record<string, unknown>[]) {
     el?.classList.add('hidden');
     return;
   }
-  const byFlow = new Map<string, Record<string, unknown>[]>();
-  for (const f of flowList) {
-    const fid = String((f as Record<string, string>).flowId ?? '');
-    if (!byFlow.has(fid)) byFlow.set(fid, []);
-    byFlow.get(fid)!.push(f);
+  const graphs = buildFlowGraphs(flowList);
+  if (graphs.size === 0) {
+    el?.classList.add('hidden');
+    return;
   }
+  const nodeW = FLOW_NODE_W;
+  const nodeH = FLOW_NODE_H;
   let html = '';
-  for (const [flowId, nodes] of byFlow) {
-    html += `<div class="flow-group"><strong>${escapeHtml(flowId)}</strong> `;
-    for (const n of nodes) {
-      const name = (n as Record<string, string>).nodeName ?? '?';
-      const isEntry = (n as Record<string, string>).entryNode === name;
-      html += `<span class="flow-node ${isEntry ? 'entry' : ''}">${escapeHtml(name)}</span> `;
+  for (const [flowId, graph] of graphs) {
+    const pos = layoutFlowGraph(graph);
+    if (pos.size === 0) continue;
+    const maxX = Math.max(...Array.from(pos.values()).map((p) => p.x)) + nodeW + FLOW_MARGIN * 2;
+    const maxY = Math.max(...Array.from(pos.values()).map((p) => p.y)) + nodeH + FLOW_MARGIN * 2;
+    const w = Math.max(240, maxX);
+    const h = Math.max(48, maxY);
+    let svg = `<svg class="flow-diagram-svg" viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">`;
+    for (const { from, to } of graph.edges) {
+      const a = pos.get(from);
+      const b = pos.get(to);
+      if (a && b) {
+        const x1 = a.x + nodeW;
+        const y1 = a.y + nodeH / 2;
+        const x2 = b.x;
+        const y2 = b.y + nodeH / 2;
+        const midX = (x1 + x2) / 2;
+        svg += `<path d="M ${x1} ${y1} C ${midX} ${y1} ${midX} ${y2} ${x2} ${y2}" fill="none" stroke="var(--flow-edge)" stroke-width="1" class="flow-edge"/>`;
+        const arrowSize = 4;
+        const ax = x2 - arrowSize * Math.cos(Math.PI / 6);
+        const ay = y2 - arrowSize * Math.sin(Math.PI / 6);
+        const bx = x2 - arrowSize * Math.cos(-Math.PI / 6);
+        const by = y2 - arrowSize * Math.sin(-Math.PI / 6);
+        svg += `<polygon points="${x2},${y2} ${ax},${ay} ${bx},${by}" fill="var(--flow-edge)" class="flow-arrow"/>`;
+      }
     }
-    html += '</div>';
+    for (const [name, p] of pos) {
+      const isEntry = name === graph.entryNode;
+      const cls = isEntry ? 'flow-diagram-node entry' : 'flow-diagram-node';
+      const label = name.length > 10 ? name.slice(0, 8) + '…' : name;
+      svg += `<g class="flow-node-group"><rect class="${cls}" x="${p.x}" y="${p.y}" width="${nodeW}" height="${nodeH}" rx="4"/><text x="${p.x + nodeW / 2}" y="${p.y + nodeH / 2 + 3}" text-anchor="middle" font-size="9" fill="var(--text-primary)" class="flow-node-label">${escapeHtml(label)}</text></g>`;
+    }
+    svg += '</svg>';
+    html += `<div class="flow-diagram-card"><span class="flow-diagram-badge" title="${escapeHtml(flowId)}">${escapeHtml(flowId)}</span><div class="flow-diagram-svg-wrap">${svg}</div></div>`;
   }
   el.innerHTML = html;
   el.classList.remove('hidden');
@@ -683,8 +903,16 @@ async function load(refresh = false) {
     const raw = await fetchSnapshot(refresh);
     const entries = Array.isArray(raw?.entries) ? raw.entries : [];
     const summary = raw?.summary && typeof raw.summary === 'object' ? raw.summary : {};
-    snapshot = { entries, summary };
+    const overview = raw?.overview && typeof raw.overview === 'object' ? raw.overview : {};
+    snapshot = { entries, summary, overview };
     safeRender('overview', () => renderOverview(summary));
+    if (overview.gateway) safeRender('gatewayOverview', () => renderGatewayOverview(overview.gateway as Parameters<typeof renderGatewayOverview>[0]));
+    if (overview.discovery) safeRender('discoveryOverview', () => renderDiscoveryOverview(overview.discovery as Parameters<typeof renderDiscoveryOverview>[0]));
+    if (overview.resilience) safeRender('resilienceOverview', () => renderResilienceOverview(overview.resilience as Parameters<typeof renderResilienceOverview>[0]));
+    ['overview-gateway', 'overview-discovery', 'overview-resilience'].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el && !overview[id.replace('overview-', '')]) el.classList.add('hidden');
+    });
     const [env, health, stats] = await Promise.all([
       fetchEnv(),
       Promise.all([fetchHealth('/health'), fetchHealth('/ready'), fetchHealth('/startup')]).then(([h, r, s]) => ({
@@ -697,6 +925,8 @@ async function load(refresh = false) {
     renderEnv(env);
     renderHealth(health);
     renderRuntime(stats);
+    updateStatusBar(health, stats);
+    updateQuickStats(summary);
 
     const routes = (snapshot.entries as Record<string, unknown>[]).filter((e) => e.kind === 'route');
   const modules = (snapshot.entries as Record<string, unknown>[]).filter((e) => e.kind === 'module');
@@ -785,6 +1015,8 @@ async function load(refresh = false) {
     const isFetchError =
       errStr.includes('Failed to fetch') || errStr.includes('NetworkError') || errStr.includes('Load failed');
     showOfflineBanner(isFetchError);
+    updateStatusBar({ health: { ok: false }, ready: { ok: false }, startup: { ok: false } }, {});
+    updateQuickStats({});
     const container = document.getElementById('summary-cards');
     if (container) {
       const msg = isFetchError ? 'Is the app running?' : 'A rendering error occurred. Check the console for details.';

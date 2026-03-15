@@ -4,12 +4,7 @@
  */
 
 import 'reflect-metadata';
-import type {
-  InspectorContext,
-  InspectorEntry,
-  AgentInspectorEntry,
-  HazelInspectorPlugin,
-} from '../contracts/types';
+import type { InspectorEntry, AgentInspectorEntry, HazelInspectorPlugin } from '../contracts/types';
 
 function createId(...parts: string[]): string {
   return parts.filter(Boolean).join(':');
@@ -17,7 +12,11 @@ function createId(...parts: string[]): string {
 
 function tryGetAgentModule(): {
   isAgent: (t: new (...args: unknown[]) => unknown) => boolean;
-  getAgentMetadata: (t: new (...args: unknown[]) => unknown) => { name?: string; model?: string; tools?: string[] };
+  getAgentMetadata: (t: new (...args: unknown[]) => unknown) => {
+    name?: string;
+    model?: string;
+    tools?: string[];
+  };
   getAgentTools: (t: new (...args: unknown[]) => unknown) => string[];
 } | null {
   try {

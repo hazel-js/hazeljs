@@ -5,7 +5,6 @@
 
 import 'reflect-metadata';
 import type {
-  InspectorContext,
   InspectorEntry,
   GraphQLInspectorEntry,
   HazelInspectorPlugin,
@@ -39,7 +38,10 @@ export const graphqlInspector: HazelInspectorPlugin = {
     const entries: GraphQLInspectorEntry[] = [];
     const controllers = collectControllersFromModule(context.moduleType);
     const tokens = (context.container as { getTokens?: () => unknown[] }).getTokens?.() ?? [];
-    const allClasses = [...controllers, ...tokens.filter((t): t is (new (...args: unknown[]) => object) => typeof t === 'function')];
+    const allClasses = [
+      ...controllers,
+      ...tokens.filter((t): t is new (...args: unknown[]) => object => typeof t === 'function'),
+    ];
 
     for (const ctrl of allClasses) {
       if (typeof ctrl !== 'function') continue;

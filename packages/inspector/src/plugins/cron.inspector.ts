@@ -4,7 +4,7 @@
  */
 
 import 'reflect-metadata';
-import type { InspectorContext, InspectorEntry, CronInspectorEntry, HazelInspectorPlugin } from '../contracts/types';
+import type { InspectorEntry, CronInspectorEntry, HazelInspectorPlugin } from '../contracts/types';
 function createId(...parts: string[]): string {
   return parts.filter(Boolean).join(':');
 }
@@ -23,7 +23,12 @@ function getNextRuns(cronExpression: string, count = 5): string[] {
   }
 }
 
-function tryGetCronModule(): { getCronMetadata: (t: object) => Array<{ methodName: string; options: { name?: string; cronTime?: string; enabled?: boolean } }> } | null {
+function tryGetCronModule(): {
+  getCronMetadata: (t: object) => Array<{
+    methodName: string;
+    options: { name?: string; cronTime?: string; enabled?: boolean };
+  }>;
+} | null {
   try {
     return require('@hazeljs/cron');
   } catch {
@@ -34,15 +39,15 @@ function tryGetCronModule(): { getCronMetadata: (t: object) => Array<{ methodNam
 export const cronInspector: HazelInspectorPlugin = {
   name: 'cron',
   version: '1.0.0',
-  supports: (context) => {
+  supports: (_context) => {
     return tryGetCronModule() !== null;
   },
-  inspect: async (context): Promise<InspectorEntry[]> => {
+  inspect: async (_context): Promise<InspectorEntry[]> => {
     const cronMod = tryGetCronModule();
     if (!cronMod) return [];
 
     const entries: CronInspectorEntry[] = [];
-    const tokensRaw = (context.container as { getTokens?: () => unknown[] }).getTokens?.() ?? [];
+    const tokensRaw = (_context.container as { getTokens?: () => unknown[] }).getTokens?.() ?? [];
     const tokens = Array.isArray(tokensRaw) ? tokensRaw : [];
 
     for (const token of tokens) {
