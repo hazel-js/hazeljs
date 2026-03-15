@@ -88,6 +88,60 @@ bootstrap();
 | 3 config files, manual AI glue | `@AITask` decorator. Done. |
 | Express + DIY structure + bolted-on AI | Decorators, DI, agents — out of the box. |
 
+### Agents — `@Agent` + `@Tool`
+
+```typescript
+import { Agent, Tool } from '@hazeljs/agent';
+
+@Agent({
+  name: 'support-agent',
+  systemPrompt: 'You are a helpful customer support agent.',
+  enableMemory: true,
+  enableRAG: true,
+})
+export class SupportAgent {
+  @Tool({
+    description: 'Look up order by ID',
+    parameters: [{ name: 'orderId', type: 'string', required: true }],
+  })
+  async lookupOrder(input: { orderId: string }) {
+    return { status: 'shipped', trackingNumber: 'TRACK123' };
+  }
+
+  @Tool({
+    description: 'Process a refund',
+    requiresApproval: true,  // human-in-the-loop
+    parameters: [{ name: 'orderId', type: 'string' }, { name: 'amount', type: 'number' }],
+  })
+  async processRefund(input: { orderId: string; amount: number }) {
+    return { success: true, refundId: 'REF123' };
+  }
+}
+```
+
+### RAG — vector search + retrieval
+
+```typescript
+import { RAGPipeline, MemoryVectorStore, OpenAIEmbeddings, RecursiveTextSplitter, DirectoryLoader } from '@hazeljs/rag';
+
+const embeddings = new OpenAIEmbeddings({ apiKey: process.env.OPENAI_API_KEY });
+const rag = new RAGPipeline({
+  vectorStore: new MemoryVectorStore(embeddings),
+  embeddingProvider: embeddings,
+  textSplitter: new RecursiveTextSplitter({ chunkSize: 800, chunkOverlap: 150 }),
+  topK: 5,
+});
+await rag.initialize();
+
+const docs = await new DirectoryLoader({ dirPath: './knowledge-base', recursive: true }).load();
+await rag.addDocuments(docs);
+
+const result = await rag.query('What are the main features?', { topK: 3 });
+console.log(result.answer, result.sources);
+```
+
+Or use **Agentic RAG** for self-improving retrieval: `AgenticRAGService` with query planning, reflection, and adaptive strategies out of the box.
+
 ---
 
 ## Installation
