@@ -12,7 +12,7 @@
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 
 *Stop the glue code. Build AI backends that feel native — not bolted on.*  
-Decorators, DI, agents, RAG — enterprise-grade architecture with a lightweight footprint.
+**AI** · **Agents** · **RAG** · **Flow** · **Prompts** — one cohesive stack.
 
 [Get Started](#quick-start) · [Why HazelJS?](#-why-hazeljs) · [Documentation](#-documentation)
 
@@ -32,12 +32,13 @@ You've built APIs before. You know the drill: wire up routing, configure middlew
 - 🛣️ **Advanced Routing** — Wildcards, optional params, versioning
 - 🎨 **Global Middleware** — Flexible, with exclusions
 
-### AI-Native (yes, really)
-- 🤖 **AI Service** — OpenAI, Anthropic, Gemini, Cohere, Ollama
-- 🧠 **Agent Runtime** — Stateful agents with tools and memory
-- 📚 **RAG System** — Vector search, embeddings, retrieval-augmented generation
-- 💾 **Memory Management** — Persistent conversation memory
-- 🔧 **Tool System** — Function calling with approval workflows
+### AI Stack (what makes HazelJS stand out)
+- 🤖 **[@hazeljs/ai](packages/ai)** — `@AITask` decorator, multi-provider (OpenAI, Anthropic, Gemini, Cohere, Ollama), streaming, caching, type-safe outputs
+- 🧠 **[@hazeljs/agent](packages/agent)** — Stateful agents, `@Tool` + `@Delegate`, AgentGraph, SupervisorAgent, human-in-the-loop
+- 📚 **[@hazeljs/rag](packages/rag)** — Vector search, GraphRAG, 11 document loaders, Agentic RAG, Memory System
+- ⚡ **[@hazeljs/flow](packages/flow)** — Durable workflows: WAIT/resume, idempotency, audit timeline, optional Prisma persistence
+- 🔄 **[@hazeljs/flow-runtime](packages/flow-runtime)** — REST API for flows (start, tick, resume), recovery on startup
+- 📝 **[@hazeljs/prompts](packages/prompts)** — Versioned prompt templates, override agent/RAG prompts, hot-swap from Redis/DB
 
 ### Production-ready
 - 📊 **Swagger** — Auto API docs
@@ -79,6 +80,22 @@ bootstrap();
 ```
 
 **That's it.** No config files. No boilerplate. Just code.
+
+### AI — `@AITask` decorator
+
+```typescript
+import { Controller, Post, Body } from '@hazeljs/core';
+import { AITask } from '@hazeljs/ai';
+
+@Controller({ path: '/chat' })
+class ChatController {
+  @AITask({ provider: 'openai', model: 'gpt-4', prompt: 'Respond helpfully to: {{message}}' })
+  @Post()
+  async chat(@Body() body: { message: string }) {
+    return body.message;
+  }
+}
+```
 
 ### The old way vs HazelJS
 
@@ -142,6 +159,40 @@ console.log(result.answer, result.sources);
 
 Or use **Agentic RAG** for self-improving retrieval: `AgenticRAGService` with query planning, reflection, and adaptive strategies out of the box.
 
+### Flow — durable workflows
+
+```typescript
+import { FlowEngine, Flow, Entry, Node, Edge, buildFlowDefinition } from '@hazeljs/flow';
+import type { FlowContext, NodeResult } from '@hazeljs/flow';
+
+@Flow('order-flow', '1.0.0')
+class OrderFlow {
+  @Entry()
+  @Node('validate')
+  @Edge('charge')
+  async validate(ctx: FlowContext): Promise<NodeResult> {
+    return { status: 'ok', output: { orderId: ctx.input.orderId } };
+  }
+
+  @Node('charge')
+  @Edge('end')
+  async charge(ctx: FlowContext): Promise<NodeResult> {
+    return { status: 'ok', output: { charged: true } };
+  }
+
+  @Node('end')
+  async end(ctx: FlowContext): Promise<NodeResult> {
+    return { status: 'ok', output: ctx.outputs.charge };
+  }
+}
+
+const engine = new FlowEngine();
+await engine.registerDefinition(buildFlowDefinition(OrderFlow));
+const { runId } = await engine.startRun({ flowId: 'order-flow', version: '1.0.0', input: { orderId: '123' } });
+```
+
+Use **@hazeljs/flow-runtime** for a REST API (start, tick, resume) or run flows programmatically. **@hazeljs/prompts** lets you version and override prompts for agents and RAG — hot-swap from Redis without restarting.
+
 ---
 
 ## Installation
@@ -150,8 +201,8 @@ Or use **Agentic RAG** for self-improving retrieval: `AgenticRAGService` with qu
 # Core (required)
 npm install @hazeljs/core
 
-# AI & Agents
-npm install @hazeljs/ai @hazeljs/agent @hazeljs/rag
+# AI Stack (standout packages)
+npm install @hazeljs/ai @hazeljs/agent @hazeljs/rag @hazeljs/flow @hazeljs/flow-runtime @hazeljs/prompts
 
 # Infrastructure
 npm install @hazeljs/cache @hazeljs/websocket @hazeljs/serverless
@@ -203,13 +254,21 @@ We were tired of choosing between a heavy framework (NestJS) and a minimal one (
 
 ## 📦 Packages
 
+### AI Stack (standout)
+| Package | What it does |
+|---------|--------------|
+| `@hazeljs/ai` | `@AITask` decorator, multi-provider, streaming, caching, type-safe outputs |
+| `@hazeljs/agent` | Stateful agents, `@Tool`/`@Delegate`, AgentGraph, SupervisorAgent, human-in-the-loop |
+| `@hazeljs/rag` | Vector search, GraphRAG, 11 loaders, Agentic RAG, Memory System |
+| `@hazeljs/flow` | Durable workflows — WAIT/resume, idempotency, audit timeline |
+| `@hazeljs/flow-runtime` | REST API for flows, recovery on startup |
+| `@hazeljs/prompts` | Versioned prompts, override agent/RAG prompts, hot-swap from Redis |
+
+### Core & Infrastructure
 | Package | What it does |
 |---------|--------------|
 | `@hazeljs/core` | Framework core — DI, routing, middleware |
 | `@hazeljs/cli` | Scaffolding and code generation |
-| `@hazeljs/ai` | AI providers (OpenAI, Anthropic, Gemini, etc.) |
-| `@hazeljs/agent` | Agent runtime with tools and memory |
-| `@hazeljs/rag` | Vector search and RAG |
 | `@hazeljs/auth` | JWT authentication |
 | `@hazeljs/prisma` | Prisma ORM + repository pattern |
 | `@hazeljs/swagger` | Auto OpenAPI docs |
