@@ -1,0 +1,93 @@
+{
+  "name": "@hazeljs/inspector",
+  "version": "0.2.0-rc.2",
+  "description": "Framework-aware runtime inspector for HazelJS - metadata explorer and DevTools UI",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "ui-dist"
+  ],
+  "scripts": {
+    "build": "tsc && npm run build:ui",
+    "build:ui": "vite build",
+    "test": "jest --coverage --passWithNoTests",
+    "test:ci": "jest --coverage --coverageReporters=text --coverageReporters=lcov --no-coverage-threshold",
+    "lint": "eslint \"src/**/*.{ts,tsx}\"",
+    "lint:fix": "eslint \"src/**/*.{ts,tsx}\" --fix",
+    "clean": "rm -rf dist ui-dist"
+  },
+  "dependencies": {
+    "cron-parser": "^4.9.0",
+    "reflect-metadata": "^0.2.2"
+  },
+  "peerDependencies": {
+    "@hazeljs/core": ">=0.2.0-beta.0",
+    "@hazeljs/cron": ">=0.2.0-beta.0",
+    "@hazeljs/queue": ">=0.2.0-beta.0",
+    "@hazeljs/websocket": ">=0.2.0-beta.0",
+    "@hazeljs/agent": ">=0.2.0-beta.0",
+    "@hazeljs/ai": ">=0.2.0-beta.0",
+    "@hazeljs/rag": ">=0.2.0-beta.0",
+    "@hazeljs/prompts": ">=0.2.0-beta.0",
+    "@hazeljs/event-emitter": ">=0.2.0-beta.0",
+    "@hazeljs/graphql": ">=0.2.0-beta.0",
+    "@hazeljs/grpc": ">=0.2.0-beta.0",
+    "@hazeljs/kafka": ">=0.2.0-beta.0",
+    "@hazeljs/flow": ">=0.2.0-beta.0",
+    "@hazeljs/data": ">=0.2.0-beta.0",
+    "@hazeljs/serverless": ">=0.2.0-beta.0",
+    "@hazeljs/ml": ">=0.2.0-beta.0"
+  },
+  "peerDependenciesMeta": {
+    "@hazeljs/cron": { "optional": true },
+    "@hazeljs/queue": { "optional": true },
+    "@hazeljs/websocket": { "optional": true },
+    "@hazeljs/agent": { "optional": true },
+    "@hazeljs/ai": { "optional": true },
+    "@hazeljs/rag": { "optional": true },
+    "@hazeljs/prompts": { "optional": true },
+    "@hazeljs/event-emitter": { "optional": true },
+    "@hazeljs/graphql": { "optional": true },
+    "@hazeljs/grpc": { "optional": true },
+    "@hazeljs/kafka": { "optional": true },
+    "@hazeljs/flow": { "optional": true },
+    "@hazeljs/data": { "optional": true },
+    "@hazeljs/serverless": { "optional": true },
+    "@hazeljs/ml": { "optional": true }
+  },
+  "devDependencies": {
+    "@hazeljs/core": "file:../core",
+    "@types/jest": "^29.5.14",
+    "@types/node": "^20.17.50",
+    "@typescript-eslint/eslint-plugin": "^8.18.2",
+    "@typescript-eslint/parser": "^8.18.2",
+    "eslint": "^8.56.0",
+    "jest": "^29.7.0",
+    "preact": "^10.19.0",
+    "ts-jest": "^29.1.2",
+    "typescript": "^5.3.3",
+    "vite": "^5.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hazel-js/hazeljs.git",
+    "directory": "packages/inspector"
+  },
+  "keywords": [
+    "hazeljs",
+    "inspector",
+    "devtools",
+    "metadata",
+    "debugging"
+  ],
+  "author": "Muhammad Arslan <muhammad.arslan@hazeljs.ai>",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/hazeljs/hazel-js/issues"
+  },
+  "homepage": "https://hazeljs.com"
+}

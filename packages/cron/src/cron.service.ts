@@ -1,14 +1,21 @@
-import { Service } from '@hazeljs/core';
+import { Service, Container } from '@hazeljs/core';
+import type { HazelApp } from '@hazeljs/core';
 import { CronOptions, CronJobStatus } from './cron.types';
+import { getCronMetadata } from './cron.decorator';
 import logger from '@hazeljs/core';
-import cron from 'node-cron';
+
+/** Lazy-load node-cron to avoid blocking startup (require can hang in some environments) */
+function getCron(): typeof import('node-cron') {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports -- intentional lazy load
+  return require('node-cron');
+}
 
 /**
  * Represents a scheduled cron job
  * Uses node-cron for proper cron expression parsing and scheduling
  */
 class CronJob {
-  private task: cron.ScheduledTask | null = null;
+  private task: import('node-cron').ScheduledTask | null = null;
   private _isRunning = false;
   private _lastExecution?: Date;
   private _nextExecution?: Date;
@@ -26,7 +33,7 @@ class CronJob {
     // node-cron uses 5-field (minute-level) or 6-field (second-level) expressions
     // Validate the expression upfront
     const expr = this.normalizeExpression(this.cronExpression);
-    if (!cron.validate(expr)) {
+    if (!getCron().validate(expr)) {
       throw new Error(
         `Invalid cron expression: ${this.cronExpression}. ` +
           `Format: second minute hour day-of-month month day-of-week`
@@ -58,7 +65,7 @@ class CronJob {
 
     const expr = this.normalizeExpression(this.cronExpression);
 
-    this.task = cron.schedule(
+    this.task = getCron().schedule(
       expr,
       async () => {
         await this.execute();
@@ -165,6 +172,41 @@ class CronJob {
 @Service()
 export class CronService {
   private jobs = new Map<string, CronJob>();
+
+  /**
+   * Auto-discover and register cron jobs from all providers with @Cron decorators.
+   * Called automatically after the application boots.
+   */
+  async onApplicationBootstrap(_app: HazelApp): Promise<void> {
+    const container = Container.getInstance();
+    const tokens = container.getTokens();
+    for (const token of tokens) {
+      if (typeof token !== 'function' || !token.prototype) continue;
+      try {
+        const instance = container.resolve(token);
+        if (!instance || typeof instance !== 'object') continue;
+        const metadata = getCronMetadata(instance);
+        if (metadata && metadata.length > 0) {
+          for (const job of metadata) {
+            const callback = (instance as Record<string, () => void | Promise<void>>)[
+              job.methodName
+            ];
+            if (typeof callback === 'function') {
+              this.registerJob(
+                job.options.name || job.methodName,
+                job.options.cronTime,
+                callback.bind(instance),
+                job.options
+              );
+              logger.info(`Registered cron job: ${job.options.name || job.methodName}`);
+            }
+          }
+        }
+      } catch {
+        // Skip request-scoped or unresolvable providers
+      }
+    }
+  }
 
   /**
    * Register a new cron job

@@ -1,4 +1,5 @@
 import { HazelModule, ValidationPipe } from '@hazeljs/core';
+import { InspectorModule } from '@hazeljs/inspector';
 import { PrismaModule } from '@hazeljs/prisma';
 import { ConfigModule } from '@hazeljs/config';
 import { CacheModule } from '@hazeljs/cache';
@@ -14,6 +15,11 @@ import { PdfToAudioModule } from '@hazeljs/pdf-to-audio';
 
 @HazelModule({
   imports: [
+    // Inspector - dev-only metadata explorer at /__hazel
+    InspectorModule.forRoot({
+      inspectorBasePath: '/__hazel',
+      developmentOnly: true,
+    }) as any,
     // PDF-to-Audio with Redis queue (requires Redis running)
     PdfToAudioModule.forRoot({
       connection: {

@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>HazelJS Inspector</title>
+  <link rel="stylesheet" href="./styles/inspector.css" />
+</head>
+<body>
+  <div id="app">
+    <aside class="sidebar">
+      <div class="logo">
+        <svg class="logo-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" width="24" height="24" aria-hidden="true">
+          <defs>
+            <radialGradient id="hazeljs-inspector-bg" cx="50%" cy="50%" r="60%" fx="50%" fy="50%">
+              <stop offset="0%" stop-color="#3b82f6" />
+              <stop offset="100%" stop-color="#2563eb" />
+            </radialGradient>
+          </defs>
+          <rect width="96" height="96" rx="20" fill="url(#hazeljs-inspector-bg)"/>
+          <!-- H left bar -->
+          <rect x="22" y="22" width="12" height="52" rx="6" fill="white"/>
+          <!-- H right bar -->
+          <rect x="62" y="22" width="12" height="52" rx="6" fill="white"/>
+          <!-- H crossbar with lightning bolt -->
+          <g>
+            <rect x="34" y="42" width="28" height="12" rx="6" fill="white"/>
+            <polygon points="48,44 54,44 50,52 56,52 44,68 48,56 42,56" fill="#facc15" stroke="#fbbf24" stroke-width="2"/>
+          </g>
+          <!-- JS badge -->
+          <g>
+            <rect x="66" y="66" width="18" height="18" rx="5" fill="#facc15" stroke="#fff" stroke-width="2"/>
+            <text x="75" y="80" font-family="Inter, system-ui, sans-serif" font-size="10" font-weight="bold" fill="#2563eb" text-anchor="middle" alignment-baseline="middle">JS</text>
+          </g>
+        </svg>
+        <span class="logo-text">HazelJS Inspector</span>
+      </div>
+      <nav>
+        <a href="#" data-tab="overview" class="active">
+          <span class="nav-icon"></span>
+          Overview
+        </a>
+        <div class="nav-section">
+          <span class="nav-section-title">Framework</span>
+          <a href="#" data-tab="routes"><span class="nav-icon"></span>Routes</a>
+          <a href="#" data-tab="modules"><span class="nav-icon"></span>Modules</a>
+          <a href="#" data-tab="providers"><span class="nav-icon"></span>Providers</a>
+        </div>
+        <div class="nav-section">
+          <span class="nav-section-title">Scheduled & Async</span>
+          <a href="#" data-tab="jobs"><span class="nav-icon"></span>Jobs</a>
+          <a href="#" data-tab="queues"><span class="nav-icon"></span>Queues</a>
+        </div>
+        <div class="nav-section">
+          <span class="nav-section-title">AI & Intelligence</span>
+          <a href="#" data-tab="agents"><span class="nav-icon"></span>Agents</a>
+          <a href="#" data-tab="ai"><span class="nav-icon"></span>AI</a>
+          <a href="#" data-tab="rag"><span class="nav-icon"></span>RAG</a>
+          <a href="#" data-tab="prompts"><span class="nav-icon"></span>Prompts</a>
+          <a href="#" data-tab="ml"><span class="nav-icon"></span>ML</a>
+        </div>
+        <div class="nav-section">
+          <span class="nav-section-title">APIs & Messaging</span>
+          <a href="#" data-tab="graphql"><span class="nav-icon"></span>GraphQL</a>
+          <a href="#" data-tab="grpc"><span class="nav-icon"></span>gRPC</a>
+          <a href="#" data-tab="kafka"><span class="nav-icon"></span>Kafka</a>
+          <a href="#" data-tab="websocket"><span class="nav-icon"></span>WebSocket</a>
+          <a href="#" data-tab="events"><span class="nav-icon"></span>Events</a>
+        </div>
+        <div class="nav-section">
+          <span class="nav-section-title">Workflows & Data</span>
+          <a href="#" data-tab="flows"><span class="nav-icon"></span>Flows</a>
+          <a href="#" data-tab="data"><span class="nav-icon"></span>Data</a>
+          <a href="#" data-tab="serverless"><span class="nav-icon"></span>Serverless</a>
+        </div>
+      </nav>
+      <div class="sidebar-footer">
+        <button id="refresh-sidebar" class="btn btn-primary">Refresh</button>
+      </div>
+    </aside>
+    <main class="content">
+      <header class="toolbar">
+        <div class="search-wrapper">
+          <input type="search" id="search" placeholder="Search routes, modules, providers..." class="search" />
+        </div>
+        <div class="toolbar-actions">
+          <label class="toolbar-toggle">
+            <input type="checkbox" id="auto-refresh" />
+            <span>Auto-refresh</span>
+          </label>
+          <button id="diff-btn" class="btn btn-sm" title="Compare snapshots">Diff</button>
+          <button id="export-btn" class="btn btn-sm" title="Export snapshot as JSON">Export</button>
+          <button id="refresh" class="btn btn-sm btn-primary">Refresh</button>
+        </div>
+      </header>
+      <div id="loading-overlay" class="loading-overlay hidden">
+        <div class="loading-spinner"></div>
+        <span>Loading...</span>
+      </div>
+      <div id="overview" class="tab-panel active">
+        <div id="overview-status-bar" class="overview-status-bar">
+          <div class="status-bar-left">
+            <span id="status-dot" class="status-dot" title="App status"></span>
+            <span id="status-text" class="status-text">Connecting...</span>
+            <span id="status-uptime" class="status-uptime muted"></span>
+          </div>
+          <div id="quick-stats" class="quick-stats"></div>
+        </div>
+        <h2 class="section-title">Overview</h2>
+        <div class="overview-grid">
+          <div class="overview-block overview-env">
+            <h3 class="overview-block-title">Environment</h3>
+            <div id="env-info" class="env-info env-info-compact"></div>
+          </div>
+          <div class="overview-block overview-health">
+            <h3 class="overview-block-title">Health</h3>
+            <div id="health-cards" class="health-cards-inline"></div>
+          </div>
+          <div class="overview-block overview-runtime">
+            <h3 class="overview-block-title">Runtime</h3>
+            <div id="memory-chart-container" class="chart-container chart-inline hidden"></div>
+            <div id="runtime-cards" class="runtime-cards-inline"></div>
+          </div>
+          <div id="overview-gateway" class="overview-block overview-gateway hidden"></div>
+          <div id="overview-discovery" class="overview-block overview-discovery hidden"></div>
+          <div id="overview-resilience" class="overview-block overview-resilience hidden"></div>
+        </div>
+        <div id="summary-cards" class="overview-container"></div>
+      </div>
+      <div id="routes" class="tab-panel">
+        <h2 class="section-title">Routes</h2>
+        <div class="table-container"><table id="routes-table"></table></div>
+      </div>
+      <div id="modules" class="tab-panel">
+        <h2 class="section-title">Modules</h2>
+        <div id="module-graph-container" class="module-graph-container hidden"></div>
+        <div class="table-container"><table id="modules-table"></table></div>
+      </div>
+      <div id="providers" class="tab-panel">
+        <h2 class="section-title">Providers</h2>
+        <div class="table-container"><table id="providers-table"></table></div>
+      </div>
+      <div id="jobs" class="tab-panel">
+        <h2 class="section-title">Cron Jobs</h2>
+        <div class="table-container"><table id="jobs-table"></table></div>
+      </div>
+      <div id="queues" class="tab-panel">
+        <h2 class="section-title">Queues</h2>
+        <div class="table-container"><table id="queues-table"></table></div>
+      </div>
+      <div id="websocket" class="tab-panel">
+        <h2 class="section-title">WebSocket Gateways</h2>
+        <div class="table-container"><table id="websocket-table"></table></div>
+      </div>
+      <div id="agents" class="tab-panel">
+        <h2 class="section-title">Agents</h2>
+        <div class="table-container"><table id="agents-table"></table></div>
+      </div>
+      <div id="ai" class="tab-panel">
+        <h2 class="section-title">AI Functions</h2>
+        <div class="table-container"><table id="ai-table"></table></div>
+      </div>
+      <div id="rag" class="tab-panel">
+        <h2 class="section-title">RAG Pipelines</h2>
+        <div id="rag-explorer" class="rag-explorer hidden">
+          <div class="form-group">
+            <label>Pipeline</label>
+            <select id="rag-pipeline-select"></select>
+          </div>
+          <div class="form-group">
+            <label>Semantic Search</label>
+            <div class="rag-search-row">
+              <input type="text" id="rag-search-input" placeholder="Search by text..." />
+              <button id="rag-search-btn" class="btn btn-sm btn-primary">Search</button>
+            </div>
+          </div>
+          <div id="rag-results" class="rag-results"></div>
+        </div>
+        <div class="table-container"><table id="rag-table"></table></div>
+      </div>
+      <div id="prompts" class="tab-panel">
+        <h2 class="section-title">Prompts</h2>
+        <div class="table-container"><table id="prompts-table"></table></div>
+      </div>
+      <div id="events" class="tab-panel">
+        <h2 class="section-title">Event Listeners</h2>
+        <div class="table-container"><table id="events-table"></table></div>
+      </div>
+      <div id="graphql" class="tab-panel">
+        <h2 class="section-title">GraphQL</h2>
+        <div class="table-container"><table id="graphql-table"></table></div>
+      </div>
+      <div id="grpc" class="tab-panel">
+        <h2 class="section-title">gRPC Methods</h2>
+        <div class="table-container"><table id="grpc-table"></table></div>
+      </div>
+      <div id="kafka" class="tab-panel">
+        <h2 class="section-title">Kafka Consumers</h2>
+        <div class="table-container"><table id="kafka-table"></table></div>
+      </div>
+      <div id="flows" class="tab-panel tab-panel-compact">
+        <h2 class="section-title">Flows</h2>
+        <div id="flow-diagram" class="flow-diagram hidden"></div>
+        <div id="flow-runtime-info" class="flow-runtime-hint hidden">
+          <span class="flow-runtime-label">Flow Runtime:</span>
+          <code>npx @hazeljs/flow-runtime</code>
+          <span class="flow-runtime-sep">·</span>
+          <code>POST /v1/runs/start</code>
+          <code>POST /v1/runs/:id/tick</code>
+          <code>GET /v1/flows</code>
+        </div>
+        <div class="table-container"><table id="flows-table"></table></div>
+      </div>
+      <div id="data" class="tab-panel">
+        <h2 class="section-title">Data Pipelines</h2>
+        <div class="table-container"><table id="data-table"></table></div>
+      </div>
+      <div id="serverless" class="tab-panel">
+        <h2 class="section-title">Serverless</h2>
+        <div class="table-container"><table id="serverless-table"></table></div>
+      </div>
+      <div id="ml" class="tab-panel">
+        <h2 class="section-title">ML Models</h2>
+        <div class="table-container"><table id="ml-table"></table></div>
+      </div>
+      <div id="detail-panel" class="detail-panel hidden">
+        <div class="detail-header">
+          <h2 id="detail-title"></h2>
+          <div class="detail-actions">
+            <button id="detail-copy" class="btn btn-sm" title="Copy to clipboard">Copy</button>
+            <button id="detail-close" class="btn btn-sm">Close</button>
+          </div>
+        </div>
+        <pre id="detail-content"></pre>
+      </div>
+      <div id="prompt-playground-modal" class="modal hidden">
+        <div class="modal-content modal-wide">
+          <h3>Prompt Playground</h3>
+          <div class="modal-body">
+            <div class="form-group">
+              <label>Prompt Key</label>
+              <input type="text" id="playground-key" readonly />
+            </div>
+            <div class="form-group">
+              <label>Variables (JSON)</label>
+              <textarea id="playground-vars" rows="4">{}</textarea>
+            </div>
+            <div class="playground-actions">
+              <button id="playground-render" class="btn btn-primary">Render</button>
+            </div>
+            <div class="form-group">
+              <label>Rendered Output</label>
+              <pre id="playground-output" class="playground-output"></pre>
+            </div>
+            <div class="playground-meta">
+              <span id="playground-tokens">—</span> tokens (estimate)
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button id="playground-close" class="btn">Close</button>
+          </div>
+        </div>
+      </div>
+      <div id="route-test-modal" class="modal hidden">
+        <div class="modal-content">
+          <h3>Try Route</h3>
+          <div class="modal-body">
+            <div class="form-group">
+              <label>Method</label>
+              <select id="test-method"><option value="GET">GET</option><option value="POST">POST</option><option value="PUT">PUT</option><option value="PATCH">PATCH</option><option value="DELETE">DELETE</option></select>
+            </div>
+            <div class="form-group">
+              <label>URL</label>
+              <input type="text" id="test-url" readonly />
+            </div>
+            <div class="form-group hidden" id="test-body-group">
+              <label>Body (JSON)</label>
+              <textarea id="test-body" rows="4">{}</textarea>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button id="test-route-btn" class="btn btn-primary">Send</button>
+            <button id="test-route-cancel" class="btn">Cancel</button>
+          </div>
+          <div id="test-result" class="test-result hidden"></div>
+        </div>
+      </div>
+      <div id="diff-modal" class="modal hidden">
+        <div class="modal-content modal-wide">
+          <h3>Snapshot Diff</h3>
+          <div class="modal-body">
+            <div class="diff-sources">
+              <div class="form-group">
+                <label>Snapshot A (current)</label>
+                <p class="diff-hint">Use current snapshot</p>
+              </div>
+              <div class="form-group">
+                <label>Snapshot B (paste JSON or load file)</label>
+                <textarea id="diff-snapshot-b" rows="6" placeholder="Paste snapshot JSON or leave empty to load file..."></textarea>
+                <input type="file" id="diff-file" accept=".json" class="hidden" />
+                <button id="diff-load-file" class="btn btn-sm">Load file</button>
+              </div>
+            </div>
+            <button id="diff-compare-btn" class="btn btn-primary">Compare</button>
+            <div id="diff-result" class="diff-result hidden"></div>
+          </div>
+          <div class="modal-footer">
+            <button id="diff-close" class="btn">Close</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script type="module" src="./main.ts"></script>
+</body>
+</html>

@@ -39,6 +39,7 @@
     "@hazeljs/cache": "file:../packages/cache",
     "@hazeljs/config": "file:../packages/config",
     "@hazeljs/core": "file:../packages/core",
+    "@hazeljs/inspector": "file:../packages/inspector",
     "@hazeljs/discovery": "file:../packages/discovery",
     "@hazeljs/flow": "file:../packages/flow",
     "@hazeljs/memory": "file:../packages/memory",
