@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/mcp",
-  "version": "0.2.0-rc.2",
+  "version": "0.2.0-rc.3",
   "description": "Expose HazelJS tools as MCP (Model Context Protocol) tools over STDIO",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
