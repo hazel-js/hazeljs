@@ -2,7 +2,7 @@
 
 # HazelJS
 
-**The Node.js framework that gets out of your way — so you can build what matters.**
+**One framework. AI built in. No glue code.**
 
 [![GitHub stars](https://img.shields.io/github/stars/hazel-js/hazeljs?style=social)](https://github.com/hazel-js/hazeljs)
 [![CI](https://github.com/hazel-js/hazeljs/actions/workflows/ci.yml/badge.svg)](https://github.com/hazel-js/hazeljs/actions/workflows/ci.yml)
@@ -11,8 +11,8 @@
 [![codecov](https://codecov.io/gh/hazel-js/hazeljs/branch/main/graph/badge.svg)](https://codecov.io/gh/hazel-js/hazeljs)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 
-*Tired of boilerplate? Want to ship AI-powered apps without the complexity?*  
-**HazelJS** gives you enterprise-grade architecture with a lightweight footprint — decorators, DI, and built-in AI that just works.
+*Stop the glue code. Build AI backends that feel native — not bolted on.*  
+Decorators, DI, agents, RAG — enterprise-grade architecture with a lightweight footprint.
 
 [Get Started](#quick-start) · [Why HazelJS?](#-why-hazeljs) · [Documentation](#-documentation)
 
@@ -80,6 +80,14 @@ bootstrap();
 
 **That's it.** No config files. No boilerplate. Just code.
 
+### The old way vs HazelJS
+
+| The old way | HazelJS |
+|-------------|---------|
+| NestJS + LangChain + adapters + wiring | One stack. AI built in. |
+| 3 config files, manual AI glue | `@AITask` decorator. Done. |
+| Express + DIY structure + bolted-on AI | Decorators, DI, agents — out of the box. |
+
 ---
 
 ## Installation
@@ -132,6 +140,10 @@ npm run prisma:studio   # Optional: visual DB browser
 **vs NestJS** — Same elegance, less weight. No Express/Fastify dependency. AI and RAG built in. Simpler to onboard.
 
 **vs Express** — Get structure without the ceremony. Decorators, DI, validation, and testing utilities out of the box.
+
+### Why we built this
+
+We were tired of choosing between a heavy framework (NestJS) and a minimal one (Express), then wiring AI on top. HazelJS is the framework we wished existed: NestJS-style elegance without the weight, AI and RAG built in from day one, and no glue code. If you're building AI backends and want one cohesive stack — this is for you.
 
 ---
 
@@ -203,6 +215,6 @@ Apache 2.0 — Free for commercial and open-source use.
 
 **Built with ❤️ for developers who ship**
 
-*If HazelJS helps you build something cool — [give us a star ⭐](https://github.com/hazel-js/hazeljs)*
+*Building AI backends? A star helps us reach more developers like you. [⭐ Star HazelJS](https://github.com/hazel-js/hazeljs)*
 
 </div>
