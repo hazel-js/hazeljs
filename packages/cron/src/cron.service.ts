@@ -6,6 +6,7 @@ import logger from '@hazeljs/core';
 
 /** Lazy-load node-cron to avoid blocking startup (require can hang in some environments) */
 function getCron(): typeof import('node-cron') {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports -- intentional lazy load
   return require('node-cron');
 }
 
@@ -187,7 +188,9 @@ export class CronService {
         const metadata = getCronMetadata(instance);
         if (metadata && metadata.length > 0) {
           for (const job of metadata) {
-            const callback = (instance as Record<string, () => void | Promise<void>>)[job.methodName];
+            const callback = (instance as Record<string, () => void | Promise<void>>)[
+              job.methodName
+            ];
             if (typeof callback === 'function') {
               this.registerJob(
                 job.options.name || job.methodName,

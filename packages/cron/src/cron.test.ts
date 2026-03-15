@@ -176,6 +176,64 @@ describe('CronService', () => {
     });
   });
 
+  describe('onApplicationBootstrap()', () => {
+    it('discovers and registers cron jobs from container tokens', async () => {
+      class DiscoveredService {
+        @Cron({ cronTime: EVERY_MINUTE, name: 'discovered-job' })
+        run(): void {
+          // noop
+        }
+      }
+      const instance = new DiscoveredService();
+      const tokens = [DiscoveredService];
+      (Container.getInstance as jest.Mock).mockReturnValue({
+        getTokens: () => tokens,
+        resolve: (token: unknown) => (token === DiscoveredService ? instance : null),
+      });
+
+      await service.onApplicationBootstrap({} as never);
+      expect(service.getJobCount()).toBe(1);
+      expect(service.getJobStatus('discovered-job')).toBeDefined();
+    });
+
+    it('skips tokens that are not functions', async () => {
+      (Container.getInstance as jest.Mock).mockReturnValue({
+        getTokens: () => ['string-token', 123],
+        resolve: jest.fn(),
+      });
+      await service.onApplicationBootstrap({} as never);
+      expect(service.getJobCount()).toBe(0);
+    });
+
+    it('skips when resolve throws (request-scoped)', async () => {
+      class Unresolvable {}
+      (Container.getInstance as jest.Mock).mockReturnValue({
+        getTokens: () => [Unresolvable],
+        resolve: () => {
+          throw new Error('request-scoped');
+        },
+      });
+      await expect(service.onApplicationBootstrap({} as never)).resolves.not.toThrow();
+      expect(service.getJobCount()).toBe(0);
+    });
+
+    it('skips when metadata method is not a function on instance', async () => {
+      class NonFunctionMethod {
+        @Cron({ cronTime: EVERY_MINUTE, name: 'getter-job' })
+        get myJob(): string {
+          return 'not callable';
+        }
+      }
+      const instance = new NonFunctionMethod();
+      (Container.getInstance as jest.Mock).mockReturnValue({
+        getTokens: () => [NonFunctionMethod],
+        resolve: () => instance,
+      });
+      await service.onApplicationBootstrap({} as never);
+      expect(service.getJobCount()).toBe(0);
+    });
+  });
+
   describe('getJobCount()', () => {
     it('returns 0 when no jobs registered', () => {
       expect(service.getJobCount()).toBe(0);
@@ -200,6 +258,24 @@ describe('CronService', () => {
       // Allow the async execute() to run
       await new Promise((r) => setTimeout(r, 20));
       expect(callback).toHaveBeenCalled();
+    });
+  });
+
+  describe('job options: maxRuns', () => {
+    it('stops job when maxRuns is reached', async () => {
+      const callback = jest.fn().mockResolvedValue(undefined);
+      service.registerJob('maxRuns-job', CronExpression.EVERY_SECOND, callback, {
+        cronTime: CronExpression.EVERY_SECOND,
+        runOnInit: true,
+        maxRuns: 1,
+      });
+      await new Promise((r) => setTimeout(r, 50));
+      expect(callback).toHaveBeenCalledTimes(1);
+      // Wait for schedule tick at 1s - should hit maxRuns branch and stop (no second callback)
+      await new Promise((r) => setTimeout(r, 1500));
+      expect(callback).toHaveBeenCalledTimes(1);
+      const status = service.getJobStatus('maxRuns-job');
+      expect(status?.runCount).toBe(1);
     });
   });
 
@@ -248,6 +324,20 @@ describe('CronService', () => {
       service.registerJob('already-running', EVERY_MINUTE, jest.fn());
       // job is already started by registerJob
       expect(() => service.startJob('already-running')).not.toThrow();
+    });
+  });
+
+  describe('skip duplicate run when already executing', () => {
+    it('skips execution when job is already running (concurrent tick)', async () => {
+      const callback = jest.fn().mockImplementation(() => new Promise((r) => setTimeout(r, 2500)));
+      // Use every-second cron so a second tick can fire while first is still running
+      service.registerJob('slow-job', CronExpression.EVERY_SECOND, callback, {
+        cronTime: CronExpression.EVERY_SECOND,
+        runOnInit: true,
+      });
+      await new Promise((r) => setTimeout(r, 2500));
+      // First run (runOnInit) takes 2.5s; second tick at ~1s fires but is skipped (_isRunning)
+      expect(callback).toHaveBeenCalledTimes(1);
     });
   });
 });
@@ -402,6 +492,43 @@ describe('CronModule', () => {
 
       class TaskService {}
       expect(() => CronModule.registerJobsFromProvider(new TaskService())).not.toThrow();
+    });
+
+    it('handles resolve throwing (e.g. container error)', () => {
+      const cronService = new CronService();
+      (Container.getInstance as jest.Mock).mockReturnValue({
+        resolve: jest.fn().mockImplementation(() => {
+          throw new Error('resolve failed');
+        }),
+      });
+
+      class TaskService {
+        @Cron({ cronTime: EVERY_MINUTE, name: 'task' })
+        doTask(): void {
+          // noop
+        }
+      }
+      expect(() => CronModule.registerJobsFromProvider(new TaskService())).not.toThrow();
+      cronService.clearAll();
+    });
+
+    it('skips when callback is not a function', () => {
+      const cronService = new CronService();
+      (Container.getInstance as jest.Mock).mockReturnValue({
+        resolve: jest.fn().mockReturnValue(cronService),
+      });
+
+      class BadProvider {
+        @Cron({ cronTime: EVERY_MINUTE, name: 'bad' })
+        get doTask(): string {
+          return 'not a function';
+        }
+      }
+      const instance = new BadProvider();
+      // getCronMetadata returns methodName 'doTask' but instance.doTask is a getter returning string
+      CronModule.registerJobsFromProvider(instance);
+      expect(cronService.getJobCount()).toBe(0);
+      cronService.clearAll();
     });
   });
 });
