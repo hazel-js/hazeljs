@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/inspector",
-  "version": "0.2.0-rc.2",
+  "version": "0.2.0-rc.5",
   "description": "Framework-aware runtime inspector for HazelJS - metadata explorer and DevTools UI",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -40,21 +40,51 @@
     "@hazeljs/ml": ">=0.2.0-beta.0"
   },
   "peerDependenciesMeta": {
-    "@hazeljs/cron": { "optional": true },
-    "@hazeljs/queue": { "optional": true },
-    "@hazeljs/websocket": { "optional": true },
-    "@hazeljs/agent": { "optional": true },
-    "@hazeljs/ai": { "optional": true },
-    "@hazeljs/rag": { "optional": true },
-    "@hazeljs/prompts": { "optional": true },
-    "@hazeljs/event-emitter": { "optional": true },
-    "@hazeljs/graphql": { "optional": true },
-    "@hazeljs/grpc": { "optional": true },
-    "@hazeljs/kafka": { "optional": true },
-    "@hazeljs/flow": { "optional": true },
-    "@hazeljs/data": { "optional": true },
-    "@hazeljs/serverless": { "optional": true },
-    "@hazeljs/ml": { "optional": true }
+    "@hazeljs/cron": {
+      "optional": true
+    },
+    "@hazeljs/queue": {
+      "optional": true
+    },
+    "@hazeljs/websocket": {
+      "optional": true
+    },
+    "@hazeljs/agent": {
+      "optional": true
+    },
+    "@hazeljs/ai": {
+      "optional": true
+    },
+    "@hazeljs/rag": {
+      "optional": true
+    },
+    "@hazeljs/prompts": {
+      "optional": true
+    },
+    "@hazeljs/event-emitter": {
+      "optional": true
+    },
+    "@hazeljs/graphql": {
+      "optional": true
+    },
+    "@hazeljs/grpc": {
+      "optional": true
+    },
+    "@hazeljs/kafka": {
+      "optional": true
+    },
+    "@hazeljs/flow": {
+      "optional": true
+    },
+    "@hazeljs/data": {
+      "optional": true
+    },
+    "@hazeljs/serverless": {
+      "optional": true
+    },
+    "@hazeljs/ml": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@hazeljs/core": "file:../core",
