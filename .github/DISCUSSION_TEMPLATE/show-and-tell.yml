@@ -1,0 +1,67 @@
+title: "Show and Tell: "
+labels: ["show-and-tell"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        # 🎉 Show and Tell
+        
+        Share what you've built with HazelJS! We love seeing what the community creates.
+
+  - type: input
+    id: project-name
+    attributes:
+      label: Project Name
+      description: What's your project called?
+      placeholder: My Awesome Project
+    validations:
+      required: true
+
+  - type: input
+    id: project-url
+    attributes:
+      label: Project URL
+      description: Link to your project (GitHub, live demo, etc.)
+      placeholder: https://github.com/username/project
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Tell us about your project
+      placeholder: I built a...
+    validations:
+      required: true
+
+  - type: textarea
+    id: tech-stack
+    attributes:
+      label: Tech Stack
+      description: What HazelJS packages and other technologies did you use?
+      placeholder: |
+        - @hazeljs/core
+        - @hazeljs/ai
+        - PostgreSQL
+        - React
+
+  - type: textarea
+    id: highlights
+    attributes:
+      label: Highlights
+      description: What are you most proud of? Any interesting challenges you solved?
+      placeholder: The coolest part is...
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots/Demo
+      description: Share screenshots, GIFs, or video links
+      placeholder: ![Screenshot](url)
+
+  - type: checkboxes
+    id: permissions
+    attributes:
+      label: Permissions
+      options:
+        - label: I give permission for HazelJS to feature this project in documentation/social media
+          required: false

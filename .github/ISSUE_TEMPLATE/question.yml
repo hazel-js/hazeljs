@@ -1,0 +1,98 @@
+name: ❓ Question
+description: Ask a question about HazelJS
+title: "[Question]: "
+labels: ["question"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Have a question? We're here to help! 
+        
+        **Note:** For general discussions, consider using [GitHub Discussions](https://github.com/hazel-js/hazeljs/discussions) instead.
+        For real-time help, join our [Discord](https://discord.com/channels/1448263814238965833/1448263814859456575).
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Your Question
+      description: What would you like to know?
+      placeholder: How do I...?
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Provide any relevant context about what you're trying to achieve
+      placeholder: I'm trying to build... and I want to...
+    validations:
+      required: true
+
+  - type: textarea
+    id: tried
+    attributes:
+      label: What Have You Tried?
+      description: What have you already attempted?
+      placeholder: I've tried... but...
+
+  - type: textarea
+    id: code
+    attributes:
+      label: Relevant Code
+      description: Share any relevant code snippets
+      render: typescript
+      placeholder: |
+        import { HazelApp } from '@hazeljs/core';
+        
+        // Your code here
+
+  - type: dropdown
+    id: topic
+    attributes:
+      label: Topic
+      description: What is your question about?
+      options:
+        - "Getting Started"
+        - "Core Framework"
+        - "AI Integration (@hazeljs/ai)"
+        - "Agents (@hazeljs/agent)"
+        - "RAG (@hazeljs/rag)"
+        - "Workflows (@hazeljs/flow)"
+        - "Authentication (@hazeljs/auth)"
+        - "Database (Prisma)"
+        - "Deployment"
+        - "Testing"
+        - "Performance"
+        - "Best Practices"
+        - "Other"
+    validations:
+      required: true
+
+  - type: input
+    id: hazeljs-version
+    attributes:
+      label: HazelJS Version
+      description: Which version are you using?
+      placeholder: e.g., 0.2.0
+
+  - type: textarea
+    id: documentation
+    attributes:
+      label: Documentation Checked
+      description: Which documentation have you already reviewed?
+      placeholder: |
+        - [ ] README
+        - [ ] Quick Start Guide
+        - [ ] Package-specific docs
+        - [ ] Examples folder
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I have searched existing issues and discussions
+          required: true
+        - label: I have checked the documentation
+          required: true

@@ -8,13 +8,19 @@
 [![CI](https://github.com/hazel-js/hazeljs/actions/workflows/ci.yml/badge.svg)](https://github.com/hazel-js/hazeljs/actions/workflows/ci.yml)
 [![Publish Package to NPM](https://github.com/hazel-js/hazeljs/actions/workflows/publish.yml/badge.svg)](https://github.com/hazel-js/hazeljs/actions/workflows/publish.yml)
 [![npm version](https://badge.fury.io/js/%40hazeljs%2Fcore.svg)](https://badge.fury.io/js/%40hazeljs%2Fcore)
+[![npm downloads](https://img.shields.io/npm/dm/@hazeljs/core)](https://www.npmjs.com/package/@hazeljs/core)
 [![codecov](https://codecov.io/gh/hazel-js/hazeljs/branch/main/graph/badge.svg)](https://codecov.io/gh/hazel-js/hazeljs)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
+[![Discord](https://img.shields.io/discord/1448263814238965833?color=7289da&label=Discord&logo=discord&logoColor=white)](https://discord.com/channels/1448263814238965833/1448263814859456575)
 
 *Stop the glue code. Build AI backends that feel native — not bolted on.*  
 **AI** · **Agents** · **RAG** · **Flow** · **Prompts** — one cohesive stack.
 
-[Get Started](#quick-start) · [Why HazelJS?](#-why-hazeljs) · [Documentation](#-documentation)
+[Get Started](#quick-start) · [Why HazelJS?](#-why-hazeljs) · [Documentation](#-documentation) · [Starter](./hazeljs-starter-example)
+
+---
+
+### 🎯 **Try it in 60 seconds** → `npx @hazeljs/cli g app my-app` | [Starter Example](./hazeljs-starter-example) | [Full Example](./example)
 
 </div>
 
@@ -54,6 +60,32 @@ You've built APIs before. You know the drill: wire up routing, configure middlew
 
 *From zero to running in 60 seconds.*
 
+### Option 1: Use the CLI (Recommended)
+
+```bash
+# Create a new app with the CLI
+npx @hazeljs/cli g app my-app
+
+# Navigate and start
+cd my-app
+npm install
+npm run dev
+
+# ✨ Your API is live at http://localhost:3000
+```
+
+> See [hazeljs-starter-example](./hazeljs-starter-example) for a complete starter generated with `hazel g app`
+
+### Option 2: Manual Setup (One File)
+
+```bash
+# Install
+npm install @hazeljs/core
+
+# Create your app (one file!)
+touch app.ts
+```
+
 ```typescript
 import { HazelApp, HazelModule, Controller, Get } from '@hazeljs/core';
 
@@ -79,7 +111,22 @@ async function bootstrap() {
 bootstrap();
 ```
 
+```bash
+# Run it
+npx ts-node app.ts
+# ✨ Done! Your API is live at http://localhost:3000
+```
+
 **That's it.** No config files. No boilerplate. Just code.
+
+### Which Option Should I Choose?
+
+- **CLI Generator** (`hazel g app`) - Best for production apps, includes full project structure
+- **Manual Setup** - Best for learning, prototyping, or single-file demos
+
+> 💡 **Want more?** 
+> - Full starter: [hazeljs-starter-example](./hazeljs-starter-example)
+> - AI features: [Full Example App](./example) with AI, RAG, Agents, and more
 
 ### AI — `@AITask` decorator
 
@@ -298,6 +345,28 @@ We were tired of choosing between a heavy framework (NestJS) and a minimal one (
 
 ---
 
+## 🌟 Show Your Support
+
+**If HazelJS saved you time, give us a star!** ⭐
+
+It helps us reach more developers and keeps the project growing.
+
+[![Star History Chart](https://api.star-history.com/svg?repos=hazel-js/hazeljs&type=Date)](https://star-history.com/#hazel-js/hazeljs&Date)
+
+### Ways to Support
+
+- ⭐ **Star the repo** - Show your support
+- 🐛 **Report bugs** - Help us improve
+- 💡 **Request features** - Share your ideas
+- 📝 **Improve docs** - Help others learn
+- 💻 **Contribute code** - Build with us
+- 🎨 **Share your project** - Inspire others
+- 💬 **Join Discord** - Connect with the community
+
+[See all contributors](./CONTRIBUTORS.md) | [Contribution Guide](./CONTRIBUTING.md)
+
+---
+
 ## 🤝 Contributing
 
 We'd love your help. Every star, issue, and PR matters.
@@ -308,13 +377,17 @@ We'd love your help. Every star, issue, and PR matters.
 4. Add tests
 5. Open a PR
 
+Read our [Contributing Guide](./CONTRIBUTING.md) for details.
+
 ---
 
-## 📞 Support
+## 📞 Support & Community
 
-- **Issues**: [Report bugs](https://github.com/hazel-js/hazeljs/issues)
-- **Discussions**: [Ask questions](https://github.com/hazel-js/hazeljs/discussions)
-- **Discord**: [Discord](https://discord.com/channels/1448263814238965833/1448263814859456575)
+- 💬 **Discord**: [Join our community](https://discord.com/channels/1448263814238965833/1448263814859456575) - Real-time help
+- 💭 **Discussions**: [GitHub Discussions](https://github.com/hazel-js/hazeljs/discussions) - Ask questions
+- 🐛 **Issues**: [Report bugs](https://github.com/hazel-js/hazeljs/issues) - Help us improve
+- 🎨 **Show & Tell**: [Share your project](https://github.com/hazel-js/hazeljs/discussions) - Get featured!
+- 🌟 **Awesome HazelJS**: [Community resources](./awesome-hazeljs) - Curated list
 
 ---
 
@@ -326,8 +399,18 @@ Apache 2.0 — Free for commercial and open-source use.
 
 <div align="center">
 
+---
+
 **Built with ❤️ for developers who ship**
 
-*Building AI backends? A star helps us reach more developers like you. [⭐ Star HazelJS](https://github.com/hazel-js/hazeljs)*
+### 🚀 Ready to build?
+
+[Get Started](./QUICKSTART.md) · [View Examples](./example) · [Join Discord](https://discord.com/channels/1448263814238965833/1448263814859456575) · [⭐ Star on GitHub](https://github.com/hazel-js/hazeljs)
+
+---
+
+*Building AI backends? A star helps us reach more developers like you.*
+
+**HazelJS** · Making AI backends feel native, not bolted on.
 
 </div>

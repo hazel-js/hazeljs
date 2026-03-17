@@ -1,0 +1,116 @@
+name: ✨ Feature Request
+description: Suggest a new feature or enhancement for HazelJS
+title: "[Feature]: "
+labels: ["enhancement", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting a feature! We appreciate your input in making HazelJS better.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Statement
+      description: Is your feature request related to a problem? Please describe.
+      placeholder: I'm always frustrated when...
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: Describe the solution you'd like to see
+      placeholder: I would like to see...
+    validations:
+      required: true
+
+  - type: textarea
+    id: example
+    attributes:
+      label: Example Usage
+      description: Show how you would use this feature
+      render: typescript
+      placeholder: |
+        import { NewFeature } from '@hazeljs/core';
+        
+        @Controller('/example')
+        class ExampleController {
+          @NewFeature()
+          async example() {
+            // Your example here
+          }
+        }
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: Describe any alternative solutions or features you've considered
+      placeholder: I've also considered...
+
+  - type: dropdown
+    id: package
+    attributes:
+      label: Target Package
+      description: Which package should this feature be added to?
+      options:
+        - "@hazeljs/core"
+        - "@hazeljs/ai"
+        - "@hazeljs/agent"
+        - "@hazeljs/rag"
+        - "@hazeljs/flow"
+        - "@hazeljs/flow-runtime"
+        - "@hazeljs/prompts"
+        - "@hazeljs/auth"
+        - "@hazeljs/prisma"
+        - "@hazeljs/swagger"
+        - "@hazeljs/cache"
+        - "@hazeljs/websocket"
+        - "@hazeljs/serverless"
+        - "@hazeljs/cli"
+        - "New package"
+        - "Not sure"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How important is this feature to you?
+      options:
+        - "Critical - Blocking my work"
+        - "High - Would significantly improve my workflow"
+        - "Medium - Nice to have"
+        - "Low - Just a suggestion"
+    validations:
+      required: true
+
+  - type: textarea
+    id: use-case
+    attributes:
+      label: Use Case
+      description: Describe your specific use case for this feature
+      placeholder: I'm building... and I need this feature to...
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Add any other context, screenshots, or references about the feature request
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I have searched existing issues and discussions to avoid duplicates
+          required: true
+        - label: I am willing to help implement this feature
+          required: false
+        - label: I have considered backward compatibility
+          required: false
