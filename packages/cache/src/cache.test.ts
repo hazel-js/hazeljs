@@ -179,6 +179,37 @@ describe('RedisCacheStore', () => {
     expect(await store.get('key1')).toBeNull();
     expect(await store.get('key2')).toBeNull();
   });
+
+  it('should return null for expired key', async () => {
+    await store.set('exp', 'val', 0.001);
+    await new Promise((r) => setTimeout(r, 50));
+    expect(await store.get('exp')).toBeNull();
+  });
+
+  it('should support has and keys', async () => {
+    await store.set('k1', 'v1', 60);
+    expect(await store.has('k1')).toBe(true);
+    expect(await store.has('nope')).toBe(false);
+    const keys = await store.keys();
+    expect(keys).toContain('k1');
+  });
+
+  it('should clear and getStats', async () => {
+    await store.set('a', 'b', 60);
+    await store.clear();
+    expect(await store.get('a')).toBeNull();
+    const stats = await store.getStats();
+    expect(stats).toBeDefined();
+  });
+
+  it('should resetStats', async () => {
+    await store.set('s', 'v', 60);
+    await store.get('s');
+    store.resetStats();
+    const stats = await store.getStats();
+    expect(stats.hits).toBe(0);
+    expect(stats.misses).toBe(0);
+  });
 });
 
 describe('MultiTierCacheStore', () => {
@@ -229,6 +260,67 @@ describe('MultiTierCacheStore', () => {
     expect(stats.hits).toBeGreaterThan(0);
     expect(stats.misses).toBeGreaterThan(0);
   });
+
+  it('should setWithTags and deleteByTag', async () => {
+    await store.setWithTags('t1', 'v1', 60, ['tagA']);
+    await store.setWithTags('t2', 'v2', 60, ['tagA']);
+    expect(await store.get('t1')).toBe('v1');
+    await store.deleteByTag('tagA');
+    expect(await store.get('t1')).toBeNull();
+    expect(await store.get('t2')).toBeNull();
+  });
+
+  it('should has return true when in L1 or L2', async () => {
+    await store.set('ink', 'val', 60);
+    expect(await store.has('ink')).toBe(true);
+    expect(await store.has('missing')).toBe(false);
+  });
+
+  it('should return keys from both tiers', async () => {
+    await store.set('a', 1, 60);
+    await store.set('b', 2, 60);
+    const keys = await store.keys();
+    expect(keys.length).toBeGreaterThanOrEqual(2);
+    expect(keys).toContain('a');
+    expect(keys).toContain('b');
+  });
+
+  it('should clear both tiers', async () => {
+    await store.set('c', 'v', 60);
+    await store.clear();
+    expect(await store.get('c')).toBeNull();
+  });
+
+  it('should return L1 and L2 stats', async () => {
+    const l1 = await store.getL1Stats();
+    const l2 = await store.getL2Stats();
+    expect(l1).toBeDefined();
+    expect(l2).toBeDefined();
+  });
+
+  it('should resetStats on both tiers', async () => {
+    await store.set('x', 'y', 60);
+    await store.get('x');
+    store.resetStats();
+    const stats = await store.getStats();
+    expect(stats.hits).toBe(0);
+    expect(stats.misses).toBe(0);
+  });
+});
+
+jest.mock('@hazeljs/core', () => {
+  const loggerFn = {
+    info: jest.fn(),
+    debug: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+  };
+  return {
+    __esModule: true,
+    default: loggerFn,
+    Service: () => () => undefined,
+    logger: loggerFn,
+  };
 });
 
 describe('CacheService', () => {
@@ -236,6 +328,20 @@ describe('CacheService', () => {
 
   beforeEach(() => {
     service = new CacheService('memory');
+  });
+
+  describe('createStore strategies', () => {
+    it('should create redis store when strategy is redis', () => {
+      const redisService = new CacheService('redis', { redis: { host: 'localhost', port: 6379 } });
+      expect(redisService.getStrategy()).toBe('redis');
+      expect(redisService.getStore()).toBeDefined();
+    });
+
+    it('should create multi-tier store when strategy is multi-tier', () => {
+      const multiService = new CacheService('multi-tier', {});
+      expect(multiService.getStrategy()).toBe('multi-tier');
+      expect(multiService.getStore()).toBeDefined();
+    });
   });
 
   describe('basic operations', () => {
@@ -275,6 +381,21 @@ describe('CacheService', () => {
       expect(result2).toEqual({ data: 'fetched' });
       expect(fetchCount).toBe(1); // Should only fetch once
     });
+
+    it('should getOrSet with tags', async () => {
+      const result = await service.getOrSet('tagged', async () => 'value', 60, ['tag1']);
+      expect(result).toBe('value');
+      expect(await service.get('tagged')).toBe('value');
+    });
+
+    it('should wrap function with caching', async () => {
+      const fn = jest.fn().mockResolvedValue('wrapped');
+      const result1 = await service.wrap('wrap-key', fn, 60);
+      const result2 = await service.wrap('wrap-key', fn, 60);
+      expect(result1).toBe('wrapped');
+      expect(result2).toBe('wrapped');
+      expect(fn).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe('cache warming', () => {
@@ -288,6 +409,31 @@ describe('CacheService', () => {
       expect(await service.get('key1')).toEqual({ key: 'key1', data: 'data-key1' });
       expect(await service.get('key2')).toEqual({ key: 'key2', data: 'data-key2' });
       expect(await service.get('key3')).toEqual({ key: 'key3', data: 'data-key3' });
+    });
+
+    it('should warm up cache with parallel false', async () => {
+      await service.warmUp({
+        keys: ['a', 'b'],
+        fetcher: async (key) => key,
+        ttl: 60,
+        parallel: false,
+      });
+      expect(await service.get('a')).toBe('a');
+      expect(await service.get('b')).toBe('b');
+    });
+
+    it('should log and continue when fetcher throws for a key', async () => {
+      await service.warmUp({
+        keys: ['ok', 'fail', 'ok2'],
+        fetcher: async (key) => {
+          if (key === 'fail') throw new Error('fetch failed');
+          return key;
+        },
+        ttl: 60,
+      });
+      expect(await service.get('ok')).toBe('ok');
+      expect(await service.get('ok2')).toBe('ok2');
+      expect(await service.get('fail')).toBeNull();
     });
   });
 
@@ -312,6 +458,22 @@ describe('CacheService', () => {
       expect(stats).toBeDefined();
       expect(stats.hits).toBeGreaterThanOrEqual(0);
       expect(stats.misses).toBeGreaterThanOrEqual(0);
+    });
+
+    it('should reset stats when store supports it', async () => {
+      await service.set('key', 'value', 60);
+      await service.get('key');
+      service.resetStats();
+      const stats = await service.getStats();
+      expect(stats.hits).toBe(0);
+      expect(stats.misses).toBe(0);
+    });
+  });
+
+  describe('store accessors', () => {
+    it('should return store and strategy', () => {
+      expect(service.getStore()).toBeDefined();
+      expect(service.getStrategy()).toBe('memory');
     });
   });
 });
@@ -362,6 +524,31 @@ describe('CacheManager', () => {
 
     expect(await cache1.get('key')).toBeNull();
     expect(await cache2.get('key')).toBeNull();
+  });
+
+  it('should throw when get() with no name and no default', () => {
+    expect(() => manager.get()).toThrow('No default cache configured');
+  });
+
+  it('should throw when get(name) and cache not found', () => {
+    expect(() => manager.get('nonexistent')).toThrow('Cache not found: nonexistent');
+  });
+
+  it('should get all stats', async () => {
+    const cache = new CacheService('memory');
+    manager.register('stats-cache', cache);
+    await cache.set('k', 'v', 60);
+    const allStats = await manager.getAllStats();
+    expect(allStats.size).toBeGreaterThanOrEqual(1);
+    expect(allStats.get('stats-cache')).toBeDefined();
+  });
+
+  it('should invalidate tags globally', async () => {
+    const cache = new CacheService('memory');
+    manager.register('inv', cache);
+    await cache.setWithTags('x', 'y', 60, ['t1']);
+    await manager.invalidateTagsGlobal(['t1']);
+    expect(await cache.get('x')).toBeNull();
   });
 });
 

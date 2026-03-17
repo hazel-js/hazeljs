@@ -157,6 +157,14 @@ describe('PdfToAudioController', () => {
       );
       expect(mockAdd).not.toHaveBeenCalled();
     });
+
+    it('should rethrow and log when parseMultipart throws', async () => {
+      getMockParseMultipart().mockRejectedValue(new Error('parse error'));
+
+      await expect(
+        controller.convert({} as never, { status: mockStatus, json: mockJson } as never)
+      ).rejects.toThrow('parse error');
+    });
   });
 
   describe('status', () => {
@@ -259,6 +267,19 @@ describe('PdfToAudioController', () => {
       await controller.status('job-1', { json: mockJson } as never);
       expect(mockJson).toHaveBeenCalledWith(expect.objectContaining({ progress: 75 }));
     });
+
+    it('should return completed status and Conversion complete message', async () => {
+      mockQueue.getJob.mockResolvedValue({
+        id: 'job-1',
+        getState: jest.fn().mockResolvedValue('completed'),
+        progress: {},
+        failedReason: null,
+      });
+      await controller.status('job-1', { json: mockJson } as never);
+      const call = mockJson.mock.calls[0][0];
+      expect(call.status).toBe('completed');
+      expect(call.message).toBe('Conversion complete');
+    });
   });
 
   describe('download', () => {
@@ -334,6 +355,22 @@ describe('PdfToAudioController', () => {
       await expect(controller.download('job-123', {} as never)).rejects.toThrow(
         'Job result not available'
       );
+    });
+
+    it('should not call sendBuffer when res has no sendBuffer', async () => {
+      mockQueue.getJob.mockResolvedValue({
+        id: 'job-123',
+        getState: jest.fn().mockResolvedValue('completed'),
+        returnvalue: '/data/job-123.mp3',
+      });
+      mockExistsSync.mockReturnValue(true);
+      mockReadFileSync.mockReturnValue(Buffer.from('audio'));
+
+      const mockRes = {};
+      await controller.download('job-123', mockRes as never);
+
+      expect(mockReadFileSync).toHaveBeenCalledWith('/data/job-123.mp3');
+      expect(mockSendBuffer).not.toHaveBeenCalled();
     });
   });
 });

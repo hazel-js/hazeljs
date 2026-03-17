@@ -1,5 +1,6 @@
 import { TypeOrmModule } from './typeorm.module';
 import { TypeOrmService } from './typeorm.service';
+import * as typeorm from 'typeorm';
 
 describe('TypeOrmModule', () => {
   it('should export TypeOrmModule class', () => {
@@ -38,8 +39,33 @@ describe('TypeOrmModule', () => {
 
       const provider = result.providers![0] as { useFactory: () => TypeOrmService };
       expect(provider.useFactory).toBeDefined();
-      // useFactory creates DataSource(options) and TypeOrmService; skip calling it to avoid requiring pg driver
       expect(typeof provider.useFactory).toBe('function');
+    });
+
+    it('useFactory creates DataSource and TypeOrmService (forRoot body coverage)', async () => {
+      const mockDs = {
+        isInitialized: false,
+        initialize: jest.fn().mockResolvedValue(undefined),
+        destroy: jest.fn().mockResolvedValue(undefined),
+        getRepository: jest.fn(() => ({})),
+      };
+      const spy = jest.spyOn(typeorm, 'DataSource').mockImplementation(() => mockDs as any);
+
+      const result = TypeOrmModule.forRoot({
+        type: 'sqlite',
+        database: ':memory:',
+        synchronize: true,
+      });
+
+      const provider = result.providers![0] as { useFactory: () => TypeOrmService };
+      const service = provider.useFactory();
+      expect(service).toBeDefined();
+      expect(service.ready).toBeDefined();
+      await service.ready();
+      expect(service.dataSource).toBe(mockDs);
+      expect(mockDs.initialize).toHaveBeenCalledTimes(1);
+      await service.onModuleDestroy();
+      spy.mockRestore();
     });
   });
 });

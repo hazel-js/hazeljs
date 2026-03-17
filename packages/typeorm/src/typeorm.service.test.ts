@@ -1,4 +1,5 @@
 import { DataSource } from 'typeorm';
+import * as typeorm from 'typeorm';
 import { TypeOrmService } from './typeorm.service';
 
 interface MockDs {
@@ -82,6 +83,63 @@ describe('TypeOrmService', () => {
 
       const repo = service.getRepository('dummy' as never);
       expect(repo).toBe(mockRepo);
+    });
+  });
+
+  describe('with options.options (DataSourceOptions)', () => {
+    it('creates DataSource from options and initializes', async () => {
+      const mockDs: MockDs = {
+        isInitialized: false,
+        initialize: jest.fn().mockResolvedValue(undefined),
+        destroy: jest.fn().mockResolvedValue(undefined),
+        getRepository: jest.fn(() => ({})),
+      };
+      const spy = jest
+        .spyOn(typeorm, 'DataSource')
+        .mockImplementation(() => mockDs as unknown as DataSource);
+
+      const service = new TypeOrmService({
+        options: {
+          type: 'sqlite',
+          database: ':memory:',
+          synchronize: true,
+        } as import('typeorm').DataSourceOptions,
+      });
+      await service.ready();
+      expect(service.dataSource).toBe(mockDs);
+      expect(mockDs.initialize).toHaveBeenCalledTimes(1);
+      spy.mockRestore();
+    });
+  });
+
+  describe('when initialize() rejects', () => {
+    it('surfaces error from ready() and leaves DataSource uninitialized', async () => {
+      const mockDs: MockDs = {
+        isInitialized: false,
+        initialize: jest.fn().mockRejectedValue(new Error('connection refused')),
+        destroy: jest.fn(),
+        getRepository: jest.fn(() => ({})),
+      };
+      const dataSource = mockDs as unknown as DataSource;
+      const service = new TypeOrmService({ dataSource });
+
+      await expect(service.ready()).rejects.toThrow('connection refused');
+    });
+  });
+
+  describe('when destroy() throws in onModuleDestroy', () => {
+    it('logs and rethrows', async () => {
+      const mockDs: MockDs = {
+        isInitialized: true,
+        initialize: jest.fn(),
+        destroy: jest.fn().mockRejectedValue(new Error('destroy failed')),
+        getRepository: jest.fn(() => ({})),
+      };
+      const dataSource = mockDs as unknown as DataSource;
+      const service = new TypeOrmService({ dataSource });
+      await service.ready();
+
+      await expect(service.onModuleDestroy()).rejects.toThrow('destroy failed');
     });
   });
 

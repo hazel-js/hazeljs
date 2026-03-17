@@ -1,4 +1,8 @@
-import { GlobalMiddlewareManager } from '../../middleware/global-middleware';
+import {
+  GlobalMiddlewareManager,
+  CorsMiddleware,
+  LoggerMiddleware,
+} from '../../middleware/global-middleware';
 import { Request, Response } from '../../types';
 
 // Mock logger
@@ -24,6 +28,7 @@ describe('GlobalMiddlewareManager', () => {
     mockRes = {
       setHeader: jest.fn(),
       status: jest.fn().mockReturnThis(),
+      end: jest.fn().mockReturnThis(),
       json: jest.fn(),
     };
   });
@@ -349,6 +354,45 @@ describe('GlobalMiddlewareManager', () => {
       
       // Original should not be affected
       expect(manager.getMiddleware()).toHaveLength(1);
+    });
+  });
+
+  describe('CorsMiddleware (global-middleware)', () => {
+    it('should set CORS headers and call next', () => {
+      const middleware = new CorsMiddleware();
+      const next = jest.fn();
+      middleware.use(mockReq as Request, mockRes as Response, next);
+      expect(mockRes.setHeader).toHaveBeenCalledWith('Access-Control-Allow-Origin', '*');
+      expect(mockRes.setHeader).toHaveBeenCalledWith(
+        'Access-Control-Allow-Methods',
+        'GET, POST, PUT, DELETE, PATCH, OPTIONS'
+      );
+      expect(next).toHaveBeenCalled();
+    });
+
+    it('should set credentials when options.credentials is true', () => {
+      const middleware = new CorsMiddleware({ credentials: true });
+      const next = jest.fn();
+      middleware.use(mockReq as Request, mockRes as Response, next);
+      expect(mockRes.setHeader).toHaveBeenCalledWith('Access-Control-Allow-Credentials', 'true');
+    });
+
+    it('should respond 204 for OPTIONS and not call next', () => {
+      const middleware = new CorsMiddleware();
+      const next = jest.fn();
+      (mockReq as Request).method = 'OPTIONS';
+      middleware.use(mockReq as Request, mockRes as Response, next);
+      expect(mockRes.status).toHaveBeenCalledWith(204);
+      expect(next).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('LoggerMiddleware (global-middleware)', () => {
+    it('should log request and response and call next', async () => {
+      const middleware = new LoggerMiddleware();
+      const next = jest.fn().mockResolvedValue(undefined);
+      await middleware.use(mockReq as Request, mockRes as Response, next);
+      expect(next).toHaveBeenCalled();
     });
   });
 });

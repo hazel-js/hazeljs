@@ -246,6 +246,17 @@ describe('RateLimitMiddleware', () => {
     });
   });
 
+  describe('MemoryStore coverage', () => {
+    it('should run cleanup interval when using default store', async () => {
+      const middleware = new RateLimitMiddleware({ max: 5, windowMs: 60 });
+      await middleware.use(mockReq as Request, mockRes as Response, nextFn);
+      jest.advanceTimersByTime(61000);
+      await middleware.use(mockReq as Request, mockRes as Response, nextFn);
+      expect(nextFn).toHaveBeenCalled();
+      middleware.destroy();
+    });
+  });
+
   describe('edge cases', () => {
     it('should handle missing socket', async () => {
       const middleware = new RateLimitMiddleware({

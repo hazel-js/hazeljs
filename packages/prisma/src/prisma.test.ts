@@ -11,9 +11,10 @@ jest.mock('@hazeljs/core', () => ({
 }));
 
 import logger from '@hazeljs/core';
+import { PrismaModule } from './prisma.module';
 import { PrismaService } from './prisma.service';
 import { BaseRepository, PrismaModel } from './base.repository';
-import { Repository } from './repository.decorator';
+import { Repository, InjectRepository } from './repository.decorator';
 import { PrismaClientKnownRequestError } from './__mocks__/@prisma/client/runtime/library';
 
 // ─── PrismaService ────────────────────────────────────────────────────────────
@@ -298,5 +299,53 @@ describe('@Repository decorator', () => {
 
     const injectable = Reflect.getMetadata('hazel:injectable', LogRepo);
     expect(injectable).toEqual({ scope: 'TRANSIENT' });
+  });
+
+  it('sets hazel:repository:model for InjectRepository', () => {
+    @Repository('profile')
+    class ProfileRepo {}
+
+    const model = Reflect.getMetadata('hazel:repository:model', ProfileRepo);
+    expect(model).toBe('profile');
+  });
+});
+
+describe('PrismaModule', () => {
+  it('exports PrismaModule class with providers and exports', () => {
+    expect(PrismaModule).toBeDefined();
+    const _meta = Reflect.getMetadata('hazel:module', PrismaModule) ?? (PrismaModule as any).module;
+    expect(PrismaModule).toHaveProperty('name', 'PrismaModule');
+  });
+});
+
+describe('InjectRepository', () => {
+  it('throws when used on constructor parameter (propertyKey undefined)', () => {
+    const decorator = InjectRepository();
+    expect(() => decorator(class C {}, undefined!, 0)).toThrow(
+      'InjectRepository decorator must be used on a method parameter'
+    );
+  });
+
+  it('pushes repository metadata when used on method parameter', () => {
+    @Repository('product')
+    class ProductRepo {}
+
+    class Consumer {
+      doSomething(@InjectRepository() _repo: ProductRepo) {}
+    }
+    const repos = Reflect.getMetadata('hazel:repositories', Consumer.prototype);
+    expect(repos).toBeDefined();
+    expect(repos).toHaveLength(1);
+    expect(repos[0]).toEqual({ index: 0, model: 'product' });
+  });
+
+  it('throws when repository type is not decorated with @Repository', () => {
+    class UndecoratedRepo {}
+    const proto = class {
+      method(_r: UndecoratedRepo) {}
+    }.prototype;
+    Reflect.defineMetadata('design:paramtypes', [UndecoratedRepo], proto, 'method');
+    const decorator = InjectRepository();
+    expect(() => decorator(proto, 'method', 0)).toThrow(/not decorated with @Repository/);
   });
 });
