@@ -143,7 +143,7 @@ HazelJS is a modern, TypeScript-first Node.js framework with AI built in. This l
 
 ### Code Examples
 - [Official Examples](https://github.com/hazel-js/hazeljs/tree/main/example) - Full example app
-- [One-File Demo](https://github.com/hazel-js/hazeljs/tree/main/examples) - Minimal demo
+- [HazelJS Starter Example](https://github.com/hazel-js/hazeljs/tree/main/hazeljs-starter-example) - HazelJS Starter Example
 
 ### Use Cases
 - AI Chatbots
