@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/cache",
-  "version": "0.2.0-rc.5",
+  "version": "0.2.0-rc.6",
   "description": "Caching module for HazelJS framework",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/realtime",
-  "version": "0.2.0-rc.5",
+  "version": "0.2.0-rc.6",
   "description": "Real-time voice AI for HazelJS - OpenAI Realtime API & Gemini Live integration for low-latency speech-to-speech",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
