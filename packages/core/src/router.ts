@@ -51,9 +51,9 @@ export class Router {
 
     routes.forEach((route: { method: string; path: string; propertyKey: string | symbol }) => {
       const { method, path, propertyKey } = route;
-      const basePath = controllerMetadata.path || '';
-      const routePath = path || '';
-      const fullPath = this.normalizePath(`${basePath}${routePath}`);
+      const basePath = (controllerMetadata.path || '').trim().replace(/^\/+|\/+$/g, '');
+      const routePath = (path || '').trim().replace(/^\/+|\/+$/g, '');
+      const fullPath = this.normalizePath([basePath, routePath].filter(Boolean).join('/') || '/');
       logger.debug(`Registering route: ${method} ${fullPath} (handler: ${String(propertyKey)})`);
 
       // Get parameter types from TypeScript metadata

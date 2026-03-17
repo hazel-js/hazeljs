@@ -177,6 +177,7 @@ export class WorkerPoolManager {
 
       await this.shutdown();
       clearTimeout(timer);
+      process.exit(0);
     };
 
     process.once('SIGTERM', () => {

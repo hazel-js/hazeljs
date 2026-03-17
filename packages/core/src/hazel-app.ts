@@ -483,8 +483,9 @@ export class HazelApp {
         if (instance && typeof (instance as { onApplicationBootstrap?: unknown }).onApplicationBootstrap === 'function') {
           await (instance as { onApplicationBootstrap: (app: HazelApp) => void | Promise<void> }).onApplicationBootstrap(this);
         }
-      } catch {
-        // Skip request-scoped or unresolvable providers
+      } catch (err) {
+        const tokenName = typeof token === 'function' ? (token as { name?: string }).name : String(token);
+        logger.error(`OnApplicationBootstrap failed for ${tokenName}`, err);
       }
     }
   }

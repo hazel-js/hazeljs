@@ -280,7 +280,9 @@ describe('WorkerModule', () => {
 
       expect(result.module).toBe(WorkerModule);
       expect(result.providers).toBeDefined();
-      expect(result.providers).toContain(WorkerRegistry);
+      expect(
+        result.providers?.some((p) => (p as { provide?: unknown })?.provide === WorkerRegistry)
+      ).toBe(true);
       expect(result.providers).toContain(WorkerExecutor);
       expect(result.global).toBe(true);
     });

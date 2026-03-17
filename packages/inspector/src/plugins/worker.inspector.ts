@@ -4,15 +4,28 @@
  */
 
 import 'reflect-metadata';
-import type { InspectorEntry, WorkerInspectorEntry, HazelInspectorPlugin } from '../contracts/types';
+import type {
+  InspectorEntry,
+  WorkerInspectorEntry,
+  HazelInspectorPlugin,
+} from '../contracts/types';
 
 function createId(...parts: string[]): string {
   return parts.filter(Boolean).join(':');
 }
 
 function tryGetWorkerModule(): {
-  getWorkerTaskMetadata: (t: object) => { name: string; timeout?: number; maxConcurrency?: number } | undefined;
-  WorkerRegistry?: new () => { getAll: () => Array<{ name: string; handlerPath: string; timeout?: number; maxConcurrency?: number }> };
+  getWorkerTaskMetadata: (
+    t: object
+  ) => { name: string; timeout?: number; maxConcurrency?: number } | undefined;
+  WorkerRegistry?: new () => {
+    getAll: () => Array<{
+      name: string;
+      handlerPath: string;
+      timeout?: number;
+      maxConcurrency?: number;
+    }>;
+  };
 } | null {
   try {
     return require('@hazeljs/worker');
@@ -32,12 +45,22 @@ export const workerInspector: HazelInspectorPlugin = {
     if (!workerMod) return [];
 
     const entries: WorkerInspectorEntry[] = [];
-    const container = context.container as { resolve?: (token: unknown) => unknown; getTokens?: () => unknown[] };
+    const container = context.container as {
+      resolve?: (token: unknown) => unknown;
+      getTokens?: () => unknown[];
+    };
 
     try {
       const WorkerRegistry = workerMod.WorkerRegistry;
       if (WorkerRegistry && container.resolve) {
-        const registry = container.resolve(WorkerRegistry) as { getAll?: () => Array<{ name: string; handlerPath: string; timeout?: number; maxConcurrency?: number }> };
+        const registry = container.resolve(WorkerRegistry) as {
+          getAll?: () => Array<{
+            name: string;
+            handlerPath: string;
+            timeout?: number;
+            maxConcurrency?: number;
+          }>;
+        };
         if (registry && typeof registry.getAll === 'function') {
           const tasks = registry.getAll();
           for (const task of tasks) {

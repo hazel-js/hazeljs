@@ -87,12 +87,22 @@ export class WorkerModule {
       useValue: options,
     };
 
+    const registryProvider = {
+      provide: WorkerRegistry,
+      useFactory: (): WorkerRegistry => {
+        const registry = new WorkerRegistry();
+        if (options.taskRegistry && Object.keys(options.taskRegistry).length > 0) {
+          registry.registerFromMap(options.taskRegistry, { timeout: options.timeout });
+        }
+        return registry;
+      },
+    };
+
     return {
       module: WorkerModule,
       providers: [
-        WorkerRegistry,
+        registryProvider,
         WorkerTaskDiscovery,
-        WorkerExecutor,
         optionsProvider,
         {
           provide: WorkerPoolManager,
@@ -101,6 +111,7 @@ export class WorkerModule {
           },
           inject: [WorkerRegistry],
         },
+        WorkerExecutor,
         WorkerBootstrapService,
       ],
       exports: [WorkerExecutor, WorkerRegistry],

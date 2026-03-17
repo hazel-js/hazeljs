@@ -1,10 +1,11 @@
-import { Service } from '@hazeljs/core';
+import { Inject, Service } from '@hazeljs/core';
 import type { HazelApp } from '@hazeljs/core';
 import { Container } from '@hazeljs/core';
 import { getWorkerTaskMetadata } from './worker.decorator';
 import type { WorkerRegistry } from './worker.registry';
 import type { WorkerModuleOptions } from './worker.types';
 import logger from '@hazeljs/core';
+import { WorkerRegistry as WorkerRegistryClass } from './worker.registry';
 
 /**
  * Discovers @WorkerTask decorated classes from the DI container and
@@ -13,13 +14,15 @@ import logger from '@hazeljs/core';
  */
 @Service()
 export class WorkerTaskDiscovery {
-  constructor(private readonly registry: WorkerRegistry) {}
+  constructor(@Inject(WorkerRegistryClass) private readonly registry: WorkerRegistry) {}
 
   /**
    * Discover worker tasks from container and merge with module options.
-   * Called during OnApplicationBootstrap.
+   * Called by WorkerBootstrapService with options; guard when core calls with only (app).
    */
-  async onApplicationBootstrap(_app: HazelApp, options: WorkerModuleOptions): Promise<void> {
+  async onApplicationBootstrap(_app: HazelApp, options?: WorkerModuleOptions): Promise<void> {
+    if (!options) return;
+
     const discoveredNames = this.discoverTaskNames();
 
     if (discoveredNames.length > 0) {

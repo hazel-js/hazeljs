@@ -1,9 +1,11 @@
-import { Injectable } from '@hazeljs/core';
+import { Inject, Injectable } from '@hazeljs/core';
 import type { WorkerExecutionOptions, WorkerExecutionResult } from './worker.types';
 import type { WorkerResultMessage, WorkerErrorMessage } from './worker.types';
 import { WorkerExecutionFailedError } from './worker.errors';
 import type { WorkerRegistry } from './worker.registry';
 import type { WorkerPoolManager } from './worker.pool';
+import { WorkerRegistry as WorkerRegistryClass } from './worker.registry';
+import { WorkerPoolManager as WorkerPoolManagerClass } from './worker.pool';
 
 /**
  * Service for executing CPU-intensive tasks in worker threads.
@@ -12,8 +14,8 @@ import type { WorkerPoolManager } from './worker.pool';
 @Injectable()
 export class WorkerExecutor {
   constructor(
-    private readonly registry: WorkerRegistry,
-    private readonly pool: WorkerPoolManager
+    @Inject(WorkerRegistryClass) private readonly registry: WorkerRegistry,
+    @Inject(WorkerPoolManagerClass) private readonly pool: WorkerPoolManager
   ) {}
 
   /**
