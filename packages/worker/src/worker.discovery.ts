@@ -38,6 +38,7 @@ export class WorkerTaskDiscovery {
     if (options.taskDirectory && discoveredNames.length > 0) {
       this.registry.registerFromDirectory(options.taskDirectory, discoveredNames, {
         timeout: options.timeout,
+        taskFileExtension: options.taskFileExtension,
       });
     }
 
@@ -48,6 +49,7 @@ export class WorkerTaskDiscovery {
       if (fromDir.length > 0) {
         this.registry.registerFromDirectory(options.taskDirectory, fromDir, {
           timeout: options.timeout,
+          taskFileExtension: options.taskFileExtension,
         });
       }
     }

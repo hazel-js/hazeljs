@@ -88,9 +88,15 @@ export interface WorkerModuleOptions {
   taskRegistry?: Record<string, string>;
 
   /**
-   * Directory containing task handlers. Tasks loaded by convention: taskName.js
+   * Directory containing task handlers. Paths resolved at runtime as taskDirectory + taskName + taskFileExtension.
    */
   taskDirectory?: string;
+
+  /**
+   * File extension for task handlers when using taskDirectory (e.g. '.js' or '.task.js').
+   * @default '.js'
+   */
+  taskFileExtension?: string;
 
   /**
    * Default task timeout in milliseconds

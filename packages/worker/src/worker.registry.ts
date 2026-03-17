@@ -37,18 +37,20 @@ export class WorkerRegistry {
   }
 
   /**
-   * Register tasks from a directory by convention: taskName.js
+   * Register tasks from a directory by convention: taskDirectory + taskName + extension (resolved at runtime).
    */
   registerFromDirectory(
     taskDirectory: string,
     taskNames: string[],
-    defaults?: { timeout?: number; maxConcurrency?: number }
+    defaults?: { timeout?: number; maxConcurrency?: number; taskFileExtension?: string }
   ): void {
     const resolvedDir = path.isAbsolute(taskDirectory)
       ? taskDirectory
       : path.resolve(taskDirectory);
+    const ext = defaults?.taskFileExtension ?? '.js';
+    const suffix = ext.startsWith('.') ? ext : `.${ext}`;
     for (const name of taskNames) {
-      const handlerPath = path.join(resolvedDir, `${name}.js`);
+      const handlerPath = path.join(resolvedDir, `${name}${suffix}`);
       this.register({
         name,
         handlerPath,
