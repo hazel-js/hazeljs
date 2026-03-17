@@ -20,8 +20,7 @@
 
 ---
 
-### 🎯 **Try it in 60 seconds** → `npx @hazeljs/cli g app my-app` | [Starter Example](./hazeljs-starter-example) | [HazelJS CSR Agent Example](https://github.com/hazel-js/hazeljs-csr-agent)
-
+### 🎯 **Try it in 60 seconds** → `npx @hazeljs/cli g app my-app` | [Starter Example](./hazeljs-starter-example) | [HazelJS CSR Agent Example](https://github.com/hazel-js/hazeljs-csr-agent) | [HazelJS Flow Starter](https://github.com/hazel-js/hazeljs-flow-starter) | [HazelJS RAG Documents Starter](https://github.com/hazel-js/hazeljs-rag-documents-starter) | [HazelJS RAG Graph Starter](https://github.com/hazel-js/hazeljs-rag-graph-starter)
 </div>
 
 ---
