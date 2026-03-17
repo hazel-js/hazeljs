@@ -112,11 +112,12 @@ WorkerModule.forRoot({
 ```typescript
 WorkerModule.forRoot({
   taskDirectory: path.join(__dirname, 'dist/worker-tasks'),
+  taskFileExtension: '.js',  // optional; default '.js'. Use '.task.js' for generate-embeddings.task.js
   // Task name 'generate-embeddings' → dist/worker-tasks/generate-embeddings.js
 })
 ```
 
-Add your `@WorkerTask` classes as **providers** so discovery can find them. Discovery merges with `taskRegistry` or builds paths from `taskDirectory` + discovered names.
+Paths are resolved as `taskDirectory + taskName + taskFileExtension`. Add your `@WorkerTask` classes as **providers** so discovery can find them. Discovery merges with `taskRegistry` or builds paths from `taskDirectory` + discovered names.
 
 ## Module Options
 
@@ -125,8 +126,9 @@ interface WorkerModuleOptions {
   poolSize?: number;                    // Default: os.cpus().length - 1
   taskRegistry?: Record<string, string>;
   taskDirectory?: string;
-  timeout?: number;                    // Default: 30000
-  isGlobal?: boolean;                  // Default: true
+  taskFileExtension?: string;           // Default: '.js' (e.g. '.task.js' for name.task.js)
+  timeout?: number;                     // Default: 30000
+  isGlobal?: boolean;                   // Default: true
   gracefulShutdownTimeout?: number;    // Default: 10000
 }
 ```
@@ -169,6 +171,7 @@ workerExecutor.getTaskNames();
 
 - `WorkerTaskNotFoundError` — Task not in registry
 - `WorkerTaskTimeoutError` — Task exceeded timeout
+- `WorkerPoolExhaustedError` — No available worker in pool
 - `WorkerExecutionFailedError` — Task threw in worker
 - `WorkerSerializationError` — Payload serialization failed
 
