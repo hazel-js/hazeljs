@@ -26,7 +26,8 @@ export type InspectorEntryKind =
   | 'flow'
   | 'data'
   | 'serverless'
-  | 'ml';
+  | 'ml'
+  | 'worker';
 
 /** Base fields shared by all inspector entries */
 export interface InspectorEntryBase {
@@ -133,6 +134,15 @@ export interface QueueInspectorEntry extends InspectorEntryBase {
   jobName?: string;
   concurrency?: number;
   retry?: Record<string, unknown>;
+}
+
+/** Worker task inspector entry */
+export interface WorkerInspectorEntry extends InspectorEntryBase {
+  kind: 'worker';
+  taskName: string;
+  handlerPath?: string;
+  timeout?: number;
+  maxConcurrency?: number;
 }
 
 /** Agent inspector entry */
@@ -258,6 +268,7 @@ export type InspectorEntry =
   | DataPipelineInspectorEntry
   | ServerlessInspectorEntry
   | MLModelInspectorEntry
+  | WorkerInspectorEntry
   | (InspectorEntryBase & {
       kind: Exclude<
         InspectorEntryKind,
@@ -280,6 +291,7 @@ export type InspectorEntry =
         | 'data'
         | 'serverless'
         | 'ml'
+        | 'worker'
       >;
     });
 
@@ -311,6 +323,7 @@ export interface GroupedSnapshot {
   dataPipelines: DataPipelineInspectorEntry[];
   serverless: ServerlessInspectorEntry[];
   mlModels: MLModelInspectorEntry[];
+  workers: WorkerInspectorEntry[];
   other: InspectorEntry[];
 }
 

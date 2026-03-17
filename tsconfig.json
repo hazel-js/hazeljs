@@ -120,6 +120,7 @@
     { "path": "./packages/flow"},
     { "path": "./packages/flow-runtime"},
     { "path": "./packages/realtime"},
-    { "path": "./packages/inspector"}
+    { "path": "./packages/inspector"},
+    { "path": "./packages/worker"}
   ]
 }

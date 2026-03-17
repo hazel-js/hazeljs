@@ -26,6 +26,7 @@ import type {
   DataPipelineInspectorEntry,
   ServerlessInspectorEntry,
   MLModelInspectorEntry,
+  WorkerInspectorEntry,
   GroupedSnapshot,
 } from '../contracts/types';
 import type { HazelInspectorRegistry } from '../registry/registry';
@@ -147,6 +148,10 @@ export class HazelInspectorService {
     return entries.filter((e): e is MLModelInspectorEntry => e.kind === 'ml');
   }
 
+  getWorkers(entries: InspectorEntry[]): WorkerInspectorEntry[] {
+    return entries.filter((e): e is WorkerInspectorEntry => e.kind === 'worker');
+  }
+
   getByKind(entries: InspectorEntry[], kind: InspectorEntryKind): InspectorEntry[] {
     return entries.filter((e) => e.kind === kind);
   }
@@ -172,6 +177,7 @@ export class HazelInspectorService {
       'data',
       'serverless',
       'ml',
+      'worker',
     ];
     return {
       routes: this.getRoutes(entries),
@@ -193,6 +199,7 @@ export class HazelInspectorService {
       dataPipelines: this.getDataPipelines(entries),
       serverless: this.getServerless(entries),
       mlModels: this.getMLModels(entries),
+      workers: this.getWorkers(entries),
       other: entries.filter((e) => !knownKinds.includes(e.kind)),
     };
   }

@@ -25,6 +25,7 @@ import { flowInspector } from './plugins/flow.inspector';
 import { dataInspector } from './plugins/data.inspector';
 import { serverlessInspector } from './plugins/serverless.inspector';
 import { mlInspector } from './plugins/ml.inspector';
+import { workerInspector } from './plugins/worker.inspector';
 import { mergeInspectorConfig, shouldExposeInspector } from './config/inspector.config';
 import { InspectorRuntime } from './runtime/inspector-runtime';
 
@@ -80,6 +81,7 @@ export const InspectorModule = {
         registry.register(dataInspector);
         registry.register(serverlessInspector);
         registry.register(mlInspector);
+        registry.register(workerInspector);
 
         const basePath = config.inspectorBasePath ?? '/__hazel';
         const handler = createInspectorHandler(service, config, app);
@@ -492,6 +494,12 @@ function createInspectorHandler(
         res.end(JSON.stringify({ entries: ml }));
         return;
       }
+      if (pathSeg === '/workers' || pathSeg === '/workers/') {
+        const workers = snapshot.entries.filter((e: { kind?: string }) => e.kind === 'worker');
+        res.writeHead(200);
+        res.end(JSON.stringify({ entries: workers }));
+        return;
+      }
       if (pathSeg === '/' || pathSeg === '') {
         res.writeHead(200);
         res.end(
@@ -518,6 +526,7 @@ function createInspectorHandler(
               '/data',
               '/serverless',
               '/ml',
+              '/workers',
               '/stats',
             ],
           })
