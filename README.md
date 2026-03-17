@@ -11,7 +11,7 @@
 [![npm downloads](https://img.shields.io/npm/dm/@hazeljs/core)](https://www.npmjs.com/package/@hazeljs/core)
 [![codecov](https://codecov.io/gh/hazel-js/hazeljs/branch/main/graph/badge.svg)](https://codecov.io/gh/hazel-js/hazeljs)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
-[![Discord](https://img.shields.io/discord/1448263814238965833?color=7289da&label=Discord&logo=discord&logoColor=white)](https://discord.com/channels/1448263814238965833/1448263814859456575)
+[![Discord](https://img.shields.io/discord/1448263814238965833?color=7289da&label=Discord&logo=discord&logoColor=white)](https://discord.gg/your-invite-code)
 
 *Stop the glue code. Build AI backends that feel native — not bolted on.*  
 **AI** · **Agents** · **RAG** · **Flow** · **Prompts** — one cohesive stack.
@@ -20,7 +20,7 @@
 
 ---
 
-### 🎯 **Try it in 60 seconds** → `npx @hazeljs/cli g app my-app` | [Starter Example](./hazeljs-starter-example) | [Full Example](./example)
+### 🎯 **Try it in 60 seconds** → `npx @hazeljs/cli g app my-app` | [Starter Example](./hazeljs-starter-example) | [HazelJS CSR Agent Example](https://github.com/hazel-js/hazeljs-csr-agent)
 
 </div>
 
