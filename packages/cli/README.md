@@ -710,11 +710,11 @@ Contributions are welcome! Please read our [Contributing Guide](../../CONTRIBUTI
 
 ## License
 
-Apache 2.0 © [HazelJS](https://hazeljs.com)
+Apache 2.0 © [HazelJS](https://hazeljs.ai)
 
 ## Links
 
-- [Documentation](https://hazeljs.com/docs/packages/cli)
+- [Documentation](https://hazeljs.ai/docs/packages/cli)
 - [GitHub](https://github.com/hazel-js/hazeljs)
 - [Issues](https://github.com/hazel-js/hazeljs/issues)
 - [Discord](https://discord.com/channels/1448263814238965833/1448263814859456575)

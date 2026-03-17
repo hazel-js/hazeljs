@@ -343,7 +343,7 @@ const mockAI = {
 
 ## API Reference
 
-See full documentation at: https://hazeljs.com/docs/ai
+See full documentation at: https://hazeljs.ai/docs/ai
 
 ## Examples
 

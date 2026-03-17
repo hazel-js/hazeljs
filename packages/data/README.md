@@ -302,7 +302,7 @@ See [hazeljs-data-starter](../../../hazeljs-data-starter) for a full example wit
 
 ## Links
 
-- [Documentation](https://hazeljs.com/docs/packages/data)
+- [Documentation](https://hazeljs.ai/docs/packages/data)
 - [GitHub](https://github.com/hazel-js/hazeljs)
 - [Issues](https://github.com/hazel-js/hazeljs/issues)
-- [Homepage](https://hazeljs.com)
+- [Homepage](https://hazeljs.ai)

@@ -37,7 +37,7 @@
   "bugs": {
     "url": "https://github.com/hazeljs/hazel-js/issues"
   },
-  "homepage": "https://hazeljs.com",
+  "homepage": "https://hazeljs.ai",
   "dependencies": {},
   "devDependencies": {
     "@types/jest": "^29.5.11",

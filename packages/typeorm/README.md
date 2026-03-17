@@ -153,9 +153,9 @@ export class TransferService {
 ## Links
 
 - [TypeORM docs](https://typeorm.io)
-- [HazelJS](https://hazeljs.com)
+- [HazelJS](https://hazeljs.ai)
 - [GitHub](https://github.com/hazel-js/hazeljs)
 
 ## License
 
-Apache 2.0 © [HazelJS](https://hazeljs.com)
+Apache 2.0 © [HazelJS](https://hazeljs.ai)

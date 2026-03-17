@@ -493,7 +493,7 @@ canActivate(context: ExecutionContext): boolean {
 
 ## Links
 
-- [Documentation](https://hazeljs.com/docs/packages/auth)
+- [Documentation](https://hazeljs.ai/docs/packages/auth)
 - [GitHub](https://github.com/hazel-js/hazeljs)
 - [Issues](https://github.com/hazel-js/hazeljs/issues)
 - [Discord](https://discord.com/channels/1448263814238965833/1448263814859456575)

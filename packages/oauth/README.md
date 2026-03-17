@@ -191,10 +191,10 @@ npm test
 
 ## Links
 
-- [Documentation](https://hazeljs.com/docs/packages/oauth)
+- [Documentation](https://hazeljs.ai/docs/packages/oauth)
 - [GitHub](https://github.com/hazel-js/hazeljs)
 - [Arctic](https://arcticjs.dev)
 
 ## License
 
-Apache 2.0 © [HazelJS](https://hazeljs.com)
+Apache 2.0 © [HazelJS](https://hazeljs.ai)

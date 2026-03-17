@@ -572,11 +572,11 @@ Contributions are welcome! Please read our [Contributing Guide](../../CONTRIBUTI
 
 ## License
 
-Apache 2.0 © [HazelJS](https://hazeljs.com)
+Apache 2.0 © [HazelJS](https://hazeljs.ai)
 
 ## Links
 
-- [Documentation](https://hazeljs.com/docs/packages/swagger)
+- [Documentation](https://hazeljs.ai/docs/packages/swagger)
 - [OpenAPI Specification](https://swagger.io/specification/)
 - [Swagger UI](https://swagger.io/tools/swagger-ui/)
 - [GitHub](https://github.com/hazel-js/hazeljs)

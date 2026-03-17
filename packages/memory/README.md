@@ -114,7 +114,7 @@ See [@hazeljs/rag README](../rag/README.md) (Memory System / Using @hazeljs/memo
 
 ## License
 
-Apache 2.0 © [HazelJS](https://hazeljs.com)
+Apache 2.0 © [HazelJS](https://hazeljs.ai)
 
 ## Contributing
 

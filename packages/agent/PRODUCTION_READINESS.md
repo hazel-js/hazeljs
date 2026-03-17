@@ -153,7 +153,7 @@ Create tests for remaining core components:
 
 ### 1. Install Dependencies
 ```bash
-cd /Users/muhammadarslan/repos/hazeljs.com/hazeljs/packages/agent
+cd /Users/muhammadarslan/repos/hazeljs.ai/hazeljs/packages/agent
 npm install
 ```
 

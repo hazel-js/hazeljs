@@ -278,7 +278,7 @@ async retrieve(query: string): Promise<SearchResult[]> { }
 
 - [Agentic RAG Documentation](../src/agentic/AGENTIC_RAG.md)
 - [API Reference](../docs/API.md)
-- [HazelJS Documentation](https://hazeljs.com/docs)
+- [HazelJS Documentation](https://hazeljs.ai/docs)
 
 ## 🐛 Troubleshooting
 

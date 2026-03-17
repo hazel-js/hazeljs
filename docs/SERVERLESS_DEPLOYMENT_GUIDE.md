@@ -1355,7 +1355,7 @@ Deploying HazelJS serverless applications to production is straightforward with 
 
 ### Resources
 
-- **HazelJS Documentation:** https://hazeljs.com/docs
+- **HazelJS Documentation:** https://hazeljs.ai/docs
 - **AWS Lambda Docs:** https://docs.aws.amazon.com/lambda
 - **Serverless Framework:** https://www.serverless.com/framework/docs
 - **HazelJS Discord:** https://discord.com/channels/1448263814238965833/1448263814859456575

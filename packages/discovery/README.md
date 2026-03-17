@@ -440,11 +440,11 @@ Contributions are welcome! Please read our [Contributing Guide](../../CONTRIBUTI
 
 ## License
 
-Apache 2.0 &copy; [HazelJS](https://hazeljs.com)
+Apache 2.0 &copy; [HazelJS](https://hazeljs.ai)
 
 ## Links
 
-- [Documentation](https://hazeljs.com/docs)
+- [Documentation](https://hazeljs.ai/docs)
 - [GitHub](https://github.com/hazel-js/hazeljs)
 - [Issues](https://github.com/hazel-js/hazeljs/issues)
 - [Roadmap](../../ROADMAP_2.0.md)

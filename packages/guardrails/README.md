@@ -153,6 +153,6 @@ Thrown when content is blocked. Includes `violations` and `blockedReason`. Use a
 
 ## Learn More
 
-- [Documentation](https://hazeljs.com/docs/packages/guardrails)
-- [@hazeljs/ai](https://hazeljs.com/docs/packages/ai) — AI integration
-- [@hazeljs/agent](https://hazeljs.com/docs/packages/agent) — Agent runtime
+- [Documentation](https://hazeljs.ai/docs/packages/guardrails)
+- [@hazeljs/ai](https://hazeljs.ai/docs/packages/ai) — AI integration
+- [@hazeljs/agent](https://hazeljs.ai/docs/packages/agent) — Agent runtime

@@ -108,4 +108,4 @@ The migration SQL in `prisma/migrations/` is only needed when you use this adapt
 
 ## License
 
-Apache 2.0 © [HazelJS](https://hazeljs.com)
+Apache 2.0 © [HazelJS](https://hazeljs.ai)

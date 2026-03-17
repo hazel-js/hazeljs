@@ -85,4 +85,4 @@ For a complete app with REST API, pipelines, and metrics, see:
 ## Docs
 
 - [ML package README](../../../packages/ml/README.md) – API and decorator options.
-- [hazeljs.com/docs/packages/ml](https://hazeljs.com/docs/packages/ml) – full documentation.
+- [hazeljs.ai/docs/packages/ml](https://hazeljs.ai/docs/packages/ml) – full documentation.

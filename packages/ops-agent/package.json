@@ -30,7 +30,7 @@
   "bugs": {
     "url": "https://github.com/hazeljs/hazel-js/issues"
   },
-  "homepage": "https://hazeljs.com",
+  "homepage": "https://hazeljs.ai",
   "dependencies": {
     "reflect-metadata": "^0.2.1"
   },

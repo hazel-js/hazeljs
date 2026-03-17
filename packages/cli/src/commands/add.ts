@@ -172,7 +172,7 @@ export function addCommand(program: Command) {
         console.log(chalk.gray('\nUsage:'));
         console.log(chalk.gray(`  ${pkgInfo.hint}`));
         console.log(
-          chalk.gray(`\nDocumentation: https://hazeljs.com/docs/packages/${selectedPackage}`)
+          chalk.gray(`\nDocumentation: https://hazeljs.ai/docs/packages/${selectedPackage}`)
         );
       } catch (error) {
         console.error(chalk.red('Error installing package:'), error);

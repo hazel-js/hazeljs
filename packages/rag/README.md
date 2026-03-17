@@ -156,7 +156,7 @@ const wordDocs = await new DocxLoader({ filePath: './agreement.docx' }).load();
 
 // Web scraping
 const webDocs = await new WebLoader({
-  urls: ['https://hazeljs.com/docs', 'https://hazeljs.com/blog'],
+  urls: ['https://hazeljs.ai/docs', 'https://hazeljs.ai/blog'],
   timeout: 10_000,
   maxRetries: 3,
 }).load();
@@ -282,7 +282,7 @@ console.log(`${result.mode} search in ${result.duration}ms`);
 ### Incremental updates
 
 ```typescript
-const newDocs = await new WebLoader({ urls: ['https://hazeljs.com/blog/new'] }).load();
+const newDocs = await new WebLoader({ urls: ['https://hazeljs.ai/blog/new'] }).load();
 await graphRag.addDocuments(newDocs);
 // Re-runs community detection and regenerates reports automatically
 ```

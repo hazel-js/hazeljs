@@ -18,7 +18,7 @@
  * @example
  * ```typescript
  * // Scrape a single page (no extra deps)
- * const loader = new WebLoader({ url: 'https://hazeljs.com/docs' });
+ * const loader = new WebLoader({ url: 'https://hazeljs.ai/docs' });
  * const docs = await loader.load();
  *
  * // Scrape multiple URLs

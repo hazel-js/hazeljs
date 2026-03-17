@@ -230,13 +230,13 @@ Contributions are welcome! Please read our [Contributing Guide](../../CONTRIBUTI
 
 ## License
 
-Apache 2.0 © [HazelJS](https://hazeljs.com)
+Apache 2.0 © [HazelJS](https://hazeljs.ai)
 
 ---
 
 ## Links
 
-- [Documentation](https://hazeljs.com/docs/packages/realtime)
+- [Documentation](https://hazeljs.ai/docs/packages/realtime)
 - [OpenAI Realtime API](https://platform.openai.com/docs/guides/realtime)
 - [GitHub](https://github.com/hazel-js/hazeljs)
 - [Issues](https://github.com/hazel-js/hazeljs/issues)

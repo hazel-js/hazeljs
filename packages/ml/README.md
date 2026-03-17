@@ -294,7 +294,7 @@ metricsService.recordEvaluation({
 
 ## Links
 
-- [Documentation](https://hazeljs.com/docs/packages/ml)
+- [Documentation](https://hazeljs.ai/docs/packages/ml)
 - [GitHub](https://github.com/hazel-js/hazeljs)
 - [Issues](https://github.com/hazel-js/hazeljs/issues)
-- [Homepage](https://hazeljs.com)
+- [Homepage](https://hazeljs.ai)

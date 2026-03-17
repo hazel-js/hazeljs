@@ -88,7 +88,7 @@ CLOSED  ──(failures >= threshold)──>  OPEN
 
 ## API Reference
 
-See the [full documentation](https://hazeljs.com/docs/packages/resilience) for complete API reference.
+See the [full documentation](https://hazeljs.ai/docs/packages/resilience) for complete API reference.
 
 ## License
 

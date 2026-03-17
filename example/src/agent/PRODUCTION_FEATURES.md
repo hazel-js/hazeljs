@@ -53,7 +53,7 @@ npm run example:production-features
 ### 1. Install Dependencies
 
 ```bash
-cd /Users/muhammadarslan/repos/hazeljs.com/hazeljs/packages/agent
+cd /Users/muhammadarslan/repos/hazeljs.ai/hazeljs/packages/agent
 npm install
 ```
 
@@ -406,4 +406,4 @@ if (metrics.executions.successRate < 0.9) {
 
 For issues or questions:
 - GitHub Issues: https://github.com/hazeljs/hazeljs/issues
-- Documentation: https://hazeljs.com/docs
+- Documentation: https://hazeljs.ai/docs

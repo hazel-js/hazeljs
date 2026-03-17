@@ -75,4 +75,4 @@ See [hazeljs-flow-example](https://github.com/hazel-js/hazeljs-flow-example) for
 
 ## License
 
-Apache 2.0 © [HazelJS](https://hazeljs.com)
+Apache 2.0 © [HazelJS](https://hazeljs.ai)

@@ -481,11 +481,11 @@ Contributions are welcome! Please read our [Contributing Guide](../../CONTRIBUTI
 
 ## License
 
-Apache 2.0 © [HazelJS](https://hazeljs.com)
+Apache 2.0 © [HazelJS](https://hazeljs.ai)
 
 ## Links
 
-- [Documentation](https://hazeljs.com/docs/packages/serverless)
+- [Documentation](https://hazeljs.ai/docs/packages/serverless)
 - [AWS Lambda Docs](https://docs.aws.amazon.com/lambda/)
 - [Google Cloud Functions Docs](https://cloud.google.com/functions/docs)
 - [GitHub](https://github.com/hazel-js/hazeljs)
