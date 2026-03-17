@@ -1,5 +1,5 @@
 import { Command } from 'commander';
-import { Generator } from '../utils/generator';
+import { Generator, GenerateResult, GenerateCLIOptions, printGenerateResult } from '../utils/generator';
 
 const AI_SERVICE_TEMPLATE = `import { Service } from '@hazeljs/core';
 import { AIService, AIFunction, AIPrompt } from '@hazeljs/ai';
@@ -33,6 +33,11 @@ class AIServiceGenerator extends Generator {
   }
 }
 
+export async function runAIService(name: string, options: GenerateCLIOptions): Promise<GenerateResult> {
+  const generator = new AIServiceGenerator();
+  return generator.generate({ name, path: options.path, dryRun: options.dryRun });
+}
+
 export function generateAIService(program: Command): void {
   program
     .command('ai-service <name>')
@@ -40,8 +45,9 @@ export function generateAIService(program: Command): void {
     .alias('ai')
     .option('-p, --path <path>', 'Path where the AI service should be generated')
     .option('--dry-run', 'Preview files without writing them')
-    .action(async (name: string, options: { path?: string; dryRun?: boolean }) => {
-      const generator = new AIServiceGenerator();
-      await generator.generate({ name, path: options.path, dryRun: options.dryRun });
+    .option('--json', 'Output result as JSON')
+    .action(async (name: string, options: GenerateCLIOptions) => {
+      const result = await runAIService(name, options);
+      printGenerateResult(result, { json: options.json });
     });
 }

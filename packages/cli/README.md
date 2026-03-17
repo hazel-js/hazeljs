@@ -44,13 +44,20 @@ The CLI provides commands to generate various HazelJS components, create new app
 
 ### Project Management
 
-#### Create New Application
+#### Create new application
 
+**Skeleton app (quick start, like create-next-app):**
+```bash
+hazel g app <appName>
+# Then: cd <appName> && npm install && npm run dev
+```
+
+**Full setup with interactive package selection:**
 ```bash
 hazel new <appName> [options]
 ```
 
-Creates a new HazelJS application with optional interactive setup.
+Creates a new HazelJS application. Use `hazel g app <name>` for a minimal skeleton; use `hazel new <name> -i` for interactive setup with optional packages.
 
 **Options:**
 - `-d, --dest <path>` - Destination path (default: current directory)
@@ -209,7 +216,34 @@ Or using the shorter alias:
 hazel g <component> <name> [options]
 ```
 
+#### Generation options
+
+- **One pattern:** `hazel g <type> <name> [--path <path>] [--dry-run] [--json]`
+- **List types:** `hazel g --list` — list all generator types
+- **List as JSON:** `hazel g --list --list-json` — output `{ "generators": [ ... ] }`
+- **Result as JSON:** add `--json` to any generator to get `{ "ok", "created", "nextSteps" }` on stdout
+- **Stable options:** `-p, --path`, `--dry-run`, and `--json` work the same for every generator.
+
+```bash
+# See what you can generate
+hazel g --list
+hazel g --list --list-json
+
+# Generate with JSON result
+hazel g controller users --json
+hazel g crud product --path src/products --json
+
+# Dry run (no files written)
+hazel g module orders --dry-run
+```
+
 ### Available Generators
+
+#### Skeleton app
+- `app` - Generate a skeleton HazelJS application (minimal template, like create-next-app). Use `hazel g app my-app` then `cd my-app && npm install && npm run dev`.
+
+#### Package setup
+- `setup` / `st` - Generate a minimal setup starter file for a HazelJS package (e.g. `hazel g setup swagger`).
 
 #### Core Components
 - `controller` / `c` - Generate a new controller
@@ -232,6 +266,8 @@ hazel g <component> <name> [options]
 ### Generator Options
 
 - `-p, --path <path>` - Specify the path where the component should be generated (default: 'src')
+- `--dry-run` - Preview files without writing them
+- `--json` - Output result as JSON (created paths and next steps)
 - `-r, --route <route>` - Specify the route path (for CRUD generator)
 - `--platform <platform>` - For serverless, specify platform: `lambda` or `cloud-function` (default: 'lambda')
 
@@ -532,7 +568,8 @@ hazel start [-d] [-p <port>]       # Start application
 hazel test [pattern] [-w] [-c]     # Run tests
 
 # Code Generation (alias: g)
-hazel g crud <name>                # Complete CRUD resource
+hazel g app <name>                # Skeleton application
+hazel g crud <name>               # Complete CRUD resource
 hazel g controller <name>          # Controller
 hazel g service <name>             # Service
 hazel g module <name>              # Module

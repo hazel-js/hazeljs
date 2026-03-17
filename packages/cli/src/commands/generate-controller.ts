@@ -1,5 +1,5 @@
 import { Command } from 'commander';
-import { Generator } from '../utils/generator';
+import { Generator, GenerateResult, GenerateCLIOptions, printGenerateResult } from '../utils/generator';
 
 const CONTROLLER_TEMPLATE = `import { Controller, Get, Post, Body, Param, Delete, Put } from '@hazeljs/core';
 import { {{className}}Service } from './{{fileName}}.service';
@@ -45,6 +45,11 @@ class ControllerGenerator extends Generator {
   }
 }
 
+export async function runController(name: string, options: GenerateCLIOptions): Promise<GenerateResult> {
+  const generator = new ControllerGenerator();
+  return generator.generate({ name, path: options.path, dryRun: options.dryRun });
+}
+
 export function generateController(program: Command): void {
   program
     .command('controller <name>')
@@ -52,8 +57,9 @@ export function generateController(program: Command): void {
     .alias('c')
     .option('-p, --path <path>', 'Path where the controller should be generated')
     .option('--dry-run', 'Preview files without writing them')
-    .action(async (name: string, options: { path?: string; dryRun?: boolean }) => {
-      const generator = new ControllerGenerator();
-      await generator.generate({ name, path: options.path, dryRun: options.dryRun });
+    .option('--json', 'Output result as JSON')
+    .action(async (name: string, options: GenerateCLIOptions) => {
+      const result = await runController(name, options);
+      printGenerateResult(result, { json: options.json });
     });
 }

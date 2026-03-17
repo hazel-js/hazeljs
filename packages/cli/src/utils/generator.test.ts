@@ -125,17 +125,17 @@ describe('Generator class', () => {
     });
 
     it('should not write files in dry-run mode', async () => {
-      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
-
-      await generator.generate({
+      const result = await generator.generate({
         name: 'test',
         template: 'content',
         dryRun: true,
       });
 
       expect(mockFs.writeFileSync).not.toHaveBeenCalled();
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('[dry-run]'));
-      consoleSpy.mockRestore();
+      expect(result.ok).toBe(true);
+      expect(result.dryRun).toBe(true);
+      expect(result.created).toHaveLength(1);
+      expect(result.created[0]).toContain('test.ts');
     });
   });
 

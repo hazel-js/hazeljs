@@ -2,7 +2,7 @@
 
 import { Command } from 'commander';
 import { generateModule } from './commands/generate-module';
-import { generateApp } from './commands/generate-app';
+import { generateApp, registerGenerateApp } from './commands/generate-app';
 import { generateController } from './commands/generate-controller';
 import { generateService } from './commands/generate-service';
 import { generateDto } from './commands/generate-dto';
@@ -23,6 +23,8 @@ import { generateCache } from './commands/generate-cache';
 import { generateCron } from './commands/generate-cron';
 import { generateRag } from './commands/generate-rag';
 import { generateDiscovery } from './commands/generate-discovery';
+import { generateSetup } from './commands/generate-setup';
+import { GENERATOR_LIST } from './utils/generator-registry';
 import { infoCommand } from './commands/info';
 import { addCommand } from './commands/add';
 import { buildCommand } from './commands/build';
@@ -48,11 +50,36 @@ pdfToAudioCommand(program);
 startCommand(program);
 testCommand(program);
 
-// Generate command group
+// Generate command group (unified: hazel g <type> <name> [--path] [--dry-run] [--json], or hazel g --list)
 const generateCommand = program
   .command('generate')
-  .description('Generate HazelJS components')
-  .alias('g');
+  .description('Generate HazelJS components. Use: hazel g <type> <name> (e.g. hazel g controller users). Use --list to see all types.')
+  .alias('g')
+  .option('--list', 'List available generator types')
+  .option('--list-json', 'With --list: output list as JSON')
+  .action((options: { list?: boolean; listJson?: boolean }) => {
+    const outputJsonList = options.list && options.listJson;
+    if (options.list) {
+      if (outputJsonList) {
+        console.log(JSON.stringify({ generators: GENERATOR_LIST }));
+      } else {
+        console.log('\nAvailable generator types:\n');
+        GENERATOR_LIST.forEach((g) => {
+          const nameNote = g.nameRequired ? ' <name>' : ' [name]';
+          console.log(`  ${g.type}${nameNote}  ${g.description}`);
+        });
+        console.log('\nExample: hazel g controller users\n');
+      }
+    } else {
+      console.log('Usage: hazel g <type> <name> [--path <path>] [--dry-run] [--json]');
+      console.log('       hazel g --list         List all generator types');
+      console.log('       hazel g --list --list-json   List types as JSON');
+      console.log('Example: hazel g controller users\n');
+    }
+  });
+
+// Skeleton app
+registerGenerateApp(generateCommand);
 
 // Core components
 generateController(generateCommand);
@@ -78,5 +105,6 @@ generateCache(generateCommand);
 generateCron(generateCommand);
 generateRag(generateCommand);
 generateDiscovery(generateCommand);
+generateSetup(generateCommand);
 
 program.parse(process.argv);

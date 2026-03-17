@@ -1,6 +1,5 @@
 import { Command } from 'commander';
-import { Generator } from '../utils/generator';
-import chalk from 'chalk';
+import { Generator, GenerateResult, GenerateCLIOptions, printGenerateResult } from '../utils/generator';
 
 const MIDDLEWARE_TEMPLATE = `import { Injectable, type MiddlewareHandler, type Request, type Response, type NextFunction } from '@hazeljs/core';
 
@@ -24,6 +23,14 @@ class MiddlewareGenerator extends Generator {
   }
 }
 
+export async function runMiddleware(name: string, options: GenerateCLIOptions): Promise<GenerateResult> {
+  const generator = new MiddlewareGenerator();
+  const result = await generator.generate({ name, path: options.path, dryRun: options.dryRun });
+  result.nextSteps = result.nextSteps ?? [];
+  result.nextSteps.push('Import the middleware in your module or apply it globally.');
+  return result;
+}
+
 export function generateMiddleware(command: Command) {
   command
     .command('middleware <name>')
@@ -31,13 +38,9 @@ export function generateMiddleware(command: Command) {
     .description('Generate a middleware')
     .option('-p, --path <path>', 'Specify the path', 'src/middleware')
     .option('--dry-run', 'Preview files without writing them')
-    .action(async (name: string, options: { path?: string; dryRun?: boolean }) => {
-      const generator = new MiddlewareGenerator();
-      await generator.generate({ name, path: options.path, dryRun: options.dryRun });
-
-      if (!options.dryRun) {
-        console.log(chalk.gray('\nUsage:'));
-        console.log(chalk.gray(`  Import the middleware in your module or apply it globally.`));
-      }
+    .option('--json', 'Output result as JSON')
+    .action(async (name: string, options: GenerateCLIOptions) => {
+      const result = await runMiddleware(name, options);
+      printGenerateResult(result, { json: options.json });
     });
 }

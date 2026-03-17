@@ -1,6 +1,5 @@
 import { Command } from 'commander';
-import { Generator } from '../utils/generator';
-import chalk from 'chalk';
+import { Generator, GenerateResult, GenerateCLIOptions, printGenerateResult } from '../utils/generator';
 
 const CACHE_SERVICE_TEMPLATE = `import { Service } from '@hazeljs/core';
 import { CacheService, Cacheable, CacheEvict } from '@hazeljs/cache';
@@ -41,21 +40,26 @@ class CacheServiceGenerator extends Generator {
   }
 }
 
+export async function runCache(name: string, options: GenerateCLIOptions): Promise<GenerateResult> {
+  const generator = new CacheServiceGenerator();
+  const result = await generator.generate({ name, path: options.path, dryRun: options.dryRun });
+  result.nextSteps = [
+    'npm install @hazeljs/cache',
+    'Add CacheModule to your module imports',
+    'Configure the cache strategy (memory, redis, or multi-tier)',
+  ];
+  return result;
+}
+
 export function generateCache(command: Command) {
   command
     .command('cache <name>')
     .description('Generate a cache service with decorators')
     .option('-p, --path <path>', 'Specify the path')
     .option('--dry-run', 'Preview files without writing them')
-    .action(async (name: string, options: { path?: string; dryRun?: boolean }) => {
-      const generator = new CacheServiceGenerator();
-      await generator.generate({ name, path: options.path, dryRun: options.dryRun });
-
-      if (!options.dryRun) {
-        console.log(chalk.gray('\nNext steps:'));
-        console.log(chalk.gray('  1. npm install @hazeljs/cache'));
-        console.log(chalk.gray('  2. Add CacheModule to your module imports'));
-        console.log(chalk.gray('  3. Configure the cache strategy (memory, redis, or multi-tier)'));
-      }
+    .option('--json', 'Output result as JSON')
+    .action(async (name: string, options: GenerateCLIOptions) => {
+      const result = await runCache(name, options);
+      printGenerateResult(result, { json: options.json });
     });
 }

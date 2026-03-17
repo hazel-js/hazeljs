@@ -1,6 +1,5 @@
 import { Command } from 'commander';
-import { Generator } from '../utils/generator';
-import chalk from 'chalk';
+import { Generator, GenerateResult, GenerateCLIOptions, printGenerateResult } from '../utils/generator';
 
 const CRON_SERVICE_TEMPLATE = `import { Service } from '@hazeljs/core';
 import { Cron, CronExpression } from '@hazeljs/cron';
@@ -35,6 +34,17 @@ class CronServiceGenerator extends Generator {
   }
 }
 
+export async function runCron(name: string, options: GenerateCLIOptions): Promise<GenerateResult> {
+  const generator = new CronServiceGenerator();
+  const result = await generator.generate({ name, path: options.path, dryRun: options.dryRun });
+  result.nextSteps = [
+    'npm install @hazeljs/cron',
+    'Add CronModule to your module imports',
+    'Register this service as a provider',
+  ];
+  return result;
+}
+
 export function generateCron(command: Command) {
   command
     .command('cron <name>')
@@ -42,15 +52,9 @@ export function generateCron(command: Command) {
     .alias('job')
     .option('-p, --path <path>', 'Specify the path')
     .option('--dry-run', 'Preview files without writing them')
-    .action(async (name: string, options: { path?: string; dryRun?: boolean }) => {
-      const generator = new CronServiceGenerator();
-      await generator.generate({ name, path: options.path, dryRun: options.dryRun });
-
-      if (!options.dryRun) {
-        console.log(chalk.gray('\nNext steps:'));
-        console.log(chalk.gray('  1. npm install @hazeljs/cron'));
-        console.log(chalk.gray('  2. Add CronModule to your module imports'));
-        console.log(chalk.gray('  3. Register this service as a provider'));
-      }
+    .option('--json', 'Output result as JSON')
+    .action(async (name: string, options: GenerateCLIOptions) => {
+      const result = await runCron(name, options);
+      printGenerateResult(result, { json: options.json });
     });
 }

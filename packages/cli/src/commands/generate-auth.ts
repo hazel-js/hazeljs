@@ -1,8 +1,7 @@
 import { Command } from 'commander';
 import fs from 'fs';
 import path from 'path';
-import chalk from 'chalk';
-import { renderTemplate } from '../utils/generator';
+import { renderTemplate, GenerateResult, GenerateCLIOptions, printGenerateResult } from '../utils/generator';
 
 const AUTH_MODULE_TEMPLATE = `import { HazelModule } from '@hazeljs/core';
 import { AuthController } from './auth.controller';
@@ -147,54 +146,50 @@ export class LoginDto {
 }
 `;
 
+export async function runAuth(_name: string, options: GenerateCLIOptions): Promise<GenerateResult> {
+  const basePath = path.join(process.cwd(), options.path || 'src/auth');
+  const data: Record<string, string> = {};
+
+  const files = [
+    { file: 'auth.module.ts', template: AUTH_MODULE_TEMPLATE },
+    { file: 'auth.service.ts', template: AUTH_SERVICE_TEMPLATE },
+    { file: 'auth.controller.ts', template: AUTH_CONTROLLER_TEMPLATE },
+    { file: 'jwt-auth.guard.ts', template: JWT_GUARD_TEMPLATE },
+    { file: 'dto/register.dto.ts', template: REGISTER_DTO_TEMPLATE },
+    { file: 'dto/login.dto.ts', template: LOGIN_DTO_TEMPLATE },
+  ];
+
+  const created: string[] = [];
+  for (const { file, template } of files) {
+    const filePath = path.join(basePath, file);
+    created.push(filePath);
+    if (options.dryRun) continue;
+    const dir = path.dirname(filePath);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(filePath, renderTemplate(template, data));
+  }
+  return {
+    ok: true,
+    created,
+    dryRun: options.dryRun,
+    nextSteps: [
+      'Import AuthModule in your app module',
+      'Configure JwtModule.forRoot() in your app module: JwtModule.forRoot({ secret: "your-secret", expiresIn: "1d" })',
+      'Install bcryptjs: npm install bcryptjs @types/bcryptjs',
+      'Implement database integration in AuthService',
+    ],
+  };
+}
+
 export function generateAuth(command: Command) {
   command
     .command('auth')
     .description('Generate an auth module with JWT guard, service, controller, and DTOs')
     .option('-p, --path <path>', 'Specify the path', 'src/auth')
     .option('--dry-run', 'Preview files without writing them')
-    .action((options: { path?: string; dryRun?: boolean }) => {
-      const basePath = path.join(process.cwd(), options.path || 'src/auth');
-      const data = {};
-
-      const files = [
-        { file: 'auth.module.ts', template: AUTH_MODULE_TEMPLATE },
-        { file: 'auth.service.ts', template: AUTH_SERVICE_TEMPLATE },
-        { file: 'auth.controller.ts', template: AUTH_CONTROLLER_TEMPLATE },
-        { file: 'jwt-auth.guard.ts', template: JWT_GUARD_TEMPLATE },
-        { file: 'dto/register.dto.ts', template: REGISTER_DTO_TEMPLATE },
-        { file: 'dto/login.dto.ts', template: LOGIN_DTO_TEMPLATE },
-      ];
-
-      try {
-        for (const { file, template } of files) {
-          const filePath = path.join(basePath, file);
-
-          if (options.dryRun) {
-            console.log(chalk.blue(`[dry-run] Would create ${filePath}`));
-            continue;
-          }
-
-          const dir = path.dirname(filePath);
-          if (!fs.existsSync(dir)) {
-            fs.mkdirSync(dir, { recursive: true });
-          }
-          fs.writeFileSync(filePath, renderTemplate(template, data));
-          console.log(chalk.green(`\u2713 Generated ${filePath}`));
-        }
-
-        if (!options.dryRun) {
-          console.log(chalk.blue('\n\uD83D\uDD10 Auth module generated successfully!'));
-          console.log(chalk.gray('\nNext steps:'));
-          console.log(chalk.gray('  1. Import AuthModule in your app module'));
-          console.log(chalk.gray('  2. Configure JwtModule.forRoot() in your app module:'));
-          console.log(chalk.gray('     JwtModule.forRoot({ secret: "your-secret", expiresIn: "1d" })'));
-          console.log(chalk.gray('  3. Install bcryptjs: npm install bcryptjs @types/bcryptjs'));
-          console.log(chalk.gray('  4. Implement database integration in AuthService'));
-        }
-      } catch (error) {
-        console.error(chalk.red('Error generating auth module:'), error);
-        process.exit(1);
-      }
+    .option('--json', 'Output result as JSON')
+    .action(async (options: GenerateCLIOptions) => {
+      const result = await runAuth('auth', options);
+      printGenerateResult(result, { json: options.json });
     });
 }

@@ -1,5 +1,5 @@
 import { Command } from 'commander';
-import { Generator, GeneratorOptions } from '../utils/generator';
+import { Generator, GeneratorOptions, GenerateResult, GenerateCLIOptions, printGenerateResult } from '../utils/generator';
 
 const CREATE_DTO_TEMPLATE = `import { IsString, IsOptional } from 'class-validator';
 
@@ -33,9 +33,9 @@ class DtoGenerator extends Generator {
     return CREATE_DTO_TEMPLATE;
   }
 
-  public async generate(options: GeneratorOptions): Promise<void> {
+  public async generate(options: GeneratorOptions): Promise<GenerateResult> {
     // Generate create DTO
-    await super.generate({
+    const r1 = await super.generate({
       ...options,
       template: CREATE_DTO_TEMPLATE,
       path: options.path ? `${options.path}/dto` : 'src/dto',
@@ -50,11 +50,20 @@ class DtoGenerator extends Generator {
       template: UPDATE_DTO_TEMPLATE,
       path: options.path ? `${options.path}/dto` : 'src/dto',
     };
-    // Override suffix for the update variant — we prepend "update-" to the name
-    // so the file is update-<name>.dto.ts rather than <name>.dto.ts (which would conflict)
-    await super.generate(updateOptions);
+    const r2 = await super.generate(updateOptions);
     this.suffix = origSuffix;
+
+    return {
+      ok: r1.ok && r2.ok,
+      created: [...(r1.created ?? []), ...(r2.created ?? [])],
+      dryRun: r1.dryRun ?? r2.dryRun,
+    };
   }
+}
+
+export async function runDto(name: string, options: GenerateCLIOptions): Promise<GenerateResult> {
+  const generator = new DtoGenerator();
+  return generator.generate({ name, path: options.path, dryRun: options.dryRun });
 }
 
 export function generateDto(program: Command): void {
@@ -64,8 +73,9 @@ export function generateDto(program: Command): void {
     .alias('d')
     .option('-p, --path <path>', 'Path where the DTOs should be generated')
     .option('--dry-run', 'Preview files without writing them')
-    .action(async (name: string, options: { path?: string; dryRun?: boolean }) => {
-      const generator = new DtoGenerator();
-      await generator.generate({ name, path: options.path, dryRun: options.dryRun });
+    .option('--json', 'Output result as JSON')
+    .action(async (name: string, options: GenerateCLIOptions) => {
+      const result = await runDto(name, options);
+      printGenerateResult(result, { json: options.json });
     });
 }

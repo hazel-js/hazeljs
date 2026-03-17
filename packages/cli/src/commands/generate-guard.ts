@@ -1,5 +1,5 @@
 import { Command } from 'commander';
-import { Generator } from '../utils/generator';
+import { Generator, GenerateResult, GenerateCLIOptions, printGenerateResult } from '../utils/generator';
 
 const GUARD_TEMPLATE = `import { Injectable, type CanActivate, type ExecutionContext } from '@hazeljs/core';
 
@@ -21,6 +21,11 @@ class GuardGenerator extends Generator {
   }
 }
 
+export async function runGuard(name: string, options: GenerateCLIOptions): Promise<GenerateResult> {
+  const generator = new GuardGenerator();
+  return generator.generate({ name, path: options.path, dryRun: options.dryRun });
+}
+
 export function generateGuard(program: Command): void {
   program
     .command('guard <name>')
@@ -28,8 +33,9 @@ export function generateGuard(program: Command): void {
     .alias('gu')
     .option('-p, --path <path>', 'Path where the guard should be generated')
     .option('--dry-run', 'Preview files without writing them')
-    .action(async (name: string, options: { path?: string; dryRun?: boolean }) => {
-      const generator = new GuardGenerator();
-      await generator.generate({ name, path: options.path, dryRun: options.dryRun });
+    .option('--json', 'Output result as JSON')
+    .action(async (name: string, options: GenerateCLIOptions) => {
+      const result = await runGuard(name, options);
+      printGenerateResult(result, { json: options.json });
     });
 }

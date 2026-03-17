@@ -1,8 +1,7 @@
 import { Command } from 'commander';
 import fs from 'fs';
 import path from 'path';
-import chalk from 'chalk';
-import { toPascalCase, toKebabCase, toCamelCase, renderTemplate } from '../utils/generator';
+import { toPascalCase, toKebabCase, toCamelCase, renderTemplate, GenerateResult, GenerateCLIOptions, printGenerateResult } from '../utils/generator';
 
 const controllerTemplate = `import { Controller, Get, Post, Put, Delete, Body, Param } from '@hazeljs/core';
 import { {{className}}Service } from './{{fileName}}.service';
@@ -127,6 +126,50 @@ import { {{className}}Service } from './{{fileName}}.service';
 export class {{className}}Module {}
 `;
 
+export async function runCrud(name: string, options: GenerateCLIOptions): Promise<GenerateResult> {
+  try {
+    const className = toPascalCase(name);
+    const fileName = toKebabCase(name);
+    const camelName = toCamelCase(name);
+    const routePath = options.route || fileName;
+    const basePath = path.join(process.cwd(), options.path || 'src', fileName);
+    const data = { className, fileName, camelName, routePath };
+
+    const files = [
+      { file: `${fileName}.controller.ts`, template: controllerTemplate },
+      { file: `${fileName}.service.ts`, template: serviceTemplate },
+      { file: `dto/${fileName}.dto.ts`, template: dtoTemplate },
+      { file: `${fileName}.module.ts`, template: moduleTemplate },
+    ];
+
+    const created: string[] = [];
+    for (const { file, template } of files) {
+      const filePath = path.join(basePath, file);
+      created.push(filePath);
+      if (options.dryRun) continue;
+      const dir = path.dirname(filePath);
+      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+      fs.writeFileSync(filePath, renderTemplate(template, data));
+    }
+    return {
+      ok: true,
+      created,
+      dryRun: options.dryRun,
+      nextSteps: [
+        `Import ${className}Module in your app module`,
+        'Customize the DTOs',
+        'Implement your business logic in the service',
+      ],
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      created: [],
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
 export function generateCrud(command: Command) {
   command
     .command('crud <name>')
@@ -134,49 +177,10 @@ export function generateCrud(command: Command) {
     .option('-p, --path <path>', 'Specify the path', 'src')
     .option('-r, --route <route>', 'Specify the route path')
     .option('--dry-run', 'Preview files without writing them')
-    .action((name: string, options: { path?: string; route?: string; dryRun?: boolean }) => {
-      const className = toPascalCase(name);
-      const fileName = toKebabCase(name);
-      const camelName = toCamelCase(name);
-      const routePath = options.route || fileName;
-      const basePath = path.join(process.cwd(), options.path || 'src', fileName);
-
-      const data = { className, fileName, camelName, routePath };
-
-      const files = [
-        { file: `${fileName}.controller.ts`, template: controllerTemplate },
-        { file: `${fileName}.service.ts`, template: serviceTemplate },
-        { file: `dto/${fileName}.dto.ts`, template: dtoTemplate },
-        { file: `${fileName}.module.ts`, template: moduleTemplate },
-      ];
-
-      try {
-        for (const { file, template } of files) {
-          const filePath = path.join(basePath, file);
-
-          if (options.dryRun) {
-            console.log(chalk.blue(`[dry-run] Would create ${filePath}`));
-            continue;
-          }
-
-          const dir = path.dirname(filePath);
-          if (!fs.existsSync(dir)) {
-            fs.mkdirSync(dir, { recursive: true });
-          }
-          fs.writeFileSync(filePath, renderTemplate(template, data));
-          console.log(chalk.green(`\u2713 Generated ${filePath}`));
-        }
-
-        if (!options.dryRun) {
-          console.log(chalk.blue('\n\uD83D\uDCE6 CRUD resource generated successfully!'));
-          console.log(chalk.gray(`\nNext steps:`));
-          console.log(chalk.gray(`1. Import ${className}Module in your app module`));
-          console.log(chalk.gray(`2. Customize the DTOs`));
-          console.log(chalk.gray(`3. Implement your business logic in the service`));
-        }
-      } catch (error) {
-        console.error(chalk.red('Error generating CRUD resource:'), error);
-        process.exit(1);
-      }
+    .option('--json', 'Output result as JSON')
+    .action(async (name: string, options: GenerateCLIOptions) => {
+      const result = await runCrud(name, options);
+      printGenerateResult(result, { json: options.json });
+      if (!result.ok) process.exit(1);
     });
 }

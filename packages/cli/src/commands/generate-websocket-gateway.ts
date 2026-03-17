@@ -1,5 +1,5 @@
 import { Command } from 'commander';
-import { Generator } from '../utils/generator';
+import { Generator, GenerateResult, GenerateCLIOptions, printGenerateResult } from '../utils/generator';
 
 const WEBSOCKET_GATEWAY_TEMPLATE = `import { Realtime, OnConnect, OnDisconnect, OnMessage, Subscribe, Client, Data, WebSocketClient } from '@hazeljs/websocket';
 
@@ -32,6 +32,11 @@ class WebSocketGatewayGenerator extends Generator {
   }
 }
 
+export async function runWebSocketGateway(name: string, options: GenerateCLIOptions): Promise<GenerateResult> {
+  const generator = new WebSocketGatewayGenerator();
+  return generator.generate({ name, path: options.path, dryRun: options.dryRun });
+}
+
 export function generateWebSocketGateway(program: Command): void {
   program
     .command('gateway <name>')
@@ -39,8 +44,9 @@ export function generateWebSocketGateway(program: Command): void {
     .alias('ws')
     .option('-p, --path <path>', 'Path where the gateway should be generated')
     .option('--dry-run', 'Preview files without writing them')
-    .action(async (name: string, options: { path?: string; dryRun?: boolean }) => {
-      const generator = new WebSocketGatewayGenerator();
-      await generator.generate({ name, path: options.path, dryRun: options.dryRun });
+    .option('--json', 'Output result as JSON')
+    .action(async (name: string, options: GenerateCLIOptions) => {
+      const result = await runWebSocketGateway(name, options);
+      printGenerateResult(result, { json: options.json });
     });
 }

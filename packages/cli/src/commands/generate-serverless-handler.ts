@@ -1,5 +1,5 @@
 import { Command } from 'commander';
-import { Generator, GeneratorOptions } from '../utils/generator';
+import { Generator, GeneratorOptions, GenerateResult, GenerateCLIOptions, printGenerateResult } from '../utils/generator';
 
 const SERVERLESS_LAMBDA_TEMPLATE = `import { createLambdaHandler } from '@hazeljs/serverless';
 import { AppModule } from './app.module';
@@ -20,18 +20,28 @@ class ServerlessHandlerGenerator extends Generator {
     return SERVERLESS_LAMBDA_TEMPLATE;
   }
 
-  public async generate(options: GeneratorOptions & { platform?: string }): Promise<void> {
+  public async generate(options: GeneratorOptions & { platform?: string }): Promise<GenerateResult> {
     const { platform = 'lambda', ...restOptions } = options;
 
     const template = platform === 'lambda'
       ? SERVERLESS_LAMBDA_TEMPLATE
       : SERVERLESS_CLOUD_FUNCTION_TEMPLATE;
 
-    await super.generate({
+    return super.generate({
       ...restOptions,
       template,
     });
   }
+}
+
+export async function runServerlessHandler(name: string, options: GenerateCLIOptions): Promise<GenerateResult> {
+  const generator = new ServerlessHandlerGenerator();
+  return generator.generate({
+    name,
+    path: options.path,
+    platform: options.platform,
+    dryRun: options.dryRun,
+  });
 }
 
 export function generateServerlessHandler(program: Command): void {
@@ -42,8 +52,9 @@ export function generateServerlessHandler(program: Command): void {
     .option('-p, --path <path>', 'Path where the handler should be generated', 'src')
     .option('--platform <platform>', 'Platform: lambda or cloud-function', 'lambda')
     .option('--dry-run', 'Preview files without writing them')
-    .action(async (name: string, options: { path?: string; platform?: string; dryRun?: boolean }) => {
-      const generator = new ServerlessHandlerGenerator();
-      await generator.generate({ name, path: options.path, platform: options.platform, dryRun: options.dryRun });
+    .option('--json', 'Output result as JSON')
+    .action(async (name: string, options: GenerateCLIOptions) => {
+      const result = await runServerlessHandler(name, options);
+      printGenerateResult(result, { json: options.json });
     });
 }

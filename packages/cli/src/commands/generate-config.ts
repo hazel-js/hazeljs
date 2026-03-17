@@ -1,6 +1,5 @@
 import { Command } from 'commander';
-import { Generator } from '../utils/generator';
-import chalk from 'chalk';
+import { Generator, GenerateResult, GenerateCLIOptions, printGenerateResult } from '../utils/generator';
 
 const CONFIG_TEMPLATE = `import { HazelModule } from '@hazeljs/core';
 import { ConfigModule, ConfigService } from '@hazeljs/config';
@@ -34,21 +33,26 @@ class ConfigGenerator extends Generator {
   }
 }
 
+export async function runConfig(_name: string, options: GenerateCLIOptions): Promise<GenerateResult> {
+  const generator = new ConfigGenerator();
+  const result = await generator.generate({ name: 'app', path: options.path, dryRun: options.dryRun });
+  result.nextSteps = [
+    'npm install @hazeljs/config',
+    'Add ConfigModule.forRoot({ envFilePath: ".env" }) to your app module imports',
+    'Create a .env file in your project root',
+  ];
+  return result;
+}
+
 export function generateConfig(command: Command) {
   command
     .command('config')
     .description('Generate a config module setup')
     .option('-p, --path <path>', 'Specify the path', 'src')
     .option('--dry-run', 'Preview files without writing them')
-    .action(async (options: { path?: string; dryRun?: boolean }) => {
-      const generator = new ConfigGenerator();
-      await generator.generate({ name: 'app', path: options.path, dryRun: options.dryRun });
-
-      if (!options.dryRun) {
-        console.log(chalk.gray('\nNext steps:'));
-        console.log(chalk.gray('  1. npm install @hazeljs/config'));
-        console.log(chalk.gray('  2. Add ConfigModule.forRoot({ envFilePath: ".env" }) to your app module imports'));
-        console.log(chalk.gray('  3. Create a .env file in your project root'));
-      }
+    .option('--json', 'Output result as JSON')
+    .action(async (options: GenerateCLIOptions) => {
+      const result = await runConfig('app', options);
+      printGenerateResult(result, { json: options.json });
     });
 }

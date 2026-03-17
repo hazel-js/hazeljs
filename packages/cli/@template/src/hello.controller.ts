@@ -1,6 +1,6 @@
 import { Controller, Get } from '@hazeljs/core';
 
-@Controller('/hello')
+@Controller('hello')
 export class HelloController {
   @Get()
   hello() {

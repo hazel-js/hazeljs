@@ -38,6 +38,24 @@ export interface GeneratorOptions {
   dryRun?: boolean;
 }
 
+/** Result of a generation run for machine-readable output (e.g. --json) */
+export interface GenerateResult {
+  ok: boolean;
+  created: string[];
+  nextSteps?: string[];
+  dryRun?: boolean;
+  error?: string;
+}
+
+/** Common CLI options for all generate commands */
+export interface GenerateCLIOptions {
+  path?: string;
+  dryRun?: boolean;
+  json?: boolean;
+  route?: string;
+  platform?: string;
+}
+
 export class Generator {
   /**
    * File suffix appended before .ts (e.g. 'controller' -> name.controller.ts)
@@ -45,7 +63,7 @@ export class Generator {
    */
   protected suffix = '';
 
-  public async generate(options: GeneratorOptions): Promise<void> {
+  public async generate(options: GeneratorOptions): Promise<GenerateResult> {
     const { name, path: customPath, template, data = {}, dryRun = false } = options;
 
     // Get the template
@@ -65,11 +83,10 @@ export class Generator {
 
     // Determine the file path
     const filePath = this.getFilePath(name, customPath);
+    const created: string[] = [filePath];
 
     if (dryRun) {
-      console.log(chalk.blue(`[dry-run] Would create ${filePath}`));
-      console.log(chalk.gray(content));
-      return;
+      return { ok: true, created, dryRun: true };
     }
 
     // Create directory if it doesn't exist
@@ -81,7 +98,7 @@ export class Generator {
     // Write the file
     fs.writeFileSync(filePath, content);
 
-    console.log(chalk.green(`✓ Generated ${filePath}`));
+    return { ok: true, created };
   }
 
   protected getFilePath(name: string, customPath?: string): string {
@@ -116,5 +133,25 @@ export class Generator {
       ...options,
       ...answers,
     };
+  }
+}
+
+/** Output result for humans or as JSON. Use json: true to print a single JSON object to stdout. */
+export function printGenerateResult(result: GenerateResult, options: { json?: boolean }): void {
+  if (options.json) {
+    console.log(JSON.stringify(result));
+    return;
+  }
+  if (!result.ok) {
+    console.error(chalk.red(result.error ?? 'Generation failed'));
+    return;
+  }
+  const prefix = result.dryRun ? chalk.blue('[dry-run] Would create ') : chalk.green('✓ Generated ');
+  for (const file of result.created) {
+    console.log(prefix + file);
+  }
+  if (result.nextSteps && result.nextSteps.length > 0) {
+    console.log(chalk.blue('\nNext steps:'));
+    result.nextSteps.forEach((step) => console.log(chalk.gray('  ' + step)));
   }
 }

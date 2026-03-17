@@ -1,8 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { Command } from 'commander';
-import chalk from 'chalk';
-import { toPascalCase, toKebabCase, renderTemplate } from '../utils/generator';
+import { toPascalCase, toKebabCase, renderTemplate, GenerateResult, GenerateCLIOptions, printGenerateResult } from '../utils/generator';
 
 const MODULE_TEMPLATE = `import { HazelModule } from '@hazeljs/core';
 import { {{className}}Controller } from './{{fileName}}.controller';
@@ -65,6 +64,38 @@ const UPDATE_DTO_TEMPLATE = `export class Update{{className}}Dto {
 }
 `;
 
+export async function runModule(name: string, options: GenerateCLIOptions): Promise<GenerateResult> {
+  const className = toPascalCase(name);
+  const fileName = toKebabCase(name);
+  const camelName = fileName.replace(/-([a-z])/g, (_, c: string) => c.toUpperCase());
+  const baseDir = path.join(process.cwd(), options.path || 'src', fileName);
+  const data = { className, fileName, camelName };
+
+  const files = [
+    { file: `${fileName}.module.ts`, template: MODULE_TEMPLATE },
+    { file: `${fileName}.controller.ts`, template: CONTROLLER_TEMPLATE },
+    { file: `${fileName}.service.ts`, template: SERVICE_TEMPLATE },
+    { file: `dto/create-${fileName}.dto.ts`, template: CREATE_DTO_TEMPLATE },
+    { file: `dto/update-${fileName}.dto.ts`, template: UPDATE_DTO_TEMPLATE },
+  ];
+
+  const created: string[] = [];
+  for (const { file, template } of files) {
+    const filePath = path.join(baseDir, file);
+    created.push(filePath);
+    if (options.dryRun) continue;
+    const dir = path.dirname(filePath);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(filePath, renderTemplate(template, data));
+  }
+  return {
+    ok: true,
+    created,
+    dryRun: options.dryRun,
+    nextSteps: [`Import ${className}Module in your app module.`],
+  };
+}
+
 export function generateModule(program: Command): void {
   program
     .command('module <name>')
@@ -72,42 +103,9 @@ export function generateModule(program: Command): void {
     .alias('m')
     .option('-p, --path <path>', 'Path where the module should be generated')
     .option('--dry-run', 'Preview files without writing them')
-    .action(async (name: string, options: { path?: string; dryRun?: boolean }) => {
-      const className = toPascalCase(name);
-      const fileName = toKebabCase(name);
-      const camelName = fileName.replace(/-([a-z])/g, (_, c) => c.toUpperCase());
-      const baseDir = path.join(process.cwd(), options.path || 'src', fileName);
-
-      const data = { className, fileName, camelName };
-
-      const files = [
-        { file: `${fileName}.module.ts`, template: MODULE_TEMPLATE },
-        { file: `${fileName}.controller.ts`, template: CONTROLLER_TEMPLATE },
-        { file: `${fileName}.service.ts`, template: SERVICE_TEMPLATE },
-        { file: `dto/create-${fileName}.dto.ts`, template: CREATE_DTO_TEMPLATE },
-        { file: `dto/update-${fileName}.dto.ts`, template: UPDATE_DTO_TEMPLATE },
-      ];
-
-      for (const { file, template } of files) {
-        const filePath = path.join(baseDir, file);
-
-        if (options.dryRun) {
-          console.log(chalk.blue(`[dry-run] Would create ${filePath}`));
-          continue;
-        }
-
-        const dir = path.dirname(filePath);
-        if (!fs.existsSync(dir)) {
-          fs.mkdirSync(dir, { recursive: true });
-        }
-        fs.writeFileSync(filePath, renderTemplate(template, data));
-        console.log(chalk.green(`✓ Generated ${filePath}`));
-      }
-
-      if (!options.dryRun) {
-        console.log(chalk.blue(`\n📦 Module generated in ${baseDir}`));
-        console.log(chalk.gray(`\nNext steps:`));
-        console.log(chalk.gray(`  Import ${className}Module in your app module.`));
-      }
+    .option('--json', 'Output result as JSON')
+    .action(async (name: string, options: GenerateCLIOptions) => {
+      const result = await runModule(name, options);
+      printGenerateResult(result, { json: options.json });
     });
 }

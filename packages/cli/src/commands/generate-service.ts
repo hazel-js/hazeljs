@@ -1,5 +1,5 @@
 import { Command } from 'commander';
-import { Generator } from '../utils/generator';
+import { Generator, GenerateResult, GenerateCLIOptions, printGenerateResult } from '../utils/generator';
 
 const SERVICE_TEMPLATE = `import { Service } from '@hazeljs/core';
 
@@ -37,6 +37,11 @@ class ServiceGenerator extends Generator {
   }
 }
 
+export async function runService(name: string, options: GenerateCLIOptions): Promise<GenerateResult> {
+  const generator = new ServiceGenerator();
+  return generator.generate({ name, path: options.path, dryRun: options.dryRun });
+}
+
 export function generateService(program: Command): void {
   program
     .command('service <name>')
@@ -44,8 +49,9 @@ export function generateService(program: Command): void {
     .alias('s')
     .option('-p, --path <path>', 'Path where the service should be generated')
     .option('--dry-run', 'Preview files without writing them')
-    .action(async (name: string, options: { path?: string; dryRun?: boolean }) => {
-      const generator = new ServiceGenerator();
-      await generator.generate({ name, path: options.path, dryRun: options.dryRun });
+    .option('--json', 'Output result as JSON')
+    .action(async (name: string, options: GenerateCLIOptions) => {
+      const result = await runService(name, options);
+      printGenerateResult(result, { json: options.json });
     });
 }
