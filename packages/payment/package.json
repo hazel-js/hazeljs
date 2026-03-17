@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/payment",
-  "version": "0.2.0-rc.8",
+  "version": "0.2.0",
   "description": "Stripe payment integration for HazelJS - checkout sessions, customers, subscriptions, webhooks",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
