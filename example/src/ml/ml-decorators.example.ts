@@ -6,7 +6,6 @@
  *
  * See src/ml/README.md for a full explanation of the decorators.
  */
-import 'reflect-metadata';
 import {
   Model,
   Train,

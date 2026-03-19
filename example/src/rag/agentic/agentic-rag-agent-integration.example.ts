@@ -3,10 +3,6 @@
  * Shows how to integrate Agentic RAG with @hazeljs/agent
  */
 
-// Load environment variables
-import * as dotenv from 'dotenv';
-dotenv.config();
-
 import { Agent, Tool, AgentRuntime } from '@hazeljs/agent';
 import {
   AgenticRAGService,

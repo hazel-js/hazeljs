@@ -7,14 +7,6 @@
  *   - See gateway.config.ts for the full list of configurable settings
  *   - Override any setting via environment variables without code changes
  */
-
-import * as path from 'path';
-import * as dotenv from 'dotenv';
-
-// Load .env from example root so all services see gateway/timeout/host settings
-dotenv.config({ path: path.resolve(process.cwd(), '.env') });
-dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
-
 import { startUserService } from './user-service';
 import { startOrderService } from './order-service';
 import { startAPIGateway } from './api-gateway';

@@ -182,7 +182,6 @@ If your backend already uses `@hazeljs/agent`, you can pass your `ToolRegistry` 
 ```ts
 import { createMcpServer } from '@hazeljs/mcp';
 import { ToolRegistry } from '@hazeljs/agent';
-import 'reflect-metadata';
 
 class SupportService {
   @Tool({ name: 'lookup_customer', description: '...' })

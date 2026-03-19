@@ -1,6 +1,5 @@
 /// <reference types="jest" />
 import * as fs from 'fs';
-import * as dotenv from 'dotenv';
 import { ConfigService } from './config.service';
 import { ConfigModule, ValidationSchema } from './config.module';
 

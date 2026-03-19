@@ -3,10 +3,6 @@
  * Demonstrates core agentic RAG features
  */
 
-// Load environment variables
-import * as dotenv from 'dotenv';
-dotenv.config();
-
 import {
   AgenticRAGService,
   QueryPlanner,
