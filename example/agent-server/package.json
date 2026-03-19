@@ -11,8 +11,7 @@
   },
   "dependencies": {
     "@hazeljs/agent": "file:../../../agent",
-    "@hazeljs/mcp": "file:../../",
-    "reflect-metadata": "^0.2.1"
+    "@hazeljs/mcp": "file:../../"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",
