@@ -458,4 +458,4 @@ Contributions are welcome! See [CONTRIBUTING.md](../../CONTRIBUTING.md) for deta
 - [Documentation](https://hazeljs.ai/docs/packages/prompts)
 - [GitHub](https://github.com/hazeljs/hazeljs)
 - [Issues](https://github.com/hazeljs/hazeljs/issues)
-- [Discord](https://discord.com/channels/1448263814238965833/1448263814859456575)
+- [Discord](https://discord.gg/rnxaDcXx)
