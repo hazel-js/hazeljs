@@ -213,8 +213,44 @@ export class AgentExecutor {
 
         stepNumber++;
 
-        const stepResult = await this.executeStep(context, stepNumber, signal, streaming);
+        // Stream tokens in real-time if streaming is enabled
+        if (streaming) {
+          let step: AgentStep | undefined;
+          for await (const chunk of this.executeStepStream(context, stepNumber, signal)) {
+            if (chunk.type === 'step') {
+              step = chunk.step;
+              yield { type: 'step', step };
+            } else if (chunk.type === 'token') {
+              yield { type: 'token', content: chunk.content };
+            }
+          }
+          if (!step) throw new Error('No step returned from executeStepStream');
+          await this.unwrap(this.stateManager.addStep(context.executionId, step));
 
+          if (step.state === AgentState.COMPLETED) {
+            finalResponse = step.action?.response;
+            break;
+          }
+          if (step.state === AgentState.FAILED) {
+            throw step.error || new Error('Step failed without error');
+          }
+          if (step.state === AgentState.WAITING_FOR_APPROVAL) {
+            await this.unwrap(
+              this.stateManager.updateState(context.executionId, AgentState.WAITING_FOR_APPROVAL)
+            );
+            break;
+          }
+          if (step.state === AgentState.WAITING_FOR_INPUT) {
+            await this.unwrap(
+              this.stateManager.updateState(context.executionId, AgentState.WAITING_FOR_INPUT)
+            );
+            break;
+          }
+          continue;
+        }
+
+        // Non-streaming path
+        const stepResult = await this.executeStep(context, stepNumber, signal, streaming);
         const { step, tokenChunks } = stepResult;
 
         yield { type: 'step', step };
@@ -391,6 +427,127 @@ export class AgentExecutor {
       });
 
       return { step };
+    }
+  }
+
+  /**
+   * Execute a single step with real-time token streaming.
+   * Yields tokens as they arrive from the LLM instead of buffering them.
+   */
+  private async *executeStepStream(
+    context: AgentContext,
+    stepNumber: number,
+    signal?: AbortSignal
+  ): AsyncGenerator<AgentStreamChunk> {
+    const stepId = randomUUID();
+    const startTime = Date.now();
+
+    const step: AgentStep = {
+      id: stepId,
+      agentId: context.agentId,
+      executionId: context.executionId,
+      stepNumber,
+      state: AgentState.THINKING,
+      timestamp: new Date(),
+    };
+
+    this.emitEvent(AgentEventType.STEP_STARTED, context.executionId, {
+      stepNumber,
+      state: step.state,
+    });
+
+    try {
+      this.throwIfAborted(signal);
+
+      // Build the LLM request
+      const prompt = this.buildPrompt(context);
+      const tools = this.toolRegistry.getToolDefinitionsForLLM(context.agentId);
+      const messages = [
+        { role: 'system' as const, content: prompt.system },
+        ...prompt.messages,
+        { role: 'user' as const, content: context.input },
+      ];
+      const request = {
+        messages,
+        tools: tools.length > 0 ? tools : undefined,
+      };
+
+      const streamChat = this.llmProvider?.streamChat;
+
+      if (streamChat) {
+        let content = '';
+
+        // Stream tokens in real-time by directly forwarding chunks
+        const stream = streamChat(request);
+
+        for await (const chunk of stream) {
+          if (signal) this.throwIfAborted(signal);
+          if (chunk.content) {
+            content += chunk.content;
+            // Yield token immediately - each yield returns control to caller
+            yield { type: 'token', content: chunk.content };
+            // Force microtask to allow immediate processing
+            await Promise.resolve();
+          }
+        }
+
+        // After streaming completes, create the action
+        step.action = {
+          type: AgentActionType.RESPOND,
+          response: content,
+        };
+        step.state = AgentState.COMPLETED;
+        step.result = {
+          success: true,
+          output: content,
+        };
+      } else if (this.llmProvider) {
+        // Fallback to non-streaming
+        const response = await this.llmProvider.chat(request);
+        step.action = {
+          type: AgentActionType.RESPOND,
+          response: response.content,
+        };
+        step.state = AgentState.COMPLETED;
+        step.result = {
+          success: true,
+          output: response.content,
+        };
+      } else {
+        // No LLM provider
+        step.action = {
+          type: AgentActionType.RESPOND,
+          response: 'No LLM provider configured',
+        };
+        step.state = AgentState.COMPLETED;
+        step.result = {
+          success: true,
+          output: 'No LLM provider configured',
+        };
+      }
+
+      step.duration = Date.now() - startTime;
+
+      this.emitEvent(AgentEventType.STEP_COMPLETED, context.executionId, {
+        stepNumber,
+        state: step.state,
+        duration: step.duration,
+      });
+
+      // Yield the completed step
+      yield { type: 'step', step };
+    } catch (error) {
+      step.state = AgentState.FAILED;
+      step.error = error as Error;
+      step.duration = Date.now() - startTime;
+
+      this.emitEvent(AgentEventType.STEP_FAILED, context.executionId, {
+        stepNumber,
+        state: step.state,
+        error: (error as Error).message,
+      });
+
+      yield { type: 'step', step };
     }
   }
 

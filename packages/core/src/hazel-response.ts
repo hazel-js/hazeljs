@@ -11,14 +11,16 @@ export interface HazelResponse {
   sendBuffer?(buffer: Buffer, contentType?: string): void;
 }
 
-export class HazelExpressResponse implements HazelResponse {
+export class HazelHttpResponse implements HazelResponse {
   private isStreaming: boolean = false;
   private headersSent: boolean = false;
+  private customHeaders: Record<string, string> = {};
 
   constructor(private res: Response) {}
 
   setHeader(name: string, value: string): void {
     if (!this.headersSent) {
+      this.customHeaders[name] = value;
       this.res.setHeader(name, value);
     }
   }
@@ -27,7 +29,10 @@ export class HazelExpressResponse implements HazelResponse {
     if (!this.isStreaming) {
       this.isStreaming = true;
       this.headersSent = true;
-      this.res.setHeader('Content-Type', 'text/plain');
+      // Only set Content-Type if not already set
+      if (!this.customHeaders['Content-Type']) {
+        this.res.setHeader('Content-Type', 'text/plain');
+      }
       this.res.setHeader('Transfer-Encoding', 'chunked');
       this.res.send(chunk);
     } else {
@@ -100,5 +105,24 @@ export class HazelExpressResponse implements HazelResponse {
       // If JSON stringify fails, send a simple error message
       this.res.json({ error: 'Failed to serialize response' });
     }
+  }
+
+  sse(): { write: (data: string) => void; end: () => void } {
+    if (!this.headersSent) {
+      this.headersSent = true;
+      this.isStreaming = true;
+      this.res.setHeader('Content-Type', 'text/event-stream');
+      this.res.setHeader('Cache-Control', 'no-cache');
+      this.res.setHeader('Connection', 'keep-alive');
+    }
+
+    return {
+      write: (data: string): void => {
+        this.res.send(data);
+      },
+      end: (): void => {
+        this.res.end();
+      },
+    };
   }
 }

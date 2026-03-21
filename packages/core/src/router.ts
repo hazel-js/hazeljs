@@ -9,7 +9,7 @@ import { CanActivate, ExecutionContext } from './decorators';
 import 'reflect-metadata';
 import logger from './logger';
 import { RequestParser } from './request-parser';
-import { HazelExpressResponse } from './hazel-response';
+import { HazelHttpResponse } from './hazel-response';
 import { ValidationPipe } from './pipes/validation.pipe';
 
 const ROUTE_METADATA_KEY = 'hazel:routes';
@@ -257,7 +257,7 @@ export class Router {
               args[i] = req;
             } else if (injection.type === 'response') {
               // Handle @Res decorator
-              args[i] = new HazelExpressResponse(res);
+              args[i] = new HazelHttpResponse(res);
             } else if (injection.type === 'body') {
               // Handle @Body decorator with DTO type
               if (injection.dtoType) {

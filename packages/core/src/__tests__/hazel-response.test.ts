@@ -1,9 +1,9 @@
-import { HazelExpressResponse } from '../hazel-response';
+import { HazelHttpResponse } from '../hazel-response';
 import { Response } from '../types';
 
-describe('HazelExpressResponse', () => {
+describe('HazelHttpResponse', () => {
   let mockRes: Partial<Response>;
-  let hazelResponse: HazelExpressResponse;
+  let hazelResponse: HazelHttpResponse;
 
   beforeEach(() => {
     mockRes = {
@@ -13,7 +13,7 @@ describe('HazelExpressResponse', () => {
       send: jest.fn(),
       end: jest.fn(),
     };
-    hazelResponse = new HazelExpressResponse(mockRes as Response);
+    hazelResponse = new HazelHttpResponse(mockRes as Response);
   });
 
   describe('setHeader', () => {
@@ -45,7 +45,7 @@ describe('HazelExpressResponse', () => {
     it('should return this for chaining', () => {
       const result = hazelResponse.status(200);
 
-      expect(result).toBeInstanceOf(HazelExpressResponse);
+      expect(result).toBeInstanceOf(HazelHttpResponse);
     });
 
     it('should not set status after headers are sent', () => {
@@ -139,12 +139,12 @@ describe('HazelExpressResponse', () => {
       expect(mockRes.json).toHaveBeenCalledWith('string value');
 
       jest.clearAllMocks();
-      hazelResponse = new HazelExpressResponse(mockRes as Response);
+      hazelResponse = new HazelHttpResponse(mockRes as Response);
       hazelResponse.json(123);
       expect(mockRes.json).toHaveBeenCalledWith(123);
 
       jest.clearAllMocks();
-      hazelResponse = new HazelExpressResponse(mockRes as Response);
+      hazelResponse = new HazelHttpResponse(mockRes as Response);
       hazelResponse.json(true);
       expect(mockRes.json).toHaveBeenCalledWith(true);
     });
@@ -154,7 +154,7 @@ describe('HazelExpressResponse', () => {
       expect(mockRes.json).toHaveBeenCalledWith(null);
 
       jest.clearAllMocks();
-      hazelResponse = new HazelExpressResponse(mockRes as Response);
+      hazelResponse = new HazelHttpResponse(mockRes as Response);
       hazelResponse.json(undefined);
       expect(mockRes.json).toHaveBeenCalledWith(undefined);
     });

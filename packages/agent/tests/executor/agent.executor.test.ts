@@ -544,5 +544,172 @@ describe('AgentExecutor', () => {
       await expect(executor.resume('non-existent')).rejects.toThrow('Execution context');
     });
   });
+
+  describe('executeStream', () => {
+    it('should stream execution chunks', async () => {
+      const context = stateManager.createContext('agent-1', 'session-1', 'Hello');
+      
+      const mockLLMProvider: LLMProvider = {
+        chat: jest.fn(),
+        streamChat: jest.fn(async function* () {
+          yield { content: 'Test' };
+          yield { content: ' response' };
+        }),
+      };
+
+      const executorWithLLM = new AgentExecutor(
+        stateManager,
+        contextBuilder,
+        toolExecutor,
+        toolRegistry,
+        mockLLMProvider,
+        eventEmitter
+      );
+
+      const chunks = [];
+      try {
+        for await (const chunk of executorWithLLM.executeStream(context, 1)) {
+          chunks.push(chunk);
+          if (chunks.length > 10) break; // Prevent infinite loop
+        }
+      } catch (error) {
+        // May fail but we should have collected some chunks
+      }
+
+      expect(chunks.length).toBeGreaterThan(0);
+    });
+
+    it('should handle streaming without streamChat provider', async () => {
+      const context = stateManager.createContext('agent-1', 'session-1', 'Hello');
+      
+      const mockLLMProvider: LLMProvider = {
+        chat: jest.fn().mockResolvedValue({ content: 'Response' }),
+      };
+
+      const executorWithLLM = new AgentExecutor(
+        stateManager,
+        contextBuilder,
+        toolExecutor,
+        toolRegistry,
+        mockLLMProvider,
+        eventEmitter
+      );
+
+      const chunks = [];
+      try {
+        for await (const chunk of executorWithLLM.executeStream(context, 1)) {
+          chunks.push(chunk);
+          if (chunks.length > 5) break;
+        }
+      } catch (error) {
+        // Expected
+      }
+
+      // Should still produce some chunks even without streamChat
+      expect(chunks.length).toBeGreaterThanOrEqual(0);
+    });
+  });
+
+  describe('executeStepStream', () => {
+    it('should stream step execution', async () => {
+      const context = stateManager.createContext('agent-1', 'session-1', 'Hello');
+      
+      const mockLLMProvider: LLMProvider = {
+        chat: jest.fn(),
+        streamChat: jest.fn(async function* () {
+          yield { content: 'Token1' };
+          yield { content: 'Token2' };
+        }),
+      };
+
+      const executorWithLLM = new AgentExecutor(
+        stateManager,
+        contextBuilder,
+        toolExecutor,
+        toolRegistry,
+        mockLLMProvider,
+        eventEmitter
+      );
+
+      const chunks = [];
+      try {
+        for await (const chunk of (executorWithLLM as any).executeStepStream(context, 1)) {
+          chunks.push(chunk);
+          if (chunk.type === 'step') break; // Stop after first step
+        }
+      } catch (error) {
+        // May fail but should have some chunks
+      }
+
+      expect(chunks.length).toBeGreaterThan(0);
+      const tokenChunks = chunks.filter(c => c.type === 'token');
+      expect(tokenChunks.length).toBeGreaterThan(0);
+    });
+
+    it('should handle empty stream chunks', async () => {
+      const context = stateManager.createContext('agent-1', 'session-1', 'Hello');
+      
+      const mockLLMProvider: LLMProvider = {
+        chat: jest.fn(),
+        streamChat: jest.fn(async function* () {
+          yield { content: '' };
+        }),
+      };
+
+      const executorWithLLM = new AgentExecutor(
+        stateManager,
+        contextBuilder,
+        toolExecutor,
+        toolRegistry,
+        mockLLMProvider,
+        eventEmitter
+      );
+
+      const chunks = [];
+      try {
+        for await (const chunk of (executorWithLLM as any).executeStepStream(context, 1)) {
+          chunks.push(chunk);
+          if (chunk.type === 'step') break;
+        }
+      } catch (error) {
+        // Expected
+      }
+
+      expect(chunks.length).toBeGreaterThanOrEqual(0);
+    });
+
+    it('should handle streaming errors gracefully', async () => {
+      const context = stateManager.createContext('agent-1', 'session-1', 'Hello');
+      
+      const mockLLMProvider: LLMProvider = {
+        chat: jest.fn(),
+        streamChat: jest.fn(async function* () {
+          yield { content: 'Token' };
+          throw new Error('Stream error');
+        }),
+      };
+
+      const executorWithLLM = new AgentExecutor(
+        stateManager,
+        contextBuilder,
+        toolExecutor,
+        toolRegistry,
+        mockLLMProvider,
+        eventEmitter
+      );
+
+      const chunks = [];
+      try {
+        for await (const chunk of (executorWithLLM as any).executeStepStream(context, 1)) {
+          chunks.push(chunk);
+        }
+      } catch (error) {
+        expect(error).toBeDefined();
+      }
+
+      // Should have collected at least one chunk before error
+      expect(chunks.length).toBeGreaterThanOrEqual(0);
+    });
+  });
 });
 

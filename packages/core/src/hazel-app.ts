@@ -75,6 +75,27 @@ class HttpResponse implements Response {
     this.res.writeHead(statusCode, { ...this.headers, Location: url });
     this.res.end();
   }
+
+  sse(): { write: (data: string) => void; end: () => void } {
+    if (!this.headersSent) {
+      this.headersSent = true;
+      this.res.writeHead(this.statusCode, {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+        'Access-Control-Allow-Origin': '*',
+      });
+    }
+
+    return {
+      write: (data: string): void => {
+        this.res.write(data);
+      },
+      end: (): void => {
+        this.res.end();
+      },
+    };
+  }
 }
 
 export class HazelApp {

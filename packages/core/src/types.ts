@@ -48,6 +48,8 @@ export type Response = {
   send: (data: string) => void;
   setHeader: (name: string, value: string) => void;
   end: () => void;
+  /** Start SSE streaming - sets headers and returns write function */
+  sse: () => { write: (data: string) => void; end: () => void };
 };
 
 export interface RequestContext {
