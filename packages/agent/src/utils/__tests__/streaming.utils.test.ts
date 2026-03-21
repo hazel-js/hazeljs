@@ -4,6 +4,8 @@ import {
   StreamingProgressTracker,
   StreamingEventEmitter,
   ConsoleStreamFormatter,
+  filterChunks,
+  transformStream,
 } from '../streaming.utils';
 import { AgentStreamChunk, AgentState, AgentActionType } from '../../types/agent.types';
 
@@ -90,7 +92,10 @@ describe('Streaming Utils', () => {
     it('should handle mixed token and non-token chunks', async () => {
       async function* mockStream() {
         yield { type: 'token', content: 'a' } as AgentStreamChunk;
-        yield { type: 'done', result: { state: AgentState.COMPLETED, duration: 100, response: 'done' } } as unknown as AgentStreamChunk;
+        yield {
+          type: 'done',
+          result: { state: AgentState.COMPLETED, duration: 100, response: 'done' },
+        } as unknown as AgentStreamChunk;
         yield { type: 'token', content: 'b' } as AgentStreamChunk;
       }
 
@@ -225,8 +230,6 @@ describe('Streaming Utils', () => {
 
   describe('filterChunks', () => {
     it('should filter chunks by type', async () => {
-      const { filterChunks } = require('../streaming.utils');
-      
       async function* mockStream() {
         yield { type: 'token', content: 'a' } as AgentStreamChunk;
         yield { type: 'step', step: {} } as unknown as AgentStreamChunk;
@@ -243,8 +246,6 @@ describe('Streaming Utils', () => {
     });
 
     it('should handle empty filter', async () => {
-      const { filterChunks } = require('../streaming.utils');
-      
       async function* mockStream() {
         yield { type: 'token', content: 'a' } as AgentStreamChunk;
       }
@@ -260,17 +261,14 @@ describe('Streaming Utils', () => {
 
   describe('transformStream', () => {
     it('should transform chunks', async () => {
-      const { transformStream } = require('../streaming.utils');
-      
       async function* mockStream() {
         yield { type: 'token', content: 'hello' } as AgentStreamChunk;
         yield { type: 'token', content: 'world' } as AgentStreamChunk;
       }
 
       const results: string[] = [];
-      for await (const transformed of transformStream(
-        mockStream(),
-        (chunk: AgentStreamChunk) => chunk.type === 'token' ? chunk.content.toUpperCase() : null
+      for await (const transformed of transformStream(mockStream(), (chunk: AgentStreamChunk) =>
+        chunk.type === 'token' ? chunk.content.toUpperCase() : null
       )) {
         results.push(transformed);
       }
@@ -279,17 +277,14 @@ describe('Streaming Utils', () => {
     });
 
     it('should filter out null transforms', async () => {
-      const { transformStream } = require('../streaming.utils');
-      
       async function* mockStream() {
         yield { type: 'token', content: 'a' } as AgentStreamChunk;
         yield { type: 'step', step: {} } as unknown as AgentStreamChunk;
       }
 
       const results: string[] = [];
-      for await (const transformed of transformStream(
-        mockStream(),
-        (chunk: AgentStreamChunk) => chunk.type === 'token' ? chunk.content : null
+      for await (const transformed of transformStream(mockStream(), (chunk: AgentStreamChunk) =>
+        chunk.type === 'token' ? chunk.content : null
       )) {
         results.push(transformed);
       }
