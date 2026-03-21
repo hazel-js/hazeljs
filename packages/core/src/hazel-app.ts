@@ -107,6 +107,7 @@ export class HazelApp {
   private shutdownManager: ShutdownManager;
   private healthManager: HealthCheckManager;
   private requestTimeout: number = 30000; // 30 seconds default
+  private globalPrefix: string = '';
   private corsEnabled: boolean = false;
   private corsOptions?: CorsOptions;
   private timeoutMiddleware?: TimeoutMiddleware;
@@ -346,6 +347,19 @@ export class HazelApp {
             throw error;
           }
 
+          // Strip global prefix from URL before routing
+          if (this.globalPrefix && req.url) {
+            const urlPath = req.url.split('?')[0];
+            if (urlPath === this.globalPrefix || urlPath.startsWith(this.globalPrefix + '/')) {
+              req.url = req.url.slice(this.globalPrefix.length) || '/';
+            } else {
+              // URL doesn't match the global prefix → 404
+              res.writeHead(404, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ statusCode: 404, message: 'Not Found' }));
+              return;
+            }
+          }
+
           // Proxy handlers (e.g. API gateway) - run before router
           const pathname = (req.url || '/').split('?')[0];
           for (const { pathPrefix, handler } of this.proxyHandlers) {
@@ -547,6 +561,19 @@ export class HazelApp {
     this.requestTimeout = timeout;
     this.timeoutMiddleware = new TimeoutMiddleware({ ...options, timeout });
     logger.debug(`Request timeout set to ${timeout}ms`);
+  }
+
+  /**
+   * Set a global prefix for all routes (e.g. '/api/v1').
+   * Requests that don't match the prefix will receive a 404.
+   */
+  setGlobalPrefix(prefix: string): void {
+    // Normalize: ensure leading slash, no trailing slash
+    this.globalPrefix = prefix.startsWith('/') ? prefix : `/${prefix}`;
+    if (this.globalPrefix.endsWith('/')) {
+      this.globalPrefix = this.globalPrefix.slice(0, -1);
+    }
+    logger.debug(`Global prefix set to "${this.globalPrefix}"`);
   }
 
   /**
