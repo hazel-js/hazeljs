@@ -1,5 +1,6 @@
 export type { PromptMetadata } from './types';
 export { PromptTemplate } from './template';
+export type { RenderOptions } from './template';
 export { PromptRegistry } from './registry';
 
 // Store backends

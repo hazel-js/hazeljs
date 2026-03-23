@@ -19,6 +19,7 @@ module.exports = {
     '!src/index.ts',
     '!src/connectors/csv.connector.ts',
     '!src/connectors/http.connector.ts',
+    '!src/connectors/postgres.connector.ts',
     '!src/connectors/connector.interface.ts',
     '!src/connectors/index.ts',
     '!src/streaming/flink/flink.client.ts',

@@ -9,6 +9,10 @@ export { AIEnhancedService } from './ai-enhanced.service';
 export type { AITaskConfig, AITaskContext, AITaskResult } from './ai.types';
 export { AITask } from './ai.decorator';
 
+// Fluent Chat Builder
+export { ChatBuilder } from './chat-builder';
+export type { ChatBuilderHost } from './chat-builder';
+
 // Enhanced AI
 export { OpenAIProvider } from './providers/openai.provider';
 export { AnthropicProvider } from './providers/anthropic.provider';
@@ -53,3 +57,9 @@ export {
   type AIFunctionOptions,
   type AIValidationOptions,
 } from './ai-enhanced.types';
+
+// Errors
+export { AIError, AIErrorCode } from './errors/ai.error';
+
+// Debug utility
+export { debug, setDebugEnabled } from './utils/debug';

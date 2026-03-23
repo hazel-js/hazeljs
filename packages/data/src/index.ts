@@ -121,6 +121,35 @@ export {
   type HttpSinkOptions,
 } from './connectors/http.connector';
 export { MemorySource, MemorySink } from './connectors/memory.connector';
+export {
+  JsonlSource,
+  JsonlSink,
+  type JsonlSourceOptions,
+  type JsonlSinkOptions,
+} from './connectors/jsonl.connector';
+export {
+  PostgresSource,
+  PostgresSink,
+  type PostgresSourceOptions,
+  type PostgresSinkOptions,
+} from './connectors/postgres.connector';
+
+// ─── Data Contracts ───────────────────────────────────────────────────────────
+export {
+  ContractRegistry,
+  DataContract,
+  getDataContractMetadata,
+  hasDataContractMetadata,
+  type ContractStatus,
+  type DataContractType,
+  type DataContractSLA,
+  type ContractViolation,
+  type SchemaChange,
+  type ContractDiff,
+  type ContractValidationResult,
+  type DataContractOptions,
+  type DataContractMetadata,
+} from './contracts';
 
 // ─── Telemetry ────────────────────────────────────────────────────────────────
 export {

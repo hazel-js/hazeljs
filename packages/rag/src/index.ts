@@ -52,3 +52,9 @@ export * from './agentic';
 
 // GraphRAG - Knowledge graph-based retrieval (entity + community search)
 export * from './graph';
+
+// Errors
+export { RAGError, RAGErrorCode } from './errors/rag.error';
+
+// Debug utility
+export { debug, setDebugEnabled } from './utils/debug';

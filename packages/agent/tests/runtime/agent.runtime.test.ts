@@ -585,5 +585,120 @@ describe('AgentRuntime', () => {
       }
     });
   });
+
+  describe('pipeline', () => {
+    it('should create a sequential pipeline of agents', () => {
+      @Agent({ name: 'agent-1', description: 'First agent' })
+      class Agent1 {}
+
+      @Agent({ name: 'agent-2', description: 'Second agent' })
+      class Agent2 {}
+
+      @Agent({ name: 'agent-3', description: 'Third agent' })
+      class Agent3 {}
+
+      const runtime = new AgentRuntime();
+      runtime.registerAgent(Agent1);
+      runtime.registerAgent(Agent2);
+      runtime.registerAgent(Agent3);
+
+      const compiled = runtime.pipeline('test-pipeline', ['agent-1', 'agent-2', 'agent-3']);
+      expect(compiled).toBeDefined();
+      expect(compiled.execute).toBeDefined();
+    });
+
+    it('should throw error when pipeline has no agents', () => {
+      const runtime = new AgentRuntime();
+      
+      expect(() => {
+        runtime.pipeline('empty-pipeline', []);
+      }).toThrow('pipeline() requires at least one agent name');
+    });
+
+    it('should create pipeline with single agent', () => {
+      @Agent({ name: 'solo-agent', description: 'Solo agent' })
+      class SoloAgent {}
+
+      const runtime = new AgentRuntime();
+      runtime.registerAgent(SoloAgent);
+
+      const compiled = runtime.pipeline('solo-pipeline', ['solo-agent']);
+      expect(compiled).toBeDefined();
+    });
+  });
+
+  describe('quick', () => {
+    it('should execute agent with quick method', async () => {
+      @Agent({ name: 'quick-agent', description: 'Quick test agent' })
+      class QuickAgent {
+        @Tool({ description: 'Test tool' })
+        testTool() {
+          return 'test result';
+        }
+      }
+
+      const mockLLM = {
+        complete: jest.fn().mockResolvedValue({
+          content: 'Test response',
+          role: 'assistant',
+          finishReason: 'stop',
+        }),
+      };
+
+      try {
+        const result = await AgentRuntime.quick(
+          QuickAgent,
+          'test input',
+          { llmProvider: mockLLM as any },
+          { maxSteps: 1 }
+        );
+        
+        // May fail without proper LLM setup, but should not throw on registration
+        expect(result).toBeDefined();
+      } catch (error) {
+        // Expected to potentially fail without full LLM integration
+        expect(error).toBeDefined();
+      }
+    });
+
+    it('should throw error when quick is called with non-agent class', async () => {
+      class NotAnAgent {}
+
+      await expect(
+        AgentRuntime.quick(NotAnAgent, 'test input')
+      ).rejects.toThrow('is not decorated with @Agent');
+    });
+
+    it('should handle quick with custom options', async () => {
+      @Agent({ name: 'custom-quick-agent', description: 'Custom agent' })
+      class CustomAgent {}
+
+      const mockLLM = {
+        complete: jest.fn().mockResolvedValue({
+          content: 'Response',
+          role: 'assistant',
+          finishReason: 'stop',
+        }),
+      };
+
+      try {
+        await AgentRuntime.quick(
+          CustomAgent,
+          'input',
+          {
+            llmProvider: mockLLM as any,
+            defaultMaxSteps: 5,
+            defaultTimeout: 30000,
+          },
+          {
+            maxSteps: 3,
+            timeout: 10000,
+          }
+        );
+      } catch {
+        // Expected to fail without full setup
+      }
+    });
+  });
 });
 

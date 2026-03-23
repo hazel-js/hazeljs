@@ -78,4 +78,80 @@ describe('TrainerService', () => {
       'Training method train not found on model'
     );
   });
+
+  it('should train with specific version', async () => {
+    @Model({ name: 'versioned-model', version: '2.0.0', framework: 'custom' })
+    class VersionedModel {
+      @Train()
+      async train(data: unknown) {
+        return { version: '2.0.0', data };
+      }
+
+      @Predict()
+      predict() {}
+    }
+
+    const instance = new VersionedModel();
+    registry.register({
+      metadata: { name: 'versioned-model', version: '2.0.0', framework: 'custom' },
+      instance,
+      trainMethod: 'train',
+      predictMethod: 'predict',
+    });
+
+    const result = await trainer.train('versioned-model', { test: true }, '2.0.0');
+    expect((result as any).version).toBe('2.0.0');
+  });
+
+  it('should handle training errors gracefully', async () => {
+    @Model({ name: 'error-model', version: '1.0.0', framework: 'custom' })
+    class ErrorModel {
+      @Train()
+      async train() {
+        throw new Error('Training failed');
+      }
+
+      @Predict()
+      predict() {}
+    }
+
+    const instance = new ErrorModel();
+    registry.register({
+      metadata: { name: 'error-model', version: '1.0.0', framework: 'custom' },
+      instance,
+      trainMethod: 'train',
+      predictMethod: 'predict',
+    });
+
+    await expect(trainer.train('error-model', {})).rejects.toThrow('Training failed');
+  });
+
+  it('should discover train method from decorated class', () => {
+    @Model({ name: 'discover-model', version: '1.0.0', framework: 'custom' })
+    class DiscoverModel {
+      @Train()
+      customTrainMethod() {}
+
+      @Predict()
+      predict() {}
+    }
+
+    const instance = new DiscoverModel();
+    const method = trainer.discoverTrainMethod(instance);
+    expect(method).toBe('customTrainMethod');
+  });
+
+  it('should return undefined when no train method decorated', () => {
+    @Model({ name: 'no-decorator', version: '1.0.0', framework: 'custom' })
+    class NoDecoratorModel {
+      train() {}
+
+      @Predict()
+      predict() {}
+    }
+
+    const instance = new NoDecoratorModel();
+    const method = trainer.discoverTrainMethod(instance);
+    expect(method).toBeUndefined();
+  });
 });

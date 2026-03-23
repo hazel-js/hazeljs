@@ -53,3 +53,60 @@ export type {
   PredictionResult,
   ModelVersion,
 } from './ml.types';
+
+// Feature Store
+export {
+  FeatureStoreService,
+  MemoryOnlineStore,
+  RedisOnlineStore,
+  FileOfflineStore,
+  PostgresOfflineStore,
+  createOnlineStore,
+  createOfflineStore,
+  Feature,
+  FeatureView,
+  getFeatureMetadata,
+  hasFeatureMetadata,
+  getFeatureViewMetadata,
+  hasFeatureViewMetadata,
+  type FeatureValueType,
+  type FeatureMetadata,
+  type FeatureValue,
+  type FeatureViewType,
+  type FeatureDefinition,
+  type FeatureQuery,
+  type FeatureResponse,
+  type OnlineStoreConfig,
+  type OfflineStoreConfig,
+  type FeatureStoreConfig,
+  type FeatureOptions,
+  type FeatureViewOptions,
+} from './features';
+
+// Experiment Tracking
+export {
+  ExperimentService,
+  Experiment,
+  getExperimentMetadata,
+  hasExperimentMetadata,
+  type ExperimentType,
+  type Run,
+  type Artifact,
+  type ExperimentConfig,
+  type ExperimentOptions,
+  type ExperimentMetadata,
+} from './experiments';
+
+// Monitoring & Drift Detection
+export {
+  DriftService,
+  MonitorService,
+  type DriftType,
+  type DriftConfig,
+  type DriftResult,
+  type DriftReport,
+  type DistributionStats,
+  type MonitorConfig,
+  type MonitorAlert,
+  type AlertHandler,
+} from './monitoring';

@@ -49,4 +49,59 @@ describe('TransformerService', () => {
     const result = await filter([1, 2, 3]);
     expect(result).toEqual([2, 3]);
   });
+
+  it('apply handles async transform', async () => {
+    service.register('asyncDouble', async (x) => (x as number) * 2);
+    const result = await service.apply('asyncDouble', 5);
+    expect(result).toBe(10);
+  });
+
+  it('pipe handles async functions', async () => {
+    const fn = service.pipe(
+      async (x) => (x as number) + 1,
+      async (x) => (x as number) * 2
+    );
+    const result = await fn(5);
+    expect(result).toBe(12);
+  });
+
+  it('pipe handles mix of sync and async functions', async () => {
+    const fn = service.pipe(
+      (x) => (x as number) + 1,
+      async (x) => (x as number) * 2,
+      (x) => (x as number) - 1
+    );
+    const result = await fn(5);
+    expect(result).toBe(11);
+  });
+
+  it('map handles async mapper', async () => {
+    const mapper = service.map(async (x) => (x as number) * 2);
+    const result = await mapper([1, 2, 3]);
+    expect(result).toEqual([2, 4, 6]);
+  });
+
+  it('filter returns empty array when no items match', async () => {
+    const filter = service.filter((x) => (x as number) > 10);
+    const result = await filter([1, 2, 3]);
+    expect(result).toEqual([]);
+  });
+
+  it('filter handles empty array', async () => {
+    const filter = service.filter((x) => (x as number) > 1);
+    const result = await filter([]);
+    expect(result).toEqual([]);
+  });
+
+  it('map handles empty array', async () => {
+    const mapper = service.map((x) => (x as number) * 2);
+    const result = await mapper([]);
+    expect(result).toEqual([]);
+  });
+
+  it('pipe handles empty pipeline', async () => {
+    const fn = service.pipe();
+    const result = await fn(5);
+    expect(result).toBe(5);
+  });
 });

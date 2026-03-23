@@ -14,6 +14,27 @@ interface AIProvider {
   execute: (config: AITaskConfig, input: unknown) => Promise<AITaskResult>;
 }
 
+/**
+ * @deprecated Use `AIEnhancedService` instead. `AIService` will be removed in v0.4.0.
+ *
+ * `AIEnhancedService` provides the same functionality plus:
+ * - Multi-provider management (OpenAI, Anthropic, Gemini, Cohere, Ollama)
+ * - Token tracking and rate limiting
+ * - Response caching
+ * - Streaming completions
+ * - Embeddings generation
+ *
+ * Migration:
+ * ```ts
+ * // Before
+ * const ai = new AIService();
+ * const result = await ai.executeTask(config, input);
+ *
+ * // After
+ * const ai = new AIEnhancedService();
+ * const result = await ai.complete({ messages: [...], model: 'gpt-4' });
+ * ```
+ */
 @Service()
 export class AIService {
   private providers: Map<string, AIProvider> = new Map();

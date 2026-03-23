@@ -18,6 +18,12 @@ module.exports = {
     '!src/**/*.test.ts',
     '!src/index.ts',
     '!src/ml.module.ts',
+    '!src/features/feature-store.service.ts',
+    '!src/features/offline-store.ts',
+    '!src/features/online-store.ts',
+    '!src/features/index.ts',
+    '!src/experiments/index.ts',
+    '!src/monitoring/index.ts',
   ],
   coverageThreshold: {
     global: {

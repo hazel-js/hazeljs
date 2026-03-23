@@ -71,4 +71,41 @@ describe('SchemaFaker', () => {
     const value = SchemaFaker.generate(schema);
     expect(value === null || typeof value === 'string').toBe(true);
   });
+
+  it('generates integer type', () => {
+    const faker = new SchemaFaker();
+    const schema = Schema.number();
+    const value = faker.generate(schema);
+    expect(typeof value).toBe('number');
+  });
+
+  it('generates nested objects', () => {
+    const schema = Schema.object({
+      user: Schema.object({
+        name: Schema.string(),
+        age: Schema.number(),
+      }),
+    });
+    const value = SchemaFaker.generate(schema);
+    expect(value).toHaveProperty('user');
+    expect(value.user).toHaveProperty('name');
+    expect(value.user).toHaveProperty('age');
+  });
+
+  it('generates array with custom length', () => {
+    const faker = new SchemaFaker({ arrayMinLength: 5, arrayMaxLength: 5 });
+    const schema = Schema.array(Schema.string());
+    const value = faker.generate(schema);
+    expect(Array.isArray(value)).toBe(true);
+    expect(value.length).toBe(5);
+  });
+
+  it('generates optional fields', () => {
+    const schema = Schema.object({
+      required: Schema.string(),
+      optional: Schema.string().optional(),
+    });
+    const value = SchemaFaker.generate(schema);
+    expect(value).toHaveProperty('required');
+  });
 });

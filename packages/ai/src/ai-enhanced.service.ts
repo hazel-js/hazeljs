@@ -8,6 +8,7 @@ import {
   AIEmbeddingResponse,
   AIModelConfig,
 } from './ai-enhanced.types';
+import { ChatBuilder } from './chat-builder';
 import { Service } from '@hazeljs/core';
 import { OpenAIProvider } from './providers/openai.provider';
 import { AnthropicProvider } from './providers/anthropic.provider';
@@ -18,6 +19,9 @@ import { AIContextManager } from './context/context.manager';
 import { TokenTracker } from './tracking/token.tracker';
 import { CacheService } from '@hazeljs/cache';
 import logger from '@hazeljs/core';
+import { debug } from './utils/debug';
+
+const dbg = debug('ai');
 
 /**
  * Enhanced AI Service
@@ -137,27 +141,40 @@ export class AIEnhancedService {
     const provider = this.getProvider(config?.provider);
     const cacheKey = config?.cacheKey || this.generateCacheKey(request);
 
+    dbg(
+      'complete start model=%s provider=%s',
+      request.model || 'default',
+      config?.provider || this.defaultProvider
+    );
+
     // Check cache first
     if (this.cacheService && config?.cacheKey) {
       const cached = await this.cacheService.get<AICompletionResponse>(cacheKey);
       if (cached) {
         logger.debug('Returning cached AI response');
+        dbg('complete cache hit key=%s', cacheKey);
         return cached;
       }
     }
 
     // Check rate limits
     const estimatedTokens = this.estimateRequestTokens(request);
+    dbg('complete tokens estimated=%d user=%s', estimatedTokens, config?.userId || 'anonymous');
     const limitCheck = await this.tokenTracker.checkLimits(config?.userId, estimatedTokens);
 
     if (!limitCheck.allowed) {
+      dbg('complete rate limited reason=%s', limitCheck.reason || 'unknown');
       throw new Error(`Rate limit exceeded: ${limitCheck.reason}`);
     }
 
     // Execute with retry logic
+    const startTime = Date.now();
     const response = await this.executeWithRetry(async () => {
       return await provider.complete(request);
     });
+    const duration = Date.now() - startTime;
+
+    dbg('complete success duration=%dms tokens=%d', duration, response.usage?.totalTokens || 0);
 
     // Track token usage
     if (response.usage) {
@@ -176,6 +193,7 @@ export class AIEnhancedService {
     // Cache response
     if (this.cacheService && config?.cacheKey) {
       await this.cacheService.set(cacheKey, response, config.cacheTTL || 3600);
+      dbg('complete cached ttl=%d', config.cacheTTL || 3600);
     }
 
     return response;
@@ -416,5 +434,53 @@ export class AIEnhancedService {
     this.retryAttempts = attempts;
     this.retryDelay = delay;
     logger.info(`Retry config updated: ${attempts} attempts, ${delay}ms delay`);
+  }
+
+  /**
+   * Ensure a provider is registered and throw an actionable error if not.
+   */
+  ensureProvider(name: AIProvider): IAIProvider {
+    const provider = this.providers.get(name);
+    if (!provider) {
+      throw new Error(
+        `AI provider "${name}" is not registered. ` +
+          `Available providers: ${[...this.providers.keys()].join(', ') || '(none)'}. ` +
+          `Set the appropriate API key environment variable or call registerProvider().`
+      );
+    }
+    return provider;
+  }
+
+  /**
+   * List all registered provider names.
+   */
+  listProviders(): AIProvider[] {
+    return [...this.providers.keys()];
+  }
+
+  /**
+   * Fluent chat builder — the easiest way to call an LLM.
+   *
+   * @example
+   * ```ts
+   * const answer = await ai.chat('Summarize this article')
+   *   .system('You are a helpful assistant')
+   *   .model('gpt-4')
+   *   .temperature(0.3)
+   *   .text();
+   *
+   * // Streaming
+   * for await (const chunk of ai.chat('Hello').stream()) {
+   *   process.stdout.write(chunk.delta);
+   * }
+   *
+   * // JSON parsing
+   * const data = await ai.chat('Return a JSON list of colors')
+   *   .model('gpt-4')
+   *   .json<string[]>();
+   * ```
+   */
+  chat(message: string): ChatBuilder {
+    return new ChatBuilder(this, message);
   }
 }

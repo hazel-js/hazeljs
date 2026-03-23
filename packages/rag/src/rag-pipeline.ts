@@ -11,16 +11,116 @@ import {
   SearchResult,
   RetrievalStrategy,
 } from './types';
+import { BM25, BM25Document } from './retrieval/bm25';
+import { OpenAIEmbeddings } from './embeddings/openai-embeddings';
+import { CohereEmbeddings } from './embeddings/cohere-embeddings';
+import { MemoryVectorStore } from './vector-stores/memory-vector-store';
+import { RecursiveTextSplitter } from './text-splitters/recursive-text-splitter';
 
 export type LLMFunction = (prompt: string) => Promise<string>;
+
+/**
+ * Shorthand configuration for `RAGPipeline.from()`.
+ *
+ * Only `provider` (or `apiKey`) is required — everything else has sensible defaults.
+ */
+export interface RAGPipelineQuickConfig {
+  /** Embedding provider name. Defaults to `'openai'`. */
+  provider?: 'openai' | 'cohere';
+  /** API key for the embedding provider. Falls back to `OPENAI_API_KEY` / `COHERE_API_KEY` env vars. */
+  apiKey?: string;
+  /** Embedding model name (provider-specific). */
+  embeddingModel?: string;
+  /** Vector store to use. Defaults to in-memory. */
+  vectorStore?: 'memory';
+  /** Number of results to return. Default: 5. */
+  topK?: number;
+  /** Chunk size for text splitting. Default: 1000. */
+  chunkSize?: number;
+  /** Chunk overlap for text splitting. Default: 200. */
+  chunkOverlap?: number;
+  /** LLM function for answer generation. */
+  llm?: LLMFunction;
+}
 
 export class RAGPipeline {
   private config: RAGConfig;
   private llmFunction?: LLMFunction;
+  private bm25: BM25;
+  private bm25Indexed: boolean = false;
 
   constructor(config: RAGConfig, llmFunction?: LLMFunction) {
     this.config = config;
     this.llmFunction = llmFunction;
+    this.bm25 = new BM25();
+  }
+
+  /**
+   * Create a RAGPipeline with sensible defaults from minimal configuration.
+   *
+   * @example
+   * ```ts
+   * const pipeline = RAGPipeline.from({ provider: 'openai', topK: 5, llm: myLLM });
+   * await pipeline.initialize();
+   * await pipeline.addDocuments(docs);
+   * const result = await pipeline.query('What is X?');
+   * ```
+   */
+  static from(quick: RAGPipelineQuickConfig = {}): RAGPipeline {
+    const provider = quick.provider ?? 'openai';
+
+    // Resolve embedding provider
+    let embeddingProvider;
+    switch (provider) {
+      case 'cohere': {
+        const apiKey = quick.apiKey ?? process.env.COHERE_API_KEY;
+        if (!apiKey) {
+          throw new Error(
+            'RAGPipeline.from(): Missing API key for Cohere. ' +
+              'Pass `apiKey` or set the COHERE_API_KEY environment variable.'
+          );
+        }
+        embeddingProvider = new CohereEmbeddings({
+          apiKey,
+          model: quick.embeddingModel,
+        });
+        break;
+      }
+      case 'openai':
+      default: {
+        const apiKey = quick.apiKey ?? process.env.OPENAI_API_KEY;
+        if (!apiKey) {
+          throw new Error(
+            'RAGPipeline.from(): Missing API key for OpenAI. ' +
+              'Pass `apiKey` or set the OPENAI_API_KEY environment variable.'
+          );
+        }
+        embeddingProvider = new OpenAIEmbeddings({
+          apiKey,
+          model: quick.embeddingModel,
+        });
+        break;
+      }
+    }
+
+    // Resolve vector store (currently only memory; extensible later)
+    const vectorStore = new MemoryVectorStore(embeddingProvider);
+
+    // Resolve text splitter
+    const textSplitter = new RecursiveTextSplitter({
+      chunkSize: quick.chunkSize ?? 1000,
+      chunkOverlap: quick.chunkOverlap ?? 200,
+    });
+
+    return new RAGPipeline(
+      {
+        vectorStore,
+        embeddingProvider,
+        textSplitter,
+        topK: quick.topK ?? 5,
+      },
+      quick.llm
+    );
   }
 
   /**
@@ -41,7 +141,22 @@ export class RAGPipeline {
       processedDocs = this.config.textSplitter.splitDocuments(documents);
     }
 
-    return this.config.vectorStore.addDocuments(processedDocs);
+    const ids = await this.config.vectorStore.addDocuments(processedDocs);
+
+    // Index in BM25 for hybrid search
+    const bm25Docs: BM25Document[] = processedDocs.map((doc, i) => ({
+      id: doc.id || ids[i],
+      content: doc.content,
+      tokens: doc.content
+        .toLowerCase()
+        .replace(/[^\w\s]/g, ' ')
+        .split(/\s+/)
+        .filter((t) => t.length > 0),
+    }));
+    this.bm25.addDocuments(bm25Docs);
+    this.bm25Indexed = true;
+
+    return ids;
   }
 
   /**
@@ -166,17 +281,67 @@ export class RAGPipeline {
   }
 
   /**
-   * Hybrid retrieval (combines keyword and semantic search)
-   * For now, just returns semantic search results
-   * TODO: Implement keyword search integration
+   * Hybrid retrieval — combines BM25 keyword search with vector similarity.
+   * Uses weighted score fusion (default 0.7 vector, 0.3 keyword).
    */
   private async retrieveHybrid(
     query: string,
     options: RAGQueryOptions = {}
   ): Promise<SearchResult[]> {
-    // For now, fallback to similarity search
-    // In production, this would combine BM25 or other keyword search with vector search
-    return this.config.vectorStore.search(query, options);
+    const topK = options.topK || this.config.topK || 5;
+
+    // Always run vector search
+    const vectorResults = await this.config.vectorStore.search(query, {
+      ...options,
+      topK: topK * 2,
+    });
+
+    // If BM25 hasn't been indexed yet, fall back to vector-only
+    if (!this.bm25Indexed) {
+      return vectorResults.slice(0, topK);
+    }
+
+    // BM25 keyword search
+    const keywordResults = this.bm25.search(query, topK * 2);
+
+    // Normalize scores to [0, 1]
+    const normalize = (items: Array<{ id: string; score: number }>): Map<string, number> => {
+      if (items.length === 0) return new Map<string, number>();
+      const scores = items.map((r) => r.score);
+      const min = Math.min(...scores);
+      const max = Math.max(...scores);
+      const range = max - min || 1;
+      return new Map(items.map((r) => [r.id, (r.score - min) / range]));
+    };
+
+    const vectorScores = normalize(vectorResults.map((r) => ({ id: r.id, score: r.score })));
+    const keywordScores = normalize(keywordResults);
+
+    const vectorWeight = 0.7;
+    const keywordWeight = 0.3;
+
+    // Fuse scores
+    const allIds = new Set([...vectorScores.keys(), ...keywordScores.keys()]);
+    const fused: Array<{ id: string; score: number }> = [];
+
+    for (const id of allIds) {
+      const vs = vectorScores.get(id) || 0;
+      const ks = keywordScores.get(id) || 0;
+      fused.push({ id, score: vectorWeight * vs + keywordWeight * ks });
+    }
+
+    fused.sort((a, b) => b.score - a.score);
+
+    // Map back to full SearchResult objects
+    const resultMap = new Map(vectorResults.map((r) => [r.id, r]));
+    return fused
+      .slice(0, topK)
+      .map((f) => {
+        const original = resultMap.get(f.id);
+        if (original) return { ...original, score: f.score };
+        return null;
+      })
+      .filter((r): r is SearchResult => r !== null);
   }
 
   /**
@@ -233,5 +398,7 @@ export class RAGPipeline {
    */
   async clear(): Promise<void> {
     await this.config.vectorStore.clear();
+    this.bm25.clear();
+    this.bm25Indexed = false;
   }
 }

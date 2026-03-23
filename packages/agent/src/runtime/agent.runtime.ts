@@ -671,6 +671,73 @@ export class AgentRuntime {
   }
 
   /**
+   * Create a sequential pipeline of agents — a shorthand for `createGraph()`.
+   *
+   * @param pipelineId  Unique ID for the graph.
+   * @param agentNames  Ordered list of agent names to execute in sequence.
+   * @returns A compiled graph ready to `.execute()`.
+   *
+   * @example
+   * ```ts
+   * const result = await runtime
+   *   .pipeline('summarize', ['ResearchAgent', 'WriterAgent'])
+   *   .execute('Write about LLMs');
+   * ```
+   */
+  pipeline(pipelineId: string, agentNames: string[]): ReturnType<AgentGraph['compile']> {
+    if (agentNames.length === 0) {
+      throw new Error('pipeline() requires at least one agent name');
+    }
+
+    let graph = this.createGraph(pipelineId);
+
+    for (const name of agentNames) {
+      graph = graph.addNode(name, { type: 'agent', agentName: name });
+    }
+
+    for (let i = 0; i < agentNames.length - 1; i++) {
+      graph = graph.addEdge(agentNames[i], agentNames[i + 1]);
+    }
+
+    graph = graph.addEdge(agentNames[agentNames.length - 1], '__end__');
+    graph = graph.setEntryPoint(agentNames[0]);
+
+    return graph.compile();
+  }
+
+  /**
+   * One-liner to register an agent class and execute it immediately.
+   * Creates a temporary runtime, registers the agent, runs it, and returns the result.
+   *
+   * @example
+   * ```ts
+   * const result = await AgentRuntime.quick(MyAgent, 'Hello!', {
+   *   llmProvider: myLLM,
+   * });
+   * console.log(result.response);
+   * ```
+   */
+  static async quick(
+    agentClass: new (...args: unknown[]) => unknown,
+    input: string,
+    config: AgentRuntimeConfig = {},
+    options: AgentExecutionOptions = {}
+  ): Promise<AgentExecutionResult> {
+    const runtime = new AgentRuntime(config);
+    runtime.registerAgent(agentClass);
+
+    // Derive agent name from decorator metadata
+    const agents = runtime.getAgents();
+    if (agents.length === 0) {
+      throw new Error(
+        'AgentRuntime.quick(): No agent found. Ensure the class is decorated with @Agent().'
+      );
+    }
+
+    return runtime.execute(agents[0], input, options);
+  }
+
+  /**
    * Shutdown the runtime
    */
   async shutdown(): Promise<void> {
