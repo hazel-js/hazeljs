@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/kafka",
-  "version": "0.2.4",
+  "version": "0.3.0",
   "description": "Kafka module for HazelJS framework - produce, consume, and stream processing",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
