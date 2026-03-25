@@ -41,7 +41,7 @@ describe('OllamaProvider', () => {
   describe('getSupportedModels()', () => {
     it('returns list including llama2', () => {
       const models = provider.getSupportedModels();
-      expect(models).toContain('llama2');
+      expect(models).toContain('llama3.1');
       expect(models.length).toBeGreaterThan(0);
     });
   });
@@ -49,7 +49,7 @@ describe('OllamaProvider', () => {
   describe('getSupportedEmbeddingModels()', () => {
     it('returns list including llama2', () => {
       const models = provider.getSupportedEmbeddingModels();
-      expect(models).toContain('llama2');
+      expect(models).toContain('llama3.1');
     });
   });
 
@@ -285,7 +285,7 @@ describe('OllamaProvider', () => {
       });
 
       const result = await provider.embed({ input: 'test' });
-      expect(result.model).toBe('llama2');
+      expect(result.model).toBe('llama3.1');
     });
 
     it('throws on API error', async () => {

@@ -85,7 +85,7 @@ describe('AnthropicProvider', () => {
       await provider.complete({ messages: [{ role: 'user', content: 'hi' }] });
 
       expect(mockMessagesCreate).toHaveBeenCalledWith(
-        expect.objectContaining({ model: 'claude-3-5-sonnet-20241022' })
+        expect.objectContaining({ model: 'claude-sonnet-4-20250514' })
       );
     });
 
@@ -249,7 +249,7 @@ describe('AnthropicProvider', () => {
       }
 
       expect(mockMessagesStream).toHaveBeenCalledWith(
-        expect.objectContaining({ model: 'claude-3-5-sonnet-20241022' })
+        expect.objectContaining({ model: 'claude-sonnet-4-20250514' })
       );
     });
 

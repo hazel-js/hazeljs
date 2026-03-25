@@ -20,6 +20,7 @@ export function Tool(config?: Partial<ToolConfig>): MethodDecorator {
       name: config?.name || methodName,
       description: config?.description || `Tool: ${methodName}`,
       parameters: config?.parameters || [],
+      schema: config?.schema,
       requiresApproval: config?.requiresApproval || false,
       timeout: config?.timeout || 30000,
       retries: config?.retries || 0,

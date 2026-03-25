@@ -200,19 +200,33 @@ export class RAGPipeline {
     options: RAGQueryOptions = {},
     strategy: RetrievalStrategy = RetrievalStrategy.SIMILARITY
   ): Promise<SearchResult[]> {
+    let results: SearchResult[];
+
     switch (strategy) {
       case RetrievalStrategy.SIMILARITY:
-        return this.config.vectorStore.search(query, options);
-
+        results = await this.config.vectorStore.search(query, options);
+        break;
       case RetrievalStrategy.MMR:
-        return this.retrieveWithMMR(query, options);
-
+        results = await this.retrieveWithMMR(query, options);
+        break;
       case RetrievalStrategy.HYBRID:
-        return this.retrieveHybrid(query, options);
-
+        results = await this.retrieveHybrid(query, options);
+        break;
       default:
-        return this.config.vectorStore.search(query, options);
+        results = await this.config.vectorStore.search(query, options);
+        break;
     }
+
+    // Apply reranker if configured
+    if (this.config.reranker && results.length > 0) {
+      results = await this.config.reranker.rerank(
+        query,
+        results,
+        options.topK || this.config.topK || 5
+      );
+    }
+
+    return results;
   }
 
   /**

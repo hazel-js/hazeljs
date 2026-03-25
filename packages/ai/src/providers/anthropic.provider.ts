@@ -50,7 +50,7 @@ export class AnthropicProvider implements IAIProvider {
    * Generate completion
    */
   async complete(request: AICompletionRequest): Promise<AICompletionResponse> {
-    const modelName = request.model || 'claude-3-5-sonnet-20241022';
+    const modelName = request.model || 'claude-sonnet-4-20250514';
     logger.debug(`Anthropic completion request for model: ${modelName}`);
 
     try {
@@ -102,7 +102,7 @@ export class AnthropicProvider implements IAIProvider {
    * Generate streaming completion
    */
   async *streamComplete(request: AICompletionRequest): AsyncGenerator<AIStreamChunk> {
-    const modelName = request.model || 'claude-3-5-sonnet-20241022';
+    const modelName = request.model || 'claude-sonnet-4-20250514';
     logger.debug('Anthropic streaming completion started');
 
     try {
@@ -207,13 +207,24 @@ export class AnthropicProvider implements IAIProvider {
    */
   getSupportedModels(): string[] {
     return [
+      'claude-sonnet-4-20250514',
+      'claude-3-7-sonnet-20250219',
       'claude-3-5-sonnet-20241022',
-      'claude-3-5-sonnet-20240620',
+      'claude-3-5-haiku-20241022',
       'claude-3-opus-20240229',
       'claude-3-sonnet-20240229',
       'claude-3-haiku-20240307',
-      'claude-2.1',
-      'claude-2.0',
     ];
+  }
+
+  /**
+   * Build prefill string for structured output.
+   * Anthropic supports JSON mode via system prompt instructions + assistant prefill.
+   */
+  private buildPrefill(
+    format?: import('../ai-enhanced.types').AIResponseFormat
+  ): string | undefined {
+    if (!format || format === 'text') return undefined;
+    return '{';
   }
 }

@@ -80,7 +80,7 @@ No manual registration of method names is needed—the decorators are the source
 
 For a complete app with REST API, pipelines, and metrics, see:
 
-- **[hazeljs-ml-starter](https://github.com/hazel-js/hazeljs/tree/main/hazeljs-ml-starter)** – sentiment, spam, intent classifiers and training scripts.
+- **[hazeljs-ml-starter](https://github.com/hazel-js/hazeljs-ml-starter)** – sentiment, spam, intent classifiers and training scripts.
 
 ## Docs
 

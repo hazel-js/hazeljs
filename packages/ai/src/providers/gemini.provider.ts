@@ -48,7 +48,7 @@ export class GeminiProvider implements IAIProvider {
    * Generate completion
    */
   async complete(request: AICompletionRequest): Promise<AICompletionResponse> {
-    const modelName = request.model || 'gemini-pro';
+    const modelName = request.model || 'gemini-2.5-flash';
     logger.debug(`Gemini completion request for model: ${modelName}`);
 
     try {
@@ -91,7 +91,7 @@ export class GeminiProvider implements IAIProvider {
    * Generate streaming completion
    */
   async *streamComplete(request: AICompletionRequest): AsyncGenerator<AIStreamChunk> {
-    const modelName = request.model || 'gemini-pro';
+    const modelName = request.model || 'gemini-2.5-flash';
     logger.debug('Gemini streaming completion started');
 
     try {
@@ -205,8 +205,9 @@ export class GeminiProvider implements IAIProvider {
    */
   getSupportedModels(): string[] {
     return [
-      'gemini-pro',
-      'gemini-pro-vision',
+      'gemini-2.5-pro',
+      'gemini-2.5-flash',
+      'gemini-2.0-flash',
       'gemini-1.5-pro',
       'gemini-1.5-flash',
       'text-embedding-004',

@@ -7,10 +7,15 @@ import {
   AIEmbeddingRequest,
   AIEmbeddingResponse,
   AIMessage,
+  AIResponseFormat,
+  AIJsonSchema,
 } from '../ai-enhanced.types';
 import logger from '@hazeljs/core';
 import OpenAI from 'openai';
-import type { ChatCompletionMessageParam } from 'openai/resources/chat/completions';
+import type {
+  ChatCompletionMessageParam,
+  ChatCompletionCreateParamsBase,
+} from 'openai/resources/chat/completions';
 
 /**
  * OpenAI Provider
@@ -26,7 +31,7 @@ export class OpenAIProvider implements IAIProvider {
       apiKey: apiKey || process.env.OPENAI_API_KEY,
       baseURL: config?.baseURL,
     });
-    this.defaultModel = config?.defaultModel || 'gpt-4-turbo-preview';
+    this.defaultModel = config?.defaultModel || 'gpt-4o';
     logger.info('OpenAI provider initialized');
   }
 
@@ -47,6 +52,9 @@ export class OpenAIProvider implements IAIProvider {
         })
       );
 
+      // Build response_format for structured output
+      const responseFormat = this.buildResponseFormat(request.responseFormat);
+
       const response = await this.client.chat.completions.create({
         model: request.model || this.defaultModel,
         messages,
@@ -60,6 +68,7 @@ export class OpenAIProvider implements IAIProvider {
             : request.functionCall === 'none'
               ? 'none'
               : undefined,
+        ...(responseFormat ? { response_format: responseFormat } : {}),
       });
 
       const choice = response.choices[0];
@@ -285,14 +294,15 @@ export class OpenAIProvider implements IAIProvider {
    */
   getSupportedModels(): string[] {
     return [
-      'gpt-4-turbo-preview',
-      'gpt-4-0125-preview',
-      'gpt-4-1106-preview',
+      'gpt-4o',
+      'gpt-4o-mini',
+      'gpt-4-turbo',
       'gpt-4',
-      'gpt-4-0613',
+      'o1',
+      'o1-mini',
+      'o3',
+      'o3-mini',
       'gpt-3.5-turbo',
-      'gpt-3.5-turbo-0125',
-      'gpt-3.5-turbo-1106',
     ];
   }
 
@@ -301,6 +311,33 @@ export class OpenAIProvider implements IAIProvider {
    */
   getSupportedEmbeddingModels(): string[] {
     return ['text-embedding-3-small', 'text-embedding-3-large', 'text-embedding-ada-002'];
+  }
+
+  /**
+   * Build response_format for OpenAI structured output.
+   * Supports both JSON mode ({ type: 'json_object' }) and
+   * JSON Schema mode ({ type: 'json_schema', json_schema: {...} }).
+   */
+  private buildResponseFormat(
+    format?: AIResponseFormat
+  ): ChatCompletionCreateParamsBase['response_format'] | undefined {
+    if (!format || format === 'text') return undefined;
+
+    if (format === 'json') {
+      return { type: 'json_object' as const };
+    }
+
+    // AIJsonSchema — structured output with JSON schema
+    const schema = format as AIJsonSchema;
+    return {
+      type: 'json_schema' as const,
+      json_schema: {
+        name: schema.name,
+        ...(schema.description ? { description: schema.description } : {}),
+        schema: schema.schema,
+        strict: schema.strict ?? true,
+      },
+    };
   }
 
   /**

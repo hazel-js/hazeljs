@@ -393,6 +393,31 @@ export class AgentExecutor {
           step.state = AgentState.WAITING_FOR_APPROVAL;
           break;
 
+        case AgentActionType.USE_TOOLS:
+          step.state = AgentState.USING_TOOL;
+          if (action.toolCalls && action.toolCalls.length > 0) {
+            const toolResults = await Promise.all(
+              action.toolCalls.map((tc) =>
+                this.executeTool(context, {
+                  ...action,
+                  type: AgentActionType.USE_TOOL,
+                  toolName: tc.toolName,
+                  toolInput: tc.toolInput,
+                })
+              )
+            );
+            // Combine all tool results
+            step.result = {
+              success: toolResults.every((r) => r.success),
+              output: toolResults.map((r, i) => ({
+                tool: action.toolCalls![i].toolName,
+                output: r.output,
+                error: r.error,
+              })),
+            };
+          }
+          break;
+
         case AgentActionType.COMPLETE:
           step.state = AgentState.COMPLETED;
           step.result = {
@@ -602,22 +627,39 @@ export class AgentExecutor {
       const response = await this.llmProvider.chat(request);
 
       if (response.tool_calls && response.tool_calls.length > 0) {
-        const toolCall = response.tool_calls[0];
-        let toolInput: Record<string, unknown>;
-        try {
-          toolInput = JSON.parse(toolCall.function.arguments) as Record<string, unknown>;
-        } catch (parseError) {
-          throw AgentError.invalidToolInput(
-            toolCall.function.name,
-            'Invalid JSON in tool arguments',
-            parseError as Error
-          );
+        // Parse all tool calls
+        const parsedCalls: Array<{ toolName: string; toolInput: Record<string, unknown> }> = [];
+        for (const toolCall of response.tool_calls) {
+          let toolInput: Record<string, unknown>;
+          try {
+            toolInput = JSON.parse(toolCall.function.arguments) as Record<string, unknown>;
+          } catch (parseError) {
+            throw AgentError.invalidToolInput(
+              toolCall.function.name,
+              'Invalid JSON in tool arguments',
+              parseError as Error
+            );
+          }
+          parsedCalls.push({ toolName: toolCall.function.name, toolInput });
         }
+
+        // Single tool call — use existing USE_TOOL for backward compatibility
+        if (parsedCalls.length === 1) {
+          return {
+            action: {
+              type: AgentActionType.USE_TOOL,
+              toolName: parsedCalls[0].toolName,
+              toolInput: parsedCalls[0].toolInput,
+              thought: response.content,
+            },
+          };
+        }
+
+        // Multiple tool calls — parallel execution
         return {
           action: {
-            type: AgentActionType.USE_TOOL,
-            toolName: toolCall.function.name,
-            toolInput,
+            type: AgentActionType.USE_TOOLS,
+            toolCalls: parsedCalls,
             thought: response.content,
           },
         };

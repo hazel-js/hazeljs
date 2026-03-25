@@ -68,6 +68,33 @@ export class ToolExecutor {
     });
 
     try {
+      // Validate input against Zod schema if provided
+      if (tool.schema) {
+        const parsed = await tool.schema.safeParseAsync(input);
+        if (!parsed.success) {
+          context.status = ToolExecutionStatus.FAILED;
+          context.completedAt = new Date();
+          context.duration = Date.now() - startTime;
+          const errorMsg = `Input validation failed: ${parsed.error.message}`;
+
+          this.emitEvent(AgentEventType.TOOL_EXECUTION_FAILED, {
+            toolName: tool.name,
+            input,
+            error: errorMsg,
+            duration: context.duration,
+          });
+
+          return {
+            success: false,
+            error: new Error(errorMsg),
+            duration: context.duration,
+          };
+        }
+        // Use parsed data which may include defaults/transforms
+        input = parsed.data as Record<string, unknown>;
+        context.input = input;
+      }
+
       if (this.guardrailsService) {
         const inputResult = this.guardrailsService.checkInput(input);
         if (!inputResult.allowed) {

@@ -2,6 +2,8 @@
  * Tool System Types
  */
 
+import { z } from 'zod';
+
 /**
  * Tool execution status
  */
@@ -20,7 +22,10 @@ export enum ToolExecutionStatus {
 export interface ToolConfig {
   name: string;
   description: string;
+  /** Legacy manual parameter definitions */
   parameters?: ToolParameter[];
+  /** Modern Zod schema for strongly-typed input validation */
+  schema?: z.ZodTypeAny;
   requiresApproval?: boolean;
   timeout?: number;
   retries?: number;

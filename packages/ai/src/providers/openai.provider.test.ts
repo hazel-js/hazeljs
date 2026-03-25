@@ -92,9 +92,7 @@ describe('OpenAIProvider', () => {
 
       await provider.complete({ messages: [{ role: 'user', content: 'hi' }] });
 
-      expect(mockChatCreate).toHaveBeenCalledWith(
-        expect.objectContaining({ model: 'gpt-4-turbo-preview' })
-      );
+      expect(mockChatCreate).toHaveBeenCalledWith(expect.objectContaining({ model: 'gpt-4o' }));
     });
 
     it('handles tool_calls in response', async () => {

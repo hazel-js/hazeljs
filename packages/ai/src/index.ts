@@ -46,6 +46,8 @@ export {
   type AIEmbeddingRequest,
   type AIEmbeddingResponse,
   type IAIProvider,
+  type AIResponseFormat,
+  type AIJsonSchema,
   type VectorDatabase,
   type VectorStoreConfig,
   type VectorDocument,

@@ -225,7 +225,7 @@ The `@hazeljs/ml` package uses three decorators to define models and their behav
 npm run ml:decorators
 ```
 
-See **`src/ml/README.md`** for a full decorator reference and **`src/ml/ml-decorators.example.ts`** for a minimal runnable model. For a full app (REST API, pipelines, metrics), use [hazeljs-ml-starter](https://github.com/hazel-js/hazeljs/tree/main/hazeljs-ml-starter).
+See **`src/ml/README.md`** for a full decorator reference and **`src/ml/ml-decorators.example.ts`** for a minimal runnable model. For a full app (REST API, pipelines, metrics), use [hazeljs-ml-starter](https://github.com/hazel-js/hazeljs-ml-starter).
 
 ### Flow (workflow engine)
 

@@ -78,6 +78,24 @@ export interface AIMessage {
 }
 
 /**
+ * JSON Schema definition for structured output
+ */
+export interface AIJsonSchema {
+  name: string;
+  description?: string;
+  schema: Record<string, unknown>;
+  strict?: boolean;
+}
+
+/**
+ * Response format for structured output
+ * - 'text': Default, unstructured text response
+ * - 'json': JSON mode — model returns valid JSON (OpenAI json_object, Anthropic, Gemini)
+ * - AIJsonSchema: Schema mode — model returns JSON conforming to a specific schema
+ */
+export type AIResponseFormat = 'text' | 'json' | AIJsonSchema;
+
+/**
  * AI completion request
  */
 export interface AICompletionRequest {
@@ -89,6 +107,13 @@ export interface AICompletionRequest {
   stream?: boolean;
   functions?: AIFunction[];
   functionCall?: 'auto' | 'none' | { name: string };
+  /**
+   * Control the output format of the model.
+   * - 'text': Default unstructured text
+   * - 'json': Model returns valid JSON
+   * - AIJsonSchema: Model returns JSON conforming to the given schema
+   */
+  responseFormat?: AIResponseFormat;
 }
 
 /**

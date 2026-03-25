@@ -42,4 +42,11 @@ export * from './graph/agent-graph.types';
 export * from './graph/agent-graph';
 export * from './supervisor/supervisor';
 
+// A2A Protocol (Agent-to-Agent)
+export * from './a2a/a2a.types';
+export { buildAgentCard, buildSingleAgentCard } from './a2a/agent-card.builder';
+export type { AgentCardOptions } from './a2a/agent-card.builder';
+export { A2AServer } from './a2a/a2a.server';
+export type { A2AServerOptions } from './a2a/a2a.server';
+
 export * from './agent.module';

@@ -66,7 +66,7 @@ describe('GeminiProvider', () => {
   describe('getSupportedModels()', () => {
     it('returns list of gemini models', () => {
       const models = provider.getSupportedModels();
-      expect(models).toContain('gemini-pro');
+      expect(models).toContain('gemini-2.5-flash');
       expect(models.length).toBeGreaterThan(0);
     });
   });
@@ -89,7 +89,7 @@ describe('GeminiProvider', () => {
 
       await provider.complete({ messages: [{ role: 'user', content: 'hi' }] });
 
-      expect(mockGetGenerativeModel).toHaveBeenCalledWith({ model: 'gemini-pro' });
+      expect(mockGetGenerativeModel).toHaveBeenCalledWith({ model: 'gemini-2.5-flash' });
     });
 
     it('converts messages to prompt format', async () => {

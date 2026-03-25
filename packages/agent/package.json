@@ -37,7 +37,9 @@
     "@hazeljs/prompts": "file:../prompts",
     "@hazeljs/rag": "file:../rag",
     "@hazeljs/resilience": "file:../resilience",
-    "reflect-metadata": "^0.2.1"
+    "reflect-metadata": "^0.2.1",
+    "zod": "^3.23.8",
+    "zod-to-json-schema": "^3.22.5"
   },
   "devDependencies": {
     "@types/jest": "^29.5.11",
@@ -48,9 +50,9 @@
   },
   "peerDependencies": {
     "@hazeljs/core": ">=0.2.0-beta.0",
+    "@hazeljs/guardrails": ">=0.2.0-beta.0",
     "@hazeljs/rag": ">=0.1.0",
-    "redis": ">=4.0.0",
-    "@hazeljs/guardrails": ">=0.2.0-beta.0"
+    "redis": ">=4.0.0"
   },
   "peerDependenciesMeta": {
     "redis": {

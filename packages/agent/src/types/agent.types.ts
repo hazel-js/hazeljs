@@ -59,6 +59,7 @@ export interface AgentStep {
 export enum AgentActionType {
   THINK = 'think',
   USE_TOOL = 'use_tool',
+  USE_TOOLS = 'use_tools',
   ASK_USER = 'ask_user',
   RESPOND = 'respond',
   WAIT = 'wait',
@@ -72,6 +73,8 @@ export interface AgentAction {
   type: AgentActionType;
   toolName?: string;
   toolInput?: Record<string, unknown>;
+  /** Multiple tool calls for parallel execution */
+  toolCalls?: Array<{ toolName: string; toolInput: Record<string, unknown> }>;
   thought?: string;
   question?: string;
   response?: string;

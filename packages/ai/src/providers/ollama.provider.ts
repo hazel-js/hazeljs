@@ -52,7 +52,7 @@ export class OllamaProvider implements IAIProvider {
 
   constructor(config?: { baseURL?: string; defaultModel?: string }) {
     this.baseURL = config?.baseURL || process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
-    this.defaultModel = config?.defaultModel || 'llama2';
+    this.defaultModel = config?.defaultModel || 'llama3.1';
     logger.info(`Ollama provider initialized with base URL: ${this.baseURL}`);
   }
 
@@ -267,19 +267,16 @@ export class OllamaProvider implements IAIProvider {
    */
   getSupportedModels(): string[] {
     return [
-      'llama2',
-      'llama2:13b',
-      'llama2:70b',
+      'llama3.2',
+      'llama3.1',
+      'llama3.1:70b',
+      'deepseek-r1',
+      'qwen2.5',
+      'gemma2',
+      'phi4',
       'mistral',
       'mixtral',
       'codellama',
-      'neural-chat',
-      'starling-lm',
-      'phi',
-      'orca-mini',
-      'vicuna',
-      'wizardcoder',
-      'wizard-vicuna',
     ];
   }
 
@@ -287,6 +284,6 @@ export class OllamaProvider implements IAIProvider {
    * Get supported embedding models
    */
   getSupportedEmbeddingModels(): string[] {
-    return ['llama2', 'mistral', 'nomic-embed-text'];
+    return ['llama3.1', 'nomic-embed-text', 'mxbai-embed-large'];
   }
 }

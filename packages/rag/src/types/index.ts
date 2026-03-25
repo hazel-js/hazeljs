@@ -130,6 +130,7 @@ export interface DocumentLoader {
 export interface RAGConfig {
   vectorStore: VectorStore;
   embeddingProvider: EmbeddingProvider;
+  reranker?: Reranker;
   textSplitter?: TextSplitter;
   chunkSize?: number;
   chunkOverlap?: number;
@@ -161,4 +162,14 @@ export interface RAGResponse {
   answer: string;
   sources: SearchResult[];
   context: string;
+}
+
+/**
+ * Reranker interface
+ */
+export interface Reranker {
+  /**
+   * Rerank search results based on a query
+   */
+  rerank(query: string, results: SearchResult[], topN?: number): Promise<SearchResult[]>;
 }

@@ -18,9 +18,10 @@ export * from './decorators/rag.decorator';
 export * from './decorators/embeddable.decorator';
 export * from './decorators/semantic-search.decorator';
 
-// Embeddings
+// Embeddings & Reranking
 export * from './embeddings/openai-embeddings';
 export * from './embeddings/cohere-embeddings';
+export * from './reranking/cohere.reranker';
 
 // Vector Stores
 export * from './vector-stores/memory-vector-store';

@@ -48,7 +48,7 @@ HazelJS is a modern, TypeScript-first Node.js framework with AI built in. This l
 
 ### Getting Started
 - [Official Quick Start](https://github.com/hazel-js/hazeljs/blob/main/QUICKSTART.md) - Get running in 5 minutes
-- [HazelJS Starter Example](https://github.com/hazel-js/hazeljs/tree/main/hazeljs-starter-example) - HazelJS Starter Example
+- [HazelJS Starter Example](https://github.com/hazel-js/hazeljs-starter-example) - HazelJS Starter Example
 
 ### Advanced Topics
 - [Building AI Agents](https://github.com/hazel-js/hazeljs/tree/main/packages/agent) - Agent documentation
@@ -143,7 +143,7 @@ HazelJS is a modern, TypeScript-first Node.js framework with AI built in. This l
 
 ### Code Examples
 - [Official Examples](https://github.com/hazel-js/hazeljs/tree/main/example) - Full example app
-- [HazelJS Starter Example](https://github.com/hazel-js/hazeljs/tree/main/hazeljs-starter-example) - HazelJS Starter Example
+- [HazelJS Starter Example](https://github.com/hazel-js/hazeljs-starter-example) - HazelJS Starter Example
 
 ### Use Cases
 - AI Chatbots
