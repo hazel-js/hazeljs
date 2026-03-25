@@ -102,7 +102,7 @@ export class ToolRegistry {
       // Modern path: Zod schema available
       if (tool.schema) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const jsonSchema = zodToJsonSchema(tool.schema) as any;
+        const jsonSchema = zodToJsonSchema(tool.schema as any) as any;
         return {
           name: tool.name,
           description: tool.description,
