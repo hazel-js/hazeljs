@@ -21,6 +21,7 @@ export interface ModuleOptions {
   controllers?: Type<unknown>[];
   providers?: Type<unknown>[];
   exports?: Type<unknown>[];
+  lazy?: boolean; // New field for lazy loading
 }
 
 export function HazelModule(options: ModuleOptions): ClassDecorator {
@@ -148,22 +149,24 @@ export class HazelModuleInstance {
         })
       );
       metadata.providers.forEach((provider: unknown) => {
-        // Dynamic module provider: { provide, useFactory?, useClass?, useValue? } (NestJS-style)
+        // Dynamic module provider: { provide, useFactory?, useClass?, useValue?, lazy? }
         if (provider && typeof provider === 'object' && ('provide' in provider || 'token' in provider)) {
-          const p = provider as { provide?: unknown; token?: unknown; useFactory?: unknown; useClass?: unknown; useValue?: unknown; inject?: unknown[] };
+          const p = provider as { provide?: unknown; token?: unknown; useFactory?: unknown; useClass?: unknown; useValue?: unknown; inject?: unknown[]; lazy?: boolean };
           const token = p.token ?? p.provide;
-          logger.debug(`Registering provider config for: ${typeof token === 'symbol' ? token.toString() : token}`);
+          logger.debug(`Registering provider config for: ${typeof token === 'symbol' ? token.toString() : token} (lazy: ${p.lazy || false || metadata.lazy})`);
           this.container.registerProvider({
             token,
             useFactory: p.useFactory,
             useClass: p.useClass,
             useValue: p.useValue,
             inject: p.inject,
+            lazy: p.lazy || metadata.lazy, // Use provider-specific lazy setting or fall back to module-level
           } as Parameters<Container['registerProvider']>[0]);
           return;
         }
         const cls = provider as Type<unknown>;
-        logger.debug(`Registering provider: ${cls?.name}`);
+        const isLazy = Reflect.getMetadata('hazel:lazy', cls) || metadata.lazy;
+        logger.debug(`Registering provider: ${cls?.name} (lazy: ${isLazy})`);
 
         // Check if provider is request-scoped
         const scope = Reflect.getMetadata('hazel:scope', cls);
@@ -174,6 +177,14 @@ export class HazelModuleInstance {
             token: cls,
             useClass: cls,
             scope: Scope.REQUEST,
+          });
+        } else if (isLazy) {
+          // Register as lazy provider
+          this.container.registerProvider({
+            token: cls,
+            useClass: cls,
+            scope: Scope.SINGLETON,
+            lazy: true,
           });
         } else {
           // Eagerly resolve singleton and transient providers

@@ -114,7 +114,7 @@ jobs:
         timeout-minutes: 10
         run: |
           VERSION="${{ steps.version.outputs.version }}"
-          PKGS="core cli ai agent auth cache config cron worker observability inspector casl realtime feature-toggle mcp stripe memory flow flow-runtime prompts i18n typeorm graphql discovery audit oauth kafka gateway guardrails resilience grpc messaging ops-agent data ml rag event-emitter pdf-to-audio prisma queue serverless swagger websocket"
+          PKGS="core cli ai agent auth cache config cron worker distributed-lock saga observability inspector casl realtime feature-toggle mcp stripe memory flow flow-runtime prompts i18n typeorm graphql discovery audit oauth kafka gateway guardrails resilience grpc messaging ops-agent data ml rag event-emitter pdf-to-audio prisma queue serverless swagger websocket"
           TOTAL=$(echo $PKGS | wc -w)
           echo "Updating latest dist-tag to $VERSION for $TOTAL packages (8 parallel, 60s timeout per package)"
           i=0

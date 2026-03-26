@@ -67,6 +67,9 @@
       "path": "./packages/config"
     },
     {
+      "path": "./packages/distributed-lock"
+    },
+    {
       "path": "./packages/feature-toggle"
     },
     {
@@ -89,6 +92,9 @@
     },
     {
       "path": "./packages/gateway"
+    },
+    {
+      "path": "./packages/saga"
     },
     {
       "path": "./packages/discovery"

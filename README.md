@@ -38,20 +38,26 @@ You've built APIs before. You know the drill: wire up routing, configure middlew
 - 🎨 **Global Middleware** — Flexible, with exclusions
 
 ### AI Stack (what makes HazelJS stand out)
-- 🤖 **[@hazeljs/ai](packages/ai)** — `@AITask` decorator, multi-provider (OpenAI, Anthropic, Gemini, Cohere, Ollama), streaming, caching, type-safe outputs
-- 🧠 **[@hazeljs/agent](packages/agent)** — Stateful agents, `@Tool` + `@Delegate`, AgentGraph, SupervisorAgent, human-in-the-loop
-- 📚 **[@hazeljs/rag](packages/rag)** — Vector search, GraphRAG, 11 document loaders, Agentic RAG, Memory System
-- ⚡ **[@hazeljs/flow](packages/flow)** — Durable workflows: WAIT/resume, idempotency, audit timeline, optional Prisma persistence
-- 🔄 **[@hazeljs/flow-runtime](packages/flow-runtime)** — REST API for flows (start, tick, resume), recovery on startup
-- 📝 **[@hazeljs/prompts](packages/prompts)** — Versioned prompt templates, override agent/RAG prompts, hot-swap from Redis/DB
+- 🤖 **[@hazeljs/ai](packages/ai)** — Multi-provider (OpenAI, Anthropic, Gemini, Cohere, Ollama), streaming, caching, type-safe outputs
+- 🧠 **[@hazeljs/agent](packages/agent)** — Stateful agents, tool calling, SupervisorAgent, human-in-the-loop, **MCP Support**, **A2A Compliance**
+- 📚 **[@hazeljs/rag](packages/rag)** — Vector search, GraphRAG, 11 loaders, Agentic RAG, Memory System
+- 🧪 **[@hazeljs/ml](packages/ml)** — Complete ML toolkit: **Feature Store**, experiment tracking, drift detection (PSC/KS/JSD/Wasserstein)
+- 🛡️ **[@hazeljs/guardrails](packages/guardrails)** — AI safety & compliance (PII redaction, toxicity detection, factuality)
+- 💾 **[@hazeljs/memory](packages/memory)** — Persistent long-term memory for contextual AI applications
+- ⚡ **[@hazeljs/flow](packages/flow)** — Durable workflows: WAIT/resume, idempotency, audit timeline
+- 📝 **[@hazeljs/prompts](packages/prompts)** — Versioned prompts, hot-swap from Redis/DB
+- 👁️ **[@hazeljs/observability](packages/observability)** — Native OTel tracing, cost monitoring, and reasoning loop debugging
 
 ### Production-ready
 - 📊 **Swagger** — Auto API docs
-- 🗄️ **Prisma** — First-class ORM
-- 🔐 **JWT Auth** — Token-based auth module
+- 🗄️ **Prisma / TypeORM** — First-class ORM integration
+- 🔐 **JWT Auth / OAuth 2.0** — Production auth & OpenID Connect
 - 🌐 **WebSocket & SSE** — Real-time out of the box
 - ⚡ **Serverless** — Lambda & Cloud Functions adapters
 - 💾 **Multi-tier Caching** — Memory, Redis, CDN
+- 🛡️ **Resilience** — Circuit breakers, retries, and rate limiting
+- 🔄 **Distributed Systems** — Saga patterns and Distributed Locks
+- 📊 **Data & ETL** — Data quality contracts and pipeline management
 
 ---
 
@@ -303,22 +309,28 @@ We were tired of choosing between a heavy framework (NestJS) and a minimal one (
 ### AI Stack (standout)
 | Package | What it does |
 |---------|--------------|
-| `@hazeljs/ai` | `@AITask` decorator, multi-provider, streaming, caching, type-safe outputs |
-| `@hazeljs/agent` | Stateful agents, `@Tool`/`@Delegate`, AgentGraph, SupervisorAgent, human-in-the-loop |
+| `@hazeljs/ai` | Multi-provider integration, streaming, caching, type-safe outputs |
+| `@hazeljs/agent` | Stateful agents, tool calling, SupervisorAgent, human-in-the-loop |
 | `@hazeljs/rag` | Vector search, GraphRAG, 11 loaders, Agentic RAG, Memory System |
+| `@hazeljs/ml` | Complete ML toolkit, training, metrics, drift detection |
+| `@hazeljs/guardrails` | AI safety, PII redaction, toxicity check, factuality |
+| `@hazeljs/memory` | Persistent long-term memory for AI context |
 | `@hazeljs/flow` | Durable workflows — WAIT/resume, idempotency, audit timeline |
-| `@hazeljs/flow-runtime` | REST API for flows, recovery on startup |
-| `@hazeljs/prompts` | Versioned prompts, override agent/RAG prompts, hot-swap from Redis |
+| `@hazeljs/prompts` | Versioned prompts, hot-swap from Redis |
 
-### Core & Infrastructure
+### Infrastructure & Resilience
 | Package | What it does |
 |---------|--------------|
 | `@hazeljs/core` | Framework core — DI, routing, middleware |
-| `@hazeljs/cli` | Scaffolding and code generation |
-| `@hazeljs/auth` | JWT authentication |
+| `@hazeljs/saga` | Distributed transactions with automated rollback |
+| `@hazeljs/distributed-lock` | Multi-instance resource synchronization (Redis/Memory) |
+| `@hazeljs/resilience` | Circuit breakers, retries, and fallback logic |
+| `@hazeljs/data` | ETL, data quality contracts, and pipelines |
+| `@hazeljs/auth` | JWT authentication and OAuth 2.0 |
 | `@hazeljs/prisma` | Prisma ORM + repository pattern |
 | `@hazeljs/swagger` | Auto OpenAPI docs |
-| *+ more* | Cache, WebSocket, Serverless, Cron, Queue, Discovery |
+| `@hazeljs/cli` | Scaffolding and code generation |
+| *+ more* | Cache, WebSocket, Serverless, Cron, Queue, Discovery, I18n |
 
 ---
 
@@ -329,16 +341,19 @@ We were tired of choosing between a heavy framework (NestJS) and a minimal one (
 - **[Contributing](./CONTRIBUTING.md)** — How to contribute
 - **[Examples](./example)** — Full working apps
 
-**Guides:** [DI](docs/guides/providers.md) · [Controllers](docs/guides/controllers.md) · [Guards](docs/guides/guards.md) · [Middleware](docs/guides/middleware.md) · [Pipes](docs/guides/pipes.md) · [Cron](docs/guides/cron-jobs.md) · [Security](docs/guides/security.md)
+**Guides:** [DI](docs/guides/providers.md) · [Controllers](docs/guides/controllers.md) · [Guards](docs/guides/guards.md) · [Middleware](docs/guides/middleware.md) · [Saga](docs/guides/saga.md) · [Locking](docs/guides/distributed-locking.md) · [Security](docs/guides/security.md)
 
 ---
 
-## 🚀 What's New in v0.2.0
+## 🚀 What's New in v0.3.0
 
-- ✅ Multiple DI scopes, exception filters, config module
-- ✅ Testing utilities, advanced routing, global middleware
-- ✅ File upload, API versioning, CORS & logging
-- ✅ Auth, Cron, WebSocket, Serverless, RAG — all production-ready
+- ✨ **Enterprise ML Layer**: `@hazeljs/ml` with model management, experiment tracking, and drift detection.
+- ✨ **AI Safety & Quality**: `@hazeljs/guardrails` for PII redaction and toxicity checks.
+- ✨ **Persistent Memory**: `@hazeljs/memory` for long-term AI state.
+- ✨ **Distributed Systems**: `@hazeljs/saga` and `@hazeljs/distributed-lock` for multi-instance consistency.
+- ✨ **Advanced RAG**: Agentic RAG strategies and GraphRAG 0.1.
+- ✨ **Data Quality**: `@hazeljs/data` for schema-based data contracts.
+- ✅ 100% backward compatible with v0.2.0.
 
 *100% backward compatible.*
 

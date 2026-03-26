@@ -122,6 +122,16 @@ export function Injectable(options: InjectableOptions = {}): ClassDecorator {
   };
 }
 
+/**
+ * Marks a provider as lazy-loaded - it will only be instantiated when first requested
+ */
+export function Lazy(): ClassDecorator {
+  return (target) => {
+    logger.debug(`Marking provider as lazy: ${target.constructor?.name || target.name}`);
+    Reflect.defineMetadata('hazel:lazy', true, target);
+  };
+}
+
 export function Get(options?: { path?: string } | string): MethodDecorator {
   const opts = typeof options === 'string' ? { path: options } : options || {};
   return createRouteDecorator('GET', opts);

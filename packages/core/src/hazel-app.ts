@@ -14,6 +14,8 @@ import { ShutdownManager } from './shutdown';
 import { HealthCheckManager, BuiltInHealthChecks } from './health';
 import { TimeoutMiddleware, TimeoutOptions } from './middleware/timeout.middleware';
 import { CorsOptions } from './middleware/cors.middleware';
+import { PerformanceMonitor, PerformanceHook, BuiltinPerformanceHooks, PerformanceMetrics } from './performance';
+import { ErrorHandler } from './enhanced-errors';
 
 /** Early HTTP handler (e.g. for GraphQL) - receives raw req/res before body parsing */
 export type EarlyHttpHandler = (
@@ -106,6 +108,7 @@ export class HazelApp {
   private module: HazelModuleInstance;
   private shutdownManager: ShutdownManager;
   private healthManager: HealthCheckManager;
+  private performanceMonitor: PerformanceMonitor;
   private requestTimeout: number = 30000; // 30 seconds default
   private globalPrefix: string = '';
   private corsEnabled: boolean = false;
@@ -123,10 +126,16 @@ export class HazelApp {
     this.module = new HazelModuleInstance(this.moduleType);
     this.shutdownManager = new ShutdownManager();
     this.healthManager = new HealthCheckManager();
+    this.performanceMonitor = new PerformanceMonitor();
     
     // Register built-in health checks
     this.healthManager.registerCheck(BuiltInHealthChecks.memoryCheck());
     this.healthManager.registerCheck(BuiltInHealthChecks.eventLoopCheck());
+    
+    // Register default performance hooks
+    this.performanceMonitor.addHook(BuiltinPerformanceHooks.slowRequestLogger(1000));
+    this.performanceMonitor.addHook(BuiltinPerformanceHooks.memoryMonitor());
+    this.performanceMonitor.addHook(BuiltinPerformanceHooks.metricsCollector());
     
     this.initialize();
   }
@@ -177,9 +186,35 @@ export class HazelApp {
     return this;
   }
 
+  // Performance monitoring methods
+  addPerformanceHook(hook: PerformanceHook): HazelApp {
+    this.performanceMonitor.addHook(hook);
+    return this;
+  }
+
+  removePerformanceHook(name: string): HazelApp {
+    this.performanceMonitor.removeHook(name);
+    return this;
+  }
+
+  getPerformanceMetrics(): {
+    activeRequests: number;
+    totalHooks: number;
+    averageResponseTime?: number;
+  } {
+    return this.performanceMonitor.getMetrics();
+  }
+
+  getActiveRequests(): PerformanceMetrics[] {
+    return this.performanceMonitor.getActiveRequests();
+  }
+
   async listen(port: number): Promise<void> {
     return new Promise((resolve) => {
       this.server = new Server(async (req: IncomingMessage, res: ServerResponse) => {
+        // Start performance monitoring
+        const requestId = this.performanceMonitor.startRequest(req as Request);
+        
         const startTime = Date.now();
         const method = req.method || 'GET';
         const url = req.url || '/';
@@ -194,6 +229,9 @@ export class HazelApp {
           logger.info(
             `${chalk.bold(method)} ${path} ${statusColor(String(status))} ${chalk.gray(duration + 'ms')}`
           );
+          
+          // End performance monitoring
+          this.performanceMonitor.endRequest(requestId, status);
         });
 
         try {
@@ -392,15 +430,23 @@ export class HazelApp {
 
           await this.handleRoute(req, res, context);
         } catch (error) {
-          logger.error('Unhandled error:', error);
-
-          res.writeHead(500, { 'Content-Type': 'application/json' });
-          res.end(
-            JSON.stringify({
-              statusCode: 500,
-              message: 'Internal Server Error',
-            })
+          // Enhance the error with helpful suggestions
+          const enhancedError = ErrorHandler.enhanceError(
+            error as Error,
+            { method: req.method, url: req.url, userAgent: req.headers['user-agent'] },
+            requestId
           );
+
+          ErrorHandler.logEnhancedError(enhancedError);
+
+          // End performance monitoring with error
+          this.performanceMonitor.endRequest(requestId, (enhancedError as HttpError).statusCode || 500, error as Error);
+
+          // Format enhanced error response
+          const errorResponse = ErrorHandler.formatErrorResponse(enhancedError);
+          
+          res.writeHead((enhancedError as HttpError).statusCode || 500, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify(errorResponse));
         }
       });
 

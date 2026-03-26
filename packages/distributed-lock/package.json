@@ -1,0 +1,49 @@
+{
+  "name": "@hazeljs/distributed-lock",
+  "version": "0.1.0",
+  "description": "Distributed locking and synchronization primitives for HazelJS - Mutex, Semaphores, Read/Write locks",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "jest --coverage --passWithNoTests",
+    "test:ci": "jest --coverage --coverageReporters=text --coverageReporters=lcov --coverageReporters=clover --no-coverage-threshold",
+    "test:watch": "jest --watch",
+    "lint": "eslint \"src/**/*.ts\"",
+    "lint:fix": "eslint \"src/**/*.ts\" --fix",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@hazeljs/core": "file:../core",
+    "reflect-metadata": "^0.2.2"
+  },
+  "devDependencies": {
+    "@types/ioredis-mock": "^8.2.7",
+    "@types/jest": "^29.5.14",
+    "@types/node": "^20.17.50",
+    "ioredis": "^5.3.0",
+    "ioredis-mock": "^8.13.1",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.2",
+    "typescript": "^5.3.3",
+    "@typescript-eslint/eslint-plugin": "^8.18.2",
+    "@typescript-eslint/parser": "^8.18.2",
+    "eslint": "^8.56.0"
+  },
+  "peerDependencies": {
+    "ioredis": "^5.3.0"
+  },
+  "peerDependenciesMeta": {
+    "ioredis": {
+      "optional": true
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "author": "Muhammad Arslan <muhammad.arslan@hazeljs.ai>",
+  "license": "Apache-2.0"
+}

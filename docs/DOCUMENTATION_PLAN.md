@@ -117,6 +117,12 @@ Documentation structure - practical, example-driven guides.
 - [ ] Cache invalidation
 - [ ] Custom cache store
 
+#### Distributed Systems
+- [x] Distributed Locking ([guide](guides/distributed-locking.md))
+- [x] Saga Patterns (Distributed Transactions) ([guide](guides/saga.md))
+- [ ] Redis-backed synchronization
+- [ ] Task Orchestration
+
 #### Authentication
 - [ ] JWT strategy
 - [ ] Passport integration
@@ -183,7 +189,10 @@ Documentation structure - practical, example-driven guides.
 #### Vector Search
 - [ ] Embeddings
 - [ ] Similarity search
+- [ ] Similarity search
 - [ ] RAG (Retrieval Augmented Generation)
+- [ ] Agentic RAG
+- [ ] GraphRAG
 
 #### AI Decorators
 - [ ] @AITask decorator
@@ -196,6 +205,21 @@ Documentation structure - practical, example-driven guides.
 - [ ] Semantic search
 - [ ] Code assistant
 - [ ] Data extraction
+
+#### Advanced ML & Monitoring
+- [ ] Feature Store (TypeScript-Native)
+- [ ] Experiment Tracking
+- [ ] Drift Detection (PSC, KS, JSD)
+- [ ] Model Monitoring
+- [ ] Guardrails (PII, Toxicity)
+- [ ] Data Contracts & Pipelines
+
+#### Agent Ecosystem
+- [ ] MCP Protocol Support
+- [ ] A2A Compliance (Interoperability)
+- [ ] Persistent Long-term Memory
+- [ ] Reasoning Loop Debugging
+- [ ] Observability & Tracing (OTel)
 
 ### 6. WebSockets
 

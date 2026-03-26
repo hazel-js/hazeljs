@@ -66,6 +66,7 @@ export {
   SetMetadata,
   getMetadata,
   createParamDecorator,
+  Lazy,
   CUSTOM_METADATA_PREFIX,
   type ControllerMetadata,
   type RouteMetadata,
@@ -211,3 +212,21 @@ export {
   sanitizeObject,
   escapeHtml,
 } from './utils/sanitize';
+
+// Performance monitoring
+export {
+  PerformanceMonitor,
+  BuiltinPerformanceHooks,
+  type PerformanceHook,
+  type PerformanceMetrics,
+  type PerformanceOptions,
+} from './performance';
+
+// Enhanced error handling
+export {
+  ErrorHandler,
+  createEnhancedError,
+  EnhancedErrors,
+  type EnhancedError,
+  type ErrorSuggestion,
+} from './enhanced-errors';

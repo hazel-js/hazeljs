@@ -17,6 +17,7 @@ export interface Provider<T = unknown> {
   useFactory?: (...args: unknown[]) => T | Promise<T>;
   scope?: Scope;
   inject?: InjectionToken[];
+  lazy?: boolean; // New field for lazy loading
 }
 
 interface ProviderMetadata {
@@ -24,6 +25,9 @@ interface ProviderMetadata {
   scope: Scope;
   factory?: (requestId?: string) => unknown | Promise<unknown>;
   isResolving?: boolean;
+  lazy?: boolean;
+  loaded?: boolean;
+  loadPromise?: Promise<unknown>;
 }
 
 export class Container {
@@ -76,13 +80,18 @@ export class Container {
    */
   registerProvider<T>(provider: Provider<T>): void {
     const tokenName = this.getTokenName(provider.token);
-    logger.debug(`Registering provider configuration: ${tokenName}`);
+    logger.debug(`Registering provider configuration: ${tokenName} (lazy: ${provider.lazy || false})`);
 
     const scope = provider.scope || Scope.SINGLETON;
-    const metadata: ProviderMetadata = { scope };
+    const metadata: ProviderMetadata = { 
+      scope, 
+      lazy: provider.lazy,
+      loaded: false,
+    };
 
     if (provider.useValue !== undefined) {
       metadata.instance = provider.useValue;
+      metadata.loaded = true;
     } else if (provider.useFactory) {
       metadata.factory = (requestId?: string): unknown => {
         const deps = (provider.inject || []).map((dep) => this.resolve(dep, requestId));
@@ -163,13 +172,28 @@ export class Container {
             throw new Error(`Singleton ${tokenName} is already being resolved (possible async race)`);
           }
           if (metadata.factory) {
-            metadata.isResolving = true;
-            try {
-              const result = metadata.factory(requestId);
-              metadata.instance = result;
-              return metadata.instance;
-            } finally {
-              metadata.isResolving = false;
+            // Check if this is a lazy provider that hasn't been loaded yet
+            if (metadata.lazy && !metadata.loaded) {
+              logger.debug(`Lazy loading provider: ${tokenName}`);
+              metadata.isResolving = true;
+              try {
+                const result = metadata.factory(requestId);
+                metadata.instance = result;
+                metadata.loaded = true;
+                logger.debug(`Lazy loaded provider: ${tokenName}`);
+                return metadata.instance;
+              } finally {
+                metadata.isResolving = false;
+              }
+            } else {
+              metadata.isResolving = true;
+              try {
+                const result = metadata.factory(requestId);
+                metadata.instance = result;
+                return metadata.instance;
+              } finally {
+                metadata.isResolving = false;
+              }
             }
           }
           break;
