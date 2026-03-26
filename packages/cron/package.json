@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/cron",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "description": "Cron job scheduling module for HazelJS framework",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
