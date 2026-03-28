@@ -208,9 +208,23 @@ if (logEnabled) {
             const { level, message, timestamp, ...metadata } = info;
             let msg = `${timestamp} [${String(level).toUpperCase()}] ${message}`;
               if (Object.keys(metadata).length > 0) {
+                // Use the same comprehensive circular reference handling as console logger
+                const seen = new WeakSet();
                 msg += ` | ${JSON.stringify(metadata, (key, val) => {
+                  // Skip known circular references
                   if (key === 'socket' || key === 'parser' || key === 'res' || key === 'req') {
                     return '[Circular]';
+                  }
+                  // Skip Node.js internal objects
+                  if (key === '_idlePrev' || key === '_idleNext' || key === 'cleanupInterval') {
+                    return '[Internal]';
+                  }
+                  // Handle circular references
+                  if (typeof val === 'object' && val !== null) {
+                    if (seen.has(val)) {
+                      return '[Circular]';
+                    }
+                    seen.add(val);
                   }
                   return val;
                 })}`;
@@ -229,9 +243,23 @@ if (logEnabled) {
             const { level, message, timestamp, ...metadata } = info;
             let msg = `${timestamp} [${String(level).toUpperCase()}] ${message}`;
               if (Object.keys(metadata).length > 0) {
+                // Use the same comprehensive circular reference handling as console logger
+                const seen = new WeakSet();
                 msg += ` | ${JSON.stringify(metadata, (key, val) => {
+                  // Skip known circular references
                   if (key === 'socket' || key === 'parser' || key === 'res' || key === 'req') {
                     return '[Circular]';
+                  }
+                  // Skip Node.js internal objects
+                  if (key === '_idlePrev' || key === '_idleNext' || key === 'cleanupInterval') {
+                    return '[Internal]';
+                  }
+                  // Handle circular references
+                  if (typeof val === 'object' && val !== null) {
+                    if (seen.has(val)) {
+                      return '[Circular]';
+                    }
+                    seen.add(val);
                   }
                   return val;
                 })}`;
