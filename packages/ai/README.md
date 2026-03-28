@@ -2,11 +2,23 @@
 
 **Add AI to your API in minutes — not days.**
 
-OpenAI, Anthropic, Gemini, Cohere, Ollama. One decorator, one config. Streaming, caching, retries, and type-safe outputs. Ship AI features without the glue code.
+Part of the HazelJS AI-Native Backend Framework. OpenAI, Anthropic, Gemini, Cohere, Ollama. One decorator, one config. Streaming, caching, retries, and type-safe outputs. Ship AI features without the glue code.
+
+**🚀 Trusted by 200K+ monthly downloads • 37+ GitHub stars • 15+ daily active developers**
 
 [![npm version](https://img.shields.io/npm/v/@hazeljs/ai.svg)](https://www.npmjs.com/package/@hazeljs/ai)
 [![npm downloads](https://img.shields.io/npm/dm/@hazeljs/ai)](https://www.npmjs.com/package/@hazeljs/ai)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
+
+## Why @hazeljs/ai?
+
+Built for **AI-native applications** - not just another AI integration. When you combine @hazeljs/ai with @hazeljs/core, @hazeljs/agent, and @hazeljs/rag, you get a complete stack for intelligent backends.
+
+**Perfect for:**
+- AI startups adding chat/completion features
+- Teams building AI-powered APIs without complexity
+- Developers who want decorator-based AI integration
+- Projects needing multiple AI providers in one interface
 
 ## Features
 

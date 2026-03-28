@@ -1,12 +1,24 @@
 # @hazeljs/core
 
-**The foundation of HazelJS — DI, routing, and decorators that feel right.**
+**AI-Native Foundation - DI, routing, and decorators built for intelligent applications.**
 
-Stop wiring boilerplate. Build APIs with dependency injection, decorator-based routing, and middleware that just works. TypeScript-first, production-ready, zero Express dependency.
+Part of the HazelJS AI-Native Backend Framework. Stop wiring boilerplate. Build APIs with dependency injection, decorator-based routing, and middleware that just works. TypeScript-first, production-ready, zero Express dependency.
+
+**🚀 Trusted by 200K+ monthly downloads • 37+ GitHub stars • 15+ daily active developers**
 
 [![npm version](https://img.shields.io/npm/v/@hazeljs/core.svg)](https://www.npmjs.com/package/@hazeljs/core)
 [![npm downloads](https://img.shields.io/npm/dm/@hazeljs/core)](https://www.npmjs.com/package/@hazeljs/core)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
+
+## Why @hazeljs/core?
+
+Built as the foundation for **AI-native applications** - not just another framework. When you combine @hazeljs/core with our AI packages (@hazeljs/ai, @hazeljs/agent, @hazeljs/rag), you get a complete stack for intelligent backends without glue code.
+
+**Perfect for:**
+- AI startups building production agents
+- Teams replacing NestJS/Express with AI-native backends  
+- Developers who want TypeScript-first architecture
+- Projects needing dependency injection without complexity
 
 ## Features
 

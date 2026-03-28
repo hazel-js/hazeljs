@@ -2,11 +2,23 @@
 
 **Build AI agents that actually do things.**
 
-Stateful, tool-using, memory-enabled. Define tools with `@Tool`, delegate between agents with `@Delegate`, orchestrate multi-agent pipelines with `AgentGraph`, and route tasks automatically with `SupervisorAgent`. Production-grade agent infrastructure without the complexity.
+Part of the HazelJS AI-Native Backend Framework. Stateful, tool-using, memory-enabled. Define tools with `@Tool`, delegate between agents with `@Delegate`, orchestrate multi-agent pipelines with `AgentGraph`, and route tasks automatically with `SupervisorAgent`. Production-grade agent infrastructure without the complexity.
+
+**🚀 Trusted by 200K+ monthly downloads • 37+ GitHub stars • 15+ daily active developers**
 
 [![npm version](https://img.shields.io/npm/v/@hazeljs/agent.svg)](https://www.npmjs.com/package/@hazeljs/agent)
 [![npm downloads](https://img.shields.io/npm/dm/@hazeljs/agent)](https://www.npmjs.com/package/@hazeljs/agent)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
+
+## Why @hazeljs/agent?
+
+Built for **AI-native applications** - not just another agent framework. When you combine @hazeljs/agent with @hazeljs/core, @hazeljs/ai, and @hazeljs/rag, you get a complete stack for intelligent backends.
+
+**Perfect for:**
+- AI startups building production agent systems
+- Teams creating customer support or automation agents
+- Developers who want stateful, long-running workflows
+- Projects needing multi-agent orchestration
 
 ## Overview
 

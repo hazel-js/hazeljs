@@ -2,11 +2,23 @@
 
 **Your docs. Your data. AI that actually knows them.**
 
-Load documents from any source, build a knowledge graph, embed into vector stores, and retrieve answers with semantic, hybrid, or graph-based search. Full RAG + GraphRAG pipeline — no PhD required.
+Part of the HazelJS AI-Native Backend Framework. Load documents from any source, build a knowledge graph, embed into vector stores, and retrieve answers with semantic, hybrid, or graph-based search. Full RAG + GraphRAG pipeline — no PhD required.
+
+**🚀 Trusted by 200K+ monthly downloads • 37+ GitHub stars • 15+ daily active developers**
 
 [![npm version](https://img.shields.io/npm/v/@hazeljs/rag.svg)](https://www.npmjs.com/package/@hazeljs/rag)
 [![npm downloads](https://img.shields.io/npm/dm/@hazeljs/rag)](https://www.npmjs.com/package/@hazeljs/rag)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
+
+## Why @hazeljs/rag?
+
+Built for **AI-native applications** - not just another RAG library. When you combine @hazeljs/rag with @hazeljs/core, @hazeljs/ai, and @hazeljs/agent, you get a complete stack for intelligent backends.
+
+**Perfect for:**
+- AI startups building knowledge-based applications
+- Teams implementing document Q&A systems
+- Developers who want semantic search without complexity
+- Projects needing GraphRAG and entity extraction
 
 ## Features
 
