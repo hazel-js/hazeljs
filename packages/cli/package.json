@@ -6,7 +6,8 @@
   "types": "dist/index.d.ts",
   "files": [
     "dist",
-    "@template"
+    "@template",
+    "@template-ai-native"
   ],
   "bin": {
     "hazel": "./dist/index.js"
