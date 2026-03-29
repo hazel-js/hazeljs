@@ -335,4 +335,4 @@ Contributions are welcome! See [CONTRIBUTING.md](../../CONTRIBUTING.md) for deta
 - [Documentation](https://hazeljs.ai/docs/packages/mcp)
 - [GitHub](https://github.com/hazeljs/hazeljs)
 - [Issues](https://github.com/hazeljs/hazeljs/issues)
-- [Discord](https://discord.gg/rnxaDcXx)
+- [Discord](https://discord.gg/xe495BvE)

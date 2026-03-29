@@ -496,4 +496,4 @@ canActivate(context: ExecutionContext): boolean {
 - [Documentation](https://hazeljs.ai/docs/packages/auth)
 - [GitHub](https://github.com/hazel-js/hazeljs)
 - [Issues](https://github.com/hazel-js/hazeljs/issues)
-- [Discord](https://discord.gg/rnxaDcXx)
+- [Discord](https://discord.gg/xe495BvE)

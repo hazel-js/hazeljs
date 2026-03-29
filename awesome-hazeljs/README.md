@@ -19,7 +19,7 @@ HazelJS is a modern, TypeScript-first Node.js framework with AI built in. This l
 - [HazelJS GitHub](https://github.com/hazel-js/hazeljs) - Official repository
 - [Documentation](https://github.com/hazel-js/hazeljs#-documentation) - Official docs
 - [Quick Start Guide](https://github.com/hazel-js/hazeljs/blob/main/QUICKSTART.md)
-- [Discord Community](https://discord.gg/rnxaDcXx)
+- [Discord Community](https://discord.gg/xe495BvE)
 - [npm Packages](https://www.npmjs.com/search?q=%40hazeljs)
 
 ### Open Source Projects
@@ -156,11 +156,11 @@ HazelJS is a modern, TypeScript-first Node.js framework with AI built in. This l
 
 ### Discussion Forums
 - [GitHub Discussions](https://github.com/hazel-js/hazeljs/discussions) - Official discussions
-- [Discord](https://discord.gg/rnxaDcXx) - Real-time chat
+- [Discord](https://discord.gg/xe495BvE) - Real-time chat
 
 ### Social Media
 - Follow [@hazeljs](https://twitter.com/hazeljs) on Twitter
-- Join our [Discord](https://discord.gg/rnxaDcXx)
+- Join our [Discord](https://discord.gg/xe495BvE)
 
 ### Contributing
 - [Contributing Guide](https://github.com/hazel-js/hazeljs/blob/main/CONTRIBUTING.md)

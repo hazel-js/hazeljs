@@ -90,4 +90,4 @@ npm test
 
 **Thank you for contributing to HazelJS! 🎉**
 
-Your contribution helps make HazelJS better for everyone. If you have any questions, feel free to ask in the comments or join our [Discord](https://discord.gg/rnxaDcXx).
+Your contribution helps make HazelJS better for everyone. If you have any questions, feel free to ask in the comments or join our [Discord](https://discord.gg/xe495BvE).

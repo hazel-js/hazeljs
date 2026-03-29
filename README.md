@@ -429,7 +429,7 @@ Read our [Contributing Guide](./CONTRIBUTING.md) for details.
 
 ## 📞 Support & Community
 
-- 💬 **Discord**: [Join our community](https://discord.gg/rnxaDcXx) - Real-time help
+- 💬 **Discord**: [Join our community](https://discord.gg/xe495BvE) - Real-time help
 - 💭 **Discussions**: [GitHub Discussions](https://github.com/hazel-js/hazeljs/discussions) - Ask questions
 - 🐛 **Issues**: [Report bugs](https://github.com/hazel-js/hazeljs/issues) - Help us improve
 - 🎨 **Show & Tell**: [Share your project](https://github.com/hazel-js/hazeljs/discussions) - Get featured!
@@ -451,7 +451,7 @@ Apache 2.0 — Free for commercial and open-source use.
 
 ### 🚀 Ready to build?
 
-[Get Started](./QUICKSTART.md) · [View Examples](./example) · [Join Discord](https://discord.gg/rnxaDcXx) · [⭐ Star on GitHub](https://github.com/hazel-js/hazeljs)
+[Get Started](./QUICKSTART.md) · [View Examples](./example) · [Join Discord](https://discord.gg/xe495BvE) · [⭐ Star on GitHub](https://github.com/hazel-js/hazeljs)
 
 ---
 

@@ -592,7 +592,7 @@ coverage/
         }
         console.log(chalk.gray('  npm run dev'));
         console.log(chalk.gray('\nDocumentation: https://hazeljs.ai/docs'));
-        console.log(chalk.gray('Discord: https://discord.gg/rnxaDcXx\n'));
+        console.log(chalk.gray('Discord: https://discord.gg/xe495BvE\n'));
         
       } catch (error) {
         console.error(chalk.red('\n✗ Failed to create project:'), error);

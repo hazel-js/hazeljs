@@ -55,6 +55,6 @@ When adding items, please place them in the most appropriate category:
 If you have any questions, feel free to:
 - Open an issue
 - Ask in [GitHub Discussions](https://github.com/hazel-js/hazeljs/discussions)
-- Join our [Discord](https://discord.gg/rnxaDcXx)
+- Join our [Discord](https://discord.gg/xe495BvE)
 
 Thank you for contributing! 🎉

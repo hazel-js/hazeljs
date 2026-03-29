@@ -360,4 +360,4 @@ abstract class AbilityFactory<A extends AnyAbility> {
 - [Documentation](https://hazeljs.ai/docs/packages/casl)
 - [GitHub](https://github.com/hazel-js/hazeljs)
 - [Issues](https://github.com/hazel-js/hazeljs/issues)
-- [Discord](https://discord.gg/rnxaDcXx)
+- [Discord](https://discord.gg/xe495BvE)
