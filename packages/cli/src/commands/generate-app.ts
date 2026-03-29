@@ -602,7 +602,7 @@ coverage/
 }
 
 /** Run the skeleton app generator (used by `hazel g app <name>`). Creates a minimal app, no install/git. */
-export async function runApp(name: string, options: GenerateCLIOptions & { path?: string }): Promise<GenerateResult> {
+export async function runApp(name: string, options: GenerateCLIOptions & { path?: string; template?: string }): Promise<GenerateResult> {
   const parentDir = options.path || '.';
   const destPath = path.join(process.cwd(), parentDir, name);
 
@@ -624,7 +624,17 @@ export async function runApp(name: string, options: GenerateCLIOptions & { path?
   }
 
   try {
-    createSkeletonAtDest(destPath, name, 'A HazelJS application');
+    // Use template based on option
+    const templateDir = options.template === 'ai-native' ? '@template-ai-native' : '@template';
+    const templatePath = path.join(__dirname, '../../', templateDir);
+    
+    if (fs.existsSync(templatePath)) {
+      copyRecursiveSync(templatePath, destPath);
+      updatePackageJson(destPath, name, 'A HazelJS application');
+    } else {
+      createSkeletonAtDest(destPath, name, 'A HazelJS application');
+    }
+    
     return {
       ok: true,
       created: [destPath],
@@ -645,9 +655,10 @@ export function registerGenerateApp(generateCommand: Command) {
     .command('app <name>')
     .description('Generate a skeleton HazelJS application (minimal template, no install)')
     .option('-p, --path <path>', 'Parent directory for the app', '.')
+    .option('-t, --template <template>', 'Project template (basic, ai-native)', 'basic')
     .option('--dry-run', 'Preview without writing files')
     .option('--json', 'Output result as JSON')
-    .action(async (name: string, options: GenerateCLIOptions & { path?: string }) => {
+    .action(async (name: string, options: GenerateCLIOptions & { path?: string; template?: string }) => {
       const result = await runApp(name, options);
       printGenerateResult(result, { json: options.json });
       if (!result.ok) process.exit(1);
