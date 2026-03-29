@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/distributed-lock",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "description": "Distributed locking and synchronization primitives for HazelJS - Mutex, Semaphores, Read/Write locks",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
