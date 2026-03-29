@@ -13,7 +13,7 @@ export interface CorrectiveRAGConfig {
   relevanceThreshold?: number;
   fallbackToWeb?: boolean;
   maxCorrections?: number;
-  llmProvider?: AgenticLLMProvider;
+  llmProvider?: AgenticLLMProvider; // Optional override, falls back to service instance
 }
 
 const CRAG_METADATA_KEY = Symbol('correctiveRAG');
@@ -22,12 +22,19 @@ export function CorrectiveRAG(config: CorrectiveRAGConfig = {}): MethodDecorator
   return function (target: object, propertyKey: string | symbol, descriptor: PropertyDescriptor) {
     const originalMethod = descriptor.value;
 
-    descriptor.value = async function (...args: unknown[]): Promise<unknown> {
-      let results = await originalMethod.apply(this, args);
+    descriptor.value = async function (
+      this: { llmProvider?: AgenticLLMProvider },
+      ...args: unknown[]
+    ): Promise<unknown> {
       const query = args[0] as string;
+      let results = await originalMethod.apply(this, args);
+
+      // Get llmProvider from config or service instance
+      const llmProvider = config.llmProvider || this.llmProvider;
+      const configWithProvider = { ...config, llmProvider };
 
       // Evaluate results
-      const evaluation = await evaluateResults(results, query, config);
+      const evaluation = await evaluateResults(results, query, configWithProvider);
 
       const corrections: Correction[] = [];
       let fallbackUsed = false;

@@ -1,8 +1,8 @@
 # @hazeljs/cli
 
-**From zero to CRUD in one command.**
+**From zero to AI-powered apps in one command.**
 
-Generate controllers, services, modules, DTOs — or a full CRUD resource. Interactive project setup, package management, and code that follows best practices. Stop copy-pasting, start shipping.
+Generate controllers, services, modules, AI agents, RAG systems — or create a complete AI-Native application with PostgreSQL, Redis, and Docker. Interactive project setup, package management, and code that follows best practices. Stop copy-pasting, start shipping intelligent applications.
 
 [![npm version](https://img.shields.io/npm/v/@hazeljs/cli.svg)](https://www.npmjs.com/package/@hazeljs/cli)
 [![npm downloads](https://img.shields.io/npm/dm/@hazeljs/cli)](https://www.npmjs.com/package/@hazeljs/cli)
@@ -10,17 +10,19 @@ Generate controllers, services, modules, DTOs — or a full CRUD resource. Inter
 
 ## Features
 
+- 🤖 **AI-Native Templates** - Create complete AI applications with agents, RAG, PostgreSQL, and Docker
 - 🚀 **Project Scaffolding** - Create new HazelJS applications instantly with interactive setup
-- 🎨 **Code Generation** - Generate controllers, services, modules, and more
-- 🏗️ **Best Practices** - Generated code follows HazelJS conventions
+- 🎨 **Code Generation** - Generate controllers, services, AI agents, RAG systems, and more
+- 🏗️ **Best Practices** - Generated code follows HazelJS conventions and AI patterns
 - 🔧 **Customizable** - Specify paths and options for generated files
-- 📦 **Multiple Templates** - Support for various component types
+- 📦 **Multiple Templates** - Support for various component types including AI components
 - ⚡ **Fast Development** - Reduce boilerplate and speed up development
-- 🎯 **TypeScript First** - All generated code is fully typed
+- 🎯 **TypeScript First** - All generated code is fully typed with AI safety
 - 🛠️ **Utility Commands** - Build, start, test, and manage your project
 - 📊 **Project Info** - Display comprehensive project information
 - ➕ **Package Management** - Add HazelJS packages interactively
 - 🎭 **CRUD Generator** - Generate complete CRUD resources in one command
+- 🧠 **AI Components** - Generate agents, tools, RAG pipelines, and AI services
 
 ## Installation
 
@@ -46,6 +48,19 @@ The CLI provides commands to generate various HazelJS components, create new app
 
 #### Create new application
 
+**🤖 AI-Native Application (Recommended for AI Projects):**
+```bash
+hazel g app <appName> --template=ai-native
+# Then: cd <appName> && npm install && cp .env.example .env && docker-compose up -d && npm run dev
+```
+
+Creates a complete AI-powered application with:
+- 🤖 AI Agents with tools and memory
+- 📚 RAG System with PostgreSQL + pgvector
+- 🗄️ Database Setup (PostgreSQL, Redis)
+- 🐳 Docker Configuration for production
+- 📊 Complete API endpoints ready to use
+
 **Skeleton app (quick start, like create-next-app):**
 ```bash
 hazel g app <appName>
@@ -57,7 +72,7 @@ hazel g app <appName>
 hazel new <appName> [options]
 ```
 
-Creates a new HazelJS application. Use `hazel g app <name>` for a minimal skeleton; use `hazel new <name> -i` for interactive setup with optional packages.
+Creates a new HazelJS application. Use `hazel g app <name> --template=ai-native` for AI applications; `hazel g app <name>` for a minimal skeleton; use `hazel new <name> -i` for interactive setup with optional packages.
 
 **Options:**
 - `-d, --dest <path>` - Destination path (default: current directory)
@@ -67,6 +82,9 @@ Creates a new HazelJS application. Use `hazel g app <name>` for a minimal skelet
 
 **Examples:**
 ```bash
+# AI-Native application (recommended for AI projects)
+hazel g app my-ai-app --template=ai-native
+
 # Basic project creation
 hazel new my-app
 
@@ -239,8 +257,12 @@ hazel g module orders --dry-run
 
 ### Available Generators
 
-#### Skeleton app
-- `app` - Generate a skeleton HazelJS application (minimal template, like create-next-app). Use `hazel g app my-app` then `cd my-app && npm install && npm run dev`.
+#### Application Templates
+- `app` - Generate a HazelJS application. Use `hazel g app my-app --template=ai-native` for AI applications or `hazel g app my-app` for minimal template.
+
+**Available Templates:**
+- `ai-native` - Complete AI application with agents, RAG, PostgreSQL, Redis, and Docker
+- `default` - Minimal HazelJS application (like create-next-app)
 
 #### Package setup
 - `setup` / `st` - Generate a minimal setup starter file for a HazelJS package (e.g. `hazel g setup swagger`).
@@ -261,6 +283,9 @@ hazel g module orders --dry-run
 - `pipe` / `p` - Generate a transformation pipe
 - `repository` / `repo` - Generate a Prisma repository
 - `ai-service` / `ai` - Generate an AI service with decorators
+- `agent` - Generate an AI agent with tools and memory
+- `rag-controller` - Generate a RAG controller with document ingestion and search
+- `tool` - Generate an AI tool for agents
 - `serverless` / `sls` - Generate a serverless handler (Lambda/Cloud Function)
 
 ### Generator Options
@@ -347,6 +372,28 @@ Generate a validation pipe:
 hazel g pipe validation
 # or
 hazel g p validation
+```
+
+Generate an AI service with decorators:
+```bash
+hazel g ai-service chat
+# or
+hazel g ai chat
+```
+
+Generate an AI agent with tools and memory:
+```bash
+hazel g agent support
+```
+
+Generate a RAG controller with document ingestion and search:
+```bash
+hazel g rag-controller knowledge
+```
+
+Generate an AI tool for agents:
+```bash
+hazel g tool weather
 ```
 
 Generate a Prisma repository:

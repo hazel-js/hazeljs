@@ -11,7 +11,7 @@ services:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - LOG_LEVEL=info
     volumes:
-      - ./logs:/app/logs
+      - ./logs:/app/logshazeljs-playground/docker-compose.yml
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
@@ -47,6 +47,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./docker/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+      - ./docker/enable-pgvector.sql:/docker-entrypoint-initdb.d/enable-pgvector.sql
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U hazeljs"]

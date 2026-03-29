@@ -20,7 +20,7 @@
 
 ---
 
-### 🎯 **Try it in 60 seconds** → `npx @hazeljs/cli g app my-app` | [Starter Example](./hazeljs-starter-example) | [HazelJS CSR Agent Example](https://github.com/hazel-js/hazeljs-csr-agent) | [HazelJS Flow Starter](https://github.com/hazel-js/hazeljs-flow-starter) | [HazelJS RAG Documents Starter](https://github.com/hazel-js/hazeljs-rag-documents-starter) | [HazelJS RAG Graph Starter](https://github.com/hazel-js/hazeljs-rag-graph-starter)
+### 🎯 **Try it in 60 seconds** → `npx @hazeljs/cli g app my-app --template=ai-native` | [AI-Native Template](./packages/cli/@template-ai-native) | [Starter Example](./hazeljs-starter-example) | [HazelJS CSR Agent Example](https://github.com/hazel-js/hazeljs-csr-agent) | [HazelJS Flow Starter](https://github.com/hazel-js/hazeljs-flow-starter) | [HazelJS RAG Documents Starter](https://github.com/hazel-js/hazeljs-rag-documents-starter) | [HazelJS RAG Graph Starter](https://github.com/hazel-js/hazeljs-rag-graph-starter)
 </div>
 
 ---
@@ -65,7 +65,37 @@ You've built APIs before. You know the drill: wire up routing, configure middlew
 
 *From zero to running in 60 seconds.*
 
-### Option 1: Use the CLI (Recommended)
+### Option 1: AI-Native CLI Template (Recommended for AI Apps)
+
+```bash
+# Create an AI-powered app with pre-configured agents, RAG, and PostgreSQL
+npx @hazeljs/cli g app my-app --template=ai-native
+
+# Navigate and setup
+cd my-app
+npm install
+
+# Setup environment (copy .env.example to .env and add your OPENAI_API_KEY)
+cp .env.example .env
+
+# Start with Docker (includes PostgreSQL + Redis)
+docker-compose up -d
+npm run dev
+
+# ✨ Your AI app is live at http://localhost:3000
+# Try: curl -X POST http://localhost:3000/chat -H "Content-Type: application/json" -d '{"message": "Hello!"}'
+```
+
+**What's included:**
+- 🤖 **AI Agents** with tools and memory
+- 📚 **RAG System** with PostgreSQL + pgvector
+- 🗄️ **Database Setup** (PostgreSQL, Redis)
+- 🐳 **Docker Configuration** for production
+- 📊 **Complete API** endpoints ready to use
+
+> **Template Location:** [packages/cli/@template-ai-native](./packages/cli/@template-ai-native)
+
+### Option 2: Standard CLI Template
 
 ```bash
 # Create a new app with the CLI
@@ -126,10 +156,12 @@ npx ts-node app.ts
 
 ### Which Option Should I Choose?
 
-- **CLI Generator** (`hazel g app`) - Best for production apps, includes full project structure
+- **AI-Native Template** (`--template=ai-native`) - Best for AI applications, includes agents, RAG, PostgreSQL, Docker
+- **Standard CLI Template** (`hazel g app`) - Best for production APIs, includes full project structure
 - **Manual Setup** - Best for learning, prototyping, or single-file demos
 
 > 💡 **Want more?** 
+> - AI-Native template: [packages/cli/@template-ai-native](./packages/cli/@template-ai-native)
 > - Full starter: [hazeljs-starter-example](./hazeljs-starter-example)
 > - AI features: [Full Example App](./example) with AI, RAG, Agents, and more
 

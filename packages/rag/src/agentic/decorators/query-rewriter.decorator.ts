@@ -12,7 +12,7 @@ import { QUERY_REWRITER_KEY } from '../../prompts/agentic/query-rewriter.prompt'
 export interface QueryRewriterConfig {
   techniques?: ('expansion' | 'clarification' | 'synonym' | 'decomposition')[];
   llmBased?: boolean;
-  llmProvider?: AgenticLLMProvider;
+  llmProvider?: AgenticLLMProvider; // Optional override, falls back to service instance
   maxVariations?: number;
 }
 
@@ -22,11 +22,18 @@ export function QueryRewriter(config: QueryRewriterConfig = {}): MethodDecorator
   return function (target: object, propertyKey: string | symbol, descriptor: PropertyDescriptor) {
     const originalMethod = descriptor.value;
 
-    descriptor.value = async function (...args: unknown[]): Promise<unknown> {
+    descriptor.value = async function (
+      this: { llmProvider?: AgenticLLMProvider },
+      ...args: unknown[]
+    ): Promise<unknown> {
       const query = args[0] as string;
 
+      // Get llmProvider from config or service instance
+      const llmProvider = config.llmProvider || this.llmProvider;
+      const configWithProvider = { ...config, llmProvider };
+
       // Generate query variations
-      const variations = await generateQueryVariations(query, config);
+      const variations = await generateQueryVariations(query, configWithProvider);
 
       // Execute search with all variations
       const allResults = [];

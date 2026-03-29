@@ -14,7 +14,7 @@ export interface AdaptiveRetrievalConfig {
   strategies?: RetrievalStrategy[];
   autoSelect?: boolean;
   contextAware?: boolean;
-  llmProvider?: AgenticLLMProvider;
+  llmProvider?: AgenticLLMProvider; // Optional override, falls back to service instance
 }
 
 const ADAPTIVE_METADATA_KEY = Symbol('adaptive');
@@ -23,15 +23,22 @@ export function AdaptiveRetrieval(config: AdaptiveRetrievalConfig = {}): MethodD
   return function (target: object, propertyKey: string | symbol, descriptor: PropertyDescriptor) {
     const originalMethod = descriptor.value;
 
-    descriptor.value = async function (...args: unknown[]): Promise<unknown> {
+    descriptor.value = async function (
+      this: { llmProvider?: AgenticLLMProvider },
+      ...args: unknown[]
+    ): Promise<unknown> {
       const query = args[0] as string;
 
       if (!config.autoSelect) {
         return originalMethod.apply(this, args);
       }
 
+      // Get llmProvider from config or service instance
+      const llmProvider = config.llmProvider || this.llmProvider;
+      const configWithProvider = { ...config, llmProvider };
+
       // Select best strategy
-      const strategyResult = await selectStrategy(query, config);
+      const strategyResult = await selectStrategy(query, configWithProvider);
 
       // Store metadata
       Reflect.defineMetadata(ADAPTIVE_METADATA_KEY, strategyResult, target, propertyKey);

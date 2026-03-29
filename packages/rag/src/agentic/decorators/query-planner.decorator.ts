@@ -14,7 +14,7 @@ export interface QueryPlannerConfig {
   rewrite?: boolean;
   maxSubQueries?: number;
   parallel?: boolean;
-  llmProvider?: AgenticLLMProvider;
+  llmProvider?: AgenticLLMProvider; // Optional override, falls back to service instance
 }
 
 const QUERY_PLANNER_METADATA_KEY = Symbol('queryPlanner');
@@ -23,15 +23,22 @@ export function QueryPlanner(config: QueryPlannerConfig = {}): MethodDecorator {
   return function (target: object, propertyKey: string | symbol, descriptor: PropertyDescriptor) {
     const originalMethod = descriptor.value;
 
-    descriptor.value = async function (...args: unknown[]): Promise<unknown> {
+    descriptor.value = async function (
+      this: { llmProvider?: AgenticLLMProvider },
+      ...args: unknown[]
+    ): Promise<unknown> {
       const query = args[0] as string;
 
       if (!config.decompose) {
         return originalMethod.apply(this, args);
       }
 
+      // Get llmProvider from config or service instance
+      const llmProvider = config.llmProvider || this.llmProvider;
+      const configWithProvider = { ...config, llmProvider };
+
       // Decompose query into sub-queries
-      const plan = await decomposeQuery(query, config);
+      const plan = await decomposeQuery(query, configWithProvider);
 
       // Store plan in metadata
       Reflect.defineMetadata(QUERY_PLANNER_METADATA_KEY, plan, target, propertyKey);

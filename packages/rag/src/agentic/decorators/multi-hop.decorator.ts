@@ -12,7 +12,7 @@ import { MULTI_HOP_KEY, MULTI_HOP_SYNTHESIZE_KEY } from '../../prompts/agentic/m
 export interface MultiHopConfig {
   maxHops?: number;
   strategy?: 'breadth-first' | 'depth-first' | 'adaptive';
-  llmProvider?: AgenticLLMProvider;
+  llmProvider?: AgenticLLMProvider; // Optional override, falls back to service instance
 }
 
 const MULTIHOP_METADATA_KEY = Symbol('multiHop');
@@ -21,9 +21,16 @@ export function MultiHop(config: MultiHopConfig = {}): MethodDecorator {
   return function (target: object, propertyKey: string | symbol, descriptor: PropertyDescriptor) {
     const originalMethod = descriptor.value;
 
-    descriptor.value = async function (...args: unknown[]): Promise<unknown> {
+    descriptor.value = async function (
+      this: { llmProvider?: AgenticLLMProvider },
+      ...args: unknown[]
+    ): Promise<unknown> {
       const query = args[0] as string;
       const maxHops = config.maxHops || 3;
+
+      // Get llmProvider from config or service instance
+      const llmProvider = config.llmProvider || this.llmProvider;
+      const configWithProvider = { ...config, llmProvider };
 
       const chain: ReasoningChain = {
         query,
@@ -36,11 +43,9 @@ export function MultiHop(config: MultiHopConfig = {}): MethodDecorator {
       let currentQuery = query;
 
       for (let hop = 0; hop < maxHops; hop++) {
-        // Retrieve for current query
         const results = await originalMethod.apply(this, [currentQuery, ...args.slice(1)]);
 
-        // Generate reasoning
-        const reasoning = await generateReasoning(currentQuery, results, config);
+        const reasoning = await generateReasoning(currentQuery, results, configWithProvider);
 
         const hopResult: ReasoningHop = {
           hopNumber: hop + 1,
@@ -53,8 +58,7 @@ export function MultiHop(config: MultiHopConfig = {}): MethodDecorator {
         chain.hops.push(hopResult);
         chain.sources.push(...hopResult.results);
 
-        // Check if we should continue
-        if (!reasoning.nextQuery || reasoning.shouldStop) {
+        if (reasoning.shouldStop || !reasoning.nextQuery) {
           break;
         }
 
@@ -62,7 +66,7 @@ export function MultiHop(config: MultiHopConfig = {}): MethodDecorator {
       }
 
       // Generate final answer
-      chain.finalAnswer = await synthesizeFinalAnswer(chain, config);
+      chain.finalAnswer = await synthesizeFinalAnswer(chain, configWithProvider);
       chain.confidence = calculateConfidence(chain);
 
       Reflect.defineMetadata(MULTIHOP_METADATA_KEY, chain, target, propertyKey);

@@ -12,7 +12,7 @@ import { HYDE_KEY } from '../../prompts/agentic/hyde.prompt';
 export interface HyDEConfig {
   generateHypothesis?: boolean;
   numHypotheses?: number;
-  llmProvider?: AgenticLLMProvider;
+  llmProvider?: AgenticLLMProvider; // Optional override, falls back to service instance
 }
 
 const HYDE_METADATA_KEY = Symbol('hyde');
@@ -21,10 +21,16 @@ export function HyDE(config: HyDEConfig = {}): MethodDecorator {
   return function (target: object, propertyKey: string | symbol, descriptor: PropertyDescriptor) {
     const originalMethod = descriptor.value;
 
-    descriptor.value = async function (...args: unknown[]): Promise<unknown> {
+    descriptor.value = async function (
+      this: { llmProvider?: AgenticLLMProvider },
+      ...args: unknown[]
+    ): Promise<unknown> {
       const query = args[0] as string;
 
-      if (!config.generateHypothesis || !config.llmProvider) {
+      // Get llmProvider from config or service instance
+      const llmProvider = config.llmProvider || this.llmProvider;
+
+      if (!config.generateHypothesis || !llmProvider) {
         return originalMethod.apply(this, args);
       }
 
@@ -32,7 +38,7 @@ export function HyDE(config: HyDEConfig = {}): MethodDecorator {
       const hypotheses = await generateHypotheticalDocuments(
         query,
         config.numHypotheses || 3,
-        config.llmProvider
+        llmProvider
       );
 
       // Retrieve using each hypothesis

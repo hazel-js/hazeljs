@@ -1,55 +1,116 @@
 import { Controller, Post, Get, Body, Service } from '@hazeljs/core';
-import { AgenticRAGService, MemoryVectorStore, OpenAIEmbeddings, Document } from '@hazeljs/rag';
+import { OpenAIEmbeddings } from '@hazeljs/rag';
+import { PrismaClient } from '@prisma/client';
 
 @Service()
 export class RAGService {
-  private ragService: AgenticRAGService;
-  private vectorStore: MemoryVectorStore;
+  private embeddings: OpenAIEmbeddings;
+  private prisma: PrismaClient;
 
   constructor() {
-    // Initialize embeddings and vector store
-    const embeddings = new OpenAIEmbeddings({
+    // Initialize embeddings for generating vectors
+    this.embeddings = new OpenAIEmbeddings({
       apiKey: process.env.OPENAI_API_KEY!,
       model: 'text-embedding-3-small',
     });
-    this.vectorStore = new MemoryVectorStore(embeddings);
     
-    // Initialize RAG service
-    this.ragService = new AgenticRAGService({
-      vectorStore: this.vectorStore,
-      enableAllFeatures: true,
-    });
+    // Initialize Prisma for PostgreSQL storage
+    this.prisma = new PrismaClient();
   }
 
   async onModuleInit() {
-    await this.vectorStore.initialize();
+    await this.prisma.$connect();
+    const count = await this.prisma.document.count();
+    console.log(`RAG Service initialized - PostgreSQL vector store ready with ${count} documents`);
+  }
+  
+  async onModuleDestroy() {
+    await this.prisma.$disconnect();
   }
 
   async ingestDocument(content: string, metadata?: any) {
-    const document: Document = {
-      id: `doc-${Date.now()}`,
-      content,
-      metadata: {
-        source: 'user-input',
-        timestamp: new Date(),
-        ...metadata,
-      },
-    };
+    console.log(`Ingesting document, content length: ${content.length}`);
     
-    await this.vectorStore.addDocuments([document]);
-    return { id: document.id, content: 'Document ingested successfully' };
-  }
-
-  async search(query: string) {
-    const results = await this.ragService.retrieve(query, {
-      topK: 5,
+    // Generate embedding for the document
+    const embedding = await this.embeddings.embed(content);
+    
+    // Store in PostgreSQL
+    const document = await this.prisma.document.create({
+      data: {
+        content,
+        embedding,
+        metadata: {
+          source: 'user-input',
+          timestamp: new Date().toISOString(),
+          ...metadata,
+        },
+      },
     });
     
+    const totalDocuments = await this.prisma.document.count();
+    console.log(`Document ingested successfully. ID: ${document.id}, Total documents: ${totalDocuments}`);
+    
+    return { 
+      id: document.id, 
+      message: 'Document ingested successfully and stored in PostgreSQL',
+      totalDocuments
+    };
+  }
+
+  async search(query: string, topK = 5) {
+    const totalDocuments = await this.prisma.document.count();
+    console.log(`RAG search requested for: "${query}". Total documents: ${totalDocuments}`);
+    
+    // Generate embedding for the query
+    const queryVector = await this.embeddings.embed(query);
+    
+    // Perform vector similarity search using raw SQL for cosine similarity
+    const results = await this.prisma.$queryRaw<Array<{
+      id: string;
+      content: string;
+      metadata: any;
+      embedding: number[];
+      similarity: number;
+    }>>`
+      SELECT 
+        id,
+        content,
+        metadata,
+        embedding,
+        (1 - (embedding <=> ${queryVector}::vector)) as similarity
+      FROM documents
+      ORDER BY embedding <=> ${queryVector}::vector
+      LIMIT ${topK}
+    `;
+    
+    console.log(`RAG search for "${query}" returned ${results.length} results`);
+    
     return results.map(result => ({
+      id: result.id,
       content: result.content,
-      score: result.score,
+      score: result.similarity,
       metadata: result.metadata,
     }));
+  }
+  
+  async getDocumentCount() {
+    const totalDocuments = await this.prisma.document.count();
+    return { totalDocuments };
+  }
+  
+  async getAllDocuments() {
+    const documents = await this.prisma.document.findMany({
+      select: {
+        id: true,
+        content: true,
+        metadata: true,
+        createdAt: true,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+    return documents;
   }
 }
 
@@ -71,12 +132,30 @@ export class RAGController {
 
   @Get('documents')
   async getDocuments() {
+    const stats = await this.ragService.getDocumentCount();
     return { 
-      message: 'RAG service is ready - use /ingest to add documents and /search to query them',
+      message: 'RAG service is ready - PostgreSQL vector store with persistent storage',
+      ...stats,
       endpoints: {
-        ingest: 'POST /rag/ingest - Add documents',
-        search: 'POST /rag/search - Search documents'
+        ingest: 'POST /rag/ingest - Add documents to PostgreSQL',
+        search: 'POST /rag/search - Search documents with vector similarity',
+        stats: 'GET /rag/stats - Get document count',
+        list: 'GET /rag/list - List all documents'
       }
+    };
+  }
+  
+  @Get('stats')
+  async getStats() {
+    return this.ragService.getDocumentCount();
+  }
+  
+  @Get('list')
+  async listDocuments() {
+    const documents = await this.ragService.getAllDocuments();
+    return { 
+      documents,
+      total: documents.length
     };
   }
 }
