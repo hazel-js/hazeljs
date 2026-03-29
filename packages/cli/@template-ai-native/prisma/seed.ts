@@ -67,14 +67,18 @@ async function main() {
       // Generate embedding for the document
       const embedding = await embeddings.embed(doc.content);
       
-      // Create document with embedding
-      await prisma.document.create({
-        data: {
-          content: doc.content,
-          metadata: doc.metadata,
-          embedding: embedding,
-        },
-      });
+      // Use raw SQL to insert document with vector embedding
+      await prisma.$executeRaw`
+        INSERT INTO documents (id, content, metadata, embedding, "createdAt", "updatedAt")
+        VALUES (
+          gen_random_uuid()::text,
+          ${doc.content},
+          ${JSON.stringify(doc.metadata)}::jsonb,
+          ${embedding}::vector,
+          NOW(),
+          NOW()
+        )
+      `;
       
       console.log(`✅ Created document: ${doc.metadata.source}`);
     } catch (error) {

@@ -11,12 +11,12 @@ datasource db {
 }
 
 model Document {
-  id        String   @id @default(cuid())
+  id        String                     @id @default(cuid())
   content   String
   metadata  Json?
-  embedding Float[]  // Vector embedding for RAG
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  embedding Unsupported("vector(1536)")  // pgvector type for embeddings
+  createdAt DateTime                   @default(now())
+  updatedAt DateTime                   @updatedAt
 
   @@map("documents")
   // Vector indexes will be created by Prisma when pgvector extension is available
