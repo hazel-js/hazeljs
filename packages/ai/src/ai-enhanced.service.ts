@@ -41,6 +41,12 @@ export class AIEnhancedService {
     this.tokenTracker = tokenTracker || new TokenTracker();
     this.cacheService = cacheService;
     this.initializeProviders();
+
+    // Register this instance globally for easy access by other modules
+    // Users can reference this via: (global as typeof globalThis & { __HAZELJS_AI_ENHANCED_SERVICE__: AIEnhancedService }).__HAZELJS_AI_ENHANCED_SERVICE__
+    (
+      global as typeof globalThis & { __HAZELJS_AI_ENHANCED_SERVICE__: AIEnhancedService }
+    ).__HAZELJS_AI_ENHANCED_SERVICE__ = this;
     logger.info('AI Enhanced Service initialized');
   }
 

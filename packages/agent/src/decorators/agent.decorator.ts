@@ -11,7 +11,13 @@ type NewableFunction = new (...args: unknown[]) => unknown;
 const AGENT_METADATA_KEY = Symbol('agent');
 
 /**
- * Agent decorator - marks a class as an agent
+ * Global registry of all @Agent decorated classes
+ * This is populated automatically when the @Agent decorator is applied
+ */
+const GLOBAL_AGENT_REGISTRY = new Set<NewableFunction>();
+
+/**
+ * Agent decorator - marks a class as an agent and registers it globally
  */
 export function Agent(config: AgentConfig): ClassDecorator {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
@@ -23,7 +29,17 @@ export function Agent(config: AgentConfig): ClassDecorator {
     };
 
     Reflect.defineMetadata(AGENT_METADATA_KEY, metadata, target);
+
+    // Automatically register the agent class globally
+    GLOBAL_AGENT_REGISTRY.add(target as NewableFunction);
   }) as ClassDecorator;
+}
+
+/**
+ * Get all registered agent classes
+ */
+export function getRegisteredAgents(): NewableFunction[] {
+  return Array.from(GLOBAL_AGENT_REGISTRY);
 }
 
 /**

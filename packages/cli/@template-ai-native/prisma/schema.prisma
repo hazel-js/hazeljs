@@ -1,0 +1,52 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Document {
+  id        String   @id @default(cuid())
+  content   String
+  metadata  Json?
+  embedding Float[]  // Vector embedding for RAG
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("documents")
+  // Vector indexes will be created by Prisma when pgvector extension is available
+  @@index([content])   // Full-text search
+  @@index([metadata])  // JSONB search
+}
+
+model AgentConversation {
+  id           String   @id @default(cuid())
+  agentName    String   @map("agent_name")
+  sessionId    String?  @map("session_id")
+  userMessage  String?  @map("user_message")
+  agentResponse String? @map("agent_response")
+  metadata     Json?
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@map("agent_conversations")
+  @@index([sessionId])
+  @@index([agentName])
+}
+
+model ChatHistory {
+  id          String   @id @default(cuid())
+  sessionId   String?  @map("session_id")
+  userMessage String?  @map("user_message")
+  aiResponse  String?  @map("ai_response")
+  model       String?
+  tokensUsed  Int?     @map("tokens_used")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("chat_history")
+  @@index([sessionId])
+}

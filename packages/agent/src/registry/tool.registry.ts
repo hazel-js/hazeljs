@@ -37,7 +37,10 @@ export class ToolRegistry {
         continue;
       }
 
-      const fullToolName = `${agentName}.${toolName}`;
+      // Use metadata.name (the configured tool name, e.g. 'WeatherAgent' for @Delegate)
+      // rather than the method name, so the LLM-returned function name matches the key.
+      const registeredName = metadata.name || toolName;
+      const fullToolName = `${agentName}.${registeredName}`;
 
       if (this.tools.has(fullToolName)) {
         // Tool already registered, skip

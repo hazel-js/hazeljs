@@ -165,6 +165,16 @@ export class AgentRuntime {
   }
 
   /**
+   * Set or update the LLM provider at runtime.
+   * Updates both the config and the AgentExecutor's live reference.
+   */
+  setLLMProvider(provider: LLMProvider): void {
+    this.config.llmProvider = provider;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (this.agentExecutor as any).llmProvider = provider;
+  }
+
+  /**
    * Register an agent class
    */
   registerAgent(agentClass: new (...args: unknown[]) => unknown): void {

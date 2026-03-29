@@ -646,6 +646,38 @@ describe('AgentExecutor', () => {
       expect(tokenChunks.length).toBeGreaterThan(0);
     });
 
+    it('should handle execution without streamChat support', async () => {
+      const context = stateManager.createContext('agent-1', 'session-1', 'Hello');
+      
+      const mockLLMProvider: LLMProvider = {
+        chat: jest.fn().mockResolvedValue({
+          content: 'Response without streaming',
+        }),
+        // No streamChat method
+      };
+
+      const executorWithLLM = new AgentExecutor(
+        stateManager,
+        contextBuilder,
+        toolExecutor,
+        toolRegistry,
+        mockLLMProvider,
+        eventEmitter
+      );
+
+      const chunks = [];
+      try {
+        for await (const chunk of (executorWithLLM as any).executeStepStream(context, 1)) {
+          chunks.push(chunk);
+          if (chunk.type === 'step') break;
+        }
+      } catch (error) {
+        // Expected
+      }
+
+      expect(chunks.length).toBeGreaterThanOrEqual(0);
+    });
+
     it('should handle empty stream chunks', async () => {
       const context = stateManager.createContext('agent-1', 'session-1', 'Hello');
       

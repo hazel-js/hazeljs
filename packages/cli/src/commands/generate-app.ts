@@ -326,7 +326,8 @@ export function generateApp(program: Command) {
     .option('--skip-install', 'Skip npm install')
     .option('--skip-git', 'Skip git initialization')
     .option('-i, --interactive', 'Interactive setup')
-    .action(async (appName: string, options: { dest?: string; skipInstall?: boolean; skipGit?: boolean; interactive?: boolean }) => {
+    .option('-t, --template <template>', 'Project template (basic, ai-native)', 'basic')
+    .action(async (appName: string, options: { dest?: string; skipInstall?: boolean; skipGit?: boolean; interactive?: boolean; template?: string }) => {
       try {
         let projectConfig = {
           name: appName,
@@ -411,19 +412,20 @@ export function generateApp(program: Command) {
           process.exit(1);
         }
 
-        // Use local template
-        const templatePath = path.join(__dirname, '../../@template');
+        // Use template based on option
+        const templateDir = options.template === 'ai-native' ? '@template-ai-native' : '@template';
+        const templatePath = path.join(__dirname, '../../', templateDir);
         
         if (fs.existsSync(templatePath)) {
-          console.log(chalk.blue('📋 Copying template files...'));
+          console.log(chalk.blue(`📋 Copying ${options.template} template files...`));
           copyRecursiveSync(templatePath, destPath);
           
           // Update package.json
           updatePackageJson(destPath, projectConfig.name, projectConfig.description);
           
-          console.log(chalk.green('✓ Template files copied'));
+          console.log(chalk.green(`✓ ${options.template} template files copied`));
         } else {
-          console.log(chalk.yellow('⚠ Local template not found, creating basic structure...'));
+          console.log(chalk.yellow(`⚠ ${options.template} template not found, creating basic structure...`));
           
           // Create basic structure
           fs.mkdirSync(destPath, { recursive: true });

@@ -49,4 +49,4 @@ export type { AgentCardOptions } from './a2a/agent-card.builder';
 export { A2AServer } from './a2a/a2a.server';
 export type { A2AServerOptions } from './a2a/a2a.server';
 
-export * from './agent.module';
+export { AgentModule, AgentService, GUARDRAILS_SERVICE_TOKEN } from './agent.module';

@@ -1,0 +1,481 @@
+{
+	"info": {
+		"_postman_id": "hazeljs-ai-native-template",
+		"name": "HazelJS AI-Native API",
+		"description": "Postman collection for HazelJS AI-Native application with AI chat, agents, and RAG endpoints",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Health & Status",
+			"item": [
+				{
+					"name": "Health Check",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/health",
+							"host": ["{{baseUrl}}"],
+							"path": ["health"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "App Root",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/",
+							"host": ["{{baseUrl}}"],
+							"path": [""]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "AI Chat",
+			"item": [
+				{
+					"name": "Send Chat Message",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"message\": \"What is HazelJS and how does it work?\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/chat",
+							"host": ["{{baseUrl}}"],
+							"path": ["chat"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Chat with System Prompt",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"message\": \"Explain TypeScript decorators in simple terms\",\n  \"system\": \"You are a TypeScript expert who explains concepts clearly to beginners.\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/chat",
+							"host": ["{{baseUrl}}"],
+							"path": ["chat"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "AI Agent",
+			"description": "WeatherAgent with 3 tools: getWeather, getForecast, convertTemperature. The agent autonomously picks the right tool(s) at runtime based on the request.",
+			"item": [
+				{
+					"name": "Get Current Weather (getWeather)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"message\": \"What's the weather like in Tokyo?\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/agent",
+							"host": ["{{baseUrl}}"],
+							"path": ["agent"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Multi-Day Forecast (getForecast)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"message\": \"What's the 5-day forecast for London?\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/agent",
+							"host": ["{{baseUrl}}"],
+							"path": ["agent"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Convert Temperature (convertTemperature)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"message\": \"Convert 100°F to Celsius\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/agent",
+							"host": ["{{baseUrl}}"],
+							"path": ["agent"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Weather + Convert Temperature (multi-tool)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"message\": \"What's the weather in Paris and convert the temperature to Celsius?\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/agent",
+							"host": ["{{baseUrl}}"],
+							"path": ["agent"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Multiple Cities (parallel tool calls)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"message\": \"What's the weather in New York, London, and Tokyo?\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/agent",
+							"host": ["{{baseUrl}}"],
+							"path": ["agent"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "AI Agent - Execution Trace",
+			"description": "POST /agent/trace — Returns the full reasoning trace: every step, which tool was called, with what input, what it returned, and timing. Great for understanding agent reasoning.",
+			"item": [
+				{
+					"name": "Single Tool Trace",
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"message\": \"What's the weather in New York?\"\n}"
+						},
+						"url": {"raw": "{{baseUrl}}/agent/trace", "host": ["{{baseUrl}}"], "path": ["agent", "trace"]}
+					},
+					"response": []
+				},
+				{
+					"name": "Multi-Tool Trace",
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"message\": \"What's the weather in Tokyo and convert it to Celsius?\"\n}"
+						},
+						"url": {"raw": "{{baseUrl}}/agent/trace", "host": ["{{baseUrl}}"], "path": ["agent", "trace"]}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "AI Agent - Streaming (SSE)",
+			"description": "POST /agent/stream — Token-by-token SSE stream. Set 'Accept: text/event-stream' in your client. Each event is a JSON object with type='token'|'step'|'done'.",
+			"item": [
+				{
+					"name": "Stream Weather Response",
+					"request": {
+						"method": "POST",
+						"header": [
+							{"key": "Content-Type", "value": "application/json"},
+							{"key": "Accept", "value": "text/event-stream"}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"message\": \"What's the weather forecast for London this week?\"\n}"
+						},
+						"url": {"raw": "{{baseUrl}}/agent/stream", "host": ["{{baseUrl}}"], "path": ["agent", "stream"]}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Travel Agent (@Delegate)",
+			"description": "POST /travel — TravelAgent delegates to WeatherAgent (via @Delegate) for weather and to FactsAgent for city facts. Agent-to-agent calls are transparent to the LLM.",
+			"item": [
+				{
+					"name": "Plan a Trip (delegates to both agents)",
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"message\": \"Plan a trip to Tokyo. Get the current weather there and also tell me some interesting facts about Tokyo.\"\n}"
+						},
+						"url": {"raw": "{{baseUrl}}/travel", "host": ["{{baseUrl}}"], "path": ["travel"]}
+					},
+					"response": []
+				},
+				{
+					"name": "Weather-focused Trip (delegates to WeatherAgent)",
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"message\": \"Is the weather in Paris good for sightseeing this week?\"\n}"
+						},
+						"url": {"raw": "{{baseUrl}}/travel", "host": ["{{baseUrl}}"], "path": ["travel"]}
+					},
+					"response": []
+				},
+				{
+					"name": "Facts-focused Trip (delegates to FactsAgent)",
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"message\": \"Tell me interesting facts and travel tips for London.\"\n}"
+						},
+						"url": {"raw": "{{baseUrl}}/travel", "host": ["{{baseUrl}}"], "path": ["travel"]}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Supervisor Multi-Agent",
+			"description": "POST /travel/supervisor — An LLM supervisor routes requests to WeatherAgent or FactsAgent based on what's most relevant, then synthesises a combined answer.",
+			"item": [
+				{
+					"name": "What to Pack (routes to both agents)",
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"message\": \"What should I pack for a trip to Paris? Tell me about the weather and the local culture.\"\n}"
+						},
+						"url": {"raw": "{{baseUrl}}/travel/supervisor", "host": ["{{baseUrl}}"], "path": ["travel", "supervisor"]}
+					},
+					"response": []
+				},
+				{
+					"name": "Weather Query (routes to WeatherAgent)",
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"message\": \"What is the 3-day weather forecast for Tokyo?\"\n}"
+						},
+						"url": {"raw": "{{baseUrl}}/travel/supervisor", "host": ["{{baseUrl}}"], "path": ["travel", "supervisor"]}
+					},
+					"response": []
+				},
+				{
+					"name": "City Facts Query (routes to FactsAgent)",
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"message\": \"Tell me interesting things to do and see in New York City.\"\n}"
+						},
+						"url": {"raw": "{{baseUrl}}/travel/supervisor", "host": ["{{baseUrl}}"], "path": ["travel", "supervisor"]}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "RAG (Document Search)",
+			"item": [
+				{
+					"name": "Get RAG Status",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/rag/documents",
+							"host": ["{{baseUrl}}"],
+							"path": ["rag", "documents"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Ingest Document",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"content\": \"HazelJS is a TypeScript framework for building AI-native backend applications. It provides built-in support for AI agents, RAG (Retrieval-Augmented Generation), and seamless integration with LLM providers like OpenAI, Anthropic, and Ollama.\",\n  \"metadata\": {\n    \"source\": \"documentation\",\n    \"type\": \"introduction\"\n  }\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/rag/ingest",
+							"host": ["{{baseUrl}}"],
+							"path": ["rag", "ingest"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Ingest Multiple Documents",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"content\": \"TypeScript decorators provide a way to add metadata and modify the behavior of classes, methods, and properties. In HazelJS, decorators like @Controller, @Get, @Post, @Service, and @Agent are used to define the application structure and routing.\",\n  \"metadata\": {\n    \"source\": \"typescript-guide\",\n    \"type\": \"tutorial\"\n  }\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/rag/ingest",
+							"host": ["{{baseUrl}}"],
+							"path": ["rag", "ingest"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Search Documents",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"query\": \"What is HazelJS?\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/rag/search",
+							"host": ["{{baseUrl}}"],
+							"path": ["rag", "search"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Search for TypeScript Info",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"query\": \"TypeScript decorators in HazelJS\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/rag/search",
+							"host": ["{{baseUrl}}"],
+							"path": ["rag", "search"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Development Tools",
+			"item": [
+				{
+					"name": "Inspector Dashboard",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/__hazel",
+							"host": ["{{baseUrl}}"],
+							"path": ["__hazel"]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:3000",
+			"type": "string"
+		}
+	]
+}

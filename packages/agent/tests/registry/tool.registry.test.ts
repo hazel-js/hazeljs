@@ -56,6 +56,42 @@ describe('ToolRegistry', () => {
 
       expect(registry.count).toBe(1);
     });
+
+    it('should use metadata.name as tool key when provided', () => {
+      @Agent({ name: 'name-agent', description: 'Name agent' })
+      class NameAgent {
+        @Tool({
+          name: 'CustomToolName',
+          description: 'Tool with custom name',
+          parameters: [],
+        })
+        async methodWithDifferentName() {
+          return { result: 'ok' };
+        }
+      }
+
+      const agent = new NameAgent();
+      registry.registerAgentTools('name-agent', agent);
+
+      expect(registry.count).toBe(1);
+      expect(registry.hasTool('name-agent.CustomToolName')).toBe(true);
+      expect(registry.hasTool('name-agent.methodWithDifferentName')).toBe(false);
+    });
+
+    it('should skip tools without metadata', () => {
+      @Agent({ name: 'meta-agent', description: 'Metadata agent' })
+      class MetaAgent {
+        // This tool won't have proper metadata (simulated)
+        async noMetadataTool() {
+          return { result: 'ok' };
+        }
+      }
+
+      const agent = new MetaAgent();
+      registry.registerAgentTools('meta-agent', agent);
+
+      expect(registry.count).toBe(0);
+    });
   });
 
   describe('getTool', () => {
