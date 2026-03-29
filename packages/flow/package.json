@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/flow",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "description": "Durable execution graph engine - in-memory by default, optional Prisma persistence",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
