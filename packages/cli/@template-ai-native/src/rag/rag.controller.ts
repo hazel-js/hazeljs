@@ -65,18 +65,17 @@ export class RAGService {
     const queryVector = await this.embeddings.embed(query);
     
     // Perform vector similarity search using raw SQL for cosine similarity
+    // Note: We don't select the embedding column to avoid deserialization issues
     const results = await this.prisma.$queryRaw<Array<{
       id: string;
       content: string;
       metadata: any;
-      embedding: number[];
       similarity: number;
     }>>`
       SELECT 
         id,
         content,
         metadata,
-        embedding,
         (1 - (embedding <=> ${queryVector}::vector)) as similarity
       FROM documents
       ORDER BY embedding <=> ${queryVector}::vector
