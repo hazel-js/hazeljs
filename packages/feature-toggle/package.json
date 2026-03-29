@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/feature-toggle",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "Feature toggle module for HazelJS framework",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

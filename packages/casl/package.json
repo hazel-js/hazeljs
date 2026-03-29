@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/casl",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "Attribute-level (resource-level) authorization for HazelJS via CASL",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
