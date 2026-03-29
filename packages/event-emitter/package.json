@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/event-emitter",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "Event emitter module for HazelJS framework - event-driven architecture with decorators",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
