@@ -126,6 +126,13 @@ import { {{className}}Service } from './{{fileName}}.service';
 export class {{className}}Module {}
 `;
 
+/**
+ * Generate a complete CRUD resource (4 files: controller, service, DTOs, module).
+ *
+ * @param name    - Resource name (e.g. 'product') — determines file and class names
+ * @param options - Standard CLI options (--path, --dry-run, --json, --route)
+ * @returns GenerateResult with paths of all created files
+ */
 export async function runCrud(name: string, options: GenerateCLIOptions): Promise<GenerateResult> {
   try {
     const className = toPascalCase(name);
@@ -170,6 +177,11 @@ export async function runCrud(name: string, options: GenerateCLIOptions): Promis
   }
 }
 
+/**
+ * Register `hazel g crud <name>` as a sub-command of the generate command.
+ *
+ * @param command - The Commander `generate` parent command
+ */
 export function generateCrud(command: Command) {
   command
     .command('crud <name>')

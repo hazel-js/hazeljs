@@ -1,0 +1,940 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "HazelJS CLI Manifest",
+  "description": "Machine-readable manifest of all CLI commands and options for LLM agent tool-use",
+  "cli": {
+    "name": "hazel",
+    "version": "0.6.0",
+    "description": "CLI for generating HazelJS components and applications"
+  },
+  "commands": [
+    {
+      "name": "new",
+      "usage": "hazel new <appName> [options]",
+      "description": "Create a new HazelJS application with optional interactive setup",
+      "args": [
+        {
+          "name": "appName",
+          "type": "string",
+          "required": true,
+          "description": "Name of the new application"
+        }
+      ],
+      "options": [
+        {
+          "name": "dest",
+          "short": "d",
+          "type": "string",
+          "default": ".",
+          "description": "Destination path"
+        },
+        {
+          "name": "skip-install",
+          "type": "boolean",
+          "description": "Skip npm install"
+        },
+        {
+          "name": "skip-git",
+          "type": "boolean",
+          "description": "Skip git initialization"
+        },
+        {
+          "name": "interactive",
+          "short": "i",
+          "type": "boolean",
+          "description": "Interactive setup with package selection"
+        },
+        {
+          "name": "template",
+          "short": "t",
+          "type": "string",
+          "enum": [
+            "basic",
+            "ai-native"
+          ],
+          "default": "basic",
+          "description": "Project template"
+        }
+      ],
+      "examples": [
+        "hazel new my-app",
+        "hazel new my-app -i",
+        "hazel new my-ai-app --template ai-native"
+      ]
+    },
+    {
+      "name": "generate",
+      "usage": "hazel generate <type> <name> [options]",
+      "description": "Generate HazelJS components. Use --list to see all types",
+      "alias": "g",
+      "subcommands": [
+        {
+          "name": "app",
+          "usage": "hazel g app <name> [options]",
+          "description": "Generate a skeleton HazelJS application (minimal template, no install)",
+          "args": [
+            {
+              "name": "name",
+              "type": "string",
+              "required": true,
+              "description": "Application name"
+            }
+          ],
+          "options": [
+            {
+              "name": "path",
+              "short": "p",
+              "type": "string",
+              "default": ".",
+              "description": "Parent directory for the app"
+            },
+            {
+              "name": "template",
+              "short": "t",
+              "type": "string",
+              "enum": [
+                "basic",
+                "ai-native"
+              ],
+              "default": "basic",
+              "description": "Project template"
+            },
+            {
+              "name": "dry-run",
+              "type": "boolean",
+              "description": "Preview without writing files"
+            },
+            {
+              "name": "json",
+              "type": "boolean",
+              "description": "Output result as JSON"
+            }
+          ]
+        },
+        {
+          "name": "module",
+          "usage": "hazel g module <name> [options]",
+          "description": "Generate a new module (with controller, service, DTOs)",
+          "alias": "m",
+          "args": [
+            {
+              "name": "name",
+              "type": "string",
+              "required": true,
+              "description": "Module name"
+            }
+          ],
+          "options": [
+            {
+              "name": "path",
+              "short": "p",
+              "type": "string",
+              "description": "Path where the module should be generated"
+            },
+            {
+              "name": "dry-run",
+              "type": "boolean",
+              "description": "Preview files without writing them"
+            },
+            {
+              "name": "json",
+              "type": "boolean",
+              "description": "Output result as JSON"
+            }
+          ]
+        },
+        {
+          "name": "dto",
+          "usage": "hazel g dto <name> [options]",
+          "description": "Generate create and update DTOs",
+          "alias": "d",
+          "args": [
+            {
+              "name": "name",
+              "type": "string",
+              "required": true,
+              "description": "DTO name"
+            }
+          ],
+          "options": [
+            {
+              "name": "path",
+              "short": "p",
+              "type": "string",
+              "description": "Path where the DTOs should be generated"
+            },
+            {
+              "name": "dry-run",
+              "type": "boolean",
+              "description": "Preview files without writing them"
+            },
+            {
+              "name": "json",
+              "type": "boolean",
+              "description": "Output result as JSON"
+            }
+          ]
+        },
+        {
+          "name": "crud",
+          "usage": "hazel g crud <name> [options]",
+          "description": "Generate a complete CRUD resource (controller, service, module, DTOs)",
+          "args": [
+            {
+              "name": "name",
+              "type": "string",
+              "required": true,
+              "description": "Resource name"
+            }
+          ],
+          "options": [
+            {
+              "name": "path",
+              "short": "p",
+              "type": "string",
+              "default": "src",
+              "description": "Specify the path"
+            },
+            {
+              "name": "route",
+              "short": "r",
+              "type": "string",
+              "description": "Specify the route path"
+            },
+            {
+              "name": "dry-run",
+              "type": "boolean",
+              "description": "Preview files without writing them"
+            },
+            {
+              "name": "json",
+              "type": "boolean",
+              "description": "Output result as JSON"
+            }
+          ]
+        },
+        {
+          "name": "auth",
+          "usage": "hazel g auth [options]",
+          "description": "Generate an auth module with JWT guard, service, controller, and DTOs",
+          "args": [],
+          "options": [
+            {
+              "name": "path",
+              "short": "p",
+              "type": "string",
+              "default": "src/auth",
+              "description": "Specify the path"
+            },
+            {
+              "name": "dry-run",
+              "type": "boolean",
+              "description": "Preview files without writing them"
+            },
+            {
+              "name": "json",
+              "type": "boolean",
+              "description": "Output result as JSON"
+            }
+          ]
+        }
+      ],
+      "simpleGenerators": [
+        {
+          "type": "controller",
+          "description": "REST controller",
+          "alias": "c",
+          "usage": "hazel g controller <name> [options]",
+          "nameRequired": true,
+          "options": [
+            {
+              "name": "path",
+              "short": "p",
+              "type": "string",
+              "description": "Path where the file should be generated"
+            },
+            {
+              "name": "dry-run",
+              "type": "boolean",
+              "description": "Preview files without writing them"
+            },
+            {
+              "name": "json",
+              "type": "boolean",
+              "description": "Output result as JSON"
+            }
+          ]
+        },
+        {
+          "type": "service",
+          "description": "Service class",
+          "alias": "s",
+          "usage": "hazel g service <name> [options]",
+          "nameRequired": true,
+          "options": [
+            {
+              "name": "path",
+              "short": "p",
+              "type": "string",
+              "description": "Path where the file should be generated"
+            },
+            {
+              "name": "dry-run",
+              "type": "boolean",
+              "description": "Preview files without writing them"
+            },
+            {
+              "name": "json",
+              "type": "boolean",
+              "description": "Output result as JSON"
+            }
+          ]
+        },
+        {
+          "type": "guard",
+          "description": "Guard (e.g. auth)",
+          "alias": "gu",
+          "usage": "hazel g guard <name> [options]",
+          "nameRequired": true,
+          "options": [
+            {
+              "name": "path",
+              "short": "p",
+              "type": "string",
+              "description": "Path where the file should be generated"
+            },
+            {
+              "name": "dry-run",
+              "type": "boolean",
+              "description": "Preview files without writing them"
+            },
+            {
+              "name": "json",
+              "type": "boolean",
+              "description": "Output result as JSON"
+            }
+          ]
+        },
+        {
+          "type": "interceptor",
+          "description": "Interceptor",
+          "alias": "i",
+          "usage": "hazel g interceptor <name> [options]",
+          "nameRequired": true,
+          "options": [
+            {
+              "name": "path",
+              "short": "p",
+              "type": "string",
+              "description": "Path where the file should be generated"
+            },
+            {
+              "name": "dry-run",
+              "type": "boolean",
+              "description": "Preview files without writing them"
+            },
+            {
+              "name": "json",
+              "type": "boolean",
+              "description": "Output result as JSON"
+            }
+          ]
+        },
+        {
+          "type": "middleware",
+          "description": "Middleware",
+          "alias": "mw",
+          "usage": "hazel g middleware <name> [options]",
+          "nameRequired": true,
+          "defaultPath": "src/middleware",
+          "options": [
+            {
+              "name": "path",
+              "short": "p",
+              "type": "string",
+              "default": "src/middleware",
+              "description": "Path where the file should be generated"
+            },
+            {
+              "name": "dry-run",
+              "type": "boolean",
+              "description": "Preview files without writing them"
+            },
+            {
+              "name": "json",
+              "type": "boolean",
+              "description": "Output result as JSON"
+            }
+          ]
+        },
+        {
+          "type": "pipe",
+          "description": "Validation/transform pipe",
+          "usage": "hazel g pipe <name> [options]",
+          "nameRequired": true,
+          "options": [
+            {
+              "name": "path",
+              "short": "p",
+              "type": "string",
+              "description": "Path where the file should be generated"
+            },
+            {
+              "name": "dry-run",
+              "type": "boolean",
+              "description": "Preview files without writing them"
+            },
+            {
+              "name": "json",
+              "type": "boolean",
+              "description": "Output result as JSON"
+            }
+          ]
+        },
+        {
+          "type": "filter",
+          "description": "Exception filter",
+          "alias": "f",
+          "usage": "hazel g filter <name> [options]",
+          "nameRequired": true,
+          "options": [
+            {
+              "name": "path",
+              "short": "p",
+              "type": "string",
+              "description": "Path where the file should be generated"
+            },
+            {
+              "name": "dry-run",
+              "type": "boolean",
+              "description": "Preview files without writing them"
+            },
+            {
+              "name": "json",
+              "type": "boolean",
+              "description": "Output result as JSON"
+            }
+          ]
+        },
+        {
+          "type": "repository",
+          "description": "Prisma repository",
+          "alias": "repo",
+          "usage": "hazel g repository <name> [options]",
+          "nameRequired": true,
+          "options": [
+            {
+              "name": "path",
+              "short": "p",
+              "type": "string",
+              "description": "Path where the file should be generated"
+            },
+            {
+              "name": "dry-run",
+              "type": "boolean",
+              "description": "Preview files without writing them"
+            },
+            {
+              "name": "json",
+              "type": "boolean",
+              "description": "Output result as JSON"
+            }
+          ]
+        },
+        {
+          "type": "gateway",
+          "description": "WebSocket gateway",
+          "alias": "ws",
+          "usage": "hazel g gateway <name> [options]",
+          "nameRequired": true,
+          "options": [
+            {
+              "name": "path",
+              "short": "p",
+              "type": "string",
+              "description": "Path where the file should be generated"
+            },
+            {
+              "name": "dry-run",
+              "type": "boolean",
+              "description": "Preview files without writing them"
+            },
+            {
+              "name": "json",
+              "type": "boolean",
+              "description": "Output result as JSON"
+            }
+          ]
+        },
+        {
+          "type": "ai-service",
+          "description": "AI service with decorators",
+          "alias": "ai",
+          "usage": "hazel g ai-service <name> [options]",
+          "nameRequired": true,
+          "options": [
+            {
+              "name": "path",
+              "short": "p",
+              "type": "string",
+              "description": "Path where the file should be generated"
+            },
+            {
+              "name": "dry-run",
+              "type": "boolean",
+              "description": "Preview files without writing them"
+            },
+            {
+              "name": "json",
+              "type": "boolean",
+              "description": "Output result as JSON"
+            }
+          ]
+        },
+        {
+          "type": "agent",
+          "description": "AI agent with @Agent and @Tool",
+          "usage": "hazel g agent <name> [options]",
+          "nameRequired": true,
+          "options": [
+            {
+              "name": "path",
+              "short": "p",
+              "type": "string",
+              "description": "Path where the file should be generated"
+            },
+            {
+              "name": "dry-run",
+              "type": "boolean",
+              "description": "Preview files without writing them"
+            },
+            {
+              "name": "json",
+              "type": "boolean",
+              "description": "Output result as JSON"
+            }
+          ]
+        },
+        {
+          "type": "cache",
+          "description": "Cache service with decorators",
+          "usage": "hazel g cache <name> [options]",
+          "nameRequired": true,
+          "options": [
+            {
+              "name": "path",
+              "short": "p",
+              "type": "string",
+              "description": "Path where the file should be generated"
+            },
+            {
+              "name": "dry-run",
+              "type": "boolean",
+              "description": "Preview files without writing them"
+            },
+            {
+              "name": "json",
+              "type": "boolean",
+              "description": "Output result as JSON"
+            }
+          ]
+        },
+        {
+          "type": "cron",
+          "description": "Cron/scheduled job service",
+          "alias": "job",
+          "usage": "hazel g cron <name> [options]",
+          "nameRequired": true,
+          "options": [
+            {
+              "name": "path",
+              "short": "p",
+              "type": "string",
+              "description": "Path where the file should be generated"
+            },
+            {
+              "name": "dry-run",
+              "type": "boolean",
+              "description": "Preview files without writing them"
+            },
+            {
+              "name": "json",
+              "type": "boolean",
+              "description": "Output result as JSON"
+            }
+          ]
+        },
+        {
+          "type": "rag",
+          "description": "RAG (Retrieval-Augmented Generation) service",
+          "usage": "hazel g rag <name> [options]",
+          "nameRequired": true,
+          "options": [
+            {
+              "name": "path",
+              "short": "p",
+              "type": "string",
+              "description": "Path where the file should be generated"
+            },
+            {
+              "name": "dry-run",
+              "type": "boolean",
+              "description": "Preview files without writing them"
+            },
+            {
+              "name": "json",
+              "type": "boolean",
+              "description": "Output result as JSON"
+            }
+          ]
+        },
+        {
+          "type": "discovery",
+          "description": "Service discovery setup",
+          "usage": "hazel g discovery <name> [options]",
+          "nameRequired": true,
+          "options": [
+            {
+              "name": "path",
+              "short": "p",
+              "type": "string",
+              "description": "Path where the file should be generated"
+            },
+            {
+              "name": "dry-run",
+              "type": "boolean",
+              "description": "Preview files without writing them"
+            },
+            {
+              "name": "json",
+              "type": "boolean",
+              "description": "Output result as JSON"
+            }
+          ]
+        },
+        {
+          "type": "config",
+          "description": "Config module setup",
+          "usage": "hazel g config [options]",
+          "nameRequired": false,
+          "options": [
+            {
+              "name": "path",
+              "short": "p",
+              "type": "string",
+              "description": "Path where the file should be generated"
+            },
+            {
+              "name": "dry-run",
+              "type": "boolean",
+              "description": "Preview files without writing them"
+            },
+            {
+              "name": "json",
+              "type": "boolean",
+              "description": "Output result as JSON"
+            }
+          ]
+        },
+        {
+          "type": "serverless",
+          "description": "Serverless handler (Lambda or Cloud Function)",
+          "alias": "sls",
+          "usage": "hazel g serverless <name> [options]",
+          "nameRequired": true,
+          "options": [
+            {
+              "name": "path",
+              "short": "p",
+              "type": "string",
+              "description": "Path where the file should be generated"
+            },
+            {
+              "name": "platform",
+              "type": "string",
+              "enum": [
+                "lambda",
+                "cloud-function"
+              ],
+              "default": "lambda",
+              "description": "Platform: lambda or cloud-function"
+            },
+            {
+              "name": "dry-run",
+              "type": "boolean",
+              "description": "Preview files without writing them"
+            },
+            {
+              "name": "json",
+              "type": "boolean",
+              "description": "Output result as JSON"
+            }
+          ]
+        }
+      ],
+      "options": [
+        {
+          "name": "list",
+          "type": "boolean",
+          "description": "List available generator types"
+        },
+        {
+          "name": "list-json",
+          "type": "boolean",
+          "description": "With --list: output list as JSON"
+        }
+      ]
+    },
+    {
+      "name": "add",
+      "usage": "hazel add [package] [options]",
+      "description": "Add a HazelJS package to your project (optionally generate a setup file with --setup)",
+      "args": [
+        {
+          "name": "package",
+          "type": "string",
+          "required": false,
+          "description": "Package short name (e.g. 'ai', 'auth') or full npm name"
+        }
+      ],
+      "options": [
+        {
+          "name": "dev",
+          "type": "boolean",
+          "description": "Install as dev dependency"
+        },
+        {
+          "name": "setup",
+          "type": "boolean",
+          "description": "Also generate a minimal setup/starter file in src/"
+        },
+        {
+          "name": "setup-path",
+          "type": "string",
+          "default": "src",
+          "description": "Path for the setup file"
+        }
+      ],
+      "packages": [
+        {
+          "shortName": "ai",
+          "npm": "@hazeljs/ai",
+          "label": "AI Integration (@hazeljs/ai)",
+          "description": "AI integration with OpenAI, Anthropic, and other providers"
+        },
+        {
+          "shortName": "agent",
+          "npm": "@hazeljs/agent",
+          "label": "AI Agents (@hazeljs/agent)",
+          "description": "AI agents with tools, memory, and RAG capabilities"
+        },
+        {
+          "shortName": "auth",
+          "npm": "@hazeljs/auth",
+          "label": "Authentication (@hazeljs/auth)",
+          "description": "JWT authentication with guards and decorators"
+        },
+        {
+          "shortName": "cache",
+          "npm": "@hazeljs/cache",
+          "label": "Caching (@hazeljs/cache)",
+          "description": "Multi-tier caching with Redis, memory, and decorators"
+        },
+        {
+          "shortName": "config",
+          "npm": "@hazeljs/config",
+          "label": "Configuration (@hazeljs/config)",
+          "description": "Environment-based configuration management"
+        },
+        {
+          "shortName": "cron",
+          "npm": "@hazeljs/cron",
+          "label": "Cron Jobs (@hazeljs/cron)",
+          "description": "Scheduled jobs with cron expressions"
+        },
+        {
+          "shortName": "data",
+          "npm": "@hazeljs/data",
+          "label": "Data/ETL (@hazeljs/data)",
+          "description": "Data pipelines and ETL workflows"
+        },
+        {
+          "shortName": "discovery",
+          "npm": "@hazeljs/discovery",
+          "label": "Service Discovery (@hazeljs/discovery)",
+          "description": "Service registration and discovery"
+        },
+        {
+          "shortName": "event-emitter",
+          "npm": "@hazeljs/event-emitter",
+          "label": "Event Emitter (@hazeljs/event-emitter)",
+          "description": "Event-driven architecture with EventEmitter"
+        },
+        {
+          "shortName": "gateway",
+          "npm": "@hazeljs/gateway",
+          "label": "API Gateway (@hazeljs/gateway)",
+          "description": "API gateway with routing and load balancing"
+        },
+        {
+          "shortName": "graphql",
+          "npm": "@hazeljs/graphql",
+          "label": "GraphQL (@hazeljs/graphql)",
+          "description": "GraphQL server with schema and resolvers"
+        },
+        {
+          "shortName": "grpc",
+          "npm": "@hazeljs/grpc",
+          "label": "gRPC (@hazeljs/grpc)",
+          "description": "gRPC server with protobuf integration"
+        },
+        {
+          "shortName": "kafka",
+          "npm": "@hazeljs/kafka",
+          "label": "Kafka (@hazeljs/kafka)",
+          "description": "Apache Kafka integration for event streaming"
+        },
+        {
+          "shortName": "messaging",
+          "npm": "@hazeljs/messaging",
+          "label": "Messaging - WhatsApp/Telegram (@hazeljs/messaging)",
+          "description": "Multi-platform messaging (WhatsApp, Telegram)"
+        },
+        {
+          "shortName": "ml",
+          "npm": "@hazeljs/ml",
+          "label": "Machine Learning (@hazeljs/ml)",
+          "description": "ML model integration and feature store"
+        },
+        {
+          "shortName": "mcp",
+          "npm": "@hazeljs/mcp",
+          "label": "MCP - Model Context Protocol (@hazeljs/mcp)",
+          "description": "Model Context Protocol server implementation"
+        },
+        {
+          "shortName": "pdf-to-audio",
+          "npm": "@hazeljs/pdf-to-audio",
+          "label": "PDF to Audio (@hazeljs/pdf-to-audio)",
+          "description": "Convert PDF documents to audio using TTS"
+        },
+        {
+          "shortName": "prisma",
+          "npm": "@hazeljs/prisma",
+          "label": "Prisma ORM (@hazeljs/prisma)",
+          "description": "Database ORM with Prisma"
+        },
+        {
+          "shortName": "typeorm",
+          "npm": "@hazeljs/typeorm",
+          "label": "TypeORM (@hazeljs/typeorm)",
+          "description": "Database ORM with TypeORM"
+        },
+        {
+          "shortName": "queue",
+          "npm": "@hazeljs/queue",
+          "label": "Queue/BullMQ (@hazeljs/queue)",
+          "description": "Job queue with BullMQ and Redis"
+        },
+        {
+          "shortName": "rag",
+          "npm": "@hazeljs/rag",
+          "label": "RAG/Vector Search (@hazeljs/rag)",
+          "description": "Retrieval-augmented generation with vector search"
+        },
+        {
+          "shortName": "resilience",
+          "npm": "@hazeljs/resilience",
+          "label": "Resilience - Circuit Breaker (@hazeljs/resilience)",
+          "description": "Circuit breaker, retry, and timeout patterns"
+        },
+        {
+          "shortName": "serverless",
+          "npm": "@hazeljs/serverless",
+          "label": "Serverless (@hazeljs/serverless)",
+          "description": "Serverless adapters for AWS Lambda, Google Cloud Functions"
+        },
+        {
+          "shortName": "swagger",
+          "npm": "@hazeljs/swagger",
+          "label": "Swagger/OpenAPI (@hazeljs/swagger)",
+          "description": "OpenAPI documentation and Swagger UI"
+        },
+        {
+          "shortName": "websocket",
+          "npm": "@hazeljs/websocket",
+          "label": "WebSocket (@hazeljs/websocket)",
+          "description": "Real-time WebSocket communication"
+        }
+      ]
+    },
+    {
+      "name": "info",
+      "usage": "hazel info",
+      "description": "Display information about the current HazelJS project",
+      "args": [],
+      "options": []
+    }
+  ],
+  "globalOptions": [
+    {
+      "name": "help",
+      "short": "h",
+      "type": "boolean",
+      "description": "Display help for command"
+    },
+    {
+      "name": "version",
+      "short": "V",
+      "type": "boolean",
+      "description": "Output the version number"
+    }
+  ],
+  "outputFormats": {
+    "json": {
+      "description": "Machine-readable JSON output for automation and LLM tool-use",
+      "supported": [
+        "generate",
+        "add"
+      ],
+      "schema": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "description": "Whether the operation succeeded"
+          },
+          "created": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of created file paths"
+          },
+          "nextSteps": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Optional next steps for the user"
+          },
+          "dryRun": {
+            "type": "boolean",
+            "description": "True if this was a dry-run preview"
+          },
+          "error": {
+            "type": "string",
+            "description": "Error message if ok is false"
+          }
+        }
+      }
+    },
+    "dryRun": {
+      "description": "Preview mode that shows what would be created without writing files",
+      "supported": [
+        "generate"
+      ],
+      "behavior": "Prefixes output with [dry-run] and sets dryRun: true in JSON"
+    }
+  }
+}

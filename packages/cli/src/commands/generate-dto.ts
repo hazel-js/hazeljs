@@ -61,11 +61,23 @@ class DtoGenerator extends Generator {
   }
 }
 
+/**
+ * Generate a pair of DTOs (create + update) for the given name.
+ *
+ * @param name    - Entity name (e.g. 'product') — determines file and class names
+ * @param options - Standard CLI options (--path, --dry-run, --json)
+ * @returns GenerateResult with paths of both created DTO files
+ */
 export async function runDto(name: string, options: GenerateCLIOptions): Promise<GenerateResult> {
   const generator = new DtoGenerator();
   return generator.generate({ name, path: options.path, dryRun: options.dryRun });
 }
 
+/**
+ * Register `hazel g dto <name>` as a sub-command of the generate command.
+ *
+ * @param program - The Commander `generate` parent command
+ */
 export function generateDto(program: Command): void {
   program
     .command('dto <name>')

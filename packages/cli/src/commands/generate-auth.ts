@@ -146,6 +146,13 @@ export class LoginDto {
 }
 `;
 
+/**
+ * Generate a complete auth module (6 files: module, service, controller, JWT guard, 2 DTOs).
+ *
+ * @param _name   - Unused (auth generator doesn't need a custom name)
+ * @param options - Standard CLI options (--path, --dry-run, --json)
+ * @returns GenerateResult with paths of all created files and setup next-steps
+ */
 export async function runAuth(_name: string, options: GenerateCLIOptions): Promise<GenerateResult> {
   const basePath = path.join(process.cwd(), options.path || 'src/auth');
   const data: Record<string, string> = {};
@@ -181,6 +188,11 @@ export async function runAuth(_name: string, options: GenerateCLIOptions): Promi
   };
 }
 
+/**
+ * Register `hazel g auth` as a sub-command of the generate command.
+ *
+ * @param command - The Commander `generate` parent command
+ */
 export function generateAuth(command: Command) {
   command
     .command('auth')

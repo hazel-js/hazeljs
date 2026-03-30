@@ -378,14 +378,23 @@ SwaggerModule.setRootModule(AppModule);
   },
 ];
 
-/** Lookup by short name (e.g. 'ai') or full npm name (e.g. '@hazeljs/ai') */
+/**
+ * Look up a HazelJS package by its short CLI name or full npm package name.
+ *
+ * @param nameOrNpm - Either the short name ('ai', 'auth') or full npm name ('@hazeljs/ai')
+ * @returns The matching package metadata, or undefined if not found
+ */
 export function findPackage(nameOrNpm: string): HazelPackageMeta | undefined {
   return HAZEL_PACKAGES.find(
     (p) => p.shortName === nameOrNpm || p.npm === nameOrNpm
   );
 }
 
-/** Map of shortName → HazelPackageMeta for quick lookup */
+/**
+ * Map of short CLI name → HazelPackageMeta for O(1) lookups.
+ *
+ * Example: PACKAGES_BY_NAME['ai'] returns the @hazeljs/ai package metadata.
+ */
 export const PACKAGES_BY_NAME: Record<string, HazelPackageMeta> = Object.fromEntries(
   HAZEL_PACKAGES.map((p) => [p.shortName, p])
 );

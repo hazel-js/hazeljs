@@ -72,6 +72,11 @@ export async function runGenerator(
   };
 }
 
+/**
+ * Get an array of all available generator type names.
+ *
+ * @returns Array of generator types (e.g. ['controller', 'service', 'module', ...])
+ */
 export function getGeneratorTypes(): string[] {
   return GENERATOR_LIST.map((g) => g.type);
 }

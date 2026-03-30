@@ -7,6 +7,15 @@ import inquirer from 'inquirer';
 import { HAZEL_PACKAGES, findPackage } from '../utils/packages-registry';
 import { toKebabCase } from '../utils/generator';
 
+/**
+ * Register the `hazel add [package]` command.
+ *
+ * Installs a HazelJS package via npm and prints import/usage hints.
+ * When called without a package name, shows an interactive selection list.
+ * Use `--setup` to also generate a minimal `*.setup.ts` starter file.
+ *
+ * @param program - The root Commander program instance
+ */
 export function addCommand(program: Command) {
   program
     .command('add [package]')

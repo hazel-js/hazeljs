@@ -1,6 +1,49 @@
 #!/usr/bin/env node
 
+/**
+ * HazelJS CLI — Entry point and command registration
+ *
+ * Architecture Overview:
+ * =====================
+ *
+ * index.ts                 — Entry point, registers all commands with Commander
+ *   ├─ commands/
+ * │   ├─ generate-app.ts   — `hazel new` (full scaffolding) and `hazel g app` (skeleton)
+ * │   ├─ add.ts            — `hazel add [pkg]` with --setup flag (replaces generate-setup)
+ * │   ├─ info.ts           — `hazel info` (project diagnostics)
+ * │   ├─ generate-simple.ts — Config-driven single-file generators (18 types)
+ * │   ├─ generate-module.ts — Multi-file module generator
+ * │   ├─ generate-dto.ts   — DTO pair generator
+ * │   ├─ generate-crud.ts  — Full CRUD resource generator
+ * │   ├─ generate-auth.ts  — Auth module with JWT guard
+ * │   └─ templates.ts      — Mustache templates for all simple generators
+ * └─ utils/
+ *     ├─ generator.ts      — Base Generator class, shared types, string utils
+ *     ├─ generator-registry.ts — Unified registry + runGenerator dispatcher
+ *     └─ packages-registry.ts  — All HazelJS package metadata (single source of truth)
+ *
+ * Command Structure:
+ * =================
+ *
+ * hazel new <app>           — Full interactive scaffolding (packages, git, install)
+ * hazel g app <name>        — Minimal skeleton app (no install/git)
+ * hazel g <type> <name>      — Unified generator for 23+ types (see --list)
+ * hazel add <pkg> [--setup]  — Install HazelJS packages + optional setup file
+ * hazel info                 — Project diagnostics
+ *
+ * Design Principles:
+ * ===================
+ *
+ * 1. Config-driven generators: SIMPLE_GENERATORS array defines 18+ single-file generators
+ * 2. Centralized package registry: HAZEL_PACKAGES drives `hazel add` and `hazel new -i`
+ * 3. Machine-readable output: --json and --list --list-json for LLM tool-use
+ * 4. Consistent CLI options: --path, --dry-run, --json available everywhere
+ * 5. Separation of concerns: Templates live separately from logic; registry is data-driven
+ */
+
 import { Command } from 'commander';
+import { readFileSync } from 'fs';
+import { join } from 'path';
 import { generateApp, registerGenerateApp } from './commands/generate-app';
 import { generateModule } from './commands/generate-module';
 import { generateDto } from './commands/generate-dto';
@@ -11,12 +54,17 @@ import { GENERATOR_LIST } from './utils/generator-registry';
 import { infoCommand } from './commands/info';
 import { addCommand } from './commands/add';
 
+// Read version from package.json to ensure consistency
+const packageJson = JSON.parse(
+  readFileSync(join(__dirname, '../package.json'), 'utf8')
+);
+
 const program = new Command();
 
 program
   .name('hazel')
   .description('CLI for generating HazelJS components and applications')
-  .version('0.2.0');
+  .version(packageJson.version);
 
 // New app command
 generateApp(program);

@@ -286,9 +286,30 @@ npm run lint     # Lint
 
 Contributions are welcome! Please read our [Contributing Guide](../../CONTRIBUTING.md) for details.
 
+## For LLM Agents & Tool Integration
+
+The CLI includes a machine-readable manifest (`cli-manifest.json`) that enables perfect integration with AI agents:
+
+```bash
+# Get all available generators as JSON
+hazel g --list --list-json
+
+# Preview changes without writing files
+hazel g controller users --dry-run --json
+
+# Get machine-readable output for any command
+hazel g service users --json
+```
+
+The manifest is automatically generated during build and always reflects the current package version. It includes:
+- Complete command schemas with options and arguments
+- All available generators with their capabilities  
+- Package registry for `hazel add` commands
+- JSON schema validation for agent tool-use
+
 ## License
 
-Apache 2.0 © [HazelJS](https://hazeljs.ai)
+Apache-2.0 © [HazelJS](https://hazeljs.ai)
 
 ## Links
 

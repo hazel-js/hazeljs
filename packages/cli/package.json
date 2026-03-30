@@ -7,13 +7,15 @@
   "files": [
     "dist",
     "@template",
-    "@template-ai-native"
+    "@template-ai-native",
+    "cli-manifest.json"
   ],
   "bin": {
     "hazel": "./dist/index.js"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && node scripts/generate-manifest.js",
+    "build:types": "tsc",
     "test": "jest",
     "lint": "eslint src --ext .ts",
     "format": "prettier --write \"src/**/*.ts\"",

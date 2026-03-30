@@ -11,6 +11,18 @@ interface PackageJson {
   devDependencies?: Record<string, string>;
 }
 
+/**
+ * Register the `hazel info` command.
+ *
+ * Reads the current directory's package.json and displays:
+ * - Project name, version, description
+ * - Installed @hazeljs/* packages with versions
+ * - src/ directory listing
+ * - Node.js version, platform, architecture
+ * - Detected configuration files (tsconfig, .env, eslint, etc.)
+ *
+ * @param program - The root Commander program instance
+ */
 export function infoCommand(program: Command) {
   program
     .command('info')

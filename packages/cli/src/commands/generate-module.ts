@@ -64,6 +64,13 @@ const UPDATE_DTO_TEMPLATE = `export class Update{{className}}Dto {
 }
 `;
 
+/**
+ * Generate a complete feature module (5 files: module, controller, service, 2 DTOs).
+ *
+ * @param name    - Feature name (e.g. 'users') — determines file and class names
+ * @param options - Standard CLI options (--path, --dry-run, --json)
+ * @returns GenerateResult with paths of all created files
+ */
 export async function runModule(name: string, options: GenerateCLIOptions): Promise<GenerateResult> {
   const className = toPascalCase(name);
   const fileName = toKebabCase(name);
@@ -96,6 +103,11 @@ export async function runModule(name: string, options: GenerateCLIOptions): Prom
   };
 }
 
+/**
+ * Register `hazel g module <name>` as a sub-command of the generate command.
+ *
+ * @param program - The Commander `generate` parent command
+ */
 export function generateModule(program: Command): void {
   program
     .command('module <name>')
