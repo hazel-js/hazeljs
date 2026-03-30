@@ -81,6 +81,18 @@ jobs:
       
       - name: Run tests
         run: npm run test
+      
+      - name: Commit generated files (cli-manifest.json)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add cli-manifest.json 2>/dev/null || true
+          git diff --cached --stat
+          if git diff --cached --quiet; then
+            echo "No generated files to commit"
+          else
+            git commit -m "chore: add generated manifest files"
+          fi
 
       - name: Commit and push version updates
         run: |
@@ -106,7 +118,8 @@ jobs:
           echo "Publishing with tag: $RELEASE_TAG using Lerna"
           export CI=true
           export NPM_CONFIG_YES=true
-          npx lerna publish from-package --yes --dist-tag "$RELEASE_TAG" --no-git-reset --no-git-tag-version --concurrency 4 </dev/null
+          # Explicitly use npm client to avoid pnpm issues
+          npx lerna publish from-package --yes --dist-tag "$RELEASE_TAG" --no-git-reset --no-git-tag-version --npm-client npm --concurrency 4 </dev/null
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
