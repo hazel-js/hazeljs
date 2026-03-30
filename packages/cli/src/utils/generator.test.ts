@@ -1,10 +1,8 @@
 import fs from 'fs';
 import path from 'path';
 import { Generator, toPascalCase, toKebabCase, toCamelCase, renderTemplate } from './generator';
-import inquirer from 'inquirer';
 
 jest.mock('fs');
-jest.mock('inquirer');
 
 describe('Generator utilities', () => {
   describe('toPascalCase', () => {
@@ -72,7 +70,6 @@ describe('Generator utilities', () => {
 describe('Generator class', () => {
   let generator: Generator;
   const mockFs = fs as jest.Mocked<typeof fs>;
-  const mockInquirer = inquirer as jest.Mocked<typeof inquirer>;
 
   beforeEach(() => {
     generator = new Generator();
@@ -136,37 +133,6 @@ describe('Generator class', () => {
       expect(result.dryRun).toBe(true);
       expect(result.created).toHaveLength(1);
       expect(result.created[0]).toContain('test.ts');
-    });
-  });
-
-  describe('promptForOptions', () => {
-    it('should prompt for missing options', async () => {
-      mockInquirer.prompt.mockResolvedValue({
-        name: 'test',
-        path: 'src/test',
-      });
-
-      const result = await generator.promptForOptions({});
-
-      expect(mockInquirer.prompt).toHaveBeenCalled();
-      expect(result).toEqual({
-        name: 'test',
-        path: 'src/test',
-      });
-    });
-
-    it('should not prompt for provided options', async () => {
-      mockInquirer.prompt.mockResolvedValue({});
-
-      const result = await generator.promptForOptions({
-        name: 'test',
-        path: 'src/test',
-      });
-
-      expect(result).toEqual({
-        name: 'test',
-        path: 'src/test',
-      });
     });
   });
 });

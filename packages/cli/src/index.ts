@@ -1,36 +1,15 @@
 #!/usr/bin/env node
 
 import { Command } from 'commander';
-import { generateModule } from './commands/generate-module';
 import { generateApp, registerGenerateApp } from './commands/generate-app';
-import { generateController } from './commands/generate-controller';
-import { generateService } from './commands/generate-service';
+import { generateModule } from './commands/generate-module';
 import { generateDto } from './commands/generate-dto';
-import { generateGuard } from './commands/generate-guard';
-import { generateInterceptor } from './commands/generate-interceptor';
-import { generateWebSocketGateway } from './commands/generate-websocket-gateway';
-import { generateExceptionFilter } from './commands/generate-exception-filter';
-import { generatePipe } from './commands/generate-pipe';
-import { generateRepository } from './commands/generate-repository';
-import { generateAIService } from './commands/generate-ai-service';
-import { generateAgent } from './commands/generate-agent';
-import { generateServerlessHandler } from './commands/generate-serverless-handler';
 import { generateCrud } from './commands/generate-crud';
-import { generateMiddleware } from './commands/generate-middleware';
 import { generateAuth } from './commands/generate-auth';
-import { generateConfig } from './commands/generate-config';
-import { generateCache } from './commands/generate-cache';
-import { generateCron } from './commands/generate-cron';
-import { generateRag } from './commands/generate-rag';
-import { generateDiscovery } from './commands/generate-discovery';
-import { generateSetup } from './commands/generate-setup';
+import { registerSimpleGenerators } from './commands/generate-simple';
 import { GENERATOR_LIST } from './utils/generator-registry';
 import { infoCommand } from './commands/info';
 import { addCommand } from './commands/add';
-import { buildCommand } from './commands/build';
-import { pdfToAudioCommand } from './commands/pdf-to-audio';
-import { startCommand } from './commands/start';
-import { testCommand } from './commands/test';
 
 const program = new Command();
 
@@ -45,10 +24,6 @@ generateApp(program);
 // Utility commands
 infoCommand(program);
 addCommand(program);
-buildCommand(program);
-pdfToAudioCommand(program);
-startCommand(program);
-testCommand(program);
 
 // Generate command group (unified: hazel g <type> <name> [--path] [--dry-run] [--json], or hazel g --list)
 const generateCommand = program
@@ -81,30 +56,13 @@ const generateCommand = program
 // Skeleton app
 registerGenerateApp(generateCommand);
 
-// Core components
-generateController(generateCommand);
-generateService(generateCommand);
+// Complex generators (multi-file output)
 generateModule(generateCommand);
 generateDto(generateCommand);
-generateGuard(generateCommand);
-generateInterceptor(generateCommand);
-generateMiddleware(generateCommand);
-
-// Advanced generators
 generateCrud(generateCommand);
 generateAuth(generateCommand);
-generateWebSocketGateway(generateCommand);
-generateExceptionFilter(generateCommand);
-generatePipe(generateCommand);
-generateRepository(generateCommand);
-generateAIService(generateCommand);
-generateAgent(generateCommand);
-generateServerlessHandler(generateCommand);
-generateConfig(generateCommand);
-generateCache(generateCommand);
-generateCron(generateCommand);
-generateRag(generateCommand);
-generateDiscovery(generateCommand);
-generateSetup(generateCommand);
+
+// Simple generators (config-driven single-file output)
+registerSimpleGenerators(generateCommand);
 
 program.parse(process.argv);

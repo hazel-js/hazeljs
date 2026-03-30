@@ -1,133 +1,20 @@
 import { Command } from 'commander';
 import { execSync } from 'child_process';
 import chalk from 'chalk';
+import fs from 'fs';
+import path from 'path';
 import inquirer from 'inquirer';
-
-const HAZEL_PACKAGES: Record<string, { npm: string; hint: string }> = {
-  ai: {
-    npm: '@hazeljs/ai',
-    hint: 'import { AIModule } from "@hazeljs/ai";',
-  },
-  agent: {
-    npm: '@hazeljs/agent',
-    hint: 'import { AgentModule } from "@hazeljs/agent";',
-  },
-  audit: {
-    npm: '@hazeljs/audit',
-    hint: 'import { AuditModule, ConsoleAuditTransport } from "@hazeljs/audit";\n  // AuditModule.forRoot({ transports: [new ConsoleAuditTransport()] })',
-  },
-  auth: {
-    npm: '@hazeljs/auth',
-    hint: 'import { JwtModule } from "@hazeljs/auth";\n  // JwtModule.forRoot({ secret: "your-secret", expiresIn: "1d" })',
-  },
-  oauth: {
-    npm: '@hazeljs/oauth',
-    hint: 'import { OAuthModule } from "@hazeljs/oauth";\n  // OAuthModule.forRoot({ providers: { google: {...}, microsoft: {...}, github: {...} } })',
-  },
-  cache: {
-    npm: '@hazeljs/cache',
-    hint: 'import { CacheModule } from "@hazeljs/cache";',
-  },
-  config: {
-    npm: '@hazeljs/config',
-    hint: 'import { ConfigModule } from "@hazeljs/config";\n  // ConfigModule.forRoot({ envFilePath: ".env" })',
-  },
-  cron: {
-    npm: '@hazeljs/cron',
-    hint: 'import { CronModule } from "@hazeljs/cron";',
-  },
-  data: {
-    npm: '@hazeljs/data',
-    hint: 'import { DataModule } from "@hazeljs/data";',
-  },
-  discovery: {
-    npm: '@hazeljs/discovery',
-    hint: 'import { ServiceRegistry, DiscoveryClient } from "@hazeljs/discovery";',
-  },
-  'event-emitter': {
-    npm: '@hazeljs/event-emitter',
-    hint: 'import { EventEmitterModule } from "@hazeljs/event-emitter";',
-  },
-  gateway: {
-    npm: '@hazeljs/gateway',
-    hint: 'import { GatewayModule } from "@hazeljs/gateway";',
-  },
-  guardrails: {
-    npm: '@hazeljs/guardrails',
-    hint: 'import { GuardrailsModule } from "@hazeljs/guardrails";\n  // GuardrailsModule.forRoot({ redactPIIByDefault: true })',
-  },
-  graphql: {
-    npm: '@hazeljs/graphql',
-    hint: 'import { GraphQLModule } from "@hazeljs/graphql";',
-  },
-  grpc: {
-    npm: '@hazeljs/grpc',
-    hint: 'import { GrpcModule } from "@hazeljs/grpc";',
-  },
-  kafka: {
-    npm: '@hazeljs/kafka',
-    hint: 'import { KafkaModule } from "@hazeljs/kafka";',
-  },
-  messaging: {
-    npm: '@hazeljs/messaging',
-    hint: 'import { MessagingModule } from "@hazeljs/messaging";',
-  },
-  mcp: {
-    npm: '@hazeljs/mcp',
-    hint: 'import { createMcpServer } from "@hazeljs/mcp";\n  // createMcpServer({ name, version, toolRegistry }).listenStdio();',
-  },
-  ml: {
-    npm: '@hazeljs/ml',
-    hint: 'import { MLModule } from "@hazeljs/ml";',
-  },
-  prompts: {
-    npm: '@hazeljs/prompts',
-    hint: 'import { PromptTemplate, PromptRegistry } from "@hazeljs/prompts";',
-  },
-  prisma: {
-    npm: '@hazeljs/prisma',
-    hint: 'import { PrismaModule } from "@hazeljs/prisma";',
-  },
-  typeorm: {
-    npm: '@hazeljs/typeorm',
-    hint: 'import { TypeOrmModule } from "@hazeljs/typeorm";',
-  },
-  queue: {
-    npm: '@hazeljs/queue',
-    hint: 'import { QueueModule } from "@hazeljs/queue";',
-  },
-  rag: {
-    npm: '@hazeljs/rag',
-    hint: 'import { RAGPipeline } from "@hazeljs/rag";',
-  },
-  resilience: {
-    npm: '@hazeljs/resilience',
-    hint: 'import { CircuitBreaker, WithRetry, WithTimeout } from "@hazeljs/resilience";',
-  },
-  'pdf-to-audio': {
-    npm: '@hazeljs/pdf-to-audio',
-    hint: 'import { PdfToAudioModule } from "@hazeljs/pdf-to-audio";\n  // PdfToAudioModule converts PDFs to audio via TTS',
-  },
-  serverless: {
-    npm: '@hazeljs/serverless',
-    hint: 'import { createLambdaHandler } from "@hazeljs/serverless";',
-  },
-  swagger: {
-    npm: '@hazeljs/swagger',
-    hint: 'import { SwaggerModule } from "@hazeljs/swagger";',
-  },
-  websocket: {
-    npm: '@hazeljs/websocket',
-    hint: 'import { WebSocketModule } from "@hazeljs/websocket";',
-  },
-};
+import { HAZEL_PACKAGES, findPackage } from '../utils/packages-registry';
+import { toKebabCase } from '../utils/generator';
 
 export function addCommand(program: Command) {
   program
     .command('add [package]')
-    .description('Add a HazelJS package to your project')
+    .description('Add a HazelJS package to your project (optionally generate a setup file with --setup)')
     .option('--dev', 'Install as dev dependency')
-    .action(async (packageName?: string, options?: { dev?: boolean }) => {
+    .option('--setup', 'Also generate a minimal setup/starter file in src/')
+    .option('--setup-path <path>', 'Path for the setup file', 'src')
+    .action(async (packageName?: string, options?: { dev?: boolean; setup?: boolean; setupPath?: string }) => {
       try {
         let selectedPackage = packageName;
 
@@ -138,9 +25,9 @@ export function addCommand(program: Command) {
               type: 'list',
               name: 'package',
               message: 'Which HazelJS package would you like to add?',
-              choices: Object.keys(HAZEL_PACKAGES).map((key) => ({
-                name: `${key} - ${HAZEL_PACKAGES[key].npm}`,
-                value: key,
+              choices: HAZEL_PACKAGES.map((p) => ({
+                name: `${p.shortName} - ${p.npm}`,
+                value: p.shortName,
               })),
             },
           ]);
@@ -148,13 +35,13 @@ export function addCommand(program: Command) {
         }
 
         // Get the package info
-        const pkgInfo = HAZEL_PACKAGES[selectedPackage as string];
+        const pkgInfo = findPackage(selectedPackage as string);
 
         if (!pkgInfo) {
           console.log(chalk.yellow(`Unknown package: ${selectedPackage}`));
           console.log(chalk.gray('\nAvailable packages:'));
-          Object.keys(HAZEL_PACKAGES).forEach((key) => {
-            console.log(chalk.gray(`  - ${key}: ${HAZEL_PACKAGES[key].npm}`));
+          HAZEL_PACKAGES.forEach((p) => {
+            console.log(chalk.gray(`  - ${p.shortName}: ${p.npm}`));
           });
           return;
         }
@@ -168,11 +55,22 @@ export function addCommand(program: Command) {
 
         console.log(chalk.green(`\n\u2713 Successfully installed ${pkgInfo.npm}`));
 
+        // Generate setup file if requested
+        if (options?.setup && pkgInfo.setupTemplate) {
+          const setupDir = path.join(process.cwd(), options.setupPath || 'src');
+          const setupFile = path.join(setupDir, `${toKebabCase(pkgInfo.shortName)}.setup.ts`);
+          if (!fs.existsSync(setupDir)) fs.mkdirSync(setupDir, { recursive: true });
+          fs.writeFileSync(setupFile, pkgInfo.setupTemplate);
+          console.log(chalk.green(`\u2713 Generated setup file: ${setupFile}`));
+        } else if (options?.setup && !pkgInfo.setupTemplate) {
+          console.log(chalk.gray('\nNo setup template available for this package.'));
+        }
+
         // Show usage hints
         console.log(chalk.gray('\nUsage:'));
         console.log(chalk.gray(`  ${pkgInfo.hint}`));
         console.log(
-          chalk.gray(`\nDocumentation: https://hazeljs.ai/docs/packages/${selectedPackage}`)
+          chalk.gray(`\nDocumentation: https://hazeljs.ai/docs/packages/${pkgInfo.shortName}`)
         );
       } catch (error) {
         console.error(chalk.red('Error installing package:'), error);

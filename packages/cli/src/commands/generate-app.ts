@@ -6,6 +6,7 @@ import chalk from 'chalk';
 import inquirer from 'inquirer';
 import type { GenerateResult, GenerateCLIOptions } from '../utils/generator';
 import { printGenerateResult } from '../utils/generator';
+import { findPackage, HAZEL_PACKAGES } from '../utils/packages-registry';
 
 function copyRecursiveSync(src: string, dest: string) {
   if (fs.existsSync(src)) {
@@ -56,7 +57,7 @@ function createSkeletonAtDest(destPath: string, appName: string, description: st
         'lint:fix': 'eslint "src/**/*.ts" --fix',
         format: 'prettier --write "src/**/*.ts"',
       },
-      dependencies: { '@hazeljs/core': '^0.2.0', 'reflect-metadata': '^0.2.2' },
+      dependencies: { '@hazeljs/core': '^0.2.0' },
       devDependencies: {
         '@types/jest': '^29.5.12',
         '@types/node': '^20.0.0',
@@ -73,8 +74,7 @@ function createSkeletonAtDest(destPath: string, appName: string, description: st
       },
     };
     fs.writeFileSync(path.join(destPath, 'package.json'), JSON.stringify(packageJson, null, 2));
-    const indexContent = `import 'reflect-metadata';
-import { HazelApp, HazelModule, Controller, Get } from '@hazeljs/core';
+    const indexContent = `import { HazelApp, HazelModule, Controller, Get } from '@hazeljs/core';
 
 @Controller('/')
 export class AppController {
@@ -133,143 +133,19 @@ function scaffoldPackageBoilerplate(destPath: string, packages: string[]) {
   imports.push("import { HelloController } from './hello.controller';");
   controllers.push('HelloController');
 
+  // Special handling for config: create .env files
   if (packages.includes('@hazeljs/config')) {
-    imports.push("import { ConfigModule } from '@hazeljs/config';");
-    moduleImports.push("ConfigModule.forRoot({ envFilePath: '.env' })");
-
-    // Create .env file
     fs.writeFileSync(path.join(destPath, '.env'), 'PORT=3000\nNODE_ENV=development\n');
     fs.writeFileSync(path.join(destPath, '.env.example'), 'PORT=3000\nNODE_ENV=development\n');
     console.log(chalk.green('  ✓ Created .env and .env.example'));
   }
 
-  if (packages.includes('@hazeljs/swagger')) {
-    imports.push("import { SwaggerModule } from '@hazeljs/swagger';");
-    moduleImports.push('SwaggerModule');
-  }
-
-  if (packages.includes('@hazeljs/prisma')) {
-    imports.push("import { PrismaModule } from '@hazeljs/prisma';");
-    moduleImports.push('PrismaModule');
-  }
-
-  if (packages.includes('@hazeljs/typeorm')) {
-    imports.push("import { TypeOrmModule } from '@hazeljs/typeorm';");
-    moduleImports.push('TypeOrmModule');
-  }
-
-  if (packages.includes('@hazeljs/audit')) {
-    imports.push("import { AuditModule, ConsoleAuditTransport } from '@hazeljs/audit';");
-    moduleImports.push("AuditModule.forRoot({ transports: [new ConsoleAuditTransport()] })");
-  }
-
-  if (packages.includes('@hazeljs/auth')) {
-    imports.push("import { JwtModule } from '@hazeljs/auth';");
-    moduleImports.push("JwtModule.forRoot({ secret: process.env.JWT_SECRET || 'change-me', expiresIn: '1d' })");
-  }
-
-  if (packages.includes('@hazeljs/oauth')) {
-    imports.push("import { OAuthModule } from '@hazeljs/oauth';");
-    moduleImports.push(
-      "OAuthModule.forRoot({ providers: { google: { clientId: process.env.GOOGLE_CLIENT_ID!, clientSecret: process.env.GOOGLE_CLIENT_SECRET!, redirectUri: process.env.OAUTH_REDIRECT_URI! } } })"
-    );
-  }
-
-  if (packages.includes('@hazeljs/cache')) {
-    imports.push("import { CacheModule } from '@hazeljs/cache';");
-    moduleImports.push('CacheModule');
-  }
-
-  if (packages.includes('@hazeljs/cron')) {
-    imports.push("import { CronModule } from '@hazeljs/cron';");
-    moduleImports.push('CronModule');
-  }
-
-  if (packages.includes('@hazeljs/websocket')) {
-    imports.push("import { WebSocketModule } from '@hazeljs/websocket';");
-    moduleImports.push('WebSocketModule');
-  }
-
-  if (packages.includes('@hazeljs/ai')) {
-    imports.push("import { AIModule } from '@hazeljs/ai';");
-    moduleImports.push('AIModule');
-  }
-
-  if (packages.includes('@hazeljs/agent')) {
-    imports.push("import { AgentModule } from '@hazeljs/agent';");
-    moduleImports.push('AgentModule');
-  }
-
-  if (packages.includes('@hazeljs/rag')) {
-    imports.push("import { RAGModule } from '@hazeljs/rag';");
-    moduleImports.push('RAGModule');
-  }
-
-  if (packages.includes('@hazeljs/discovery')) {
-    // Discovery uses ServiceRegistry/DiscoveryClient programmatically - no module import
-  }
-
-  if (packages.includes('@hazeljs/prompts')) {
-    // Prompts is a library (PromptTemplate, PromptRegistry) - no module import
-  }
-
-  if (packages.includes('@hazeljs/mcp')) {
-    // MCP uses createMcpServer() programmatically - no module import
-  }
-
-  if (packages.includes('@hazeljs/pdf-to-audio')) {
-    imports.push("import { PdfToAudioModule } from '@hazeljs/pdf-to-audio';");
-    moduleImports.push('PdfToAudioModule');
-  }
-
-  if (packages.includes('@hazeljs/data')) {
-    imports.push("import { DataModule } from '@hazeljs/data';");
-    moduleImports.push('DataModule.forRoot()');
-  }
-
-  if (packages.includes('@hazeljs/event-emitter')) {
-    imports.push("import { EventEmitterModule } from '@hazeljs/event-emitter';");
-    moduleImports.push('EventEmitterModule.forRoot()');
-  }
-
-  if (packages.includes('@hazeljs/gateway')) {
-    imports.push("import { GatewayModule } from '@hazeljs/gateway';");
-    moduleImports.push('GatewayModule');
-  }
-
-  if (packages.includes('@hazeljs/graphql')) {
-    imports.push("import { GraphQLModule } from '@hazeljs/graphql';");
-    moduleImports.push('GraphQLModule');
-  }
-
-  if (packages.includes('@hazeljs/grpc')) {
-    imports.push("import { GrpcModule } from '@hazeljs/grpc';");
-    moduleImports.push('GrpcModule');
-  }
-
-  if (packages.includes('@hazeljs/kafka')) {
-    imports.push("import { KafkaModule } from '@hazeljs/kafka';");
-    moduleImports.push('KafkaModule');
-  }
-
-  if (packages.includes('@hazeljs/messaging')) {
-    imports.push("import { MessagingModule } from '@hazeljs/messaging';");
-    moduleImports.push('MessagingModule');
-  }
-
-  if (packages.includes('@hazeljs/ml')) {
-    imports.push("import { MLModule } from '@hazeljs/ml';");
-    moduleImports.push('MLModule.forRoot()');
-  }
-
-  if (packages.includes('@hazeljs/queue')) {
-    imports.push("import { QueueModule } from '@hazeljs/queue';");
-    moduleImports.push('QueueModule');
-  }
-
-  if (packages.includes('@hazeljs/resilience')) {
-    // Resilience is a library of decorators, not a module - no import needed in app.module
-    // User can import { CircuitBreaker, WithRetry } in their services
+  // Data-driven: derive imports from centralized registry
+  for (const npmName of packages) {
+    const meta = findPackage(npmName);
+    if (!meta) continue;
+    if (meta.moduleImport) imports.push(meta.moduleImport);
+    if (meta.moduleExpression) moduleImports.push(meta.moduleExpression);
   }
 
   // Generate the enhanced app.module.ts
@@ -290,8 +166,7 @@ export class AppModule {}
 
   // Update index.ts / main.ts if swagger is selected
   if (packages.includes('@hazeljs/swagger')) {
-    const mainContent = `import 'reflect-metadata';
-import { HazelApp } from '@hazeljs/core';
+    const mainContent = `import { HazelApp } from '@hazeljs/core';
 import { SwaggerModule } from '@hazeljs/swagger';
 import { AppModule } from './app.module';
 
@@ -364,36 +239,9 @@ export function generateApp(program: Command) {
               type: 'checkbox',
               name: 'packages',
               message: 'Select additional HazelJS packages to install:',
-              choices: [
-                { name: 'AI Integration (@hazeljs/ai)', value: '@hazeljs/ai' },
-                { name: 'AI Agents (@hazeljs/agent)', value: '@hazeljs/agent' },
-                { name: 'Audit Logging (@hazeljs/audit)', value: '@hazeljs/audit' },
-                { name: 'Authentication (@hazeljs/auth)', value: '@hazeljs/auth' },
-                { name: 'OAuth - Google/Microsoft/GitHub (@hazeljs/oauth)', value: '@hazeljs/oauth' },
-                { name: 'Caching (@hazeljs/cache)', value: '@hazeljs/cache' },
-                { name: 'Configuration (@hazeljs/config)', value: '@hazeljs/config' },
-                { name: 'Cron Jobs (@hazeljs/cron)', value: '@hazeljs/cron' },
-                { name: 'Data/ETL (@hazeljs/data)', value: '@hazeljs/data' },
-                { name: 'Service Discovery (@hazeljs/discovery)', value: '@hazeljs/discovery' },
-                { name: 'Event Emitter (@hazeljs/event-emitter)', value: '@hazeljs/event-emitter' },
-                { name: 'API Gateway (@hazeljs/gateway)', value: '@hazeljs/gateway' },
-                { name: 'GraphQL (@hazeljs/graphql)', value: '@hazeljs/graphql' },
-                { name: 'gRPC (@hazeljs/grpc)', value: '@hazeljs/grpc' },
-                { name: 'Kafka (@hazeljs/kafka)', value: '@hazeljs/kafka' },
-                { name: 'Messaging - WhatsApp/Telegram (@hazeljs/messaging)', value: '@hazeljs/messaging' },
-                { name: 'Machine Learning (@hazeljs/ml)', value: '@hazeljs/ml' },
-                { name: 'MCP - Model Context Protocol (@hazeljs/mcp)', value: '@hazeljs/mcp' },
-                { name: 'PDF to Audio (@hazeljs/pdf-to-audio)', value: '@hazeljs/pdf-to-audio' },
-                { name: 'Prompts - typed templates (@hazeljs/prompts)', value: '@hazeljs/prompts' },
-                { name: 'Prisma ORM (@hazeljs/prisma)', value: '@hazeljs/prisma' },
-                { name: 'TypeORM (@hazeljs/typeorm)', value: '@hazeljs/typeorm' },
-                { name: 'Queue/BullMQ (@hazeljs/queue)', value: '@hazeljs/queue' },
-                { name: 'RAG/Vector Search (@hazeljs/rag)', value: '@hazeljs/rag' },
-                { name: 'Resilience - Circuit Breaker (@hazeljs/resilience)', value: '@hazeljs/resilience' },
-                { name: 'Serverless (@hazeljs/serverless)', value: '@hazeljs/serverless' },
-                { name: 'Swagger/OpenAPI (@hazeljs/swagger)', value: '@hazeljs/swagger' },
-                { name: 'WebSocket (@hazeljs/websocket)', value: '@hazeljs/websocket' },
-              ],
+              choices: HAZEL_PACKAGES.map(
+                (p: { label: string; npm: string }) => ({ name: p.label, value: p.npm })
+              ),
             },
           ]);
 
@@ -426,110 +274,7 @@ export function generateApp(program: Command) {
           console.log(chalk.green(`✓ ${options.template} template files copied`));
         } else {
           console.log(chalk.yellow(`⚠ ${options.template} template not found, creating basic structure...`));
-          
-          // Create basic structure
-          fs.mkdirSync(destPath, { recursive: true });
-          fs.mkdirSync(path.join(destPath, 'src'), { recursive: true });
-          
-          // Create package.json
-          const packageJson = {
-            name: projectConfig.name,
-            version: '0.1.0',
-            description: projectConfig.description,
-            main: 'dist/index.js',
-            scripts: {
-              build: 'tsc',
-              start: 'node dist/index.js',
-              dev: 'ts-node-dev --respawn --transpile-only src/index.ts',
-              test: 'jest',
-              lint: 'eslint "src/**/*.ts"',
-              'lint:fix': 'eslint "src/**/*.ts" --fix',
-              format: 'prettier --write "src/**/*.ts"',
-            },
-            dependencies: {
-              '@hazeljs/core': '^0.2.0',
-              'reflect-metadata': '^0.2.2',
-            },
-            devDependencies: {
-              '@types/jest': '^29.5.12',
-              '@types/node': '^20.0.0',
-              '@typescript-eslint/eslint-plugin': '^8.18.2',
-              '@typescript-eslint/parser': '^8.18.2',
-              'eslint': '^8.56.0',
-              'eslint-config-prettier': '^9.1.0',
-              'eslint-plugin-prettier': '^5.1.3',
-              'jest': '^29.7.0',
-              'prettier': '^3.2.5',
-              'ts-jest': '^29.1.2',
-              'ts-node-dev': '^2.0.0',
-              'typescript': '^5.3.3',
-            },
-            author: projectConfig.author,
-            license: projectConfig.license,
-          };
-          
-          fs.writeFileSync(
-            path.join(destPath, 'package.json'),
-            JSON.stringify(packageJson, null, 2)
-          );
-          
-          // Create basic index.ts
-          const indexContent = `import 'reflect-metadata';
-import { HazelApp, HazelModule, Controller, Get } from '@hazeljs/core';
-
-@Controller('/')
-export class AppController {
-  @Get()
-  hello() {
-    return { message: 'Hello from HazelJS!' };
-  }
-}
-
-@HazelModule({
-  controllers: [AppController],
-})
-export class AppModule {}
-
-async function bootstrap() {
-  const app = new HazelApp(AppModule);
-
-  app.enableCors({
-    origin: '*',
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-  });
-
-  const port = parseInt(process.env.PORT || '3000', 10);
-  await app.listen(port);
-}
-
-bootstrap();
-`;
-          fs.writeFileSync(path.join(destPath, 'src', 'index.ts'), indexContent);
-          
-          // Create tsconfig.json
-          const tsConfig = {
-            compilerOptions: {
-              target: 'ES2020',
-              module: 'commonjs',
-              lib: ['ES2020'],
-              outDir: './dist',
-              rootDir: './src',
-              strict: true,
-              esModuleInterop: true,
-              skipLibCheck: true,
-              forceConsistentCasingInFileNames: true,
-              experimentalDecorators: true,
-              emitDecoratorMetadata: true,
-            },
-            include: ['src/**/*'],
-            exclude: ['node_modules', 'dist'],
-          };
-          
-          fs.writeFileSync(
-            path.join(destPath, 'tsconfig.json'),
-            JSON.stringify(tsConfig, null, 2)
-          );
-          
+          createSkeletonAtDest(destPath, projectConfig.name, projectConfig.description);
           console.log(chalk.green('✓ Basic structure created'));
         }
 

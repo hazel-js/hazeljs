@@ -1,7 +1,6 @@
 import fs from 'fs';
 import path from 'path';
 import chalk from 'chalk';
-import inquirer from 'inquirer';
 import mustache from 'mustache';
 
 /**
@@ -110,29 +109,6 @@ export class Generator {
 
   protected getDefaultTemplate(): string {
     return '';
-  }
-
-  public async promptForOptions(options: Partial<GeneratorOptions>): Promise<GeneratorOptions> {
-    const answers = await inquirer.prompt([
-      {
-        type: 'input',
-        name: 'name',
-        message: 'What is the name of the component?',
-        when: !options.name,
-      },
-      {
-        type: 'input',
-        name: 'path',
-        message: 'Where should the component be generated?',
-        default: 'src',
-        when: !options.path,
-      },
-    ]);
-
-    return {
-      ...options,
-      ...answers,
-    };
   }
 }
 
