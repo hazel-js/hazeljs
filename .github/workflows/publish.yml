@@ -92,6 +92,8 @@ jobs:
             echo "No generated files to commit"
           else
             git commit -m "chore: add generated manifest files"
+            git pull --rebase --autostash origin "${{ steps.checkout.outputs.default_branch}"
+            git push origin "${{ steps.checkout.outputs.default_branch}"
           fi
 
       - name: Commit and push version updates
