@@ -339,16 +339,16 @@ We were tired of choosing between a heavy framework (NestJS) and a minimal one (
 ## 📦 Packages
 
 ### AI Stack (standout)
-| Package | What it does |
-|---------|--------------|
-| `@hazeljs/ai` | Multi-provider integration, streaming, caching, type-safe outputs |
-| `@hazeljs/agent` | Stateful agents, tool calling, SupervisorAgent, human-in-the-loop |
-| `@hazeljs/rag` | Vector search, GraphRAG, 11 loaders, Agentic RAG, Memory System |
-| `@hazeljs/ml` | Complete ML toolkit, training, metrics, drift detection |
-| `@hazeljs/guardrails` | AI safety, PII redaction, toxicity check, factuality |
-| `@hazeljs/memory` | Persistent long-term memory for AI context |
-| `@hazeljs/flow` | Durable workflows — WAIT/resume, idempotency, audit timeline |
-| `@hazeljs/prompts` | Versioned prompts, hot-swap from Redis |
+| Package               | What it does                                                      |
+| -----------------------| -------------------------------------------------------------------|
+| `@hazeljs/ai`         | Multi-provider integration, streaming, caching, type-safe outputs |
+| `@hazeljs/agent`      | Stateful agents, tool calling, SupervisorAgent, human-in-the-loop |
+| `@hazeljs/rag`        | Vector search, GraphRAG, 11 loaders, Agentic RAG, Memory System   |
+| `@hazeljs/ml`         | Complete ML toolkit, training, metrics, drift detection           |
+| `@hazeljs/guardrails` | AI safety, PII redaction, toxicity check, factuality              |
+| `@hazeljs/memory`     | Persistent long-term memory for AI context                        |
+| `@hazeljs/flow`       | Durable workflows — WAIT/resume, idempotency, audit timeline      |
+| `@hazeljs/prompts`    | Versioned prompts, hot-swap from Redis                            |
 
 ### Infrastructure & Resilience
 | Package | What it does |
@@ -429,7 +429,7 @@ Read our [Contributing Guide](./CONTRIBUTING.md) for details.
 
 ## 📞 Support & Community
 
-- 💬 **Discord**: [Join our community](https://discord.gg/xe495BvE) - Real-time help
+- 💬 **Discord**: [Join our community](https://discord.com/channels/1448263814238965833/1448263814859456575) - Real-time help
 - 💭 **Discussions**: [GitHub Discussions](https://github.com/hazel-js/hazeljs/discussions) - Ask questions
 - 🐛 **Issues**: [Report bugs](https://github.com/hazel-js/hazeljs/issues) - Help us improve
 - 🎨 **Show & Tell**: [Share your project](https://github.com/hazel-js/hazeljs/discussions) - Get featured!
@@ -451,7 +451,7 @@ Apache 2.0 — Free for commercial and open-source use.
 
 ### 🚀 Ready to build?
 
-[Get Started](./QUICKSTART.md) · [View Examples](./example) · [Join Discord](https://discord.gg/xe495BvE) · [⭐ Star on GitHub](https://github.com/hazel-js/hazeljs)
+[Get Started](./QUICKSTART.md) · [View Examples](./example) · [Join Discord](https://discord.com/channels/1448263814238965833/1448263814859456575) · [⭐ Star on GitHub](https://github.com/hazel-js/hazeljs)
 
 ---
 

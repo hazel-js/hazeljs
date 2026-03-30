@@ -152,4 +152,4 @@ Apache 2.0 © [HazelJS](https://hazeljs.ai)
 
 - [Documentation](https://hazeljs.ai/docs/packages/observability)
 - [GitHub](https://github.com/hazel-js/hazeljs)
-- [Discord](https://discord.gg/xe495BvE)
+- [Discord](https://discord.com/channels/1448263814238965833/1448263814859456575)
