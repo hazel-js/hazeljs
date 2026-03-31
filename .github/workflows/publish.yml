@@ -120,8 +120,8 @@ jobs:
           echo "Publishing with tag: $RELEASE_TAG using Lerna"
           export CI=true
           export NPM_CONFIG_YES=true
-          # Explicitly use npm client to avoid pnpm issues
-          npx lerna publish from-package --yes --dist-tag "$RELEASE_TAG" --no-git-reset --no-git-tag-version --npm-client npm --concurrency 4 </dev/null
+          # Lerna 8.x uses npm as default client, no need to specify
+          npx lerna publish from-package --yes --dist-tag "$RELEASE_TAG" --no-git-reset --no-git-tag-version --concurrency 4 </dev/null
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
