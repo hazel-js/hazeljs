@@ -497,6 +497,263 @@ npm test
 
 Contributions are welcome! Please read our [Contributing Guide](../../CONTRIBUTING.md) for details.
 
+## 🚀 New: HazelJS Unified AI Platform
+
+**Single entry point for all AI capabilities** - Introducing the `HazelAI` class that brings together all AI features in one elegant API.
+
+### What's New?
+
+#### 🎯 **Unified API**
+```typescript
+import { HazelAI } from '@hazeljs/ai';
+
+// One class for everything
+const ai = HazelAI.create({
+  defaultProvider: 'openai',
+  model: 'gpt-4o',
+});
+
+// All AI capabilities through one interface
+await ai.chat('Hello');
+await ai.stream('Tell me a story');
+await ai.sentiment('I love this!');
+await ai.score('Rate this text', { items, criteria });
+await ai.workflow('process').step(...).run(data);
+const assistant = ai.assistant({ memory: true });
+```
+
+#### 🏗️ **6 AI Facades**
+- **ChatFacade** - Simple chat and streaming
+- **RAGFacade** - Document Q&A with retrieval
+- **AgentFacade** - Specialized AI agents
+- **MLFacade** - Classification, sentiment, scoring
+- **WorkflowFacade** - Chain multiple AI steps
+- **AssistantFacade** - Memory-enabled conversations
+
+#### 📊 **Built-in Metrics**
+```typescript
+const metrics = ai.getMetrics();
+console.log(`Requests: ${metrics.totalRequests}`);
+console.log(`Tokens: ${metrics.totalTokens}`);
+console.log(`Latency: ${metrics.averageLatencyMs}ms`);
+console.log(`Cost: $${metrics.costEstimate}`);
+```
+
+### Benefits
+
+#### 🚀 **Developer Experience**
+- **Single Import** - `import { HazelAI } from '@hazeljs/ai'`
+- **Type Safety** - Full TypeScript support with autocomplete
+- **Consistent API** - Same patterns across all AI features
+- **Zero Boilerplate** - Get started in 3 lines of code
+
+#### 💪 **Powerful Features**
+- **Multi-Provider** - Switch between OpenAI, Anthropic, Gemini, Cohere, Ollama
+- **Graceful Fallbacks** - Automatic provider switching on errors
+- **Memory Management** - Built-in conversation history for assistants
+- **Workflow Orchestration** - Chain AI steps with timing and error handling
+
+#### 🔧 **Production Ready**
+- **Token Tracking** - Monitor usage and costs per provider
+- **Retry Logic** - Automatic retries with exponential backoff
+- **Error Handling** - Graceful degradation for optional dependencies
+- **Performance** - Optimized for high-throughput applications
+
+### Quick Examples
+
+#### Basic Chat
+```typescript
+import { HazelAI } from '@hazeljs/ai';
+
+const ai = HazelAI.create({ defaultProvider: 'openai' });
+
+// Simple chat
+const response = await ai.chat('What is HazelJS?');
+console.log(response.content);
+
+// Streaming chat
+for await (const chunk of ai.stream('Tell me a story')) {
+  process.stdout.write(chunk);
+}
+```
+
+#### ML Operations
+```typescript
+// Sentiment analysis
+const sentiment = await ai.sentiment('I love using HazelJS!');
+console.log(`${sentiment.sentiment} (${sentiment.score})`);
+
+// Classification
+const category = await ai.classify('This is about technology', {
+  labels: ['tech', 'sports', 'politics'],
+});
+
+// Scoring
+const scores = await ai.score('Rate for accuracy', {
+  items: [{ id: '1', text: 'TypeScript is typed JavaScript' }],
+  criteria: 'Technical accuracy',
+});
+```
+
+#### Workflows
+```typescript
+const result = await ai.workflow('process')
+  .step('extract', async (text: string) => {
+    return text.split(' ');
+  })
+  .step('analyze', async (words: string[]) => {
+    return { count: words.length, avgLength: words.reduce((sum, w) => sum + w.length, 0) / words.length };
+  })
+  .run('Hello world');
+
+console.log(result.output); // { count: 2, avgLength: 5 }
+console.log(result.totalDuration); // 5ms
+```
+
+#### Assistants with Memory
+```typescript
+const assistant = ai.assistant({
+  name: 'HelpBot',
+  systemPrompt: 'You are a helpful assistant',
+  memory: true,
+});
+
+await assistant.chat('My name is John');
+await assistant.chat('What is my name?'); // Remembers "John"
+
+console.log(assistant.sessionId); // Unique session
+console.log(assistant.getHistory()); // Full conversation
+```
+
+### Migration Guide
+
+#### From AIEnhancedService
+```typescript
+// Before
+import { AIEnhancedService } from '@hazeljs/ai';
+const ai = new AIEnhancedService();
+await ai.complete({ messages, provider: 'openai' });
+
+// After
+import { HazelAI } from '@hazeljs/ai';
+const ai = HazelAI.create({ defaultProvider: 'openai' });
+await ai.chat('Hello');
+```
+
+#### From Multiple Imports
+```typescript
+// Before
+import { ChatService } from '@hazeljs/ai';
+import { MLService } from '@hazeljs/ml';
+import { AgentService } from '@hazeljs/agent';
+
+// After
+import { HazelAI } from '@hazeljs/ai';
+const ai = HazelAI.create();
+// All services available through ai.*
+```
+
+### Advanced Usage
+
+#### Provider Configuration
+```typescript
+const ai = HazelAI.create({
+  defaultProvider: 'openai',
+  providers: {
+    openai: { apiKey: process.env.OPENAI_API_KEY },
+    anthropic: { apiKey: process.env.ANTHROPIC_API_KEY },
+  },
+  model: 'gpt-4o',
+  temperature: 0.7,
+});
+```
+
+#### Error Handling
+```typescript
+try {
+  const response = await ai.chat('Hello');
+} catch (error) {
+  if (error.message.includes('Provider not available')) {
+    // Fallback to another provider
+    const response = await ai.chat('Hello', { provider: 'ollama' });
+  }
+}
+```
+
+#### Custom Workflows
+```typescript
+const dataProcessor = ai.workflow('data-pipeline');
+
+const result = await dataProcessor
+  .step('validate', async (data) => {
+    if (!data.isValid) throw new Error('Invalid data');
+    return data;
+  })
+  .step('transform', async (data) => {
+    return { ...data, processed: true };
+  })
+  .step('store', async (data) => {
+    await database.save(data);
+    return data.id;
+  })
+  .run(inputData);
+```
+
+### What's Under the Hood?
+
+The Unified AI Platform is built on the same robust foundation you trust:
+
+- **AIEnhancedService** - Core AI engine with provider management
+- **TokenTracker** - Usage and cost monitoring
+- **Retry Logic** - Automatic error recovery
+- **Caching** - Response caching with TTL
+- **Type Safety** - Full TypeScript coverage
+
+The `HazelAI` class is a thin, opinionated wrapper that combines:
+- All facades into one interface
+- Consistent configuration management
+- Unified error handling
+- Centralized metrics collection
+
+### Examples Repository
+
+Check out the `examples/` directory for complete, runnable examples:
+
+- **simple-demo.ts** - Basic functionality without API keys
+- **unified-platform-example.ts** - Full demo with all features
+- **README.md** - Detailed setup and usage instructions
+
+Run examples:
+```bash
+npm run demo:simple  # Basic demo
+npm run demo:full    # Full demo (requires API keys)
+```
+
+### Backward Compatibility
+
+**All existing APIs continue to work unchanged.** The Unified AI Platform is an additional layer on top of the existing architecture.
+
+```typescript
+// This still works exactly as before
+import { AIEnhancedService } from '@hazeljs/ai';
+const service = new AIEnhancedService();
+await service.complete({ messages, provider: 'openai' });
+
+// Decorators still work
+@AITask({ name: 'chat', prompt: 'Respond to: {{input}}' })
+async chat(input: string): Promise<string> { return input; }
+```
+
+### Next Steps
+
+1. **Try the simple demo** - `npm run demo:simple`
+2. **Set up API keys** and run the full demo - `npm run demo:full`
+3. **Read the examples** in `examples/README.md`
+4. **Check the API docs** for detailed method signatures
+5. **Join our Discord** for community support
+
+---
+
 ## License
 
 Apache 2.0 © [HazelJS](https://hazeljs.ai)

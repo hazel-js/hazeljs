@@ -65,3 +65,37 @@ export { AIError, AIErrorCode } from './errors/ai.error';
 
 // Debug utility
 export { debug, setDebugEnabled } from './utils/debug';
+
+// ── Unified AI Platform (NEW) ─────────────────────────────────
+export { HazelAI } from './platform/hazel-ai';
+export { AIPlatformModule } from './platform/ai-platform.module';
+export type {
+  HazelAIConfig,
+  ProviderConfig,
+  ChatOptions,
+  ChatResponse,
+  TokenUsageSummary,
+  RAGOptions,
+  RAGResult,
+  RAGSource,
+  KnowledgeSource,
+  ClassifyOptions,
+  ClassifyResult,
+  SentimentResult,
+  ScoreOptions,
+  ScoreResult,
+  WorkflowStep,
+  WorkflowResult,
+  WorkflowBuilder,
+  AssistantConfig,
+  AssistantResponse,
+  AssistantInstance,
+  AIMetrics,
+  AIPlatformPlugin,
+  RAGFacadeInterface,
+} from './platform/hazel-ai.types';
+
+// Re-export key types from sub-packages for convenience
+// (users don't need to install sub-packages for types)
+export { Agent, Tool, Delegate } from '@hazeljs/agent';
+export type { AgentConfig, AgentExecutionResult } from '@hazeljs/agent';

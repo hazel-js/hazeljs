@@ -14,12 +14,15 @@ export class TokenTracker {
 
   // Token costs per 1K tokens (as of 2024)
   private readonly TOKEN_COSTS: Record<string, { prompt: number; completion: number }> = {
+    'gpt-4o': { prompt: 0.0025, completion: 0.01 },
+    'gpt-4o-mini': { prompt: 0.00015, completion: 0.0006 },
     'gpt-4-turbo-preview': { prompt: 0.01, completion: 0.03 },
     'gpt-4': { prompt: 0.03, completion: 0.06 },
     'gpt-3.5-turbo': { prompt: 0.0005, completion: 0.0015 },
     'claude-3-opus': { prompt: 0.015, completion: 0.075 },
     'claude-3-sonnet': { prompt: 0.003, completion: 0.015 },
     'claude-3-haiku': { prompt: 0.00025, completion: 0.00125 },
+    'claude-3.5-sonnet': { prompt: 0.003, completion: 0.015 },
   };
 
   constructor(config?: TokenLimitConfig) {
