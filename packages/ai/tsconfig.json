@@ -16,6 +16,12 @@
       ],
       "@hazeljs/prompts": [
         "../prompts/src"
+      ],
+      "@hazeljs/agent": [
+        "../agent/src"
+      ],
+      "@hazeljs/rag": [
+        "../rag/src"
       ]
     },
     "types": [
@@ -40,6 +46,12 @@
     },
     {
       "path": "../prompts"
+    },
+    {
+      "path": "../agent"
+    },
+    {
+      "path": "../rag"
     }
   ]
 }
