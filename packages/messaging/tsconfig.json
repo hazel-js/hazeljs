@@ -8,6 +8,13 @@
     "sourceMap": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
+    "baseUrl": ".",
+    "paths": {
+      "@hazeljs/core": ["../core/src"],
+      "@hazeljs/ai": ["../ai/src"],
+      "@hazeljs/rag": ["../rag/src"],
+      "@hazeljs/kafka": ["../kafka/src"]
+    },
     "types": [
       "jest",
       "node"
@@ -19,5 +26,11 @@
   "exclude": [
     "node_modules",
     "dist"
+  ],
+  "references": [
+    { "path": "../core" },
+    { "path": "../ai" },
+    { "path": "../rag" },
+    { "path": "../kafka" }
   ]
 }

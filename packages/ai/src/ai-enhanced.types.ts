@@ -317,7 +317,7 @@ export interface TokenLimitConfig {
  */
 export interface AIFunctionOptions {
   provider: AIProvider;
-  model: string;
+  model?: string;
   streaming?: boolean;
   temperature?: number;
   maxTokens?: number;

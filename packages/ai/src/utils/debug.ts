@@ -34,7 +34,7 @@ export function debug(scope: string): DebugLogger {
   return (message: string, ...args: unknown[]) => {
     if (!isEnabled()) return;
     const timestamp = new Date().toISOString();
-    let formatted = message;
+    let formatted = String(message);
     let argIdx = 0;
     formatted = formatted.replace(/%[sdoOj]/g, (spec) => {
       if (argIdx >= args.length) return spec;
@@ -60,7 +60,18 @@ export function debug(scope: string): DebugLogger {
     const suffix =
       remaining.length > 0
         ? ' ' +
-          remaining.map((a) => (typeof a === 'object' ? JSON.stringify(a) : String(a))).join(' ')
+          remaining
+            .map((a) => {
+              if (typeof a === 'object') {
+                try {
+                  return JSON.stringify(a);
+                } catch {
+                  return String(a);
+                }
+              }
+              return String(a);
+            })
+            .join(' ')
         : '';
     // eslint-disable-next-line no-console
     console.error(`${timestamp} ${prefix} ${formatted}${suffix}`);

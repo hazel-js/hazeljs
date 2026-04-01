@@ -71,7 +71,7 @@ export class PdfToAudioService {
       ? enforceChunkSize(
           this.splitter
             .split(summaryText)
-            .map((c) => c.trim())
+            .map((c: string) => c.trim())
             .filter(Boolean)
         )
       : [];
@@ -80,7 +80,7 @@ export class PdfToAudioService {
       : enforceChunkSize(
           this.splitter
             .split(text)
-            .map((c) => c.trim())
+            .map((c: string) => c.trim())
             .filter(Boolean)
         );
     const totalChunks = summaryChunks.length + docChunks.length;

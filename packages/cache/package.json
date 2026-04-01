@@ -12,19 +12,24 @@
     "test": "jest --coverage",
     "lint": "eslint \"src/**/*.ts\"",
     "lint:fix": "eslint \"src/**/*.ts\" --fix",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "demo:advanced": "ts-node examples/advanced-features-demo.ts",
+    "demo:simple": "ts-node examples/advanced-features-simple.ts"
   },
   "dependencies": {
-    "ioredis": "^5.3.2"
+    "ioredis": "^5.3.2",
+    "node-cron": "^3.0.3",
+    "eventemitter3": "^5.0.1"
   },
   "devDependencies": {
     "@types/node": "^20.17.50",
+    "@types/node-cron": "^3.0.3",
     "@typescript-eslint/eslint-plugin": "^8.18.2",
     "@typescript-eslint/parser": "^8.18.2",
     "eslint": "^8.56.0",
     "jest": "^29.7.0",
     "ts-jest": "^29.1.2",
-    "typescript": "^5.3.3"
+    "typescript": "^5.9.3"
   },
   "publishConfig": {
     "access": "public"

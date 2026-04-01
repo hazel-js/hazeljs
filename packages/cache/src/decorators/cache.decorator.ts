@@ -22,7 +22,11 @@ const CACHE_METADATA_KEY = 'hazel:cache';
  * ```
  */
 export function Cache(options: CacheOptions = {}): MethodDecorator {
-  return (target: object, propertyKey: string | symbol, descriptor: PropertyDescriptor) => {
+  return function (
+    target: object,
+    propertyKey: string | symbol,
+    _descriptor: PropertyDescriptor
+  ): void {
     const defaults: CacheOptions = {
       strategy: 'memory',
       ttl: 3600,
@@ -38,8 +42,6 @@ export function Cache(options: CacheOptions = {}): MethodDecorator {
 
     // Note: The actual caching logic will be implemented by the CacheInterceptor
     // This decorator just marks the method and stores configuration
-
-    return descriptor;
   };
 }
 
@@ -72,8 +74,12 @@ export function hasCacheMetadata(target: object, propertyKey: string | symbol): 
  * }
  * ```
  */
-export function CacheKey(keyPattern: string): MethodDecorator {
-  return (target: object, propertyKey: string | symbol, descriptor: PropertyDescriptor) => {
+export function CacheKey(keyPattern: string) {
+  return function (
+    target: object,
+    propertyKey: string | symbol,
+    _descriptor: PropertyDescriptor
+  ): void {
     const existingMetadata = getCacheMetadata(target, propertyKey) || {};
     const updatedMetadata: CacheOptions = {
       ...existingMetadata,
@@ -82,7 +88,7 @@ export function CacheKey(keyPattern: string): MethodDecorator {
 
     Reflect.defineMetadata(CACHE_METADATA_KEY, updatedMetadata, target, propertyKey);
 
-    return descriptor;
+    logger.debug(`CacheKey decorator applied to ${target.constructor.name}.${String(propertyKey)}`);
   };
 }
 
@@ -98,8 +104,12 @@ export function CacheKey(keyPattern: string): MethodDecorator {
  * }
  * ```
  */
-export function CacheTTL(ttl: number): MethodDecorator {
-  return (target: object, propertyKey: string | symbol, descriptor: PropertyDescriptor) => {
+export function CacheTTL(ttl: number) {
+  return function (
+    target: object,
+    propertyKey: string | symbol,
+    _descriptor: PropertyDescriptor
+  ): void {
     const existingMetadata = getCacheMetadata(target, propertyKey) || {};
     const updatedMetadata: CacheOptions = {
       ...existingMetadata,
@@ -108,7 +118,7 @@ export function CacheTTL(ttl: number): MethodDecorator {
 
     Reflect.defineMetadata(CACHE_METADATA_KEY, updatedMetadata, target, propertyKey);
 
-    return descriptor;
+    logger.debug(`CacheTTL decorator applied to ${target.constructor.name}.${String(propertyKey)}`);
   };
 }
 
@@ -124,8 +134,12 @@ export function CacheTTL(ttl: number): MethodDecorator {
  * }
  * ```
  */
-export function CacheTags(tags: string[]): MethodDecorator {
-  return (target: object, propertyKey: string | symbol, descriptor: PropertyDescriptor) => {
+export function CacheTags(tags: string[]) {
+  return function (
+    target: object,
+    propertyKey: string | symbol,
+    _descriptor: PropertyDescriptor
+  ): void {
     const existingMetadata = getCacheMetadata(target, propertyKey) || {};
     const updatedMetadata: CacheOptions = {
       ...existingMetadata,
@@ -134,7 +148,9 @@ export function CacheTags(tags: string[]): MethodDecorator {
 
     Reflect.defineMetadata(CACHE_METADATA_KEY, updatedMetadata, target, propertyKey);
 
-    return descriptor;
+    logger.debug(
+      `CacheTags decorator applied to ${target.constructor.name}.${String(propertyKey)}`
+    );
   };
 }
 
@@ -155,10 +171,16 @@ export function CacheEvict(options: {
   tags?: string[];
   all?: boolean;
 }): MethodDecorator {
-  return (target: object, propertyKey: string | symbol, descriptor: PropertyDescriptor) => {
+  return function (
+    target: object,
+    propertyKey: string | symbol,
+    _descriptor: PropertyDescriptor
+  ): void {
     Reflect.defineMetadata('hazel:cache:evict', options, target, propertyKey);
 
-    return descriptor;
+    logger.debug(
+      `CacheEvict decorator applied to ${target.constructor.name}.${String(propertyKey)}`
+    );
   };
 }
 
