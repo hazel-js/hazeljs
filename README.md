@@ -2,7 +2,7 @@
 
 # HazelJS
 
-**One framework. AI built in. No glue code.**
+**One framework. AI built in. HCEL orchestration native. No glue code.**
 
 [![GitHub stars](https://img.shields.io/github/stars/hazel-js/hazeljs?style=social)](https://github.com/hazel-js/hazeljs)
 [![CI](https://github.com/hazel-js/hazeljs/actions/workflows/ci.yml/badge.svg)](https://github.com/hazel-js/hazeljs/actions/workflows/ci.yml)
@@ -14,7 +14,7 @@
 [![Discord](https://img.shields.io/discord/1448263814238965833?color=7289da&label=Discord&logo=discord&logoColor=white)](https://discord.com/channels/1448263814238965833/1448263814859456575)
 
 *Stop the glue code. Build AI backends that feel native — not bolted on.*  
-**AI** · **Agents** · **RAG** · **Flow** · **Prompts** — one cohesive stack.
+**HCEL** · **AI** · **Agents** · **RAG** · **Flow** · **Prompts** — one cohesive stack.
 
 [Get Started](#quick-start) · [Why HazelJS?](#-why-hazeljs) · [Documentation](#-documentation) · [Starter](./hazeljs-starter-example)
 
@@ -38,6 +38,7 @@ You've built APIs before. You know the drill: wire up routing, configure middlew
 - 🎨 **Global Middleware** — Flexible, with exclusions
 
 ### AI Stack (what makes HazelJS stand out)
+- ⚡ **HCEL (Hazel Composable Expression Language)** — Fluent TypeScript chaining for prompts, RAG, agents, ML, and observability with implicit context passing
 - 🤖 **[@hazeljs/ai](packages/ai)** — Multi-provider (OpenAI, Anthropic, Gemini, Cohere, Ollama), streaming, caching, type-safe outputs
 - 🧠 **[@hazeljs/agent](packages/agent)** — Stateful agents, tool calling, SupervisorAgent, human-in-the-loop, **MCP Support**, **A2A Compliance**
 - 📚 **[@hazeljs/rag](packages/rag)** — Vector search, GraphRAG, 11 loaders, Agentic RAG, Memory System
@@ -181,12 +182,33 @@ class ChatController {
 }
 ```
 
+### HCEL — fluent AI orchestration
+
+```typescript
+import { HazelAI } from '@hazeljs/ai';
+
+const ai = HazelAI.create({ defaultProvider: 'openai', model: 'gpt-4o' });
+
+const result = await ai.hazel
+  .prompt('Summarize this issue: {{input}}')
+  .rag('engineering-docs')
+  .agent('support-specialist')
+  .ml('sentiment')
+  .execute(userTicket);
+```
+
+**Why HCEL is easier:**
+- No manual output wiring between steps
+- One fluent chain instead of scattered async glue
+- Built-in context flow and observability hooks
+
 ### The old way vs HazelJS
 
 | The old way | HazelJS |
 |-------------|---------|
 | NestJS + LangChain + adapters + wiring | One stack. AI built in. |
 | 3 config files, manual AI glue | `@AITask` decorator. Done. |
+| Manual orchestration between prompt/RAG/agent/ML | `ai.hazel` HCEL chain with implicit context flow |
 | Express + DIY structure + bolted-on AI | Decorators, DI, agents — out of the box. |
 
 ### Agents — `@Agent` + `@Tool`
@@ -332,7 +354,7 @@ npm run prisma:studio   # Optional: visual DB browser
 
 ### Why we built this
 
-We were tired of choosing between a heavy framework (NestJS) and a minimal one (Express), then wiring AI on top. HazelJS is the framework we wished existed: NestJS-style elegance without the weight, AI and RAG built in from day one, and no glue code. If you're building AI backends and want one cohesive stack — this is for you.
+We were tired of choosing between a heavy framework (NestJS) and a minimal one (Express), then wiring AI on top. HazelJS is the framework we wished existed: NestJS-style elegance without the weight, AI and RAG built in from day one, and no glue code. HCEL makes multi-step AI orchestration feel like normal TypeScript method chaining instead of infrastructure work. If you're building AI backends and want one cohesive stack — this is for you.
 
 ---
 
@@ -341,7 +363,7 @@ We were tired of choosing between a heavy framework (NestJS) and a minimal one (
 ### AI Stack (standout)
 | Package               | What it does                                                      |
 | -----------------------| -------------------------------------------------------------------|
-| `@hazeljs/ai`         | Multi-provider integration, streaming, caching, type-safe outputs |
+| `@hazeljs/ai`         | Multi-provider integration, streaming, caching, type-safe outputs, and HCEL orchestration |
 | `@hazeljs/agent`      | Stateful agents, tool calling, SupervisorAgent, human-in-the-loop |
 | `@hazeljs/rag`        | Vector search, GraphRAG, 11 loaders, Agentic RAG, Memory System   |
 | `@hazeljs/ml`         | Complete ML toolkit, training, metrics, drift detection           |
