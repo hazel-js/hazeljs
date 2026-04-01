@@ -244,7 +244,7 @@ describe('HazelAI', () => {
   });
 
   describe('assistant', () => {
-    it('should delegate to assistant facade', () => {
+    it('should delegate to assistant facade', async () => {
       const assistantConfig = {
         name: 'Test Assistant',
         systemPrompt: 'You are helpful',
@@ -257,10 +257,10 @@ describe('HazelAI', () => {
       };
 
       (hazelAI as any).assistantFacade = {
-        create: jest.fn().mockReturnValue(expectedAssistant),
+        create: jest.fn().mockResolvedValue(expectedAssistant),
       };
 
-      const result = hazelAI.assistant(assistantConfig);
+      const result = await hazelAI.assistant(assistantConfig);
 
       expect((hazelAI as any).assistantFacade.create).toHaveBeenCalledWith(assistantConfig);
       expect(result).toBe(expectedAssistant);

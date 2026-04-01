@@ -18,6 +18,12 @@ Memory, Redis, or hybrid. `@Cache` for results, `@CacheEvict` for invalidation. 
 - 📊 **Statistics** - Hit/miss rates and performance metrics
 - 🔑 **Key Generation** - Automatic and custom key generation
 - 🧹 **Auto Cleanup** - Automatic removal of expired entries
+- 🔒 **Distributed Locking** - Prevent cache stampede with `@CacheLock`
+- 📥 **Cache-Aside Pattern** - Automatic get/set logic with `@CacheAside`
+- ✏️ **Write-Through/Behind** - Immediate or queued cache updates with `@CacheWrite`
+- 🔥 **Smart Warming** - Scheduled cache population with `@CacheWarm`
+- 📡 **Event System** - Cache hit/miss/eviction events
+- 🏥 **Health Monitoring** - Built-in health checks and metrics
 
 ## Installation
 
@@ -424,6 +430,143 @@ class CacheService {
 })
 
 @CacheTTL((result: any) => number)
+```
+
+## Advanced Features
+
+### Distributed Cache Locking
+
+Prevent cache stampede when multiple requests try to compute the same value:
+
+```typescript
+import { CacheLock } from '@hazeljs/cache';
+
+@Injectable()
+export class ProductService {
+  @CacheLock({
+    key: 'product-{id}',
+    ttl: 30000, // 30 seconds
+    retryDelay: 1000,
+    maxRetries: 3
+  })
+  async expensiveOperation(id: string) {
+    // Only one instance will execute at a time
+    return await this.computeExpensiveResult(id);
+  }
+}
+```
+
+### Cache-Aside Pattern
+
+Automatic get/set logic with fallback support:
+
+```typescript
+import { CacheAside, CacheAsideWithFallback } from '@hazeljs/cache';
+
+@Injectable()
+export class UserService {
+  @CacheAside({
+    key: 'user-{id}',
+    ttl: 3600,
+    fallback: () => this.db.user.findDefault()
+  })
+  async getUser(id: string) {
+    return await this.db.user.findUnique({ where: { id } });
+  }
+
+  @CacheAsideWithFallback({
+    key: 'user-{id}',
+    ttl: 1800,
+    fallbackValue: { id: 'unknown', name: 'Guest User' }
+  })
+  async getUserWithFallback(id: string) {
+    return await this.db.user.findUnique({ where: { id } });
+  }
+}
+```
+
+### Write-Through/Write-Behind Caching
+
+Control when cache updates happen:
+
+```typescript
+import { WriteThrough, WriteBehind } from '@hazeljs/cache';
+
+@Injectable()
+export class ProductService {
+  @WriteThrough({
+    key: 'product-{id}',
+    ttl: 3600
+  })
+  async updateProduct(id: string, data: any) {
+    // Cache updated immediately
+    return await this.db.product.update({ where: { id }, data });
+  }
+
+  @WriteBehind({
+    key: 'product-{id}',
+    ttl: 3600,
+    async: true
+  })
+  async updateProductAsync(id: string, data: any) {
+    // Cache update queued for better performance
+    return await this.db.product.update({ where: { id }, data });
+  }
+}
+```
+
+### Smart Cache Warming
+
+Pre-populate cache on schedule:
+
+```typescript
+import { CacheWarm, CacheWarmingUtils } from '@hazeljs/cache';
+
+@Injectable()
+export class CacheService {
+  @CacheWarm({
+    keys: ['featured-products', 'categories'],
+    fetcher: async (key: string) => {
+      if (key === 'featured-products') {
+        return await this.productService.findFeatured();
+      }
+      return await this.categoryService.findAll();
+    },
+    ttl: 7200, // 2 hours
+    parallel: true,
+    schedule: '0 */6 * * *', // Every 6 hours
+    condition: 'low-traffic' // Only warm during low traffic hours
+  })
+  async warmCache() {
+    // This method will be executed on schedule
+  }
+}
+
+// Manual warming
+await CacheWarmingUtils.warmUp('CacheService.warmCache');
+```
+
+### Event System
+
+Listen to cache events:
+
+```typescript
+import { EventEmitter } from 'eventemitter3';
+
+const cacheService = new CacheService('memory');
+
+// Listen to cache events
+cacheService.on('hit', (key) => {
+  console.log(`Cache hit: ${key}`);
+});
+
+cacheService.on('miss', (key) => {
+  console.log(`Cache miss: ${key}`);
+});
+
+cacheService.on('eviction', (key) => {
+  console.log(`Cache eviction: ${key}`);
+});
 ```
 
 ## Use Cases

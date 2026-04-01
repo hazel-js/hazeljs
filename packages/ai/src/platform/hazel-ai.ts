@@ -5,24 +5,22 @@ import { AgentFacade } from '../facades/agent.facade';
 import { MLFacade } from '../facades/ml.facade';
 import { WorkflowFacade } from '../facades/workflow.facade';
 import { AssistantFacade } from '../facades/assistant.facade';
+import { HCELBuilder } from './hcel/hcel.builder';
 import type {
   HazelAIConfig,
   ChatOptions,
   ClassifyOptions,
   ScoreOptions,
-  RAGOptions,
   AssistantConfig,
   ClassifyResult,
   SentimentResult,
   ScoreResult,
-  RAGResult,
-  WorkflowResult,
   AIMetrics,
   RAGFacadeInterface,
   WorkflowBuilder,
   AssistantInstance,
 } from './hazel-ai.types';
-import type { IAIProvider, AICompletionRequest, AIStreamChunk } from '../ai-enhanced.types';
+import type { IAIProvider } from '../ai-enhanced.types';
 import type { AgentExecutionResult } from '@hazeljs/agent';
 import { Service } from '@hazeljs/core';
 
@@ -178,12 +176,12 @@ export class HazelAI {
   // ── Assistants ───────────────────────────────────────────
 
   /**
-   * Create an assistant with memory.
+   * Create a conversational assistant with memory.
    *
    * @param config Assistant configuration
-   * @returns Assistant instance
+   * @returns Assistant instance with session management
    */
-  assistant(config: AssistantConfig): AssistantInstance {
+  async assistant(config: AssistantConfig): Promise<AssistantInstance> {
     return this.assistantFacade.create(config);
   }
 
@@ -196,6 +194,26 @@ export class HazelAI {
    */
   registerProvider(provider: IAIProvider): void {
     this.aiService.registerProvider(provider);
+  }
+
+  // ── HCEL - HazelJS Composable Expression Language ─────────────────
+
+  /**
+   * Get the HCEL builder for composable AI operations.
+   *
+   * HCEL provides a fluent, TypeScript-native way to compose AI operations:
+   *
+   * ```typescript
+   * const result = await ai.hazel
+   *   .prompt('Analyze: {topic}')
+   *   .rag('knowledge-base')
+   *   .agent('analyst')
+   *   .ml('sentiment')
+   *   .execute();
+   * ```
+   */
+  get hazel(): HCELBuilder {
+    return new HCELBuilder(this);
   }
 
   // ── Observability ────────────────────────────────────────

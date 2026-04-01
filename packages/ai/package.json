@@ -14,6 +14,10 @@
     "lint:fix": "eslint \"src/**/*.ts\" --fix",
     "demo:simple": "npx tsx examples/simple-demo.ts",
     "demo:full": "npx tsx examples/unified-platform-example.ts",
+    "demo:hcel": "npx tsx examples/hcel-demo.ts",
+    "demo:production": "npx tsx examples/hcel-production-demo.ts",
+    "demo:agent": "npx tsx examples/hcel-agent-demo.ts",
+    "demo:flow": "npx tsx examples/hcel-flow-demo.ts",
     "clean": "rm -rf dist"
   },
   "dependencies": {

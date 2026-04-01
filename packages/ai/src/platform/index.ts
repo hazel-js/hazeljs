@@ -4,6 +4,18 @@
 
 export { HazelAI } from './hazel-ai';
 export { AIPlatformModule } from './ai-platform.module';
+
+// HCEL - HazelJS Composable Expression Language
+export { HCELBuilder, HCELEngine } from './hcel';
+export type {
+  HCELOperation,
+  HCELContext,
+  HCELChain,
+  HCELBuilder as IHCELBuilder,
+  HCELEvent,
+  HCELResult,
+} from './hcel';
+
 export type {
   HazelAIConfig,
   ProviderConfig,

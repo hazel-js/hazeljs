@@ -69,6 +69,18 @@ export { debug, setDebugEnabled } from './utils/debug';
 // ── Unified AI Platform (NEW) ─────────────────────────────────
 export { HazelAI } from './platform/hazel-ai';
 export { AIPlatformModule } from './platform/ai-platform.module';
+
+// HCEL - HazelJS Composable Expression Language
+export { HCELBuilder, HCELEngine } from './platform/hcel';
+export type {
+  HCELOperation,
+  HCELContext,
+  HCELChain,
+  HCELBuilder as IHCELBuilder,
+  HCELEvent,
+  HCELResult,
+} from './platform/hcel';
+
 export type {
   HazelAIConfig,
   ProviderConfig,

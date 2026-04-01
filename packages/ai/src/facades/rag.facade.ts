@@ -25,7 +25,7 @@ export class RAGFacade implements RAGFacadeInterface {
   ) {}
 
   /**
-   * Ensure @hazeljs/rag is loaded and initialized.
+   * Ensure @hazeljs/rag is loaded and initialized with persistence configuration.
    * Throws a helpful error if the package is not installed.
    */
   private async ensureRAG(): Promise<void> {
@@ -34,7 +34,10 @@ export class RAGFacade implements RAGFacadeInterface {
     try {
       const { RAGPipeline, RAGService } = await import('@hazeljs/rag');
 
-      // Create a pipeline with sensible defaults
+      // Get RAG persistence configuration
+      const ragConfig = this.config.persistence?.rag;
+
+      // Create a pipeline with sensible defaults and persistence
       const pipeline = RAGPipeline.from({
         provider: (this.config.defaultProvider as 'openai' | 'cohere') || 'openai',
         llm: async (prompt: string) => {
@@ -43,6 +46,12 @@ export class RAGFacade implements RAGFacadeInterface {
           });
           return response.content;
         },
+        // For now, use memory vector store as default
+        // TODO: In Phase 2, support custom vector store configuration
+        vectorStore: 'memory',
+        topK: ragConfig?.options?.topK as number,
+        chunkSize: ragConfig?.options?.chunkSize as number,
+        chunkOverlap: ragConfig?.options?.chunkOverlap as number,
       });
 
       await pipeline.initialize();

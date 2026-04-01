@@ -21,6 +21,35 @@ export interface HazelAIConfig {
   maxTokens?: number;
   /** Enable debug logging. */
   debug?: boolean;
+
+  // NEW: Production persistence configuration
+  persistence?: {
+    /** Memory store configuration for conversation history */
+    memory?: {
+      store: 'postgres' | 'redis' | 'in-memory';
+      connectionString?: string;
+      ttl?: number; // Time to live in seconds
+      options?: Record<string, unknown>;
+    };
+
+    /** RAG vector store configuration */
+    rag?: {
+      vectorStore: 'pinecone' | 'qdrant' | 'weaviate' | 'chroma' | 'in-memory';
+      connectionString?: string;
+      apiKey?: string;
+      indexName?: string;
+      environment?: string;
+      options?: Record<string, unknown>;
+    };
+
+    /** Chain state persistence */
+    chains?: {
+      store: 'postgres' | 'redis' | 'in-memory';
+      connectionString?: string;
+      ttl?: number;
+      options?: Record<string, unknown>;
+    };
+  };
 }
 
 export interface ProviderConfig {
@@ -143,7 +172,7 @@ export interface AssistantConfig {
   name?: string;
   systemPrompt?: string;
   memory?: boolean;
-  memoryStore?: 'in-memory' | 'redis' | 'postgres';
+  memoryStore?: 'in-memory' | 'postgres' | 'redis';
   provider?: AIProvider;
   model?: string;
   tools?: Array<{
@@ -151,6 +180,11 @@ export interface AssistantConfig {
     description: string;
     execute: (...args: unknown[]) => Promise<unknown>;
   }>;
+  options?: {
+    userId?: string;
+    sessionId?: string;
+    [key: string]: unknown;
+  };
 }
 
 export interface AssistantResponse {
@@ -201,6 +235,7 @@ export interface AIPlatformPlugin {
 
 // Re-export agent types for convenience
 import type { AgentExecutionResult } from '@hazeljs/agent';
+export { AgentExecutionResult };
 
 // Forward reference for HazelAI class
 export interface HazelAI {
@@ -217,7 +252,7 @@ export interface HazelAI {
   sentiment(text: string): Promise<SentimentResult>;
   score(prompt: string, options: ScoreOptions): Promise<ScoreResult[]>;
   workflow(id: string): WorkflowBuilder;
-  assistant(config: AssistantConfig): AssistantInstance;
+  assistant(config: AssistantConfig): Promise<AssistantInstance>;
   registerProvider(provider: IAIProvider): void;
   getMetrics(): AIMetrics;
 }
