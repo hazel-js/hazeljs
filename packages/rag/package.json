@@ -18,7 +18,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc --skipLibCheck",
+    "build": "rm -rf dist tsconfig.tsbuildinfo && tsc --skipLibCheck",
     "test": "jest --coverage --passWithNoTests",
     "lint": "eslint \"src/**/*.ts\"",
     "lint:fix": "eslint \"src/**/*.ts\" --fix",

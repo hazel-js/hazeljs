@@ -8,7 +8,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc --skipLibCheck",
+    "build": "rm -rf dist tsconfig.tsbuildinfo && tsc --skipLibCheck",
     "test": "jest --coverage --maxWorkers=1",
     "lint": "eslint \"src/**/*.ts\" --max-warnings 0",
     "lint:fix": "eslint \"src/**/*.ts\" --fix",
