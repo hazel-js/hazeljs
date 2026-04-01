@@ -2,7 +2,7 @@
 
 **Add AI to your API in minutes — not days.**
 
-Part of the HazelJS AI-Native Backend Framework. OpenAI, Anthropic, Gemini, Cohere, Ollama. One decorator, one config. Streaming, caching, retries, and type-safe outputs. Ship AI features without the glue code.
+Part of the HazelJS AI-Native Backend Framework. OpenAI, Anthropic, Gemini, Cohere, Ollama. Decorators for quick tasks and **HCEL** for fluent orchestration. Streaming, caching, retries, and type-safe outputs. Ship AI features without the glue code.
 
 **🚀 Trusted by 200K+ monthly downloads • 37+ GitHub stars • 15+ daily active developers**
 
@@ -22,6 +22,7 @@ Built for **AI-native applications** - not just another AI integration. When you
 
 ## Features
 
+- ⚡ **HCEL Orchestration** - Fluent chains for prompts, RAG, agents, ML, and observability
 - 🤖 **Multiple Providers** - OpenAI, Anthropic, Gemini, Cohere, Ollama
 - 🎨 **Decorator-Based API** - `@AITask` decorator for clean integration
 - 📡 **Streaming Support** - Real-time response streaming
@@ -107,6 +108,60 @@ const response = await aiService.complete({
 
 console.log(response.content);
 console.log('Tokens used:', response.usage);
+```
+
+## HCEL (Hazel Composable Expression Language)
+
+HCEL is the fastest way to compose multi-step AI pipelines in TypeScript.  
+Instead of manually wiring outputs between services, you define one fluent chain.
+
+### Why HCEL is easier
+
+- No manual glue code between prompt, retrieval, agent, and ML steps
+- Implicit context passing across operations
+- Built-in observability hooks for production tracing
+
+### Example: Prompt -> RAG -> Agent -> ML
+
+```typescript
+import { HazelAI } from '@hazeljs/ai';
+
+const ai = HazelAI.create({
+  defaultProvider: 'openai',
+  model: 'gpt-4o',
+});
+
+const result = await ai.hazel
+  .prompt('Summarize this support request: {{input}}')
+  .rag('support-kb')
+  .agent('support-specialist')
+  .ml('sentiment')
+  .execute('Customer reports repeated payment failures after card update.');
+```
+
+### Example: Context + Observability
+
+```typescript
+const chain = ai.hazel
+  .prompt('Analyze this feedback: {{feedback}}')
+  .ml('sentiment')
+  .context({ userId: 'u-123', sessionId: 's-456' })
+  .observe((event) => {
+    console.log(`[${event.type}]`, event.timestamp);
+  });
+
+const output = await chain.execute();
+```
+
+### Example: Parallel Operations
+
+```typescript
+const parallelResult = await ai.hazel
+  .parallel(
+    ai.hazel.prompt('Summarize: {{input}}'),
+    ai.hazel.ml('sentiment')
+  )
+  .execute('HazelJS made our AI backend migration much simpler.');
 ```
 
 ## Providers
@@ -543,6 +598,7 @@ console.log(`Cost: $${metrics.costEstimate}`);
 
 #### 🚀 **Developer Experience**
 - **Single Import** - `import { HazelAI } from '@hazeljs/ai'`
+- **HCEL Fluent API** - Compose AI pipelines with a single chain
 - **Type Safety** - Full TypeScript support with autocomplete
 - **Consistent API** - Same patterns across all AI features
 - **Zero Boilerplate** - Get started in 3 lines of code
