@@ -3,6 +3,7 @@
  */
 
 import type { ChatOptions, RAGOptions, ClassifyOptions, ScoreOptions } from '../hazel-ai.types';
+import type { HCELResultCache } from './hcel.cache';
 
 // ── Core HCEL Types ────────────────────────────────────────────
 
@@ -45,17 +46,26 @@ export interface HCELChainConfig {
   retryPolicy?: HCELRetryPolicy;
   observability?: HCELObservabilityConfig;
 
-  // NEW: Persistence configuration
+  /** Idempotent output storage: after success, result is stored under `key`. */
   persistence?: {
-    key: string;
-    enabled: boolean;
+    key?: string;
+    enabled?: boolean;
+    /** When set, execute() returns a previously persisted result without re-running the chain. */
+    restoreKey?: string;
+    /** TTL for persisted entries (ms). 0 means no expiry. */
+    ttlMs?: number;
   };
 
-  // NEW: Caching configuration
+  /** Short-lived deduplication cache for identical chain + input fingerprints. */
   caching?: {
     enabled: boolean;
+    /** Time-to-live in seconds (converted to ms for the cache store). */
     ttl: number;
+    store?: HCELResultCache;
   };
+
+  /** Optional shared cache instance when neither caching.store nor default is injected on the engine. */
+  resultCache?: HCELResultCache;
 }
 
 export interface HCELRetryPolicy {
@@ -84,8 +94,18 @@ export interface HCELBuilder<TInput = unknown, TOutput = unknown> {
   ): HCELBuilder<unknown, TOutput>;
 
   // Control flow
-  parallel(...operations: HCELBuilder[]): HCELBuilder<TInput, TOutput>;
-  conditional(condition: (input: TInput) => boolean): HCELBuilder<TInput, TOutput>;
+  parallel(
+    ...args: (HCELBuilder | { strategy?: 'all' | 'any' | 'race' })[]
+  ): HCELBuilder<TInput, TOutput>;
+  conditional(
+    condition: (input: TInput) => boolean,
+    elseBuilder?: HCELBuilder<TInput, TOutput>
+  ): HCELBuilder<TInput, TOutput>;
+  ifElse(
+    condition: (input: TInput) => boolean,
+    thenBranch: HCELBuilder<TInput, TOutput>,
+    elseBranch: HCELBuilder<TInput, TOutput>
+  ): HCELBuilder<TInput, TOutput>;
   adaptive(): HCELBuilder<TInput, TOutput>;
 
   // NEW: Persistence operations
@@ -197,6 +217,11 @@ export interface ConditionalOperationConfig {
   [key: string]: unknown; // Add index signature
 }
 
+export interface SequenceOperationConfig {
+  operations: HCELOperation[];
+  [key: string]: unknown; // Add index signature
+}
+
 // ── Result Types ───────────────────────────────────────────────
 
 export interface HCELResult<T = unknown> {
@@ -224,6 +249,8 @@ export interface HCELResultMetadata {
     choice: string;
     reasoning: string;
   }>;
+  /** True when `.adaptive()` was set on the builder; scheduling is reserved — operation order is never reordered. */
+  adaptiveRequested?: boolean;
 }
 
 // ── Engine Types ───────────────────────────────────────────────

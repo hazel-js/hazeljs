@@ -35,8 +35,16 @@ export {
   MLOperation,
   ParallelOperation,
   ConditionalOperation,
+  SequenceOperation,
   HCELOperationFactory,
 } from './hcel.operations';
+
+export { HCELError, HCELErrorCode } from './hcel.error';
+export {
+  createMemoryHCELResultCache,
+  getDefaultHCELResultCache,
+  type HCELResultCache,
+} from './hcel.cache';
 
 // Utility exports
 export { createBuilder, compose, conditional } from './hcel.builder';
@@ -49,6 +57,7 @@ export type {
   MLOperationConfig,
   ParallelOperationConfig,
   ConditionalOperationConfig,
+  SequenceOperationConfig,
   HCELRetryPolicy,
   HCELObservabilityConfig,
 } from './hcel.types';

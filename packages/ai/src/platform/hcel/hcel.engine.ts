@@ -2,6 +2,7 @@
  * HCEL Execution Engine - Core execution logic for composable chains
  */
 
+import { createHash, randomUUID } from 'crypto';
 import type {
   HCELChain,
   HCELOperation,
@@ -10,13 +11,46 @@ import type {
   HCELEvent,
   HCELOperationResult,
   HCELResultMetadata,
+  HCELRetryPolicy,
 } from './hcel.types';
-import { randomUUID } from 'crypto';
+import { HCELError, HCELErrorCode } from './hcel.error';
+import type { HCELResultCache } from './hcel.cache';
+import { getDefaultHCELResultCache } from './hcel.cache';
+import { PromptOperation } from './hcel.operations';
+
+function fingerprintOperations(ops: HCELOperation[], input: unknown): string {
+  const body = ops.map((op) => JSON.stringify({ type: op.type, config: op.config })).join('\n');
+  return createHash('sha256')
+    .update(body)
+    .update('\n')
+    .update(JSON.stringify(input ?? null))
+    .digest('hex');
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function computeBackoffDelayMs(policy: HCELRetryPolicy, attemptIndex: number): number {
+  const { initialDelay, maxDelay, backoffMultiplier } = policy;
+  const base = Math.min(initialDelay * Math.pow(backoffMultiplier, attemptIndex), maxDelay);
+  const jitter = base * 0.2 * Math.random();
+  return Math.floor(base + jitter);
+}
 
 export class HCELEngine {
   private eventListeners: Map<string, ((event: HCELEvent) => void)[]> = new Map();
 
-  constructor() {}
+  constructor(private readonly defaultResultCache?: HCELResultCache) {}
+
+  private resolveCache(chain: HCELChain): HCELResultCache {
+    return (
+      chain.config.caching?.store ??
+      chain.config.resultCache ??
+      this.defaultResultCache ??
+      getDefaultHCELResultCache()
+    );
+  }
 
   async execute<TInput, TOutput>(
     chain: HCELChain<TInput, TOutput>,
@@ -27,7 +61,6 @@ export class HCELEngine {
     const chainId = chain.id || randomUUID();
     const traceId = context?.traceId || randomUUID();
 
-    // Initialize context
     const executionContext: HCELContext = {
       sessionId: context?.sessionId,
       userId: context?.userId,
@@ -36,7 +69,34 @@ export class HCELEngine {
       propagate: () => executionContext,
     };
 
-    // Emit chain start event
+    const cache = this.resolveCache(chain);
+    const persist = chain.config.persistence;
+
+    if (persist?.restoreKey) {
+      const raw = await cache.get(`persist:${persist.restoreKey}`);
+      if (raw !== undefined && raw !== null) {
+        const restored = raw as HCELResult<TOutput>;
+        if (typeof restored === 'object' && restored !== null && 'output' in restored) {
+          return restored;
+        }
+        return {
+          output: raw as TOutput,
+          chainId,
+          duration: 0,
+          operations: [],
+          metadata: { totalTokens: 0, totalCost: 0 },
+        };
+      }
+    }
+
+    if (chain.config.caching?.enabled) {
+      const fp = fingerprintOperations(chain.operations, input);
+      const hit = await cache.get(`run:${fp}`);
+      if (hit !== undefined && hit !== null) {
+        return hit as HCELResult<TOutput>;
+      }
+    }
+
     this.emitEvent({
       type: 'chain.start',
       chainId,
@@ -50,17 +110,23 @@ export class HCELEngine {
     let totalCost = 0;
     const adaptiveChoices: HCELResultMetadata['adaptiveChoices'] = [];
 
+    if (chain.config.adaptive) {
+      adaptiveChoices.push({
+        operation: 'chain',
+        choice: 'sequential',
+        reasoning:
+          'Adaptive scheduling is reserved; operations always run in declaration order (no reordering).',
+      });
+    }
+
     try {
-      // Execute operations sequentially (for now, parallel will be handled by ParallelOperation)
       for (const operation of chain.operations) {
         const operationStart = Date.now();
 
-        // Validate input
         if (operation.validate && !operation.validate(currentOutput)) {
-          throw new Error(`Operation ${operation.type} validation failed`);
+          throw HCELError.validationFailed(operation.type, operation.id, chainId);
         }
 
-        // Emit operation start event
         this.emitEvent({
           type: 'operation.start',
           chainId,
@@ -69,52 +135,17 @@ export class HCELEngine {
           data: { operationType: operation.type },
         });
 
+        let operationOutput: unknown;
         try {
-          // Execute operation
-          const operationOutput = await operation.execute(currentOutput, executionContext);
-          const operationDuration = Date.now() - operationStart;
-
-          // Update current output for next operation
-          currentOutput = operationOutput;
-
-          // Record operation result
-          results.push({
-            operationId: operation.id,
-            type: operation.type,
-            duration: operationDuration,
-            success: true,
-            output: operationOutput,
-          });
-
-          // Emit operation complete event
-          this.emitEvent({
-            type: 'operation.complete',
-            chainId,
-            operationId: operation.id,
-            timestamp: Date.now(),
-            data: { duration: operationDuration, success: true },
-          });
-
-          // Extract token usage if available
-          if (
-            operationOutput &&
-            typeof operationOutput === 'object' &&
-            'usage' in operationOutput
-          ) {
-            const usage = (
-              operationOutput as { usage: { totalTokens?: number; estimatedCost?: number } }
-            ).usage;
-            if (usage.totalTokens) {
-              totalTokens += usage.totalTokens;
-            }
-            if (usage.estimatedCost) {
-              totalCost += usage.estimatedCost;
-            }
-          }
+          operationOutput = await this.runWithRetry(
+            chain,
+            operation,
+            currentOutput,
+            executionContext,
+            chainId
+          );
         } catch (error) {
           const operationDuration = Date.now() - operationStart;
-
-          // Record operation failure
           results.push({
             operationId: operation.id,
             type: operation.type,
@@ -122,8 +153,6 @@ export class HCELEngine {
             success: false,
             error: error instanceof Error ? error.message : String(error),
           });
-
-          // Emit operation error event
           this.emitEvent({
             type: 'operation.error',
             chainId,
@@ -131,20 +160,45 @@ export class HCELEngine {
             timestamp: Date.now(),
             data: { error: error instanceof Error ? error.message : String(error) },
           });
+          throw error instanceof HCELError
+            ? error
+            : HCELError.operationFailed(operation.type, operation.id, chainId, error);
+        }
 
-          // Handle retry logic if configured
-          if (chain.config.retryPolicy && operation.metadata?.retriable) {
-            // TODO: Implement retry logic
+        const operationDuration = Date.now() - operationStart;
+        currentOutput = operationOutput;
+
+        results.push({
+          operationId: operation.id,
+          type: operation.type,
+          duration: operationDuration,
+          success: true,
+          output: operationOutput,
+        });
+
+        this.emitEvent({
+          type: 'operation.complete',
+          chainId,
+          operationId: operation.id,
+          timestamp: Date.now(),
+          data: { duration: operationDuration, success: true },
+        });
+
+        if (operationOutput && typeof operationOutput === 'object' && 'usage' in operationOutput) {
+          const usage = (
+            operationOutput as { usage: { totalTokens?: number; estimatedCost?: number } }
+          ).usage;
+          if (usage.totalTokens) {
+            totalTokens += usage.totalTokens;
           }
-
-          // Re-throw error to stop chain execution
-          throw error;
+          if (usage.estimatedCost) {
+            totalCost += usage.estimatedCost;
+          }
         }
       }
 
       const totalDuration = Date.now() - startTime;
 
-      // Emit chain complete event
       this.emitEvent({
         type: 'chain.complete',
         chainId,
@@ -152,7 +206,7 @@ export class HCELEngine {
         data: { duration: totalDuration, success: true },
       });
 
-      return {
+      const result: HCELResult<TOutput> = {
         output: currentOutput as TOutput,
         chainId,
         duration: totalDuration,
@@ -161,21 +215,71 @@ export class HCELEngine {
           totalTokens,
           totalCost,
           adaptiveChoices,
+          adaptiveRequested: Boolean(chain.config.adaptive),
         },
       };
+
+      if (chain.config.caching?.enabled) {
+        const fp = fingerprintOperations(chain.operations, input);
+        const ttlMs = Math.max(0, (chain.config.caching.ttl ?? 3600) * 1000);
+        await cache.set(`run:${fp}`, result, ttlMs);
+      }
+
+      if (persist?.enabled && persist.key) {
+        const ttlMs = persist.ttlMs ?? 0;
+        await cache.set(`persist:${persist.key}`, result, ttlMs);
+      }
+
+      return result;
     } catch (error) {
       const totalDuration = Date.now() - startTime;
-
-      // Emit chain complete event with failure
       this.emitEvent({
         type: 'chain.complete',
         chainId,
         timestamp: Date.now(),
         data: { duration: totalDuration, success: false, error },
       });
-
       throw error;
     }
+  }
+
+  private async runWithRetry(
+    chain: HCELChain,
+    operation: HCELOperation,
+    currentOutput: unknown,
+    executionContext: HCELContext,
+    chainId: string
+  ): Promise<unknown> {
+    const policy = chain.config.retryPolicy;
+    const retriable = operation.metadata?.retriable === true;
+
+    if (!policy || !retriable) {
+      try {
+        return await operation.execute(currentOutput, executionContext);
+      } catch (error) {
+        if (error instanceof HCELError) {
+          throw error;
+        }
+        throw HCELError.operationFailed(operation.type, operation.id, chainId, error);
+      }
+    }
+
+    const maxAttempts = Math.max(1, policy.maxAttempts);
+    let lastError: unknown;
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      try {
+        return await operation.execute(currentOutput, executionContext);
+      } catch (error) {
+        lastError = error;
+        if (attempt >= maxAttempts - 1) {
+          break;
+        }
+        const delay = computeBackoffDelayMs(policy, attempt);
+        await sleep(delay);
+      }
+    }
+
+    throw HCELError.retryExhausted(operation.type, operation.id, chainId, maxAttempts, lastError);
   }
 
   async *stream<TInput, TOutput>(
@@ -183,14 +287,144 @@ export class HCELEngine {
     input: TInput,
     context?: HCELContext
   ): AsyncGenerator<TOutput, HCELResult<TOutput>> {
-    // For now, execute the full chain and yield the final result
-    // TODO: Implement true streaming execution
-    const result = await this.execute(chain, input, context);
-    yield result.output as TOutput;
+    const chainId = chain.id || randomUUID();
+    const ops = chain.operations;
+    if (ops.length === 0) {
+      throw new HCELError('HCEL stream: no operations', HCELErrorCode.STREAMING_NOT_SUPPORTED, {
+        chainId,
+      });
+    }
+
+    const last = ops[ops.length - 1];
+    if (last.type !== 'prompt' || !(last instanceof PromptOperation)) {
+      throw HCELError.streamingNotSupported(last.type, chainId);
+    }
+
+    const startTime = Date.now();
+    const traceId = context?.traceId || randomUUID();
+    const executionContext: HCELContext = {
+      sessionId: context?.sessionId,
+      userId: context?.userId,
+      traceId,
+      metadata: context?.metadata || {},
+      propagate: () => executionContext,
+    };
+
+    this.emitEvent({
+      type: 'chain.start',
+      chainId,
+      timestamp: startTime,
+      data: { input, operationCount: ops.length, streaming: true },
+    });
+
+    let prefixResults: HCELOperationResult[] = [];
+    let prefixOutput: unknown = input;
+
+    if (ops.length > 1) {
+      const prefixChain: HCELChain<TInput, unknown> = {
+        id: `${chainId}-prefix`,
+        operations: ops.slice(0, -1),
+        config: {
+          ...chain.config,
+          persistence: undefined,
+          caching: undefined,
+        },
+      };
+      const prefixExec = await this.execute(prefixChain, input, context);
+      prefixResults = prefixExec.operations;
+      prefixOutput = prefixExec.output;
+    }
+
+    const prompt = last as PromptOperation;
+    const opStart = Date.now();
+    let accumulated = '';
+
+    this.emitEvent({
+      type: 'operation.start',
+      chainId,
+      operationId: prompt.id,
+      timestamp: opStart,
+      data: { operationType: 'prompt', streaming: true },
+    });
+
+    try {
+      for await (const chunk of prompt.streamChunks(prefixOutput as string, executionContext)) {
+        accumulated += chunk;
+        yield chunk as TOutput;
+      }
+    } catch (error) {
+      this.emitEvent({
+        type: 'operation.error',
+        chainId,
+        operationId: prompt.id,
+        timestamp: Date.now(),
+        data: { error: error instanceof Error ? error.message : String(error) },
+      });
+      throw error;
+    }
+
+    const opDuration = Date.now() - opStart;
+    const lastResult: HCELOperationResult = {
+      operationId: prompt.id,
+      type: 'prompt',
+      duration: opDuration,
+      success: true,
+      output: accumulated,
+    };
+
+    prefixResults.push(lastResult);
+
+    this.emitEvent({
+      type: 'operation.complete',
+      chainId,
+      operationId: prompt.id,
+      timestamp: Date.now(),
+      data: { duration: opDuration, success: true, streaming: true },
+    });
+
+    const totalDuration = Date.now() - startTime;
+    this.emitEvent({
+      type: 'chain.complete',
+      chainId,
+      timestamp: Date.now(),
+      data: { duration: totalDuration, success: true, streaming: true },
+    });
+
+    const adaptiveChoices: HCELResultMetadata['adaptiveChoices'] = [];
+    if (chain.config.adaptive) {
+      adaptiveChoices.push({
+        operation: 'chain',
+        choice: 'sequential',
+        reasoning:
+          'Adaptive scheduling is reserved; stream path runs prefix then token stream for terminal prompt.',
+      });
+    }
+
+    const result: HCELResult<TOutput> = {
+      output: accumulated as TOutput,
+      chainId,
+      duration: totalDuration,
+      operations: prefixResults,
+      metadata: {
+        adaptiveChoices,
+        adaptiveRequested: Boolean(chain.config.adaptive),
+      },
+    };
+
+    const cache = this.resolveCache(chain);
+    if (chain.config.caching?.enabled) {
+      const fp = fingerprintOperations(chain.operations, input);
+      const ttlMs = Math.max(0, (chain.config.caching.ttl ?? 3600) * 1000);
+      await cache.set(`run:${fp}`, result, ttlMs);
+    }
+    const persist = chain.config.persistence;
+    if (persist?.enabled && persist.key) {
+      const ttlMs = persist.ttlMs ?? 0;
+      await cache.set(`persist:${persist.key}`, result, ttlMs);
+    }
+
     return result;
   }
-
-  // ── Event Management ───────────────────────────────────────────
 
   addEventListener(eventType: string, listener: (event: HCELEvent) => void): void {
     if (!this.eventListeners.has(eventType)) {
@@ -221,74 +455,5 @@ export class HCELEngine {
         }
       });
     }
-  }
-
-  // ── Adaptive Execution ─────────────────────────────────────────
-
-  private shouldExecuteParallel(operations: HCELOperation[]): boolean {
-    // Simple heuristic: execute parallel if operations are independent
-    // TODO: Implement more sophisticated adaptive logic
-    return operations.length > 1 && operations.every((op) => op.type !== 'conditional');
-  }
-
-  private optimizeExecutionOrder(operations: HCELOperation[]): HCELOperation[] {
-    // Simple optimization: move expensive operations later if possible
-    // TODO: Implement more sophisticated optimization
-    return operations.sort((a, b) => {
-      const aCost = a.metadata?.cost || 0;
-      const bCost = b.metadata?.cost || 0;
-      return aCost - bCost;
-    });
-  }
-
-  // ── Context Management ─────────────────────────────────────────
-
-  private createContext(baseContext?: HCELContext): HCELContext {
-    return {
-      sessionId: baseContext?.sessionId || randomUUID(),
-      userId: baseContext?.userId,
-      traceId: baseContext?.traceId || randomUUID(),
-      metadata: baseContext?.metadata || {},
-      propagate: function (): HCELContext {
-        return this;
-      },
-    };
-  }
-
-  // ── Error Handling ───────────────────────────────────────────
-
-  private createExecutionError(
-    operation: HCELOperation,
-    error: unknown,
-    _context: HCELContext
-  ): Error {
-    const message = error instanceof Error ? error.message : String(error);
-    return new Error(
-      `HCEL execution failed in operation ${operation.type} (${operation.id}): ${message}`
-    );
-  }
-
-  // ── Metrics Collection ─────────────────────────────────────────
-
-  private collectMetrics(result: HCELResult): {
-    totalOperations: number;
-    successfulOperations: number;
-    failedOperations: number;
-    averageOperationDuration: number;
-    totalTokens: number;
-    totalCost: number;
-  } {
-    const successfulOps = result.operations.filter((op) => op.success);
-    const failedOps = result.operations.filter((op) => !op.success);
-    const totalDuration = result.operations.reduce((sum, op) => sum + op.duration, 0);
-
-    return {
-      totalOperations: result.operations.length,
-      successfulOperations: successfulOps.length,
-      failedOperations: failedOps.length,
-      averageOperationDuration: totalDuration / result.operations.length,
-      totalTokens: result.metadata.totalTokens || 0,
-      totalCost: result.metadata.totalCost || 0,
-    };
   }
 }

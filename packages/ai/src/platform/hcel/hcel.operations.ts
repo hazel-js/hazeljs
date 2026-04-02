@@ -12,6 +12,7 @@ import type {
   MLOperationConfig,
   ParallelOperationConfig,
   ConditionalOperationConfig,
+  SequenceOperationConfig,
   HCELOperationMetadata,
 } from './hcel.types';
 import type { ClassifyOptions, ScoreOptions, RAGResult } from '../hazel-ai.types';
@@ -37,19 +38,32 @@ export class PromptOperation implements HCELOperation<string, string> {
     };
   }
 
-  async execute(input: string, _context: HCELContext): Promise<string> {
-    // Replace template variables
-    let prompt = this.config.template;
-    if (this.config.variables) {
-      for (const [key, value] of Object.entries(this.config.variables)) {
+  /** Build the user message sent to the LLM (template + variables + input). */
+  static buildMessage(config: PromptOperationConfig, input: string): string {
+    let prompt = config.template;
+    if (config.variables) {
+      for (const [key, value] of Object.entries(config.variables)) {
         prompt = prompt.replace(new RegExp(`{${key}}`, 'g'), String(value));
       }
     }
+    return prompt || input;
+  }
 
-    // Use input if no template provided
-    const message = prompt || input;
-
+  async execute(input: string, _context: HCELContext): Promise<string> {
+    const message = PromptOperation.buildMessage(this.config, input);
     return this.ai.chat(message, {
+      provider: this.config.provider,
+      model: this.config.model,
+      temperature: this.config.temperature,
+      maxTokens: this.config.maxTokens,
+      systemPrompt: this.config.systemPrompt,
+      responseFormat: this.config.responseFormat,
+    });
+  }
+
+  async *streamChunks(input: string, _context: HCELContext): AsyncGenerator<string> {
+    const message = PromptOperation.buildMessage(this.config, input);
+    yield* this.ai.stream(message, {
       provider: this.config.provider,
       model: this.config.model,
       temperature: this.config.temperature,
@@ -277,6 +291,43 @@ export class ConditionalOperation implements HCELOperation<unknown, unknown> {
   }
 }
 
+// ── Sequence Operation (run multiple ops in order; used by ifElse) ─────────
+
+export class SequenceOperation implements HCELOperation<unknown, unknown> {
+  id: string;
+  type = 'sequence';
+  metadata: HCELOperationMetadata;
+  public config: SequenceOperationConfig & Record<string, unknown>;
+
+  constructor(
+    private ai: HazelAI,
+    config: SequenceOperationConfig
+  ) {
+    this.id = `sequence-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    this.config = { ...config, operations: config.operations };
+    this.metadata = {
+      name: 'sequence',
+      description: 'Run nested operations sequentially',
+      retriable: true,
+    };
+  }
+
+  async execute(input: unknown, context: HCELContext): Promise<unknown> {
+    let current: unknown = input;
+    for (const op of this.config.operations) {
+      if (op.validate && !op.validate(current)) {
+        throw new Error(`Sequence child ${op.type} validation failed`);
+      }
+      current = await op.execute(current, context);
+    }
+    return current;
+  }
+
+  validate(_input: unknown): boolean {
+    return this.config.operations.length > 0;
+  }
+}
+
 // ── Operation Factory ───────────────────────────────────────────
 
 export class HCELOperationFactory {
@@ -304,5 +355,9 @@ export class HCELOperationFactory {
 
   createConditional(config: ConditionalOperationConfig): ConditionalOperation {
     return new ConditionalOperation(this.ai, config);
+  }
+
+  createSequence(config: SequenceOperationConfig): SequenceOperation {
+    return new SequenceOperation(this.ai, config);
   }
 }

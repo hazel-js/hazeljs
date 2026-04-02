@@ -71,7 +71,14 @@ export { HazelAI } from './platform/hazel-ai';
 export { AIPlatformModule } from './platform/ai-platform.module';
 
 // HCEL - HazelJS Composable Expression Language
-export { HCELBuilder, HCELEngine } from './platform/hcel';
+export {
+  HCELBuilder,
+  HCELEngine,
+  HCELError,
+  HCELErrorCode,
+  createMemoryHCELResultCache,
+  getDefaultHCELResultCache,
+} from './platform/hcel';
 export type {
   HCELOperation,
   HCELContext,
@@ -79,6 +86,7 @@ export type {
   HCELBuilder as IHCELBuilder,
   HCELEvent,
   HCELResult,
+  HCELResultCache,
 } from './platform/hcel';
 
 export type {

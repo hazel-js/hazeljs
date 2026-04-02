@@ -115,12 +115,32 @@ export class HCELBuilder<TInput = unknown, TOutput = unknown> implements IHCELBu
 
   // ── Control Flow ───────────────────────────────────────────────
 
-  parallel(...builders: HCELBuilder[]): HCELBuilder<TInput, TOutput> {
+  parallel(
+    ...args: (HCELBuilder | { strategy?: 'all' | 'any' | 'race' })[]
+  ): HCELBuilder<TInput, TOutput> {
+    let strategy: 'all' | 'any' | 'race' = 'all';
+    let builders: HCELBuilder[];
+    const last = args[args.length - 1];
+    if (
+      args.length > 0 &&
+      last !== undefined &&
+      last !== null &&
+      typeof last === 'object' &&
+      !(last instanceof HCELBuilder) &&
+      'strategy' in last &&
+      typeof (last as { strategy?: string }).strategy === 'string'
+    ) {
+      strategy = (last as { strategy: 'all' | 'any' | 'race' }).strategy;
+      builders = args.slice(0, -1) as HCELBuilder[];
+    } else {
+      builders = args as HCELBuilder[];
+    }
+
     const operations = builders.flatMap((builder) => builder.operations);
 
     const parallelOperation = this.operationFactory.createParallel({
       operations,
-      strategy: 'all',
+      strategy,
     });
 
     this.operations.push(parallelOperation);
@@ -128,23 +148,71 @@ export class HCELBuilder<TInput = unknown, TOutput = unknown> implements IHCELBu
     return this;
   }
 
-  conditional(condition: (input: TInput) => boolean): HCELBuilder<TInput, TOutput> {
+  /**
+   * Wrap the previous operation: run it only when `condition` is true; otherwise pass input through.
+   * Optionally provide `elseBuilder` to run a different branch when false (each branch may be multiple ops via a nested builder).
+   */
+  conditional(
+    condition: (input: TInput) => boolean,
+    elseBuilder?: HCELBuilder<TInput, TOutput>
+  ): HCELBuilder<TInput, TOutput> {
     if (this.operations.length === 0) {
       throw new Error('Conditional operation requires at least one preceding operation');
     }
 
-    // For now, we'll implement a simple conditional that checks the last operation
-    // TODO: Implement more sophisticated conditional logic
     const lastOperation = this.operations[this.operations.length - 1];
+    let falseBranch: HCELOperation | undefined;
+    if (elseBuilder) {
+      const elseInternal = elseBuilder as unknown as { operations: HCELOperation[] };
+      if (elseInternal.operations.length > 0) {
+        falseBranch = this.operationFactory.createSequence({
+          operations: [...elseInternal.operations],
+        });
+      }
+    }
 
     const conditionalOperation = this.operationFactory.createConditional({
       condition: condition as (input: unknown) => boolean,
       trueBranch: lastOperation,
+      falseBranch,
     });
 
-    // Replace the last operation with the conditional
     this.operations[this.operations.length - 1] = conditionalOperation;
 
+    return this;
+  }
+
+  /**
+   * Single conditional with explicit then/else branches (multi-op each). Replaces the current chain with one conditional root.
+   */
+  ifElse(
+    condition: (input: TInput) => boolean,
+    thenBranch: HCELBuilder<TInput, TOutput>,
+    elseBranch: HCELBuilder<TInput, TOutput>
+  ): HCELBuilder<TInput, TOutput> {
+    const thenInternal = thenBranch as unknown as { operations: HCELOperation[]; ai: HazelAI };
+    const elseInternal = elseBranch as unknown as { operations: HCELOperation[]; ai: HazelAI };
+    if (thenInternal.operations.length === 0 || elseInternal.operations.length === 0) {
+      throw new Error('ifElse: each branch must contain at least one operation');
+    }
+    if (thenInternal.ai !== this.ai || elseInternal.ai !== this.ai) {
+      throw new Error('ifElse: all branches must use the same HazelAI instance as this builder');
+    }
+
+    const trueSeq = this.operationFactory.createSequence({
+      operations: [...thenInternal.operations],
+    });
+    const falseSeq = this.operationFactory.createSequence({
+      operations: [...elseInternal.operations],
+    });
+
+    const conditionalOperation = this.operationFactory.createConditional({
+      condition: condition as (input: unknown) => boolean,
+      trueBranch: trueSeq,
+      falseBranch: falseSeq,
+    });
+
+    this.operations = [conditionalOperation];
     return this;
   }
 
@@ -158,8 +226,8 @@ export class HCELBuilder<TInput = unknown, TOutput = unknown> implements IHCELBu
   persist(key?: string): HCELBuilder<TInput, TOutput> {
     const persistKey = key || `chain-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-    // Store the persistence key in chain config
     this.chainConfig.persistence = {
+      ...this.chainConfig.persistence,
       key: persistKey,
       enabled: true,
     };
@@ -167,10 +235,15 @@ export class HCELBuilder<TInput = unknown, TOutput = unknown> implements IHCELBu
     return this;
   }
 
+  /**
+   * On the next `execute()`, return a previously persisted result for this key (see `persist`) without re-running the chain.
+   * Uses the same result cache as `cache()`. For durable workflows across restarts, use `asFlowNode()` with `@hazeljs/flow`.
+   */
   restore(key: string): HCELBuilder<TInput, TOutput> {
-    // TODO: Implement chain restoration from persistence
-    // eslint-disable-next-line no-console
-    console.log(`Restoring chain with key: ${key}`);
+    this.chainConfig.persistence = {
+      ...this.chainConfig.persistence,
+      restoreKey: key,
+    };
     return this;
   }
 
@@ -252,10 +325,7 @@ export class HCELBuilder<TInput = unknown, TOutput = unknown> implements IHCELBu
       },
     };
 
-    // For now, execute normally and stream the result
-    // TODO: Implement true streaming execution in Phase 2
-    const result = await this.engine.execute(chain, input as unknown, context);
-    yield result.output as TOutput;
+    yield* this.engine.stream(chain, input as unknown, context) as AsyncGenerator<TOutput>;
   }
 
   // ── Utility Methods ───────────────────────────────────────────
@@ -407,7 +477,7 @@ export function compose<TInput, TIntermediate, TOutput>(
 }
 
 /**
- * Create a conditional builder that executes different paths based on a condition
+ * Create a builder whose only operation is a conditional over two multi-op branches.
  */
 export function conditional<TInput, TOutput>(
   condition: (input: TInput) => boolean,
@@ -415,18 +485,32 @@ export function conditional<TInput, TOutput>(
   falsePath?: HCELBuilder<TInput, TOutput>
 ): HCELBuilder<TInput, TOutput> {
   const truePathInternal = truePath as unknown as { ai: HazelAI; operations: HCELOperation[] };
-  const falsePathInternal = falsePath as unknown as { ai: HazelAI } | undefined;
+  const falsePathInternal = falsePath as unknown as { ai: HazelAI; operations: HCELOperation[] };
+
+  if (truePathInternal.operations.length === 0) {
+    throw new Error('conditional: truePath must contain at least one operation');
+  }
 
   if (falsePathInternal && truePathInternal.ai !== falsePathInternal.ai) {
     throw new Error('All conditional paths must use the same HazelAI instance');
   }
 
   const conditionalBuilder = new HCELBuilder<TInput, TOutput>(truePathInternal.ai);
+  const factory = new HCELOperationFactory(truePathInternal.ai);
 
-  // This is a simplified implementation
-  // TODO: Implement proper conditional logic in the engine
-  (conditionalBuilder as unknown as { operations: HCELOperation[] }).operations =
-    truePathInternal.operations;
+  const trueSeq = factory.createSequence({ operations: [...truePathInternal.operations] });
+  const falseSeq =
+    falsePathInternal && falsePathInternal.operations.length > 0
+      ? factory.createSequence({ operations: [...falsePathInternal.operations] })
+      : undefined;
+
+  const op = factory.createConditional({
+    condition: condition as (input: unknown) => boolean,
+    trueBranch: trueSeq,
+    falseBranch: falseSeq,
+  });
+
+  (conditionalBuilder as unknown as { operations: HCELOperation[] }).operations = [op];
 
   return conditionalBuilder;
 }
