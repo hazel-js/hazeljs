@@ -74,9 +74,19 @@ export class SwaggerController {
 
       logger.debug('Root module:', SwaggerController.rootModule.name);
 
-      // Get all controllers from the AppModule and its imported modules
+      // Get all controllers from the AppModule and its imported modules.
+      // Avoid JSON.stringify on full metadata because dynamic module objects can be circular.
       const moduleMetadata = getModuleMetadata(SwaggerController.rootModule);
-      logger.debug('Module metadata:', JSON.stringify(moduleMetadata, null, 2));
+      logger.debug(
+        'Module metadata summary:',
+        moduleMetadata
+          ? {
+              controllers: moduleMetadata.controllers?.length || 0,
+              imports: moduleMetadata.imports?.length || 0,
+              providers: moduleMetadata.providers?.length || 0,
+            }
+          : null
+      );
 
       const controllers = new Set<Type<unknown>>();
 
