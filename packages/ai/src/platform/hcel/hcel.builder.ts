@@ -14,7 +14,19 @@ import type {
   RAGOperationConfig,
   AgentOperationConfig,
   MLOperationConfig,
+  MemoryRecallOperationConfig,
+  MemorySaveOperationConfig,
+  MemorySearchOperationConfig,
+  AgentPipelineOperationConfig,
+  AgentSupervisorOperationConfig,
 } from './hcel.types';
+import type { MemoryService } from '@hazeljs/memory';
+import type {
+  CompiledGraph,
+  GraphExecutionOptions,
+  GraphExecutionResult,
+  SupervisorResult,
+} from '../agent-orchestration.types';
 import type { ChatOptions, RAGOptions, ClassifyOptions, ScoreOptions } from '../hazel-ai.types';
 import { HCELEngine } from './hcel.engine';
 import { HCELOperationFactory } from './hcel.operations';
@@ -96,6 +108,27 @@ export class HCELBuilder<TInput = unknown, TOutput = unknown> implements IHCELBu
     this.operations.push(operation);
 
     return this as unknown as HCELBuilder<string, TOutput>;
+  }
+
+  agentPipeline(config: AgentPipelineOperationConfig): HCELBuilder<string, GraphExecutionResult> {
+    this.operations.push(this.operationFactory.createAgentPipeline(config));
+    return this as unknown as HCELBuilder<string, GraphExecutionResult>;
+  }
+
+  agentSupervisor(config: AgentSupervisorOperationConfig): HCELBuilder<string, SupervisorResult> {
+    this.operations.push(this.operationFactory.createAgentSupervisor(config));
+    return this as unknown as HCELBuilder<string, SupervisorResult>;
+  }
+
+  agentGraphCompiled(
+    graphId: string,
+    compiled: Pick<CompiledGraph, 'execute'>,
+    graphOptions?: GraphExecutionOptions
+  ): HCELBuilder<string, GraphExecutionResult> {
+    this.operations.push(
+      this.operationFactory.createAgentGraphCompiled({ graphId, graphOptions }, compiled)
+    );
+    return this as unknown as HCELBuilder<string, GraphExecutionResult>;
   }
 
   ml(
@@ -221,6 +254,28 @@ export class HCELBuilder<TInput = unknown, TOutput = unknown> implements IHCELBu
     return this;
   }
 
+  // ── @hazeljs/memory integration ───────────────────────────────────
+
+  memory(service: MemoryService): this {
+    this.chainContext.memory = service;
+    return this;
+  }
+
+  memoryRecall(config: MemoryRecallOperationConfig): HCELBuilder<string, TOutput> {
+    this.operations.push(this.operationFactory.createMemoryRecall(config));
+    return this as unknown as HCELBuilder<string, TOutput>;
+  }
+
+  memorySave(config: MemorySaveOperationConfig): HCELBuilder<string, TOutput> {
+    this.operations.push(this.operationFactory.createMemorySave(config));
+    return this as unknown as HCELBuilder<string, TOutput>;
+  }
+
+  memorySearch(config?: MemorySearchOperationConfig): HCELBuilder<string, TOutput> {
+    this.operations.push(this.operationFactory.createMemorySearch(config));
+    return this as unknown as HCELBuilder<string, TOutput>;
+  }
+
   // ── Persistence Operations ───────────────────────────────────────
 
   persist(key?: string): HCELBuilder<TInput, TOutput> {
@@ -294,6 +349,7 @@ export class HCELBuilder<TInput = unknown, TOutput = unknown> implements IHCELBu
       userId: this.chainContext.userId,
       traceId: this.chainContext.traceId || randomUUID(),
       metadata: this.chainContext.metadata || {},
+      memory: this.chainContext.memory,
       propagate: function () {
         return this;
       },
@@ -320,6 +376,7 @@ export class HCELBuilder<TInput = unknown, TOutput = unknown> implements IHCELBu
       userId: this.chainContext.userId,
       traceId: this.chainContext.traceId || randomUUID(),
       metadata: this.chainContext.metadata || {},
+      memory: this.chainContext.memory,
       propagate: function () {
         return this;
       },

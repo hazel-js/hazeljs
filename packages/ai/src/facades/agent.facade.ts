@@ -1,13 +1,20 @@
 import { AIEnhancedService } from '../ai-enhanced.service';
 import type { HazelAIConfig } from '../platform/hazel-ai.types';
+import type {
+  AgentGraph,
+  CompiledGraph,
+  GraphExecutionOptions,
+  GraphExecutionResult,
+  SupervisorConfig,
+  SupervisorResult,
+} from '../platform/agent-orchestration.types';
 import type { AgentExecutionResult } from '@hazeljs/agent';
 
 /**
  * Agent Facade — Provides high-level agent execution APIs.
  *
  * This facade lazily loads @hazeljs/agent and provides simple methods
- * for executing agents and creating multi-agent pipelines. It gracefully
- * handles missing @hazeljs/agent with helpful errors.
+ * for executing agents, multi-agent pipelines, supervisors, and graphs.
  */
 export class AgentFacade {
   private agentService: unknown = null;
@@ -20,13 +27,17 @@ export class AgentFacade {
 
   /**
    * Ensure @hazeljs/agent is loaded and initialized.
-   * Throws a helpful error if the package is not installed.
    */
   private async ensureAgent(): Promise<void> {
     if (this.resolved) return;
 
+    if (this.config.agentService) {
+      this.agentService = this.config.agentService;
+      this.resolved = true;
+      return;
+    }
+
     try {
-      // Dynamically import @hazeljs/agent
       const { AgentService } = await import('@hazeljs/agent');
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       this.agentService = new AgentService(this.aiService as any);
@@ -44,11 +55,6 @@ export class AgentFacade {
 
   /**
    * Execute an agent by name.
-   *
-   * @param name The registered agent name
-   * @param input The input/prompt for the agent
-   * @param options Optional execution options
-   * @returns Agent execution result
    */
   async execute(
     name: string,
@@ -67,29 +73,88 @@ export class AgentFacade {
   }
 
   /**
-   * Create a multi-agent pipeline.
+   * Run a compiled sequential pipeline of registered agents (uses `AgentRuntime.pipeline`).
+   */
+  async runPipeline(
+    pipelineId: string,
+    agents: string[],
+    input: string,
+    options?: GraphExecutionOptions
+  ): Promise<GraphExecutionResult> {
+    await this.ensureAgent();
+    const service = this.agentService as {
+      pipeline: (id: string, agentNames: string[]) => CompiledGraph;
+    };
+    const compiled = service.pipeline(pipelineId, agents);
+    return compiled.execute(input, options) as Promise<GraphExecutionResult>;
+  }
+
+  /**
+   * Run a supervisor that delegates to worker agents (requires LLM on agent runtime).
+   */
+  async runSupervisor(
+    config: SupervisorConfig,
+    task: string,
+    runOptions?: { sessionId?: string; userId?: string }
+  ): Promise<SupervisorResult> {
+    await this.ensureAgent();
+    const service = this.agentService as {
+      createSupervisor: (c: SupervisorConfig) => {
+        run: (
+          task: string,
+          options?: { sessionId?: string; userId?: string }
+        ) => Promise<SupervisorResult>;
+      };
+    };
+    const supervisor = service.createSupervisor(config);
+    return supervisor.run(task, runOptions) as Promise<SupervisorResult>;
+  }
+
+  /**
+   * Obtain an `AgentGraph` builder bound to the shared runtime (call `.compile()` then pass to HCEL or run `.execute()`).
+   */
+  async createAgentGraph(graphId: string): Promise<AgentGraph> {
+    await this.ensureAgent();
+    const service = this.agentService as {
+      createGraph: (id: string) => AgentGraph;
+    };
+    return service.createGraph(graphId) as AgentGraph;
+  }
+
+  /**
+   * Execute a pre-compiled graph (from `createAgentGraph(...).compile()`).
+   */
+  async runCompiledGraph(
+    compiled: Pick<CompiledGraph, 'execute'>,
+    input: string,
+    options?: GraphExecutionOptions
+  ): Promise<GraphExecutionResult> {
+    return compiled.execute(input, options) as Promise<GraphExecutionResult>;
+  }
+
+  /**
+   * Lazy pipeline handle — prefer `runPipeline` for one-shot execution.
    *
-   * @param id Unique pipeline identifier
-   * @param agents Array of agent names in execution order
-   * @returns Pipeline executor
+   * @deprecated The returned `execute` resolves to `GraphExecutionResult`, not `AgentExecutionResult`.
    */
   pipeline(
     id: string,
     agents: string[]
-  ): { execute: (input: string) => Promise<AgentExecutionResult> } {
+  ): {
+    execute: (input: string, options?: GraphExecutionOptions) => Promise<GraphExecutionResult>;
+  } {
     const ensureAgent = this.ensureAgent.bind(this);
     const agentService = this.agentService;
 
     return {
-      async execute(input: string): Promise<AgentExecutionResult> {
+      async execute(input: string, options?: GraphExecutionOptions): Promise<GraphExecutionResult> {
         await ensureAgent();
         const service = agentService as {
-          pipeline: (
-            id: string,
-            agents: string[]
-          ) => { execute: (input: string) => Promise<AgentExecutionResult> };
+          pipeline: (pipelineId: string, agentNames: string[]) => CompiledGraph;
         };
-        return service.pipeline(id, agents).execute(input);
+        return service
+          .pipeline(id, agents)
+          .execute(input, options) as Promise<GraphExecutionResult>;
       },
     };
   }

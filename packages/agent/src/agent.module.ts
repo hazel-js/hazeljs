@@ -1,5 +1,8 @@
 import { Service, Inject, HazelModule } from '@hazeljs/core';
 import { AgentRuntime, AgentRuntimeConfig } from './runtime/agent.runtime';
+import { AgentGraph } from './graph/agent-graph';
+import type { SupervisorConfig } from './graph/agent-graph.types';
+import { SupervisorAgent } from './supervisor/supervisor';
 import { AgentEventType } from './types/event.types';
 import { getAgentMetadata, getRegisteredAgents } from './decorators/agent.decorator';
 import type { AgentContext, AgentExecutionResult, AgentStreamChunk } from './types/agent.types';
@@ -268,6 +271,30 @@ export class AgentService {
   getRuntime(): AgentRuntime {
     this.ensureDiscovery();
     return this.runtime;
+  }
+
+  /**
+   * Build a compiled sequential pipeline graph (same as `AgentRuntime.pipeline`).
+   */
+  pipeline(pipelineId: string, agentNames: string[]): ReturnType<AgentRuntime['pipeline']> {
+    this.ensureDiscovery();
+    return this.runtime.pipeline(pipelineId, agentNames);
+  }
+
+  /**
+   * Create a supervisor that routes tasks to worker agents (requires LLM on runtime).
+   */
+  createSupervisor(config: SupervisorConfig): SupervisorAgent {
+    this.ensureDiscovery();
+    return this.runtime.createSupervisor(config);
+  }
+
+  /**
+   * Start building a custom multi-agent graph for this runtime.
+   */
+  createGraph(graphId: string): AgentGraph {
+    this.ensureDiscovery();
+    return this.runtime.createGraph(graphId);
   }
 
   async execute(

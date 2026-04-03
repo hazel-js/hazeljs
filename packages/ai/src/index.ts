@@ -69,6 +69,14 @@ export { debug, setDebugEnabled } from './utils/debug';
 // ── Unified AI Platform (NEW) ─────────────────────────────────
 export { HazelAI } from './platform/hazel-ai';
 export { AIPlatformModule } from './platform/ai-platform.module';
+export type {
+  AgentGraph,
+  CompiledGraph,
+  GraphExecutionOptions,
+  GraphExecutionResult,
+  SupervisorConfig,
+  SupervisorResult,
+} from './platform/agent-orchestration.types';
 
 // HCEL - HazelJS Composable Expression Language
 export {
@@ -78,6 +86,12 @@ export {
   HCELErrorCode,
   createMemoryHCELResultCache,
   getDefaultHCELResultCache,
+  MemoryRecallOperation,
+  MemorySaveOperation,
+  MemorySearchOperation,
+  AgentPipelineOperation,
+  AgentSupervisorOperation,
+  AgentGraphCompiledOperation,
 } from './platform/hcel';
 export type {
   HCELOperation,
@@ -87,6 +101,12 @@ export type {
   HCELEvent,
   HCELResult,
   HCELResultCache,
+  MemoryRecallOperationConfig,
+  MemorySaveOperationConfig,
+  MemorySearchOperationConfig,
+  AgentPipelineOperationConfig,
+  AgentSupervisorOperationConfig,
+  AgentGraphCompiledOperationConfig,
 } from './platform/hcel';
 
 export type {

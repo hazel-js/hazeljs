@@ -36,6 +36,12 @@ export {
   ParallelOperation,
   ConditionalOperation,
   SequenceOperation,
+  MemoryRecallOperation,
+  MemorySaveOperation,
+  MemorySearchOperation,
+  AgentPipelineOperation,
+  AgentSupervisorOperation,
+  AgentGraphCompiledOperation,
   HCELOperationFactory,
 } from './hcel.operations';
 
@@ -58,6 +64,12 @@ export type {
   ParallelOperationConfig,
   ConditionalOperationConfig,
   SequenceOperationConfig,
+  MemoryRecallOperationConfig,
+  MemorySaveOperationConfig,
+  MemorySearchOperationConfig,
+  AgentPipelineOperationConfig,
+  AgentSupervisorOperationConfig,
+  AgentGraphCompiledOperationConfig,
   HCELRetryPolicy,
   HCELObservabilityConfig,
 } from './hcel.types';

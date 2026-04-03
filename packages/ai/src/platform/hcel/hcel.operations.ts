@@ -14,9 +14,22 @@ import type {
   ConditionalOperationConfig,
   SequenceOperationConfig,
   HCELOperationMetadata,
+  MemoryRecallOperationConfig,
+  MemorySaveOperationConfig,
+  MemorySearchOperationConfig,
+  AgentPipelineOperationConfig,
+  AgentSupervisorOperationConfig,
+  AgentGraphCompiledOperationConfig,
 } from './hcel.types';
+import { HCELError } from './hcel.error';
+import type { MemoryItem } from '@hazeljs/memory';
 import type { ClassifyOptions, ScoreOptions, RAGResult } from '../hazel-ai.types';
 import type { AgentExecutionResult } from '@hazeljs/agent';
+import type {
+  CompiledGraph,
+  GraphExecutionResult,
+  SupervisorResult,
+} from '../agent-orchestration.types';
 
 // ── Prompt Operation ─────────────────────────────────────────────
 
@@ -140,6 +153,107 @@ export class AgentOperation implements HCELOperation<string, AgentExecutionResul
     const agentInput = this.config.input || input;
 
     return this.ai.agent(this.config.name, agentInput, this.config.options);
+  }
+
+  validate(input: string): boolean {
+    return typeof input === 'string' && input.length > 0;
+  }
+}
+
+// ── Multi-agent orchestration (@hazeljs/agent) ─────────────────
+
+export class AgentPipelineOperation implements HCELOperation<string, GraphExecutionResult> {
+  id: string;
+  type = 'agentPipeline';
+  metadata: HCELOperationMetadata;
+
+  constructor(
+    private ai: HazelAI,
+    public config: AgentPipelineOperationConfig
+  ) {
+    this.id = `agent-pipeline-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    this.metadata = {
+      name: 'agentPipeline',
+      description: 'Sequential multi-agent pipeline (compiled graph)',
+      retriable: false,
+    };
+  }
+
+  async execute(input: string, _context: HCELContext): Promise<GraphExecutionResult> {
+    return this.ai.agentPipeline(
+      this.config.pipelineId,
+      this.config.agents,
+      input,
+      this.config.graphOptions
+    );
+  }
+
+  validate(input: string): boolean {
+    return typeof input === 'string' && input.length > 0 && this.config.agents.length > 0;
+  }
+}
+
+export class AgentSupervisorOperation implements HCELOperation<string, SupervisorResult> {
+  id: string;
+  type = 'agentSupervisor';
+  metadata: HCELOperationMetadata;
+
+  constructor(
+    private ai: HazelAI,
+    public config: AgentSupervisorOperationConfig
+  ) {
+    this.id = `agent-supervisor-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    this.metadata = {
+      name: 'agentSupervisor',
+      description: 'Supervisor routing to worker agents',
+      retriable: false,
+    };
+  }
+
+  async execute(input: string, context: HCELContext): Promise<SupervisorResult> {
+    return this.ai.supervisor(this.config, input, {
+      sessionId: context.sessionId,
+      userId: context.userId,
+    });
+  }
+
+  validate(input: string): boolean {
+    const w = this.config.workers;
+    return typeof input === 'string' && input.length > 0 && Array.isArray(w) && w.length > 0;
+  }
+}
+
+export class AgentGraphCompiledOperation implements HCELOperation<string, GraphExecutionResult> {
+  id: string;
+  type = 'agentGraphCompiled';
+  metadata: HCELOperationMetadata;
+  private readonly compiled: Pick<CompiledGraph, 'execute'>;
+
+  constructor(
+    private ai: HazelAI,
+    public config: AgentGraphCompiledOperationConfig,
+    compiled: Pick<CompiledGraph, 'execute'>
+  ) {
+    this.compiled = compiled;
+    this.id = `agent-graph-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    this.metadata = {
+      name: 'agentGraphCompiled',
+      description: 'Execute a pre-compiled AgentGraph',
+      retriable: false,
+    };
+  }
+
+  async execute(input: string, context: HCELContext): Promise<GraphExecutionResult> {
+    const initialData = {
+      ...(this.config.graphOptions?.initialData ?? {}),
+      ...(context.userId ? { userId: context.userId } : {}),
+      ...(context.sessionId ? { sessionId: context.sessionId } : {}),
+    };
+    const options = {
+      ...this.config.graphOptions,
+      ...(Object.keys(initialData).length ? { initialData } : {}),
+    };
+    return this.ai.runAgentGraph(this.compiled, input, options);
   }
 
   validate(input: string): boolean {
@@ -328,6 +442,202 @@ export class SequenceOperation implements HCELOperation<unknown, unknown> {
   }
 }
 
+// ── Memory operations (@hazeljs/memory) ─────────────────────────
+
+function formatMemoryValue(value: MemoryItem['value']): string {
+  if (typeof value === 'string') return value;
+  if (Array.isArray(value)) return `[vector:${value.length}]`;
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
+  }
+}
+
+export class MemoryRecallOperation implements HCELOperation<string, string> {
+  id: string;
+  type = 'memoryRecall';
+  metadata: HCELOperationMetadata;
+
+  constructor(
+    _ai: HazelAI,
+    public config: MemoryRecallOperationConfig
+  ) {
+    this.id = `memory-recall-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    this.metadata = {
+      name: 'memoryRecall',
+      description: 'Load user memories from MemoryService and prepend to prompt input',
+      retriable: true,
+    };
+  }
+
+  async execute(input: string, context: HCELContext): Promise<string> {
+    const text = typeof input === 'string' ? input : String(input ?? '');
+    const svc = context.memory;
+    if (!svc) {
+      throw HCELError.operationFailed(
+        this.type,
+        this.id,
+        '',
+        'Set builder.memory(MemoryService) before memoryRecall'
+      );
+    }
+    const userId = context.userId;
+    if (!userId) {
+      throw HCELError.operationFailed(
+        this.type,
+        this.id,
+        '',
+        'context.userId is required for memoryRecall (use builder.context({ userId }))'
+      );
+    }
+
+    const categories = Array.isArray(this.config.category)
+      ? this.config.category
+      : [this.config.category];
+    const byId = new Map<string, MemoryItem>();
+    const limit = this.config.limit ?? 20;
+
+    for (const category of categories) {
+      const batch = await svc.getByUserAndCategory(userId, category, {
+        limit,
+        orderBy: 'updatedAt',
+        order: 'desc',
+      });
+      for (const item of batch) {
+        byId.set(item.id, item);
+      }
+    }
+
+    const items = [...byId.values()].slice(0, limit);
+    if (items.length === 0) {
+      return text;
+    }
+
+    const header = this.config.header ?? 'Relevant memories:';
+    const lines = items.map((i) => `- ${i.key}: ${formatMemoryValue(i.value)}`).join('\n');
+    return `${header}\n${lines}\n\n${text}`;
+  }
+
+  validate(_input: string): boolean {
+    return true;
+  }
+}
+
+export class MemorySaveOperation implements HCELOperation<string, string> {
+  id: string;
+  type = 'memorySave';
+  metadata: HCELOperationMetadata;
+
+  constructor(
+    _ai: HazelAI,
+    public config: MemorySaveOperationConfig
+  ) {
+    this.id = `memory-save-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    this.metadata = {
+      name: 'memorySave',
+      description: 'Persist string output as a MemoryItem',
+      retriable: true,
+    };
+  }
+
+  async execute(input: string, context: HCELContext): Promise<string> {
+    const svc = context.memory;
+    if (!svc) {
+      throw HCELError.operationFailed(
+        this.type,
+        this.id,
+        '',
+        'Set builder.memory(MemoryService) before memorySave'
+      );
+    }
+    const userId = context.userId;
+    if (!userId) {
+      throw HCELError.operationFailed(
+        this.type,
+        this.id,
+        '',
+        'context.userId is required for memorySave (use builder.context({ userId }))'
+      );
+    }
+
+    const payload = typeof input === 'string' ? input : JSON.stringify(input);
+    await svc.save({
+      userId,
+      category: this.config.category,
+      key: this.config.key,
+      value: payload,
+      source: this.config.source ?? 'explicit',
+      confidence: this.config.confidence ?? 1,
+      evidence: [],
+      sessionId: context.sessionId,
+    });
+    return typeof input === 'string' ? input : payload;
+  }
+
+  validate(input: string): boolean {
+    return typeof input === 'string' ? input.length > 0 : input != null;
+  }
+}
+
+export class MemorySearchOperation implements HCELOperation<string, string> {
+  id: string;
+  type = 'memorySearch';
+  metadata: HCELOperationMetadata;
+
+  constructor(
+    _ai: HazelAI,
+    public config: MemorySearchOperationConfig = {}
+  ) {
+    this.id = `memory-search-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    this.metadata = {
+      name: 'memorySearch',
+      description:
+        'Search memories via MemoryService.search (empty when the backing store has no search implementation)',
+      retriable: true,
+    };
+  }
+
+  async execute(input: string, context: HCELContext): Promise<string> {
+    const text = typeof input === 'string' ? input : String(input ?? '');
+    const svc = context.memory;
+    if (!svc) {
+      throw HCELError.operationFailed(
+        this.type,
+        this.id,
+        '',
+        'Set builder.memory(MemoryService) before memorySearch'
+      );
+    }
+    const userId = context.userId;
+    if (!userId) {
+      throw HCELError.operationFailed(
+        this.type,
+        this.id,
+        '',
+        'context.userId is required for memorySearch (use builder.context({ userId }))'
+      );
+    }
+
+    const hits = await svc.search(text, {
+      userId,
+      category: this.config.category,
+      topK: this.config.topK ?? 8,
+      minScore: this.config.minScore,
+    });
+    if (!hits.length) {
+      return text;
+    }
+    const header = this.config.header ?? 'Memory search results:';
+    const lines = hits.map((i) => `- ${i.key}: ${formatMemoryValue(i.value)}`).join('\n');
+    return `${header}\n${lines}\n\n${text}`;
+  }
+
+  validate(_input: string): boolean {
+    return true;
+  }
+}
+
 // ── Operation Factory ───────────────────────────────────────────
 
 export class HCELOperationFactory {
@@ -359,5 +669,32 @@ export class HCELOperationFactory {
 
   createSequence(config: SequenceOperationConfig): SequenceOperation {
     return new SequenceOperation(this.ai, config);
+  }
+
+  createAgentPipeline(config: AgentPipelineOperationConfig): AgentPipelineOperation {
+    return new AgentPipelineOperation(this.ai, config);
+  }
+
+  createAgentSupervisor(config: AgentSupervisorOperationConfig): AgentSupervisorOperation {
+    return new AgentSupervisorOperation(this.ai, config);
+  }
+
+  createAgentGraphCompiled(
+    config: AgentGraphCompiledOperationConfig,
+    compiled: Pick<CompiledGraph, 'execute'>
+  ): AgentGraphCompiledOperation {
+    return new AgentGraphCompiledOperation(this.ai, config, compiled);
+  }
+
+  createMemoryRecall(config: MemoryRecallOperationConfig): MemoryRecallOperation {
+    return new MemoryRecallOperation(this.ai, config);
+  }
+
+  createMemorySave(config: MemorySaveOperationConfig): MemorySaveOperation {
+    return new MemorySaveOperation(this.ai, config);
+  }
+
+  createMemorySearch(config?: MemorySearchOperationConfig): MemorySearchOperation {
+    return new MemorySearchOperation(this.ai, config);
   }
 }

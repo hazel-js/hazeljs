@@ -21,6 +21,28 @@ export interface HazelAIConfig {
   maxTokens?: number;
   /** Enable debug logging. */
   debug?: boolean;
+  /**
+   * Optional external agent service/runtime to reuse.
+   * When provided, HCEL agent operations run on the same registrations/tools as your app runtime.
+   */
+  agentService?: {
+    execute: (
+      name: string,
+      input: string,
+      options?: Record<string, unknown>
+    ) => Promise<AgentExecutionResult>;
+    pipeline: (
+      id: string,
+      agents: string[]
+    ) => { execute: (input: string, options?: GraphExecutionOptions) => Promise<GraphExecutionResult> };
+    createSupervisor: (config: SupervisorConfig) => {
+      run: (
+        task: string,
+        options?: { sessionId?: string; userId?: string }
+      ) => Promise<SupervisorResult>;
+    };
+    createGraph: (id: string) => AgentGraph;
+  };
 
   // NEW: Production persistence configuration
   persistence?: {
@@ -235,6 +257,13 @@ export interface AIPlatformPlugin {
 
 // Re-export agent types for convenience
 import type { AgentExecutionResult } from '@hazeljs/agent';
+import type {
+  AgentGraph,
+  GraphExecutionOptions,
+  GraphExecutionResult,
+  SupervisorConfig,
+  SupervisorResult,
+} from './agent-orchestration.types';
 export { AgentExecutionResult };
 
 // Forward reference for HazelAI class

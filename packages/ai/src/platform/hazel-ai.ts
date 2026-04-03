@@ -22,6 +22,14 @@ import type {
 } from './hazel-ai.types';
 import type { IAIProvider } from '../ai-enhanced.types';
 import type { AgentExecutionResult } from '@hazeljs/agent';
+import type {
+  AgentGraph,
+  CompiledGraph,
+  GraphExecutionOptions,
+  GraphExecutionResult,
+  SupervisorConfig,
+  SupervisorResult,
+} from './agent-orchestration.types';
 import { Service } from '@hazeljs/core';
 
 /**
@@ -112,17 +120,57 @@ export class HazelAI {
   }
 
   /**
-   * Create a multi-agent pipeline.
-   *
-   * @param id Unique pipeline identifier
-   * @param agents Array of agent names in execution order
-   * @returns Pipeline executor
+   * Create a multi-agent sequential pipeline (compiled graph).
+   * `execute()` returns `GraphExecutionResult` (final `response` in `state.output` / `response`).
    */
   pipeline(
     id: string,
     agents: string[]
-  ): { execute: (input: string) => Promise<AgentExecutionResult> } {
+  ): {
+    execute: (input: string, options?: GraphExecutionOptions) => Promise<GraphExecutionResult>;
+  } {
     return this.agentFacade.pipeline(id, agents);
+  }
+
+  /**
+   * Run a sequential agent pipeline in one call.
+   */
+  async agentPipeline(
+    pipelineId: string,
+    agents: string[],
+    input: string,
+    options?: GraphExecutionOptions
+  ): Promise<GraphExecutionResult> {
+    return this.agentFacade.runPipeline(pipelineId, agents, input, options);
+  }
+
+  /**
+   * Run a supervisor that delegates subtasks to worker agents (LLM required on agent runtime).
+   */
+  async supervisor(
+    config: SupervisorConfig,
+    task: string,
+    runOptions?: { sessionId?: string; userId?: string }
+  ): Promise<SupervisorResult> {
+    return this.agentFacade.runSupervisor(config, task, runOptions);
+  }
+
+  /**
+   * Start building a custom `AgentGraph` for this app’s agent runtime.
+   */
+  async createAgentGraph(graphId: string): Promise<AgentGraph> {
+    return this.agentFacade.createAgentGraph(graphId);
+  }
+
+  /**
+   * Run a graph produced by `createAgentGraph(...).addNode(...).compile()`.
+   */
+  async runAgentGraph(
+    compiled: Pick<CompiledGraph, 'execute'>,
+    input: string,
+    options?: GraphExecutionOptions
+  ): Promise<GraphExecutionResult> {
+    return this.agentFacade.runCompiledGraph(compiled, input, options);
   }
 
   // ── Classification ───────────────────────────────────────

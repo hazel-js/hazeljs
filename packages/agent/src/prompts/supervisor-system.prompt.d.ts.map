@@ -1,0 +1,1 @@
+{"version":3,"file":"supervisor-system.prompt.d.ts","sourceRoot":"","sources":["supervisor-system.prompt.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,cAAc,EAAkB,MAAM,kBAAkB,CAAC;AAElE,eAAO,MAAM,qBAAqB,4BAA4B,CAAC;AAE/D,MAAM,WAAW,yBAAyB;IACxC,IAAI,EAAE,MAAM,CAAC;IACb,UAAU,EAAE,MAAM,CAAC;CACpB;AAED,QAAA,MAAM,QAAQ,2CAeb,CAAC;AAIF,OAAO,EAAE,QAAQ,IAAI,sBAAsB,EAAE,CAAC"}

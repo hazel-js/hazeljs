@@ -66,6 +66,7 @@ export class HCELEngine {
       userId: context?.userId,
       traceId,
       metadata: context?.metadata || {},
+      memory: context?.memory,
       propagate: () => executionContext,
     };
 
@@ -307,6 +308,7 @@ export class HCELEngine {
       userId: context?.userId,
       traceId,
       metadata: context?.metadata || {},
+      memory: context?.memory,
       propagate: () => executionContext,
     };
 

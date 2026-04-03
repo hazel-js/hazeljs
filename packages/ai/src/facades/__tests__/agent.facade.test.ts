@@ -14,6 +14,8 @@ jest.mock('@hazeljs/agent', () => {
     AgentService: jest.fn().mockImplementation(() => ({
       execute: jest.fn(),
       pipeline: jest.fn(),
+      createSupervisor: jest.fn(),
+      createGraph: jest.fn(),
     })),
   };
 });
@@ -153,7 +155,7 @@ describe('AgentFacade', () => {
 
       const result = await pipeline.execute('Test input');
       expect(mockAgentService.pipeline).toHaveBeenCalledWith('test-pipeline', ['agent1', 'agent2']);
-      expect(mockPipeline.execute).toHaveBeenCalledWith('Test input');
+      expect(mockPipeline.execute).toHaveBeenCalledWith('Test input', undefined);
       expect(result).toEqual({ response: 'Pipeline result' });
     });
 

@@ -4,6 +4,14 @@
 
 import type { ChatOptions, RAGOptions, ClassifyOptions, ScoreOptions } from '../hazel-ai.types';
 import type { HCELResultCache } from './hcel.cache';
+import type { MemoryCategory, MemoryService, MemorySource } from '@hazeljs/memory';
+import type {
+  CompiledGraph,
+  GraphExecutionOptions,
+  GraphExecutionResult,
+  SupervisorConfig,
+  SupervisorResult,
+} from '../agent-orchestration.types';
 
 // ── Core HCEL Types ────────────────────────────────────────────
 
@@ -30,6 +38,10 @@ export interface HCELContext {
   userId?: string;
   traceId?: string;
   metadata: Record<string, unknown>;
+  /**
+   * When set (via `builder.memory(service)`), `memoryRecall` / `memorySave` / `memorySearch` operations run against @hazeljs/memory.
+   */
+  memory?: MemoryService;
   propagate(): HCELContext;
 }
 
@@ -88,6 +100,26 @@ export interface HCELBuilder<TInput = unknown, TOutput = unknown> {
   prompt(template: string, options?: ChatOptions): HCELBuilder<string, TOutput>;
   rag(source: string, options?: RAGOptions): HCELBuilder<string[], TOutput>;
   agent(name: string, options?: Record<string, unknown>): HCELBuilder<string, TOutput>;
+
+  /**
+   * Sequential multi-agent pipeline (`AgentRuntime.pipeline` / compiled graph).
+   */
+  agentPipeline(config: AgentPipelineOperationConfig): HCELBuilder<string, GraphExecutionResult>;
+
+  /**
+   * Supervisor/worker pattern (`SupervisorAgent.run`); forwards `userId` / `sessionId` from context.
+   */
+  agentSupervisor(config: AgentSupervisorOperationConfig): HCELBuilder<string, SupervisorResult>;
+
+  /**
+   * Run a graph built with `await ai.createAgentGraph(id)...compile()`.
+   */
+  agentGraphCompiled(
+    graphId: string,
+    compiled: Pick<CompiledGraph, 'execute'>,
+    graphOptions?: GraphExecutionOptions
+  ): HCELBuilder<string, GraphExecutionResult>;
+
   ml(
     operation: 'sentiment' | 'classify' | 'score',
     options?: ClassifyOptions | ScoreOptions
@@ -107,6 +139,22 @@ export interface HCELBuilder<TInput = unknown, TOutput = unknown> {
     elseBranch: HCELBuilder<TInput, TOutput>
   ): HCELBuilder<TInput, TOutput>;
   adaptive(): HCELBuilder<TInput, TOutput>;
+
+  /** Attach a @hazeljs/memory MemoryService for memory* operations (create via createMemoryStore + new MemoryService). */
+  memory(service: MemoryService): this;
+
+  /**
+   * Load recent memories for `context.userId` and prepend a formatted block to the string `input` (for the next prompt).
+   */
+  memoryRecall(config: MemoryRecallOperationConfig): HCELBuilder<string, TOutput>;
+
+  /** Persist the previous step’s string output as a memory item (requires `memory` + `context.userId`). */
+  memorySave(config: MemorySaveOperationConfig): HCELBuilder<string, TOutput>;
+
+  /**
+   * Vector/text search via `MemoryService.search` (no hits or unsupported store → unchanged `input`).
+   */
+  memorySearch(config?: MemorySearchOperationConfig): HCELBuilder<string, TOutput>;
 
   // NEW: Persistence operations
   persist(key?: string): HCELBuilder<TInput, TOutput>;
@@ -220,6 +268,52 @@ export interface ConditionalOperationConfig {
 export interface SequenceOperationConfig {
   operations: HCELOperation[];
   [key: string]: unknown; // Add index signature
+}
+
+/** Categories to recall; single or list (deduped by item id). */
+export interface MemoryRecallOperationConfig {
+  category: MemoryCategory | MemoryCategory[];
+  limit?: number;
+  /** Text shown above the bullet list (default: "Relevant memories:"). */
+  header?: string;
+  [key: string]: unknown;
+}
+
+export interface MemorySaveOperationConfig {
+  category: MemoryCategory;
+  /** Stable key for this memory (e.g. `turn`, `summary`). */
+  key: string;
+  source?: MemorySource;
+  confidence?: number;
+  [key: string]: unknown;
+}
+
+export interface MemorySearchOperationConfig {
+  category?: MemoryCategory | MemoryCategory[];
+  topK?: number;
+  minScore?: number;
+  header?: string;
+  [key: string]: unknown;
+}
+
+/** Sequential registered agents; same order as `AgentRuntime.pipeline`. */
+export interface AgentPipelineOperationConfig {
+  pipelineId: string;
+  agents: string[];
+  graphOptions?: GraphExecutionOptions;
+  [key: string]: unknown;
+}
+
+/** Same fields as `SupervisorConfig` from @hazeljs/agent (index signature for HCEL operation config). */
+export interface AgentSupervisorOperationConfig extends SupervisorConfig {
+  [key: string]: unknown;
+}
+
+/** Serializable slice for caching/fingerprint; `compiled` lives on the operation instance. */
+export interface AgentGraphCompiledOperationConfig {
+  graphId: string;
+  graphOptions?: GraphExecutionOptions;
+  [key: string]: unknown;
 }
 
 // ── Result Types ───────────────────────────────────────────────

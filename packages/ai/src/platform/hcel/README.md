@@ -61,6 +61,33 @@ await ai.hazel
 - **Caching**: `chain.config.caching` with `enabled`, `ttl` (**seconds**), and optional `store` (`HCELResultCache`) uses a pluggable cache (default in-memory). Keys are derived from operation fingerprints and normalized input.
 - **Persist / restore**: `.persist(key?)` stores the successful chain result under `persist:<key>`. `.restore(key)` short-circuits execution when that entry exists (short-TTL dedup / idempotent replay in one process). For durable workflows across restarts, use `asFlowNode()` with `@hazeljs/flow`.
 
+### User memory (`@hazeljs/memory`)
+
+HCEL is separate from the **result cache** above: you can attach a `MemoryService` from `@hazeljs/memory` (backed by `createMemoryStore({ type: 'in-memory' | 'postgres' | 'redis' | 'composite' })`, vector adapters, etc.) and use chain steps that read/write that store.
+
+- **`.memory(memoryService)`** — required before `memoryRecall` / `memorySave` / `memorySearch`.
+- **`.context({ userId, sessionId?, ... })`** — `userId` is required for these ops; `sessionId` is forwarded on `memorySave`.
+- **`.memoryRecall({ category, limit?, header? })`** — loads items via `getByUserAndCategory` (supports one or many categories), formats them, and prepends to the string passed to the next step. For `prompt`, use an **empty template** (`''`) so that string becomes the user message (or set instructions via `systemPrompt`).
+- **`.memorySave({ category, key, source?, confidence? })`** — persists the **previous** step’s string output as a memory item.
+- **`.memorySearch({ category?, topK?, minScore?, header? })`** — calls `MemoryService.search`. Stores without `search` return no hits and the input string is unchanged.
+
+```typescript
+import { createMemoryStore, MemoryCategory, MemoryService } from '@hazeljs/memory';
+
+const store = createMemoryStore({ type: 'in-memory' }); // or postgres / redis / composite
+const memory = new MemoryService(store);
+await memory.initialize();
+
+await ai.hazel
+  .memory(memory)
+  .context({ userId: 'user-1', sessionId: 'session-1' })
+  .memoryRecall({ category: MemoryCategory.EPISODIC, limit: 10 })
+  // Empty `template` forwards the prior step’s string (memories + `execute()` input) to the model
+  .prompt('', { systemPrompt: 'Answer using the memories above when relevant.' })
+  .memorySave({ category: MemoryCategory.SEMANTIC_SUMMARY, key: 'last-reply' })
+  .execute('What did we discuss?');
+```
+
 ### Parallel strategy
 
 ```typescript
@@ -119,6 +146,20 @@ await ai.hazel
 
 Same fluent API as before; chain with `.execute(input)`. Use `.config({ retryPolicy })` where transient failures should retry (retriable ops only).
 
+### Multi-agent orchestration (`@hazeljs/agent`)
+
+Beyond a single `.agent(name)`, HCEL can run **compiled pipelines**, **supervisors**, and **custom graphs** (same runtime as `AgentService` / `AgentRuntime`).
+
+- **`.agentPipeline({ pipelineId, agents, graphOptions? })`** — sequential pipeline (`AgentRuntime.pipeline`). Resolves to `GraphExecutionResult` (see `@hazeljs/agent`).
+- **`.agentSupervisor({ name, workers, maxRounds?, ... })`** — `SupervisorAgent.run`. Forwards `context.userId` / `context.sessionId` into the run options. Requires an LLM provider on the agent runtime.
+- **`.agentGraphCompiled(graphId, compiled, graphOptions?)`** — run a graph from `await ai.createAgentGraph(id).addNode(...).compile()`. `userId` / `sessionId` are merged into `graphOptions.initialData` when present.
+
+Also available on **`HazelAI`**: `agentPipeline()`, `supervisor()`, `createAgentGraph()`, `runAgentGraph()`, and `pipeline()` (lazy handle whose `execute()` returns a `GraphExecutionResult`).
+
+`@Delegate` on agent classes still applies when you execute that agent via `.agent(...)`; it is not a separate HCEL opcode.
+
+TypeScript types for graphs and supervisors are exported from `@hazeljs/ai` as **`agent-orchestration.types`** (`SupervisorConfig`, `GraphExecutionResult`, `CompiledGraph`, etc.) so the AI package builds without requiring deep `@hazeljs/agent` type re-exports; at runtime they match the agent package.
+
 ## Configuration
 
 ```typescript
@@ -144,7 +185,7 @@ await ai.hazel
 
 ## Testing
 
-See `__tests__/hcel.test.ts`, `hcel.basic.test.ts`, and `hcel.production.test.ts` for retry (fake timers), streaming guard, `ifElse`, cache hit, persist/restore, and `HCELError`.
+See `__tests__/hcel.test.ts`, `hcel.basic.test.ts`, `hcel.production.test.ts`, `hcel.memory.test.ts`, and `hcel.agent-orchestration.test.ts` for retry (fake timers), streaming guard, `ifElse`, cache hit, persist/restore, memory, agent pipeline/supervisor/graph wiring, and `HCELError`.
 
 ## Debugging
 

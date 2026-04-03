@@ -23,8 +23,8 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:deploy": "prisma migrate deploy",
     "test": "jest --coverage --passWithNoTests",
-    "lint": "eslint \"src/**/*.ts\"",
-    "lint:fix": "eslint \"src/**/*.ts\" --fix",
+    "lint": "eslint \"src/**/*.ts\" --ignore-pattern \"**/*.d.ts\"",
+    "lint:fix": "eslint \"src/**/*.ts\" --ignore-pattern \"**/*.d.ts\" --fix",
     "clean": "rm -rf dist"
   },
   "dependencies": {},
