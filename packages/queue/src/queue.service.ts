@@ -1,5 +1,5 @@
 import { Service } from '@hazeljs/core';
-import { Queue as BullQueue, JobsOptions } from 'bullmq';
+import { BullMQQueue, type JobsOptions } from './bullmq.exports';
 import type { RedisConnectionOptions } from './queue.types';
 import logger from '@hazeljs/core';
 
@@ -9,7 +9,7 @@ import logger from '@hazeljs/core';
  */
 @Service()
 export class QueueService {
-  private queues = new Map<string, BullQueue>();
+  private queues = new Map<string, BullMQQueue>();
   private connection: RedisConnectionOptions | null = null;
 
   /**
@@ -31,16 +31,16 @@ export class QueueService {
   /**
    * Get or create a BullMQ Queue instance for the given name
    */
-  getQueue<T = unknown>(name: string): BullQueue<T> {
+  getQueue<T = unknown>(name: string): BullMQQueue<T> {
     if (!this.connection) {
       throw new Error(
         'QueueService not configured. Call setConnection() or use QueueModule.forRoot() with connection options.'
       );
     }
 
-    let queue = this.queues.get(name) as BullQueue<T> | undefined;
+    let queue = this.queues.get(name) as BullMQQueue<T> | undefined;
     if (!queue) {
-      queue = new BullQueue<T>(name, {
+      queue = new BullMQQueue<T>(name, {
         connection: this.connection as Record<string, unknown>,
       });
       this.queues.set(name, queue);
@@ -65,7 +65,7 @@ export class QueueService {
   ): Promise<{ id: string | undefined }> {
     const queue = this.getQueue<T>(queueName);
     // BullMQ has strict generics for job names; cast for dynamic queue/job names
-    const job = await (queue as BullQueue<unknown, unknown, string>).add(
+    const job = await (queue as BullMQQueue<unknown, unknown, string>).add(
       jobName,
       data ?? {},
       options

@@ -2,7 +2,7 @@
  * Queue module types
  */
 
-import type { JobsOptions } from 'bullmq';
+import type { JobsOptions } from './bullmq.exports';
 
 /**
  * Redis connection options for BullMQ

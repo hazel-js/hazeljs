@@ -1,8 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { Service, Container, Inject, logger } from '@hazeljs/core';
-import { Worker } from 'bullmq';
-import { QueueService } from '@hazeljs/queue';
+import { Worker, QueueService } from '@hazeljs/queue';
 import { PdfToAudioService } from './pdf-to-audio.service';
 import { PDF_TO_AUDIO_OUTPUT_DIR } from './pdf-to-audio.module';
 import type { PdfToAudioOptions } from './types';

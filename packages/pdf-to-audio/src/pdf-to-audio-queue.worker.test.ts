@@ -22,7 +22,7 @@ jest.mock('@hazeljs/core', () => {
 });
 
 import { PdfToAudioQueueWorker } from './pdf-to-audio-queue.worker';
-import { Worker as BullMqWorker } from 'bullmq';
+import { Worker as BullMqWorker } from '@hazeljs/queue';
 
 describe('PdfToAudioQueueWorker', () => {
   beforeEach(() => {

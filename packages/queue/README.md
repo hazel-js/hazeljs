@@ -11,6 +11,7 @@ BullMQ + Redis. Add jobs from controllers, process with `@Queue`. Delay, retry, 
 ## Features
 
 - **Redis-backed** - Uses BullMQ for reliable, distributed job queues
+- **BullMQ re-exports** - `Worker`, `Job`, `JobsOptions`, `WorkerOptions`, and `BullMQQueue` (BullMQ's `Queue` class; avoids clashing with the `@Queue` decorator)
 - **QueueService** - Injectable service for adding jobs from controllers and services
 - **@Queue decorator** - Mark methods as job processors for Worker setup
 - **Job options** - Delay, priority, attempts, backoff, timeout
@@ -75,7 +76,7 @@ export class EmailService {
 Create a worker process (or run alongside your app) to process jobs:
 
 ```typescript
-import { Worker } from 'bullmq';
+import { Worker } from '@hazeljs/queue';
 
 const worker = new Worker(
   'emails',

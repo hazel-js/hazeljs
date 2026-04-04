@@ -32,13 +32,12 @@
   "dependencies": {
     "pdf-parse": "^1.1.1",
     "reflect-metadata": "^0.2.1",
-    "bullmq": "^5.34.0"
+    "@hazeljs/queue": "^0.7.5"
   },
   "peerDependencies": {
     "@hazeljs/ai": ">=0.2.0-beta.0",
     "@hazeljs/core": ">=0.2.0-beta.0",
-    "@hazeljs/rag": ">=0.2.0-beta.0",
-    "@hazeljs/queue": ">=0.2.0-beta.0"
+    "@hazeljs/rag": ">=0.2.0-beta.0"
   },
   "devDependencies": {
     "@types/jest": "^29.5.11",

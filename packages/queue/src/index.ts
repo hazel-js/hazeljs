@@ -11,3 +11,5 @@ export type {
   QueueJobOptions,
   QueueProcessorMetadata,
 } from './queue.types';
+export { Worker, BullMQQueue } from './bullmq.exports';
+export type { Job, JobsOptions, WorkerOptions } from './bullmq.exports';
