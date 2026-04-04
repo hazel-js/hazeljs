@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/worker",
-  "version": "0.7.4",
+  "version": "0.7.5",
   "description": "Worker thread module for CPU-intensive task offloading in HazelJS",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
