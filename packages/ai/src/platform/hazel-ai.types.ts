@@ -34,7 +34,9 @@ export interface HazelAIConfig {
     pipeline: (
       id: string,
       agents: string[]
-    ) => { execute: (input: string, options?: GraphExecutionOptions) => Promise<GraphExecutionResult> };
+    ) => {
+      execute: (input: string, options?: GraphExecutionOptions) => Promise<GraphExecutionResult>;
+    };
     createSupervisor: (config: SupervisorConfig) => {
       run: (
         task: string,
