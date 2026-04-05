@@ -1,6 +1,6 @@
 {
   "name": "hazeljs-ai-native-app",
-  "version": "0.7.5",
+  "version": "0.7.6",
   "description": "A HazelJS AI-native application with agents, RAG, and chat",
   "main": "dist/index.js",
   "scripts": {
