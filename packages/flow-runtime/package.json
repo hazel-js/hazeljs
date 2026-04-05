@@ -20,15 +20,15 @@
   "dependencies": {
     "@hazeljs/core": "*",
     "@hazeljs/flow": "*",
-    "p-limit": "^6.1.0",
+    "p-limit": "^6.2.0",
     "reflect-metadata": "^0.2.2"
   },
   "devDependencies": {
-    "@types/node": "^20.17.50",
-    "@vitest/coverage-v8": "^2.1.0",
-    "tsx": "^4.19.0",
-    "typescript": "^5.3.3",
-    "vitest": "^2.1.0"
+    "@types/node": "^20.19.39",
+    "@vitest/coverage-v8": "^2.1.9",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
+    "vitest": "^2.1.9"
   },
   "publishConfig": {
     "access": "public"

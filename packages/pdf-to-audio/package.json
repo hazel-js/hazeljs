@@ -30,8 +30,8 @@
   },
   "homepage": "https://hazeljs.ai",
   "dependencies": {
-    "pdf-parse": "^1.1.1",
-    "reflect-metadata": "^0.2.1",
+    "pdf-parse": "^1.1.4",
+    "reflect-metadata": "^0.2.2",
     "@hazeljs/queue": "^0.7.5"
   },
   "peerDependencies": {
@@ -40,12 +40,12 @@
     "@hazeljs/rag": ">=0.2.0-beta.0"
   },
   "devDependencies": {
-    "@types/jest": "^29.5.11",
-    "@types/node": "^20.17.50",
-    "@types/pdf-parse": "^1.1.4",
+    "@types/jest": "^29.5.14",
+    "@types/node": "^20.19.39",
+    "@types/pdf-parse": "^1.1.5",
     "jest": "^29.7.0",
-    "ts-jest": "^29.1.2",
-    "typescript": "^5.3.3"
+    "ts-jest": "^29.4.9",
+    "typescript": "^5.9.3"
   },
   "publishConfig": {
     "access": "public"

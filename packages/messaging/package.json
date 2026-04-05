@@ -32,7 +32,7 @@
   },
   "homepage": "https://hazeljs.ai",
   "dependencies": {
-    "reflect-metadata": "^0.2.1",
+    "reflect-metadata": "^0.2.2",
     "telegraf": "^4.16.3"
   },
   "peerDependencies": {
@@ -70,11 +70,11 @@
     }
   },
   "devDependencies": {
-    "@types/jest": "^29.5.11",
-    "@types/node": "^20.17.50",
+    "@types/jest": "^29.5.14",
+    "@types/node": "^20.19.39",
     "jest": "^29.7.0",
-    "ts-jest": "^29.1.2",
-    "typescript": "^5.3.3"
+    "ts-jest": "^29.4.9",
+    "typescript": "^5.9.3"
   },
   "publishConfig": {
     "access": "public"
