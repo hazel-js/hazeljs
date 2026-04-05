@@ -76,7 +76,8 @@ describe('WorkflowFacade', () => {
         .run('test');
 
       expect(result.output).toBe('test (delayed)');
-      expect(result.totalDuration).toBeGreaterThanOrEqual(10);
+      // Date.now() is ms-resolution; wall time can measure 9ms for a 10ms timeout
+      expect(result.totalDuration).toBeGreaterThanOrEqual(8);
     });
 
     it('should handle errors in steps', async () => {
