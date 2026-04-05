@@ -2,7 +2,7 @@
 import { trace, Tracer } from '@opentelemetry/api';
 import { NodeTracerProvider, BatchSpanProcessor } from '@opentelemetry/sdk-trace-node';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
-import { Resource } from '@opentelemetry/resources';
+import { resourceFromAttributes } from '@opentelemetry/resources';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 import { ObservabilityProvider, ObservabilityConfig } from './types';
 
@@ -17,11 +17,21 @@ export class OpenTelemetryProvider implements ObservabilityProvider {
   constructor(config: ObservabilityConfig) {
     this.config = config;
 
-    // Set up standard node tracer provider
+    const resource = resourceFromAttributes({
+      [SemanticResourceAttributes.SERVICE_NAME]: config.serviceName,
+    });
+
+    const spanProcessors = [];
+    if (config.otlpEndpoint) {
+      this.exporter = new OTLPTraceExporter({
+        url: config.otlpEndpoint,
+      });
+      spanProcessors.push(new BatchSpanProcessor(this.exporter));
+    }
+
     this.provider = new NodeTracerProvider({
-      resource: new Resource({
-        [SemanticResourceAttributes.SERVICE_NAME]: config.serviceName,
-      }),
+      resource,
+      ...(spanProcessors.length > 0 ? { spanProcessors } : {}),
     });
   }
 
@@ -29,14 +39,6 @@ export class OpenTelemetryProvider implements ObservabilityProvider {
    * Start tracking observability metrics
    */
   async start(): Promise<void> {
-    if (this.config.otlpEndpoint) {
-      this.exporter = new OTLPTraceExporter({
-        url: this.config.otlpEndpoint,
-      });
-      // Use BatchSpanProcessor for production exports
-      this.provider.addSpanProcessor(new BatchSpanProcessor(this.exporter));
-    }
-
     // Register provider globally so trace decorators can pick it up
     this.provider.register();
 

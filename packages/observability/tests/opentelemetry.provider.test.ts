@@ -2,6 +2,7 @@ import { OpenTelemetryProvider } from '../src/opentelemetry.provider';
 import { trace } from '@opentelemetry/api';
 import { NodeTracerProvider, BatchSpanProcessor } from '@opentelemetry/sdk-trace-node';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
+import { resourceFromAttributes } from '@opentelemetry/resources';
 
 jest.mock('@opentelemetry/api', () => ({
     trace: {
@@ -26,7 +27,7 @@ jest.mock('@opentelemetry/exporter-trace-otlp-http', () => ({
 }));
 
 jest.mock('@opentelemetry/resources', () => ({
-    Resource: jest.fn(),
+    resourceFromAttributes: jest.fn().mockReturnValue('mock-resource'),
 }));
 
 jest.mock('@opentelemetry/semantic-conventions', () => ({
@@ -46,6 +47,8 @@ describe('OpenTelemetryProvider', () => {
 
         expect(NodeTracerProvider).toHaveBeenCalled();
         expect(OTLPTraceExporter).not.toHaveBeenCalled();
+        expect(resourceFromAttributes).toHaveBeenCalledWith({ 'service.name': 'test-service' });
+        expect(NodeTracerProvider).toHaveBeenCalledWith({ resource: 'mock-resource' });
         const providerInstance = (NodeTracerProvider as unknown as jest.Mock).mock.results[0].value;
         expect(providerInstance.register).toHaveBeenCalled();
     });
@@ -61,7 +64,10 @@ describe('OpenTelemetryProvider', () => {
         expect(BatchSpanProcessor).toHaveBeenCalled();
 
         const providerInstance = (NodeTracerProvider as unknown as jest.Mock).mock.results[0].value;
-        expect(providerInstance.addSpanProcessor).toHaveBeenCalled();
+        expect(NodeTracerProvider).toHaveBeenCalledWith({
+            resource: 'mock-resource',
+            spanProcessors: expect.any(Array),
+        });
         expect(providerInstance.register).toHaveBeenCalled();
     });
 
