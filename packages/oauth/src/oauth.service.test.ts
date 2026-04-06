@@ -79,6 +79,15 @@ describe('OAuthService', () => {
         facebook: { ...baseConfig },
         microsoft: { ...baseConfig },
         twitter: { ...baseConfig },
+        saml: {
+          'okta-main': {
+            idpKey: 'okta-main',
+            ssoUrl: 'https://idp.example.com/sso',
+            issuer: 'https://app.example.com',
+            acsUrl: 'https://app.example.com/auth/saml/okta-main/callback',
+            audience: 'https://app.example.com',
+          },
+        },
       },
     });
     mockFetch.mockResolvedValue({
@@ -187,6 +196,7 @@ describe('OAuthService', () => {
 
       const result = await service.handleCallback('github', 'auth-code', 'mock-state-123');
 
+      expect(result.protocol).toBe('oauth2');
       expect(result.accessToken).toBe('mock-access-token');
       expect(result.user.id).toBe('12345');
       expect(result.user.email).toBe('github@example.com');
@@ -261,6 +271,82 @@ describe('OAuthService', () => {
       await expect(service.handleCallback('facebook', 'code', 'state')).rejects.toThrow(
         'Facebook OAuth is not configured'
       );
+    });
+  });
+
+  describe('SAML support', () => {
+    it('returns SAML authorization URL for configured IdP', () => {
+      const service = new OAuthService();
+      const result = service.getSamlAuthorizationUrl('okta-main');
+      expect(result.url).toContain('idp.example.com/sso');
+      expect(result.url).toContain('SAMLRequest=');
+      expect(result.requestId).toMatch(/^_/);
+    });
+
+    it('throws for unknown SAML provider key', () => {
+      const service = new OAuthService();
+      expect(() => service.getSamlAuthorizationUrl('unknown-idp')).toThrow('not configured');
+    });
+
+    it('returns provider keys for configured SAML providers', () => {
+      const service = new OAuthService();
+      expect(service.getSamlProviderKeys()).toContain('okta-main');
+    });
+
+    it('returns metadata XML for configured SAML provider', () => {
+      const service = new OAuthService();
+      const xml = service.getSamlMetadata('okta-main');
+      expect(xml).toContain('EntityDescriptor');
+      expect(xml).toContain('AssertionConsumerService');
+    });
+
+    it('parses successful SAML callback payload', () => {
+      const service = new OAuthService();
+      const samlResponseXml = `
+        <samlp:Response InResponseTo="_req123">
+          <samlp:Status>
+            <samlp:StatusCode Value="urn:oasis:names:tc:SAML:2.0:status:Success"/>
+          </samlp:Status>
+          <saml:Assertion>
+            <saml:Conditions>
+              <saml:AudienceRestriction>
+                <saml:Audience>https://app.example.com</saml:Audience>
+              </saml:AudienceRestriction>
+            </saml:Conditions>
+            <saml:Subject>
+              <saml:NameID>user-001</saml:NameID>
+            </saml:Subject>
+            <saml:AuthnStatement SessionIndex="session-1"/>
+            <saml:AttributeStatement>
+              <saml:Attribute Name="email">
+                <saml:AttributeValue>user@example.com</saml:AttributeValue>
+              </saml:Attribute>
+              <saml:Attribute Name="name">
+                <saml:AttributeValue>Saml User</saml:AttributeValue>
+              </saml:Attribute>
+            </saml:AttributeStatement>
+          </saml:Assertion>
+        </samlp:Response>
+      `;
+      const encoded = Buffer.from(samlResponseXml, 'utf8').toString('base64');
+      const result = service.handleSamlCallback('okta-main', encoded, 'relay-123');
+      expect(result.protocol).toBe('saml');
+      expect(result.user.email).toBe('user@example.com');
+      expect(result.nameId).toBe('user-001');
+      expect(result.relayState).toBe('relay-123');
+    });
+
+    it('throws when SAML callback is unsuccessful', () => {
+      const service = new OAuthService();
+      const badXml = `
+        <samlp:Response>
+          <samlp:Status>
+            <samlp:StatusCode Value="urn:oasis:names:tc:SAML:2.0:status:Requester"/>
+          </samlp:Status>
+        </samlp:Response>
+      `;
+      const encoded = Buffer.from(badXml, 'utf8').toString('base64');
+      expect(() => service.handleSamlCallback('okta-main', encoded)).toThrow('not successful');
     });
   });
 });

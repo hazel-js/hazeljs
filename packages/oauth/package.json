@@ -1,7 +1,7 @@
 {
   "name": "@hazeljs/oauth",
-  "version": "0.7.7",
-  "description": "OAuth 2.0 social login module for HazelJS - Microsoft, Google, GitHub and more",
+  "version": "0.7.6",
+  "description": "OAuth 2.0 and SAML SSO module for HazelJS - Google, Microsoft, GitHub, and enterprise IdPs",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
@@ -41,7 +41,9 @@
     "google",
     "microsoft",
     "github",
-    "social-login"
+    "social-login",
+    "saml",
+    "sso"
   ],
   "author": "Muhammad Arslan <muhammad.arslan@hazeljs.ai>",
   "license": "Apache-2.0",

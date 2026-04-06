@@ -180,6 +180,19 @@ describe('AuthService', () => {
     const user = await svc.verifyToken('any-token');
     expect(user).toBeNull();
   });
+
+  it('normalizeIdentity maps SAML-style external claims to AuthUser', () => {
+    const normalized = authService.normalizeIdentity({
+      externalId: 'idp-user-1',
+      email: 'saml@example.com',
+      name: 'Saml User',
+      tenant_id: 'tenant-a',
+    });
+    expect(normalized.id).toBe('idp-user-1');
+    expect(normalized.username).toBe('saml@example.com');
+    expect(normalized.role).toBe('user');
+    expect(normalized.tenantId).toBe('tenant-a');
+  });
 });
 
 describe('AuthGuard', () => {

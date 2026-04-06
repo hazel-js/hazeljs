@@ -16,12 +16,18 @@ import {
   fetchGitHubUser,
   fetchFacebookUser,
   fetchTwitterUser,
+  createSamlAuthnRequest,
+  parseSamlResponse,
+  buildSamlCallbackResult,
 } from './providers';
 import type {
   OAuthModuleOptions,
   OAuthCallbackHandler,
   OAuthCallbackResult,
+  OAuthProtocolCallbackResult,
   OAuthAuthorizationResult,
+  SamlProviderConfig,
+  SamlCallbackResult,
   SupportedProvider,
   OAuthUser,
 } from './providers/provider.types';
@@ -36,6 +42,7 @@ export class OAuthService {
   private githubClient: ReturnType<typeof createGitHubProvider> | null = null;
   private facebookClient: ReturnType<typeof createFacebookProvider> | null = null;
   private twitterClient: ReturnType<typeof createTwitterProvider> | null = null;
+  private samlProviders: Record<string, SamlProviderConfig> = {};
 
   constructor() {
     this.options = OAuthService.getOptions();
@@ -73,6 +80,7 @@ export class OAuthService {
     if (this.options.providers.twitter) {
       this.twitterClient = createTwitterProvider(this.options.providers.twitter);
     }
+    this.samlProviders = this.options.providers.saml ?? {};
   }
 
   private getClient(
@@ -248,11 +256,49 @@ export class OAuthService {
     }
 
     return {
+      protocol: 'oauth2',
       accessToken,
       refreshToken,
       expiresAt,
       user,
     };
+  }
+
+  getSamlAuthorizationUrl(
+    idpKey: string,
+    relayState?: string
+  ): { url: string; requestId: string; relayState?: string } {
+    const provider = this.getSamlProvider(idpKey);
+    if (relayState) {
+      return createSamlAuthnRequest({ ...provider, relayState });
+    }
+    return createSamlAuthnRequest(provider);
+  }
+
+  handleSamlCallback(
+    idpKey: string,
+    samlResponseBase64: string,
+    relayState?: string
+  ): SamlCallbackResult {
+    const provider = this.getSamlProvider(idpKey);
+    const parsed = parseSamlResponse(provider, samlResponseBase64, relayState);
+    return buildSamlCallbackResult(idpKey, parsed, relayState, samlResponseBase64);
+  }
+
+  getSamlMetadata(idpKey: string): string {
+    const provider = this.getSamlProvider(idpKey);
+    const acs = provider.acsUrl.replace(/"/g, '&quot;');
+    const issuer = provider.issuer.replace(/"/g, '&quot;');
+    return `<?xml version="1.0" encoding="UTF-8"?>
+<EntityDescriptor xmlns="urn:oasis:names:tc:SAML:2.0:metadata" entityID="${issuer}">
+  <SPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
+    <AssertionConsumerService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="${acs}" index="0" isDefault="true"/>
+  </SPSSODescriptor>
+</EntityDescriptor>`;
+  }
+
+  getSamlProviderKeys(): string[] {
+    return Object.keys(this.samlProviders);
   }
 
   /**
@@ -266,8 +312,8 @@ export class OAuthService {
    * which preserves backwards-compatible behaviour.
    */
   async executeCallback(
-    provider: SupportedProvider,
-    result: OAuthCallbackResult
+    provider: SupportedProvider | `saml:${string}`,
+    result: OAuthProtocolCallbackResult
   ): Promise<unknown> {
     const handlerClass = OAuthService.options?.callbackHandler;
     if (!handlerClass) return result;
@@ -292,5 +338,13 @@ export class OAuthService {
    */
   generateState(): string {
     return arctic.generateState();
+  }
+
+  private getSamlProvider(idpKey: string): SamlProviderConfig {
+    const provider = this.samlProviders[idpKey];
+    if (!provider) {
+      throw new Error(`SAML provider "${idpKey}" is not configured`);
+    }
+    return provider;
   }
 }

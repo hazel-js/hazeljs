@@ -435,6 +435,22 @@ const user = await authService.verifyToken(token);
 // Returns AuthUser | null (null when token is invalid — never throws)
 ```
 
+### Identity normalization for OAuth/SAML callbacks
+
+When upstream identity providers emit non-uniform claims (`sub`, `externalId`, `tenant_id`, etc.),
+normalize them before issuing app tokens:
+
+```typescript
+const normalized = authService.normalizeIdentity({
+  externalId: samlResult.nameId,
+  email: samlResult.user.email,
+  role: 'user',
+  tenant_id: 'acme',
+});
+```
+
+`normalizeIdentity()` maps these shapes to a consistent `AuthUser` used by `JwtAuthGuard`, `RoleGuard`, and `TenantGuard`.
+
 ---
 
 ## `RoleHierarchy` API

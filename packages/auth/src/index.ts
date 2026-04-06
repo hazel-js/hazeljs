@@ -4,7 +4,7 @@
 
 export { AuthGuard, Auth } from './auth.guard';
 export { AuthService } from './auth.service';
-export type { AuthUser } from './auth.service';
+export type { AuthUser, ExternalIdentityClaims } from './auth.service';
 export { JwtModule } from './jwt/jwt.module';
 export { JwtService } from './jwt/jwt.service';
 export { JwtAuthGuard } from './guards/jwt-auth.guard';

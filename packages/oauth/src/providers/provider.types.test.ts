@@ -6,6 +6,8 @@ import type {
   OAuthCallbackResult,
   OAuthAuthorizationResult,
   SupportedProvider,
+  SamlProviderConfig,
+  SamlCallbackResult,
 } from './provider.types';
 
 describe('Provider Types', () => {
@@ -49,10 +51,39 @@ describe('Provider Types', () => {
 
   it('should define OAuthCallbackResult shape', () => {
     const result: OAuthCallbackResult = {
+      protocol: 'oauth2',
       accessToken: 'token',
       user: { id: '1', email: 'e@e.com', name: 'N' },
     };
     expect(result.accessToken).toBe('token');
+  });
+
+  it('should define SamlProviderConfig shape', () => {
+    const config: SamlProviderConfig = {
+      idpKey: 'okta-main',
+      ssoUrl: 'https://idp.example.com/sso',
+      issuer: 'https://app.example.com',
+      acsUrl: 'https://app.example.com/auth/saml/okta-main/callback',
+      audience: 'https://app.example.com',
+    };
+    expect(config.idpKey).toBe('okta-main');
+  });
+
+  it('should define SamlCallbackResult shape', () => {
+    const result: SamlCallbackResult = {
+      protocol: 'saml',
+      provider: 'okta-main',
+      nameId: 'name-id',
+      user: {
+        id: 'user-id',
+        email: 'saml@example.com',
+        name: 'Saml User',
+        attributes: {
+          email: 'saml@example.com',
+        },
+      },
+    };
+    expect(result.protocol).toBe('saml');
   });
 
   it('should define OAuthAuthorizationResult shape', () => {

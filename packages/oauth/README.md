@@ -1,8 +1,8 @@
 # @hazeljs/oauth
 
-**"Sign in with Google" in 5 minutes.**
+**OAuth social login + native SAML SSO in one HazelJS package.**
 
-Google, Microsoft, GitHub, Facebook, Twitter — one config, ready-made routes. PKCE, user profiles, JWT integration. Built on [Arctic](https://arcticjs.dev) — 50+ providers available if you need more.
+Google, Microsoft, GitHub, Facebook, Twitter — plus native SAML IdP support for enterprise SSO. One config, ready-made routes, PKCE, user profiles, callback handler hooks, JWT integration.
 
 [![npm version](https://img.shields.io/npm/v/@hazeljs/oauth.svg)](https://www.npmjs.com/package/@hazeljs/oauth)
 [![npm downloads](https://img.shields.io/npm/dm/@hazeljs/oauth)](https://www.npmjs.com/package/@hazeljs/oauth)
@@ -10,7 +10,8 @@ Google, Microsoft, GitHub, Facebook, Twitter — one config, ready-made routes. 
 
 ## Features
 
-- **Multi-Provider** — Google, Microsoft Entra ID, GitHub, Facebook, Twitter
+- **Multi-Provider OAuth** — Google, Microsoft Entra ID, GitHub, Facebook, Twitter
+- **Native SAML SP** — Multi-IdP configuration with ACS callback and metadata endpoint
 - **PKCE Support** — Automatic for Google, Microsoft, Twitter
 - **User Profile** — Fetches id, email, name, picture from provider APIs
 - **Ready-Made Routes** — Optional `/auth/:provider` and `/auth/:provider/callback`
@@ -63,6 +64,9 @@ The `OAuthController` provides:
 
 - **GET /auth/:provider** — Redirects to provider (google, microsoft, github, facebook, twitter)
 - **GET /auth/:provider/callback** — Handles callback, returns `{ accessToken, user }`
+- **GET /auth/saml/:idp** — Redirects to SAML IdP with AuthnRequest
+- **POST /auth/saml/:idp/callback** — Handles SAML ACS callback
+- **GET /auth/saml/:idp/metadata** — Returns SP metadata XML
 
 Example: User visits `/auth/google` → authenticates → callback returns tokens and profile.
 
@@ -103,6 +107,38 @@ export class AuthController {
 | GitHub | No | user:email |
 | Facebook | No | email, public_profile |
 | Twitter | Yes | users.read, tweet.read |
+
+## SAML Configuration (Multi-IdP)
+
+```typescript
+OAuthModule.forRoot({
+  providers: {
+    google: { ...googleConfig },
+    saml: {
+      oktaMain: {
+        idpKey: 'okta-main',
+        ssoUrl: 'https://your-org.okta.com/app/abc/sso/saml',
+        issuer: 'https://api.example.com',
+        acsUrl: 'https://api.example.com/auth/saml/okta-main/callback',
+        audience: 'https://api.example.com',
+        relayState: 'app=dashboard',
+      },
+      azureMain: {
+        idpKey: 'azure-main',
+        ssoUrl: 'https://login.microsoftonline.com/.../saml2',
+        issuer: 'https://api.example.com',
+        acsUrl: 'https://api.example.com/auth/saml/azure-main/callback',
+      },
+    },
+  },
+});
+```
+
+Use start + callback flow:
+
+1. Browser hits `GET /auth/saml/okta-main`
+2. IdP authenticates user and POSTS `SAMLResponse` to ACS callback
+3. Package parses assertion, extracts profile, then invokes optional callback handler
 
 ## Configuration
 
@@ -178,6 +214,10 @@ OAUTH_REDIRECT_URI=http://localhost:3000/auth/google/callback
 - `handleCallback(provider, code, state, codeVerifier?)` — Returns `{ accessToken, refreshToken?, expiresAt?, user }`
 - `validateState(received, stored)` — CSRF check
 - `generateState()` — Cryptographically secure state
+- `getSamlAuthorizationUrl(idpKey, relayState?)` — Returns SAML redirect URL + request ID
+- `handleSamlCallback(idpKey, samlResponseBase64, relayState?)` — Returns parsed SAML callback result
+- `getSamlMetadata(idpKey)` — Returns SP metadata XML
+- `getSamlProviderKeys()` — Returns configured SAML provider keys
 
 ### OAuthStateGuard
 
