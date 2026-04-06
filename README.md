@@ -11,7 +11,7 @@
 [![npm downloads](https://img.shields.io/npm/dm/@hazeljs/core)](https://www.npmjs.com/package/@hazeljs/core)
 [![codecov](https://codecov.io/gh/hazel-js/hazeljs/branch/main/graph/badge.svg)](https://codecov.io/gh/hazel-js/hazeljs)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
-[![Discord](https://img.shields.io/discord/1448263814238965833?color=7289da&label=Discord&logo=discord&logoColor=white)](https://discord.com/channels/1448263814238965833/1448263814859456575)
+[![Discord](https://img.shields.io/discord/1448263814238965833?color=7289da&label=Discord&logo=discord&logoColor=white)](https://discord.gg/PxNBPzvQk7)
 
 *Stop the glue code. Build AI backends that feel native — not bolted on.*  
 **HCEL** · **AI** · **Agents** · **RAG** · **Flow** · **Prompts** — one cohesive stack.
@@ -451,7 +451,7 @@ Read our [Contributing Guide](./CONTRIBUTING.md) for details.
 
 ## 📞 Support & Community
 
-- 💬 **Discord**: [Join our community](https://discord.com/channels/1448263814238965833/1448263814859456575) - Real-time help
+- 💬 **Discord**: [Join our community](https://discord.gg/PxNBPzvQk7) - Real-time help
 - 💭 **Discussions**: [GitHub Discussions](https://github.com/hazel-js/hazeljs/discussions) - Ask questions
 - 🐛 **Issues**: [Report bugs](https://github.com/hazel-js/hazeljs/issues) - Help us improve
 - 🎨 **Show & Tell**: [Share your project](https://github.com/hazel-js/hazeljs/discussions) - Get featured!
@@ -473,7 +473,7 @@ Apache 2.0 — Free for commercial and open-source use.
 
 ### 🚀 Ready to build?
 
-[Get Started](./QUICKSTART.md) · [View Examples](./example) · [Join Discord](https://discord.com/channels/1448263814238965833/1448263814859456575) · [⭐ Star on GitHub](https://github.com/hazel-js/hazeljs)
+[Get Started](./QUICKSTART.md) · [View Examples](./example) · [Join Discord](https://discord.gg/PxNBPzvQk7) · [⭐ Star on GitHub](https://github.com/hazel-js/hazeljs)
 
 ---
 
