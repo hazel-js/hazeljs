@@ -115,6 +115,9 @@
       "path": "./packages/kafka"
     },
     {
+      "path": "./packages/pubsub"
+    },
+    {
       "path": "./packages/messaging"
     },
     {

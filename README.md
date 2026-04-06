@@ -312,7 +312,7 @@ npm install @hazeljs/ai @hazeljs/agent @hazeljs/rag @hazeljs/flow @hazeljs/flow-
 
 # Infrastructure
 npm install @hazeljs/cache @hazeljs/websocket @hazeljs/serverless
-npm install @hazeljs/discovery @hazeljs/config @hazeljs/cron @hazeljs/queue
+npm install @hazeljs/discovery @hazeljs/config @hazeljs/cron @hazeljs/queue @hazeljs/pubsub
 
 # Data & Auth
 npm install @hazeljs/prisma @hazeljs/auth @hazeljs/swagger
@@ -384,7 +384,7 @@ We were tired of choosing between a heavy framework (NestJS) and a minimal one (
 | `@hazeljs/prisma` | Prisma ORM + repository pattern |
 | `@hazeljs/swagger` | Auto OpenAPI docs |
 | `@hazeljs/cli` | Scaffolding and code generation |
-| *+ more* | Cache, WebSocket, Serverless, Cron, Queue, Discovery, I18n |
+| *+ more* | Cache, WebSocket, Serverless, Cron, Queue, PubSub, Discovery, I18n |
 
 ---
 
