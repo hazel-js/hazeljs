@@ -251,11 +251,47 @@ npm run build:watch
 
 ## Release Process
 
-1. Update version in `package.json`
-2. Update `CHANGELOG.md`
-3. Create a git tag
-4. Push to GitHub
-5. CI will automatically publish to npm
+HazelJS uses Changesets for package-level releases.
+
+### Individual package release (default)
+
+1. Make your package changes in a branch.
+2. Add a changeset:
+   ```bash
+   npm run changeset:add
+   ```
+3. Select the affected package(s) and bump type (patch/minor/major).
+4. Commit the generated `.changeset/*.md` file in the same PR.
+5. Merge to `main`:
+   - CI creates/updates a release PR with version bumps and changelog updates.
+   - When that release PR is merged, only changed packages (and required dependents) are published.
+
+### Full coordinated release (all packages)
+
+Use this for milestone releases where the full package ecosystem should move together.
+
+```bash
+npm run release:full          # patch bump for all @hazeljs/* packages
+npm run release:full:minor    # minor bump for all packages
+npm run release:full:major    # major bump for all packages
+```
+
+Then run:
+
+```bash
+npm run version:packages
+npm run publish:packages -- --tag latest
+```
+
+### Pre-release channels
+
+Use npm dist-tags when publishing manually:
+
+```bash
+npm run publish:packages -- --tag beta
+npm run publish:packages -- --tag alpha
+npm run publish:packages -- --tag rc
+```
 
 ## Getting Help
 

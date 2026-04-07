@@ -395,6 +395,22 @@ We were tired of choosing between a heavy framework (NestJS) and a minimal one (
 - **[Contributing](./CONTRIBUTING.md)** — How to contribute
 - **[Examples](./example)** — Full working apps
 
+### Maintainer release quick commands
+
+```bash
+# Add release intent for changed packages in your PR
+npm run changeset:add
+
+# Apply pending version bumps locally
+npm run version:packages
+
+# Publish only changed packages
+npm run publish:packages -- --tag latest
+
+# Create a coordinated full-repo release changeset
+npm run release:full
+```
+
 **Guides:** [DI](docs/guides/providers.md) · [Controllers](docs/guides/controllers.md) · [Guards](docs/guides/guards.md) · [Middleware](docs/guides/middleware.md) · [Saga](docs/guides/saga.md) · [Locking](docs/guides/distributed-locking.md) · [Security](docs/guides/security.md)
 
 ---
