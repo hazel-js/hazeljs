@@ -117,11 +117,12 @@ describe('AIEnhancedService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    // No API key env vars — only ollama provider registers
+    // No providers enabled by default
     delete process.env.OPENAI_API_KEY;
     delete process.env.ANTHROPIC_API_KEY;
     delete process.env.GEMINI_API_KEY;
     delete process.env.COHERE_API_KEY;
+    delete process.env.OLLAMA_ENABLED;
     service = new AIEnhancedService();
     service.setRetryConfig(1, 0); // Fast retries for tests
   });
@@ -131,9 +132,16 @@ describe('AIEnhancedService', () => {
       expect(service).toBeDefined();
     });
 
-    it('registers ollama provider by default (no env keys)', () => {
+    it('does not register ollama provider by default (no env keys)', () => {
       const providers = service.getAvailableProviders();
-      expect(providers).toContain('ollama');
+      expect(providers).not.toContain('ollama');
+    });
+
+    it('registers ollama when OLLAMA_ENABLED is true', () => {
+      process.env.OLLAMA_ENABLED = 'true';
+      const s = new AIEnhancedService();
+      expect(s.getAvailableProviders()).toContain('ollama');
+      delete process.env.OLLAMA_ENABLED;
     });
 
     it('registers openai when OPENAI_API_KEY is set', () => {
@@ -570,6 +578,7 @@ describe('AIEnhancedService', () => {
 
   describe('getAvailableProviders()', () => {
     it('returns list of provider names', () => {
+      service.registerProvider(makeMockProvider('openai'));
       const providers = service.getAvailableProviders();
       expect(Array.isArray(providers)).toBe(true);
       expect(providers.length).toBeGreaterThan(0);

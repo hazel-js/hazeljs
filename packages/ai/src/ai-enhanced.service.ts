@@ -79,18 +79,22 @@ export class AIEnhancedService {
         logger.info('Cohere provider registered');
       }
 
-      // Initialize Ollama (always available if Ollama server is running)
-      // Ollama doesn't require an API key, just a running server
-      const ollamaProvider = new OllamaProvider({
-        baseURL: process.env.OLLAMA_BASE_URL,
-        defaultModel: process.env.OLLAMA_DEFAULT_MODEL,
-      });
-      this.providers.set('ollama', ollamaProvider);
-      logger.info('Ollama provider registered (will check availability on first use)');
+      // Initialize Ollama only when explicitly enabled.
+      // This avoids unexpected logs/connections in environments that do not use Ollama.
+      const ollamaEnabled =
+        process.env.OLLAMA_ENABLED === 'true' || process.env.OLLAMA_ENABLED === '1';
+      if (ollamaEnabled) {
+        const ollamaProvider = new OllamaProvider({
+          baseURL: process.env.OLLAMA_BASE_URL,
+          defaultModel: process.env.OLLAMA_DEFAULT_MODEL,
+        });
+        this.providers.set('ollama', ollamaProvider);
+        logger.info('Ollama provider registered (enabled via OLLAMA_ENABLED)');
+      }
 
       if (this.providers.size === 0) {
         logger.warn(
-          'No AI providers configured. Set API keys in environment variables or start Ollama server.'
+          'No AI providers configured. Set API keys or enable Ollama with OLLAMA_ENABLED=true.'
         );
       }
     } catch (error) {
