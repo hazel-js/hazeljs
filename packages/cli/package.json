@@ -23,13 +23,13 @@
   },
   "optionalDependencies": {},
   "dependencies": {
+    "@hazeljs/eval": "file:../eval",
     "chalk": "^4.1.2",
     "commander": "^11.1.0",
     "inquirer": "^8.2.7",
     "mustache": "^4.2.0"
   },
   "devDependencies": {
-    "@hazeljs/eval": "file:../eval",
     "@types/inquirer": "^8.2.12",
     "@types/jest": "^29.5.14",
     "@types/mustache": "^4.2.6",
