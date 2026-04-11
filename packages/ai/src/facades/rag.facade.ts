@@ -25,6 +25,53 @@ export class RAGFacade implements RAGFacadeInterface {
   ) {}
 
   /**
+   * Build vector store from HazelAI persistence.rag (Pinecone, Qdrant, Weaviate, Chroma, or memory).
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private buildVectorStore(embeddingProvider: any, rag: any): any {
+    const ragConfig = this.config.persistence?.rag;
+    const kind = ragConfig?.vectorStore ?? 'in-memory';
+
+    if (!ragConfig || kind === 'in-memory') {
+      return new rag.MemoryVectorStore(embeddingProvider);
+    }
+
+    const opts = ragConfig.options ?? {};
+
+    switch (kind) {
+      case 'pinecone':
+        return new rag.PineconeVectorStore(embeddingProvider, {
+          apiKey: ragConfig.apiKey || process.env.PINECONE_API_KEY || '',
+          environment: ragConfig.environment || process.env.PINECONE_ENVIRONMENT || '',
+          indexName: ragConfig.indexName || 'hazel',
+          namespace: (opts.namespace as string) || undefined,
+        });
+      case 'qdrant':
+        return new rag.QdrantVectorStore(embeddingProvider, {
+          url: ragConfig.connectionString || (opts.url as string) || 'http://127.0.0.1:6333',
+          apiKey: ragConfig.apiKey,
+          collectionName: ragConfig.indexName || 'hazel',
+          vectorSize: opts.vectorSize as number | undefined,
+        });
+      case 'weaviate':
+        return new rag.WeaviateVectorStore(embeddingProvider, {
+          scheme: (opts.scheme as 'http' | 'https') || 'https',
+          host: ragConfig.connectionString || (opts.host as string) || 'localhost',
+          apiKey: ragConfig.apiKey,
+          className: ragConfig.indexName || 'HazelDocument',
+        });
+      case 'chroma':
+        return new rag.ChromaVectorStore(embeddingProvider, {
+          url: ragConfig.connectionString,
+          collectionName: ragConfig.indexName || 'hazel',
+          auth: opts.auth as { provider: 'token'; credentials: string } | undefined,
+        });
+      default:
+        return new rag.MemoryVectorStore(embeddingProvider);
+    }
+  }
+
+  /**
    * Ensure @hazeljs/rag is loaded and initialized with persistence configuration.
    * Throws a helpful error if the package is not installed.
    */
@@ -32,27 +79,58 @@ export class RAGFacade implements RAGFacadeInterface {
     if (this.initialized) return;
 
     try {
-      const { RAGPipeline, RAGService } = await import('@hazeljs/rag');
+      // Dynamic import — use `any` so @hazeljs/ai builds without pulling full RAG sources into this project.
+      const rag = (await import('@hazeljs/rag')) as any;
+      const RAGPipeline = rag.RAGPipeline;
+      const RAGService = rag.RAGService;
 
       // Get RAG persistence configuration
       const ragConfig = this.config.persistence?.rag;
+      const provider = (this.config.defaultProvider as 'openai' | 'cohere') || 'openai';
 
-      // Create a pipeline with sensible defaults and persistence
-      const pipeline = RAGPipeline.from({
-        provider: (this.config.defaultProvider as 'openai' | 'cohere') || 'openai',
-        llm: async (prompt: string) => {
-          const response = await this.aiService.complete({
-            messages: [{ role: 'user', content: prompt }],
-          });
-          return response.content;
+      let embeddingProvider;
+      switch (provider) {
+        case 'cohere': {
+          const apiKey = process.env.COHERE_API_KEY;
+          if (!apiKey) {
+            throw new Error('RAG: COHERE_API_KEY is required for Cohere embeddings.');
+          }
+          embeddingProvider = new rag.CohereEmbeddings({ apiKey });
+          break;
+        }
+        case 'openai':
+        default: {
+          const apiKey = process.env.OPENAI_API_KEY;
+          if (!apiKey) {
+            throw new Error('RAG: OPENAI_API_KEY is required for OpenAI embeddings.');
+          }
+          embeddingProvider = new rag.OpenAIEmbeddings({ apiKey });
+          break;
+        }
+      }
+
+      const chunkSize = (ragConfig?.options?.chunkSize as number) ?? 1000;
+      const chunkOverlap = (ragConfig?.options?.chunkOverlap as number) ?? 200;
+      const textSplitter = new rag.RecursiveTextSplitter({ chunkSize, chunkOverlap });
+
+      const vectorStore = this.buildVectorStore(embeddingProvider, rag);
+
+      const llm = async (prompt: string) => {
+        const response = await this.aiService.complete({
+          messages: [{ role: 'user', content: prompt }],
+        });
+        return response.content;
+      };
+
+      const pipeline = new RAGPipeline(
+        {
+          vectorStore,
+          embeddingProvider,
+          textSplitter,
+          topK: (ragConfig?.options?.topK as number) ?? 5,
         },
-        // For now, use memory vector store as default
-        // TODO: In Phase 2, support custom vector store configuration
-        vectorStore: 'memory',
-        topK: ragConfig?.options?.topK as number,
-        chunkSize: ragConfig?.options?.chunkSize as number,
-        chunkOverlap: ragConfig?.options?.chunkOverlap as number,
-      });
+        llm
+      );
 
       await pipeline.initialize();
 

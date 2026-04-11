@@ -2,7 +2,8 @@
  * Core types for the HazelJS Unified AI Platform
  */
 
-import type { AIProvider, IAIProvider, AIMessage } from '../ai-enhanced.types';
+import type { ZodType } from 'zod';
+import type { AIProvider, IAIProvider, AIMessage, AIMessageContentPart } from '../ai-enhanced.types';
 
 // ── Configuration ────────────────────────────────────────────
 
@@ -74,6 +75,33 @@ export interface HazelAIConfig {
       options?: Record<string, unknown>;
     };
   };
+
+  /**
+   * Optional hooks for observability / billing after each AI call.
+   */
+  usageHooks?: {
+    onCompletion?: (evt: {
+      provider: AIProvider;
+      model?: string;
+      latencyMs: number;
+      usage?: TokenUsageSummary;
+      error: boolean;
+    }) => void;
+  };
+
+  /**
+   * Bridge to @hazeljs/ml — when {@link ClassifyOptions.mlModel} is set, `classify` / `sentiment` call this instead of LLM.
+   */
+  ml?: {
+    predict?: (
+      modelName: string,
+      input: unknown,
+      version?: string
+    ) => Promise<
+      | { label?: string; confidence?: number; scores?: Record<string, number>; sentiment?: string }
+      | unknown
+    >;
+  };
 }
 
 export interface ProviderConfig {
@@ -91,6 +119,10 @@ export interface ChatOptions {
   maxTokens?: number;
   systemPrompt?: string;
   responseFormat?: 'text' | 'json';
+  /** Multimodal parts merged into the user message (vision / audio). */
+  contentParts?: AIMessageContentPart[];
+  /** Structured output validated with Zod (uses JSON schema mode when supported). */
+  outputSchema?: ZodType<unknown>;
 }
 
 export interface ChatResponse {
@@ -140,6 +172,9 @@ export interface ClassifyOptions {
   provider?: AIProvider;
   model?: string;
   multi?: boolean; // allow multiple labels
+  /** When set and {@link HazelAIConfig.ml.predict} is configured, uses ML instead of LLM. */
+  mlModel?: string;
+  mlVersion?: string;
 }
 
 export interface ClassifyResult {

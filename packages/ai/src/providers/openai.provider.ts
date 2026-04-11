@@ -9,12 +9,15 @@ import {
   AIMessage,
   AIResponseFormat,
   AIJsonSchema,
+  type AIMessageContentPart,
 } from '../ai-enhanced.types';
+import { isMultipartContent, messageContentToText } from '../utils/message-content';
 import logger from '@hazeljs/core';
 import OpenAI from 'openai';
 import type {
   ChatCompletionMessageParam,
   ChatCompletionCreateParamsBase,
+  ChatCompletionContentPart,
 } from 'openai/resources/chat/completions';
 
 /**
@@ -340,6 +343,33 @@ export class OpenAIProvider implements IAIProvider {
     };
   }
 
+  private mapContentPart(p: AIMessageContentPart): ChatCompletionContentPart {
+    if (p.type === 'text') {
+      return { type: 'text' as const, text: p.text };
+    }
+    if (p.type === 'image_url') {
+      return {
+        type: 'image_url' as const,
+        image_url: { url: p.imageUrl },
+      };
+    }
+    if (p.type === 'image_base64') {
+      const mime = p.mimeType || 'image/png';
+      return {
+        type: 'image_url' as const,
+        image_url: { url: `data:${mime};base64,${p.base64}` },
+      };
+    }
+    if (p.type === 'input_audio') {
+      const mime = p.mimeType || 'audio/wav';
+      return {
+        type: 'text' as const,
+        text: `[audio input ${mime}]`,
+      };
+    }
+    return { type: 'text' as const, text: '' };
+  }
+
   /**
    * Transform messages to OpenAI format
    */
@@ -349,7 +379,8 @@ export class OpenAIProvider implements IAIProvider {
       if (msg.role === 'function' || msg.role === 'tool') {
         return {
           role: 'tool' as const,
-          content: msg.content,
+          content:
+            typeof msg.content === 'string' ? msg.content : messageContentToText(msg.content),
           tool_call_id: msg.toolCallId || msg.name || 'unknown',
         };
       }
@@ -357,7 +388,10 @@ export class OpenAIProvider implements IAIProvider {
       if (msg.role === 'assistant' && (msg.functionCall || msg.toolCalls)) {
         return {
           role: 'assistant',
-          content: msg.content || null,
+          content:
+            typeof msg.content === 'string'
+              ? msg.content || null
+              : messageContentToText(msg.content) || null,
           tool_calls:
             msg.toolCalls ||
             (msg.functionCall
@@ -378,11 +412,18 @@ export class OpenAIProvider implements IAIProvider {
       if (msg.role === 'system') {
         return {
           role: 'system',
-          content: msg.content,
+          content:
+            typeof msg.content === 'string' ? msg.content : messageContentToText(msg.content),
         };
       }
 
       if (msg.role === 'user') {
+        if (isMultipartContent(msg.content)) {
+          return {
+            role: 'user',
+            content: msg.content.map((p) => this.mapContentPart(p)),
+          };
+        }
         return {
           role: 'user',
           content: msg.content,
@@ -392,7 +433,8 @@ export class OpenAIProvider implements IAIProvider {
       // Default to assistant
       return {
         role: 'assistant',
-        content: msg.content,
+        content:
+          typeof msg.content === 'string' ? msg.content : messageContentToText(msg.content),
       };
     });
   }

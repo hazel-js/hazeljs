@@ -338,6 +338,41 @@ export class {{className}}RagService {
 }
 `;
 
+export const RAG_PIPELINE_TEMPLATE = `import { Service } from '@hazeljs/core';
+import { RAGPipeline } from '@hazeljs/rag';
+
+/**
+ * RAG pipeline scaffold — uses {@link RAGPipeline.from} with in-memory vectors.
+ * Swap persistence via HazelAI \`persistence.rag\` or construct {@link RAGPipeline} with Pinecone/Qdrant/Weaviate/Chroma.
+ */
+@Service()
+export class {{className}}RagPipelineService {
+  private pipeline: RAGPipeline | null = null;
+
+  async ensurePipeline(): Promise<RAGPipeline> {
+    if (this.pipeline) return this.pipeline;
+    this.pipeline = RAGPipeline.from({
+      provider: 'openai',
+      vectorStore: 'memory',
+      topK: 5,
+      chunkSize: 1000,
+      chunkOverlap: 200,
+      llm: async (prompt: string) => {
+        // Wire to your LLM (HazelAI, AIService, or HTTP)
+        return prompt;
+      },
+    });
+    await this.pipeline.initialize();
+    return this.pipeline;
+  }
+
+  async query(question: string) {
+    const p = await this.ensurePipeline();
+    return p.query(question);
+  }
+}
+`;
+
 export const DISCOVERY_TEMPLATE = `import { Service } from '@hazeljs/core';
 import { ServiceRegistry, DiscoveryClient } from '@hazeljs/discovery';
 

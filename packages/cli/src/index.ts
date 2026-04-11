@@ -53,6 +53,7 @@ import { registerSimpleGenerators } from './commands/generate-simple';
 import { GENERATOR_LIST } from './utils/generator-registry';
 import { infoCommand } from './commands/info';
 import { addCommand } from './commands/add';
+import { registerEvalCommand } from './commands/eval';
 
 // Read version from package.json to ensure consistency
 const packageJson = JSON.parse(readFileSync(join(__dirname, '../package.json'), 'utf8'));
@@ -70,6 +71,7 @@ generateApp(program);
 // Utility commands
 infoCommand(program);
 addCommand(program);
+registerEvalCommand(program);
 
 // Generate command group (unified: hazel g <type> <name> [--path] [--dry-run] [--json], or hazel g --list)
 const generateCommand = program

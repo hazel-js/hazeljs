@@ -21,6 +21,16 @@ export interface HybridSearchOptions extends SemanticSearchOptions {
 const SEMANTIC_SEARCH_KEY = Symbol('semanticSearch');
 const HYBRID_SEARCH_KEY = Symbol('hybridSearch');
 
+/** Optional hook: embed text after entity persistence (wire to RAGPipeline / embedding provider). */
+let autoEmbedHandler: ((text: string) => Promise<void>) | undefined;
+
+/**
+ * Register a global handler for {@link AutoEmbed} (e.g. upsert into your vector index).
+ */
+export function configureAutoEmbed(handler: (text: string) => Promise<void>): void {
+  autoEmbedHandler = handler;
+}
+
 /**
  * Enables semantic search on a method
  */
@@ -42,17 +52,25 @@ export function HybridSearch(options: HybridSearchOptions = {}): MethodDecorator
 }
 
 /**
- * Auto-embed decorator for automatic embedding generation
+ * Auto-embed decorator — after the method returns, text fields are passed to {@link configureAutoEmbed}.
  */
-export function AutoEmbed(_fields?: string[]): MethodDecorator {
+export function AutoEmbed(fields?: string[]): MethodDecorator {
   return (target: object, propertyKey: string | symbol, descriptor: PropertyDescriptor) => {
-    const originalMethod = descriptor.value;
+    const originalMethod = descriptor.value as (...a: unknown[]) => Promise<unknown>;
 
     descriptor.value = async function (...args: unknown[]): Promise<unknown> {
       const result = await originalMethod.apply(this, args);
 
-      // TODO: Implement automatic embedding generation
-      // This would integrate with the RAG service to generate embeddings
+      if (autoEmbedHandler && result && typeof result === 'object') {
+        const obj = result as Record<string, unknown>;
+        const keys = fields?.length ? fields : Object.keys(obj);
+        for (const k of keys) {
+          const v = obj[k];
+          if (typeof v === 'string' && v.trim()) {
+            await autoEmbedHandler(v);
+          }
+        }
+      }
 
       return result;
     };

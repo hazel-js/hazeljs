@@ -1,4 +1,4 @@
-import { TokenUsage, TokenLimitConfig } from '../ai-enhanced.types';
+import { TokenUsage, TokenLimitConfig, type AIProvider } from '../ai-enhanced.types';
 import { Service } from '@hazeljs/core';
 import logger from '@hazeljs/core';
 import type { IUsageStore } from './usage.store';
@@ -66,7 +66,8 @@ export class TokenTracker {
       void this.usageStore
         .save({
           userId: usage.userId,
-          provider: 'tracked',
+          provider: usage.provider || 'tracked',
+          model: usage.model,
           promptTokens: usage.promptTokens,
           completionTokens: usage.completionTokens,
           totalTokens: usage.totalTokens,
@@ -265,6 +266,79 @@ export class TokenTracker {
     }
 
     logger.info(`Cleaned up usage data older than ${daysToKeep} days`);
+  }
+
+  /**
+   * Aggregate metrics for {@link HazelAI.getMetrics} / dashboards.
+   */
+  getSnapshotForMetrics(windowMs?: number): {
+    totalTokens: number;
+    totalCost: number;
+    requestCount: number;
+    totalLatencyMs: number;
+    latencySamples: number;
+    byProvider: Record<
+      string,
+      {
+        requests: number;
+        tokens: number;
+        totalLatencyMs: number;
+        latencySamples: number;
+        averageLatencyMs: number;
+      }
+    >;
+  } {
+    const cutoff = windowMs ? Date.now() - windowMs : 0;
+    const recent = this.usageHistory.filter((u) => u.timestamp >= cutoff);
+    const totalTokens = recent.reduce((s, u) => s + u.totalTokens, 0);
+    const totalCost = recent.reduce((s, u) => s + (u.cost || 0), 0);
+    const byProvider: Record<
+      string,
+      {
+        requests: number;
+        tokens: number;
+        totalLatencyMs: number;
+        latencySamples: number;
+        averageLatencyMs: number;
+      }
+    > = {};
+    for (const u of recent) {
+      const key = (u.provider as AIProvider | undefined) || 'unknown';
+      if (!byProvider[key]) {
+        byProvider[key] = {
+          requests: 0,
+          tokens: 0,
+          totalLatencyMs: 0,
+          latencySamples: 0,
+          averageLatencyMs: 0,
+        };
+      }
+      byProvider[key].requests += 1;
+      byProvider[key].tokens += u.totalTokens;
+      if (typeof u.latencyMs === 'number') {
+        byProvider[key].totalLatencyMs += u.latencyMs;
+        byProvider[key].latencySamples += 1;
+      }
+    }
+    for (const k of Object.keys(byProvider)) {
+      const b = byProvider[k];
+      b.averageLatencyMs =
+        b.latencySamples > 0 ? b.totalLatencyMs / b.latencySamples : 0;
+    }
+    const totalLatencyMs = recent.reduce(
+      (s, u) => s + (typeof u.latencyMs === 'number' ? u.latencyMs : 0),
+      0
+    );
+    const latencySamples = recent.filter((u) => typeof u.latencyMs === 'number').length;
+
+    return {
+      totalTokens,
+      totalCost,
+      requestCount: recent.length,
+      totalLatencyMs,
+      latencySamples,
+      byProvider,
+    };
   }
 
   /**

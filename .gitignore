@@ -9,6 +9,14 @@ dist/
 build/
 *.tsbuildinfo
 
+# Accidental TypeScript emit next to sources (emit belongs in dist/ only)
+packages/*/src/*.js
+packages/*/src/*.d.ts
+packages/*/src/*.d.ts.map
+packages/*/src/**/*.js
+packages/*/src/**/*.d.ts
+packages/*/src/**/*.d.ts.map
+
 # Test coverage
 coverage/
 

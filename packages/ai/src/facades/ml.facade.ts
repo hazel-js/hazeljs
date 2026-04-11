@@ -29,6 +29,23 @@ export class MLFacade {
    * @returns Classification result with confidence
    */
   async classify(text: string, options: ClassifyOptions): Promise<ClassifyResult> {
+    const mlPredict = this.config.ml?.predict;
+    if (options.mlModel && mlPredict) {
+      const raw = await mlPredict(options.mlModel, { text, labels: options.labels }, options.mlVersion);
+      const r = raw as {
+        label?: string;
+        confidence?: number;
+        scores?: Record<string, number>;
+      };
+      if (r && typeof r === 'object' && 'label' in r && r.label) {
+        return {
+          label: String(r.label),
+          confidence: typeof r.confidence === 'number' ? r.confidence : 1,
+          allScores: r.scores,
+        };
+      }
+    }
+
     const labelsStr = options.labels.join(', ');
     const multiLabel = options.multi
       ? 'You may select multiple labels.'

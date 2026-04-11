@@ -2,6 +2,7 @@ export type { PromptMetadata } from './types';
 export { PromptTemplate } from './template';
 export type { RenderOptions } from './template';
 export { PromptRegistry } from './registry';
+export * from './prompt-feature-toggle';
 
 // Store backends
 export type { PromptEntry, PromptStore } from './stores/store.interface';

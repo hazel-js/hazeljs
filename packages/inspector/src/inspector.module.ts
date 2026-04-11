@@ -26,6 +26,7 @@ import { dataInspector } from './plugins/data.inspector';
 import { serverlessInspector } from './plugins/serverless.inspector';
 import { mlInspector } from './plugins/ml.inspector';
 import { workerInspector } from './plugins/worker.inspector';
+import { hcelInspector } from './plugins/hcel.inspector';
 import { mergeInspectorConfig, shouldExposeInspector } from './config/inspector.config';
 import { InspectorRuntime } from './runtime/inspector-runtime';
 
@@ -82,6 +83,7 @@ export const InspectorModule = {
         registry.register(serverlessInspector);
         registry.register(mlInspector);
         registry.register(workerInspector);
+        registry.register(hcelInspector);
 
         const basePath = config.inspectorBasePath ?? '/__hazel';
         const handler = createInspectorHandler(service, config, app);
@@ -500,6 +502,22 @@ function createInspectorHandler(
         res.end(JSON.stringify({ entries: workers }));
         return;
       }
+      if (pathSeg === '/hcel/trace' || pathSeg === '/hcel/trace/') {
+        try {
+          const ai = require('@hazeljs/ai') as {
+            getHCELTraceSnapshot?: () => unknown[];
+            setHCELGlobalTraceEnabled?: (v: boolean) => void;
+          };
+          ai.setHCELGlobalTraceEnabled?.(true);
+          const events = ai.getHCELTraceSnapshot?.() ?? [];
+          res.writeHead(200);
+          res.end(JSON.stringify({ events }));
+        } catch (err) {
+          res.writeHead(500);
+          res.end(JSON.stringify({ error: String(err) }));
+        }
+        return;
+      }
       if (pathSeg === '/' || pathSeg === '') {
         res.writeHead(200);
         res.end(
@@ -527,6 +545,7 @@ function createInspectorHandler(
               '/serverless',
               '/ml',
               '/workers',
+              '/hcel/trace',
               '/stats',
             ],
           })

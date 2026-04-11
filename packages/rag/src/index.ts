@@ -16,7 +16,19 @@ export * from './rag.module';
 // Decorators
 export * from './decorators/rag.decorator';
 export * from './decorators/embeddable.decorator';
-export * from './decorators/semantic-search.decorator';
+export {
+  SemanticSearch,
+  HybridSearch,
+  AutoEmbed,
+  configureAutoEmbed,
+  MultiQueryRAG,
+  CompressContext,
+  SelfQueryRAG,
+  Rerank,
+  ParentChildRetrieval,
+  EnsembleRetrieval,
+  TimeWeightedRetrieval,
+} from './decorators/semantic-search.decorator';
 
 // Embeddings & Reranking
 export * from './embeddings/openai-embeddings';

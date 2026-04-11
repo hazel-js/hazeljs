@@ -7,6 +7,7 @@ import {
   AIEmbeddingRequest,
   AIEmbeddingResponse,
 } from '../ai-enhanced.types';
+import { messageContentToText } from '../utils/message-content';
 import logger from '@hazeljs/core';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
@@ -58,7 +59,8 @@ export class GeminiProvider implements IAIProvider {
       const prompt = request.messages
         .map((m) => {
           const role = m.role === 'assistant' ? 'model' : m.role;
-          return `${role}: ${m.content}`;
+          const body = typeof m.content === 'string' ? m.content : messageContentToText(m.content);
+          return `${role}: ${body}`;
         })
         .join('\n\n');
 
@@ -101,7 +103,8 @@ export class GeminiProvider implements IAIProvider {
       const prompt = request.messages
         .map((m) => {
           const role = m.role === 'assistant' ? 'model' : m.role;
-          return `${role}: ${m.content}`;
+          const body = typeof m.content === 'string' ? m.content : messageContentToText(m.content);
+          return `${role}: ${body}`;
         })
         .join('\n\n');
 

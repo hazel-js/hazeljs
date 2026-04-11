@@ -51,7 +51,24 @@ export class HazelAI {
   private aiService: AIEnhancedService;
 
   constructor(private config: HazelAIConfig = {}) {
-    this.aiService = new AIEnhancedService();
+    this.aiService = new AIEnhancedService(undefined, undefined, {
+      onCompletion: (evt) => {
+        this.config.usageHooks?.onCompletion?.({
+          provider: evt.provider,
+          model: evt.model,
+          latencyMs: evt.latencyMs,
+          error: evt.error,
+          usage: evt.usage
+            ? {
+                promptTokens: evt.usage.promptTokens,
+                completionTokens: evt.usage.completionTokens,
+                totalTokens: evt.usage.totalTokens,
+                estimatedCost: undefined,
+              }
+            : undefined,
+        });
+      },
+    });
     this.chatFacade = new ChatFacade(this.aiService, config);
     this.ragFacade = new RAGFacade(this.aiService, config);
     this.agentFacade = new AgentFacade(this.aiService, config);
@@ -272,14 +289,6 @@ export class HazelAI {
    * @returns Metrics object with request counts, token usage, costs, etc.
    */
   getMetrics(): AIMetrics {
-    // TODO: Implement metrics collection in Phase 2
-    return {
-      totalRequests: 0,
-      totalTokens: 0,
-      averageLatencyMs: 0,
-      errorRate: 0,
-      costEstimate: 0,
-      byProvider: {},
-    };
+    return this.aiService.getAIMetrics();
   }
 }

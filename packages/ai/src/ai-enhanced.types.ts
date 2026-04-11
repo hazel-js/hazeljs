@@ -65,9 +65,17 @@ export interface AIToolCall {
   };
 }
 
+/** Multimodal content part (OpenAI-compatible; providers map as supported). */
+export type AIMessageContentPart =
+  | { type: 'text'; text: string }
+  | { type: 'image_url'; imageUrl: string }
+  | { type: 'image_base64'; base64: string; mimeType?: string }
+  | { type: 'input_audio'; base64: string; mimeType?: string };
+
 export interface AIMessage {
   role: AIMessageRole;
-  content: string;
+  /** Plain text or structured parts for vision / audio inputs */
+  content: string | AIMessageContentPart[];
   name?: string;
   toolCallId?: string;
   functionCall?: {
@@ -295,6 +303,11 @@ export interface AIContext {
  */
 export interface TokenUsage {
   userId?: string;
+  /** LLM provider that served the request */
+  provider?: AIProvider;
+  model?: string;
+  /** Wall time for the completion call (when tracked). */
+  latencyMs?: number;
   promptTokens: number;
   completionTokens: number;
   totalTokens: number;

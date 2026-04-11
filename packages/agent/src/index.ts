@@ -13,6 +13,7 @@ export * from './errors/agent.error';
 export * from './decorators/agent.decorator';
 export * from './decorators/tool.decorator';
 export * from './decorators/delegate.decorator';
+export * from './decorators/approval.decorator';
 
 export * from './registry/agent.registry';
 export * from './registry/tool.registry';
@@ -50,3 +51,5 @@ export { A2AServer } from './a2a/a2a.server';
 export type { A2AServerOptions } from './a2a/a2a.server';
 
 export { AgentModule, AgentService, GUARDRAILS_SERVICE_TOKEN } from './agent.module';
+
+export * from './evaluation/agent-eval';

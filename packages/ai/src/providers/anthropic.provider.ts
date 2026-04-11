@@ -7,6 +7,7 @@ import {
   AIEmbeddingRequest,
   AIEmbeddingResponse,
 } from '../ai-enhanced.types';
+import { messageContentToText } from '../utils/message-content';
 import logger from '@hazeljs/core';
 import Anthropic from '@anthropic-ai/sdk';
 
@@ -58,7 +59,9 @@ export class AnthropicProvider implements IAIProvider {
       const systemMessages = request.messages.filter((m) => m.role === 'system');
       const conversationMessages = request.messages.filter((m) => m.role !== 'system');
 
-      const systemPrompt = systemMessages.map((m) => m.content).join('\n\n');
+      const systemPrompt = systemMessages
+        .map((m) => (typeof m.content === 'string' ? m.content : messageContentToText(m.content)))
+        .join('\n\n');
 
       // Create message request
       const response = await this.anthropic.messages.create({
@@ -68,7 +71,8 @@ export class AnthropicProvider implements IAIProvider {
         system: systemPrompt || undefined,
         messages: conversationMessages.map((m) => ({
           role: m.role as 'user' | 'assistant',
-          content: m.content,
+          content:
+            typeof m.content === 'string' ? m.content : messageContentToText(m.content),
         })),
       });
 
@@ -110,7 +114,9 @@ export class AnthropicProvider implements IAIProvider {
       const systemMessages = request.messages.filter((m) => m.role === 'system');
       const conversationMessages = request.messages.filter((m) => m.role !== 'system');
 
-      const systemPrompt = systemMessages.map((m) => m.content).join('\n\n');
+      const systemPrompt = systemMessages
+        .map((m) => (typeof m.content === 'string' ? m.content : messageContentToText(m.content)))
+        .join('\n\n');
 
       // Create streaming request
       const stream = await this.anthropic.messages.stream({
@@ -120,7 +126,8 @@ export class AnthropicProvider implements IAIProvider {
         system: systemPrompt || undefined,
         messages: conversationMessages.map((m) => ({
           role: m.role as 'user' | 'assistant',
-          content: m.content,
+          content:
+            typeof m.content === 'string' ? m.content : messageContentToText(m.content),
         })),
       });
 

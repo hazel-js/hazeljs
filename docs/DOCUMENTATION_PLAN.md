@@ -2,400 +2,402 @@
 
 Documentation structure - practical, example-driven guides.
 
+**Docs site (primary):** End-user guides live on the docs site under `hazeljs-landing/src/content/docs/` (e.g. `/docs/guides/*`). Repo `docs/guides/*.md` remains for distributed locking, saga, and serverless deep-dives.
+
 ## Documentation Structure
 
 ### 1. Introduction
 
-- [ ] What is HazelJS?
-- [ ] Why HazelJS?
-- [ ] Philosophy
-- [ ] First Steps
+- [x] What is HazelJS? (docs site: Introduction)
+- [x] Why HazelJS?
+- [x] Philosophy
+- [x] First Steps (docs site: Installation)
 
 ### 2. Overview
 
-- [ ] Controllers
-- [ ] Providers
-- [ ] Modules
-- [ ] Middleware
-- [ ] Exception Filters
-- [ ] Pipes
-- [ ] Guards
-- [ ] Interceptors
+- [x] Controllers
+- [x] Providers
+- [x] Modules
+- [x] Middleware
+- [x] Exception Filters
+- [x] Pipes
+- [x] Guards
+- [x] Interceptors
 
 ### 3. Fundamentals
 
 #### Controllers
 
-- [ ] Routing
-- [ ] Request object
-- [ ] Response handling
-- [ ] Route parameters
-- [ ] Query parameters
-- [ ] Request body
-- [ ] Headers
-- [ ] Status codes
-- [ ] Async/await
+- [x] Routing
+- [x] Request object
+- [x] Response handling
+- [x] Route parameters
+- [x] Query parameters
+- [x] Request body
+- [x] Headers
+- [x] Status codes
+- [x] Async/await
 
 #### Providers
 
-- [ ] Services
-- [ ] Dependency injection
-- [ ] Scopes (Singleton, Transient, Request)
-- [ ] Custom providers
-- [ ] Optional providers
-- [ ] Property-based injection
+- [x] Services
+- [x] Dependency injection
+- [x] Scopes (Singleton, Transient, Request)
+- [x] Custom providers
+- [x] Optional providers
+- [x] Property-based injection
 
 #### Modules
 
-- [ ] Feature modules
-- [ ] Shared modules
-- [ ] Module re-exporting
-- [ ] Dependency injection
-- [ ] Global modules
-- [ ] Dynamic modules
+- [x] Feature modules
+- [x] Shared modules
+- [x] Module re-exporting
+- [x] Dependency injection
+- [x] Global modules
+- [x] Dynamic modules
 
 #### Middleware
 
-- [ ] Applying middleware
-- [ ] Functional middleware
-- [ ] Class middleware
-- [ ] Multiple middleware
-- [ ] Global middleware
-- [ ] Route middleware
+- [x] Applying middleware
+- [x] Functional middleware
+- [x] Class middleware
+- [x] Multiple middleware
+- [x] Global middleware
+- [x] Route middleware
 
 #### Exception Filters
 
-- [ ] Built-in HTTP exceptions
-- [ ] Custom exceptions
-- [ ] Exception filters
-- [ ] Catch everything
-- [ ] Inheritance
+- [x] Built-in HTTP exceptions
+- [x] Custom exceptions
+- [x] Exception filters
+- [x] Catch everything
+- [x] Inheritance
 
 #### Pipes
 
-- [ ] Built-in pipes
-- [ ] Custom pipes
-- [ ] Validation pipe
-- [ ] Transformation pipe
-- [ ] Providing defaults
+- [x] Built-in pipes
+- [x] Custom pipes
+- [x] Validation pipe
+- [x] Transformation pipe
+- [x] Providing defaults
 
 #### Guards
 
-- [ ] Authorization guard
-- [ ] Role-based access control
-- [ ] Reflection and metadata
-- [ ] Execution context
+- [x] Authorization guard
+- [x] Role-based access control
+- [x] Reflection and metadata
+- [x] Execution context
 
 #### Interceptors
 
-- [ ] Basics
-- [ ] Binding interceptors
-- [ ] Response mapping
-- [ ] Exception mapping
-- [ ] Stream overriding
-- [ ] More operators
+- [x] Basics
+- [x] Binding interceptors
+- [x] Response mapping
+- [x] Exception mapping
+- [x] Stream overriding
+- [x] More operators
 
 ### 4. Techniques
 
 #### Database (Prisma)
 
-- [ ] Getting started with Prisma
-- [ ] Repository pattern
-- [ ] Migrations
-- [ ] Seeding
-- [ ] Relations
-- [ ] Transactions
-- [ ] Raw queries
+- [x] Getting started with Prisma (docs site: Database guide + packages/prisma)
+- [x] Repository pattern
+- [x] Migrations
+- [x] Seeding
+- [x] Relations
+- [x] Transactions
+- [x] Raw queries
 
 #### Configuration
 
-- [ ] Configuration module
-- [ ] Environment variables
-- [ ] Configuration validation
-- [ ] Custom configuration
-- [ ] Partial registration
+- [x] Configuration module (docs site: Configuration guide)
+- [x] Environment variables
+- [x] Configuration validation
+- [x] Custom configuration
+- [x] Partial registration
 
 #### Validation
 
-- [ ] Auto-validation
-- [ ] Stripping properties
-- [ ] Transform payload
-- [ ] Validation groups
-- [ ] Custom validators
+- [x] Auto-validation (docs site: Validation guide)
+- [x] Stripping properties
+- [x] Transform payload
+- [x] Validation groups
+- [x] Custom validators
 
 #### Caching
 
-- [ ] In-memory cache
-- [ ] Redis cache
-- [ ] Multi-tier caching
-- [ ] Cache invalidation
-- [ ] Custom cache store
+- [x] In-memory cache (docs site: packages/cache + caching-strategies guide)
+- [x] Redis cache
+- [x] Multi-tier caching
+- [x] Cache invalidation
+- [x] Custom cache store
 
 #### Distributed Systems
 
 - [x] Distributed Locking ([guide](guides/distributed-locking.md))
 - [x] Saga Patterns (Distributed Transactions) ([guide](guides/saga.md))
-- [ ] Redis-backed synchronization
-- [ ] Task Orchestration
+- [x] Redis-backed synchronization (docs site: caching-strategies guide + distributed-lock package)
+- [x] Task Orchestration (docs site: saga package + HCEL guide)
 
 #### Authentication
 
-- [ ] JWT strategy
-- [ ] Passport integration
-- [ ] Guards
-- [ ] Login endpoint
-- [ ] Protected routes
+- [x] JWT strategy (docs site: packages/auth + Authentication guide)
+- [x] Passport integration (docs site: Authentication guide — optional Passport bridge)
+- [x] Guards
+- [x] Login endpoint
+- [x] Protected routes
 
 #### Authorization
 
-- [ ] Role-based access control
-- [ ] Claims-based authorization
-- [ ] Policies
-- [ ] Custom decorators
+- [x] Role-based access control (docs site: packages/casl + Authentication guide)
+- [x] Claims-based authorization (docs site: Authentication guide)
+- [x] Policies
+- [x] Custom decorators
 
 #### File Upload
 
-- [ ] Single file
-- [ ] Multiple files
-- [ ] File validation
-- [ ] Storage options
+- [x] Single file (docs site: File Upload guide)
+- [x] Multiple files
+- [x] File validation
+- [x] Storage options
 
 #### Logging
 
-- [ ] Built-in logger
-- [ ] Custom logger
-- [ ] Log levels
-- [ ] Context
+- [x] Built-in logger (docs site: Logging guide)
+- [x] Custom logger (docs site: Logging guide)
+- [x] Log levels
+- [x] Context
 
 #### Testing
 
-- [ ] Unit testing
-- [ ] Integration testing
-- [ ] E2E testing
-- [ ] Test module
-- [ ] Mocking
+- [x] Unit testing (docs site: Testing guide)
+- [x] Integration testing
+- [x] E2E testing (docs site: Testing guide)
+- [x] Test module
+- [x] Mocking
 
 ### 5. AI Integration (Unique to HazelJS)
 
 #### Getting Started
 
-- [ ] AI module overview
-- [ ] Supported providers (OpenAI, Ollama, Anthropic, Gemini, Cohere)
-- [ ] Basic setup
-- [ ] Configuration
+- [x] AI module overview (docs site: packages/ai + AI Quickstart)
+- [x] Supported providers (OpenAI, Ollama, Anthropic, Gemini, Cohere)
+- [x] Basic setup
+- [x] Configuration
 
 #### OpenAI Integration
 
-- [ ] Chat completions
-- [ ] Streaming responses
-- [ ] Function calling
-- [ ] Embeddings
-- [ ] Image generation
+- [x] Chat completions
+- [x] Streaming responses
+- [x] Function calling
+- [x] Embeddings
+- [x] Image generation
 
 #### Ollama Integration
 
-- [ ] Local LLMs
-- [ ] Model management
-- [ ] Chat completions
-- [ ] Embeddings
+- [x] Local LLMs
+- [x] Model management
+- [x] Chat completions
+- [x] Embeddings
 
 #### AI Context Management
 
-- [ ] Conversation history
-- [ ] Context windows
-- [ ] Memory management
+- [x] Conversation history
+- [x] Context windows
+- [x] Memory management
 
 #### Token Tracking
 
-- [ ] Usage monitoring
-- [ ] Cost calculation
-- [ ] Rate limiting
+- [x] Usage monitoring
+- [x] Cost calculation
+- [x] Rate limiting
 
 #### Vector Search
 
-- [ ] Embeddings
-- [ ] Similarity search
-- [ ] Similarity search
-- [ ] RAG (Retrieval Augmented Generation)
-- [ ] Agentic RAG
-- [ ] GraphRAG
+- [x] Embeddings
+- [x] Similarity search
+- [x] Similarity search
+- [x] RAG (Retrieval Augmented Generation)
+- [x] Agentic RAG
+- [x] GraphRAG
 
 #### AI Decorators
 
-- [ ] @AITask decorator
-- [ ] @AIValidate decorator
-- [ ] @AIPrompt decorator
+- [x] @AITask decorator
+- [x] @AIValidate decorator
+- [x] @AIPrompt decorator
 
 #### Practical Examples
 
-- [ ] Chatbot
-- [ ] Content generation
-- [ ] Semantic search
-- [ ] Code assistant
-- [ ] Data extraction
+- [x] Chatbot
+- [x] Content generation
+- [x] Semantic search
+- [x] Code assistant
+- [x] Data extraction
 
 #### Advanced ML & Monitoring
 
-- [ ] Feature Store (TypeScript-Native)
-- [ ] Experiment Tracking
-- [ ] Drift Detection (PSC, KS, JSD)
-- [ ] Model Monitoring
-- [ ] Guardrails (PII, Toxicity)
-- [ ] Data Contracts & Pipelines
+- [x] Feature Store (TypeScript-Native)
+- [x] Experiment Tracking
+- [x] Drift Detection (PSC, KS, JSD)
+- [x] Model Monitoring
+- [x] Guardrails (PII, Toxicity)
+- [x] Data Contracts & Pipelines
 
 #### Agent Ecosystem
 
-- [ ] MCP Protocol Support
-- [ ] A2A Compliance (Interoperability)
-- [ ] Persistent Long-term Memory
-- [ ] Reasoning Loop Debugging
-- [ ] Observability & Tracing (OTel)
+- [x] MCP Protocol Support
+- [x] A2A Compliance (Interoperability)
+- [x] Persistent Long-term Memory
+- [x] Reasoning Loop Debugging (docs site: Agent Ecosystem guide)
+- [x] Observability & Tracing (OTel)
 
 ### 6. WebSockets
 
 #### Gateways
 
-- [ ] Basic gateway
-- [ ] Lifecycle hooks
-- [ ] Server
-- [ ] Multiple namespaces
+- [x] Basic gateway (docs site: WebSockets guide + packages/websocket)
+- [x] Lifecycle hooks
+- [x] Server
+- [x] Multiple namespaces
 
 #### Events
 
-- [ ] Emit events
-- [ ] Listen to events
-- [ ] Acknowledgements
+- [x] Emit events
+- [x] Listen to events
+- [x] Acknowledgements
 
 #### Rooms
 
-- [ ] Joining rooms
-- [ ] Broadcasting
-- [ ] Private messages
+- [x] Joining rooms
+- [x] Broadcasting
+- [x] Private messages
 
 #### Adapters
 
-- [ ] Redis adapter
-- [ ] Custom adapter
+- [x] Redis adapter
+- [x] Custom adapter
 
 #### Server-Sent Events (SSE)
 
-- [ ] Basic SSE
-- [ ] Streaming data
-- [ ] Client reconnection
+- [x] Basic SSE
+- [x] Streaming data
+- [x] Client reconnection
 
 ### 7. Serverless
 
 #### AWS Lambda
 
-- [ ] Setup
-- [ ] Deployment
-- [ ] Environment variables
-- [ ] Cold start optimization
-- [ ] API Gateway integration
+- [x] Setup
+- [x] Deployment
+- [x] Environment variables
+- [x] Cold start optimization
+- [x] API Gateway integration
 
 #### Vercel
 
-- [ ] Setup
-- [ ] Deployment
-- [ ] Environment variables
-- [ ] Edge functions
+- [x] Setup
+- [x] Deployment
+- [x] Environment variables
+- [x] Edge functions
 
 #### Netlify Functions
 
-- [ ] Setup
-- [ ] Deployment
-- [ ] Background functions
+- [x] Setup
+- [x] Deployment
+- [x] Background functions
 
 #### Railway
 
-- [ ] Setup
-- [ ] Deployment
-- [ ] Databases
+- [x] Setup
+- [x] Deployment
+- [x] Databases
 
 ### 8. OpenAPI (Swagger)
 
 #### Introduction
 
-- [ ] Setup
-- [ ] Decorators
-- [ ] Types and parameters
-- [ ] Operations
-- [ ] Security
+- [x] Setup (docs site: OpenAPI guide + packages/swagger)
+- [x] Decorators
+- [x] Types and parameters
+- [x] Operations
+- [x] Security
 
 #### Advanced
 
-- [ ] Multiple specifications
-- [ ] Tags
-- [ ] Responses
-- [ ] File upload
-- [ ] Extensions
+- [x] Multiple specifications
+- [x] Tags
+- [x] Responses
+- [x] File upload
+- [x] Extensions
 
 ### 9. Recipes
 
 #### CRUD Application
 
-- [ ] Complete CRUD example
-- [ ] Validation
-- [ ] Error handling
+- [x] Complete CRUD example
+- [x] Validation
+- [x] Error handling
 
 #### REST API
 
-- [ ] Best practices
-- [ ] Versioning
-- [ ] Pagination
-- [ ] Filtering
-- [ ] Sorting
+- [x] Best practices
+- [x] Versioning
+- [x] Pagination
+- [x] Filtering
+- [x] Sorting
 
 #### GraphQL API
 
-- [ ] Setup
-- [ ] Resolvers
-- [ ] Mutations
-- [ ] Subscriptions
+- [x] Setup
+- [x] Resolvers
+- [x] Mutations
+- [x] Subscriptions
 
 #### Microservices
 
-- [ ] Message patterns
-- [ ] Request-response
-- [ ] Event-based
-- [ ] gRPC
+- [x] Message patterns
+- [x] Request-response
+- [x] Event-based
+- [x] gRPC
 
 #### AI-Powered Application
 
-- [ ] Chatbot with memory
-- [ ] Content generator
-- [ ] Semantic search engine
-- [ ] Code assistant
+- [x] Chatbot with memory
+- [x] Content generator
+- [x] Semantic search engine
+- [x] Code assistant
 
 ### 10. CLI
 
 #### Overview
 
-- [ ] Installation
-- [ ] Usage
-- [ ] Workspaces
-- [ ] Libraries
+- [x] Installation (docs site: CLI guide)
+- [x] Usage
+- [x] Workspaces
+- [x] Libraries
 
 #### Generators
 
-- [ ] Generate module
-- [ ] Generate controller
-- [ ] Generate service
-- [ ] Generate guard
-- [ ] Generate interceptor
+- [x] Generate module
+- [x] Generate controller
+- [x] Generate service
+- [x] Generate guard
+- [x] Generate interceptor
 
 ### 11. FAQ
 
-- [ ] Common questions
-- [ ] Troubleshooting
-- [ ] Migration from NestJS
-- [ ] Performance tips
+- [x] Common questions
+- [x] Troubleshooting
+- [x] Migration from NestJS
+- [x] Performance tips
 
 ### 12. Migration
 
-- [ ] From Express
-- [ ] From NestJS
-- [ ] From Fastify
+- [x] From Express
+- [x] From NestJS
+- [x] From Fastify (docs site: migration-fastify guide)
 
 ## Documentation Style Guide
 

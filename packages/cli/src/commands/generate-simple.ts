@@ -37,6 +37,7 @@ import {
   CACHE_SERVICE_TEMPLATE,
   CRON_SERVICE_TEMPLATE,
   RAG_SERVICE_TEMPLATE,
+  RAG_PIPELINE_TEMPLATE,
   DISCOVERY_TEMPLATE,
   CONFIG_TEMPLATE,
   SERVERLESS_LAMBDA_TEMPLATE,
@@ -199,6 +200,18 @@ export const SIMPLE_GENERATORS: SimpleGeneratorConfig[] = [
       'npm install @hazeljs/rag',
       'Register this service as a provider in your module',
       'Configure your embedding provider and vector store',
+    ],
+  },
+  {
+    type: 'rag-pipeline',
+    description: 'RAG pipeline service (RAGPipeline.from + memory store)',
+    suffix: 'rag-pipeline',
+    template: RAG_PIPELINE_TEMPLATE,
+    nameRequired: true,
+    nextSteps: [
+      'npm install @hazeljs/rag',
+      'Wire llm() to HazelAI or AIService',
+      'For production vectors, use HazelAI persistence.rag or construct RAGPipeline with your VectorStore',
     ],
   },
   {

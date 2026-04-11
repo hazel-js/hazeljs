@@ -28,8 +28,20 @@ import { debug } from './utils/debug';
 import { AIError, AIErrorCode } from './errors/ai.error';
 import { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
+import { messageContentToText } from './utils/message-content';
+import type { AIMetrics } from './platform/hazel-ai.types';
 
 const dbg = debug('ai');
+
+export interface AIEnhancedServiceHooks {
+  onCompletion?: (evt: {
+    provider: import('./ai-enhanced.types').AIProvider;
+    model?: string;
+    latencyMs: number;
+    usage?: import('./ai-enhanced.types').AICompletionResponse['usage'];
+    error: boolean;
+  }) => void;
+}
 
 /**
  * Enhanced AI Service
@@ -44,10 +56,18 @@ export class AIEnhancedService {
   private cacheService?: CacheService;
   private retryAttempts: number = 3;
   private retryDelay: number = 1000;
+  private readonly hooks?: AIEnhancedServiceHooks;
+  private requestSuccessCount = 0;
+  private requestErrorCount = 0;
 
-  constructor(tokenTracker?: TokenTracker, cacheService?: CacheService) {
+  constructor(
+    tokenTracker?: TokenTracker,
+    cacheService?: CacheService,
+    hooks?: AIEnhancedServiceHooks
+  ) {
     this.tokenTracker = tokenTracker || new TokenTracker();
     this.cacheService = cacheService;
+    this.hooks = hooks;
     this.initializeProviders();
 
     // Register this instance globally for easy access by other modules
@@ -197,18 +217,36 @@ export class AIEnhancedService {
 
     // Execute with retry logic
     const startTime = Date.now();
-    const response = await this.executeWithRetry(async () => {
-      return await provider.complete(request);
-    });
+    let response: AICompletionResponse;
+    try {
+      response = await this.executeWithRetry(async () => {
+        return await provider.complete(request);
+      });
+    } catch (e) {
+      this.requestErrorCount++;
+      const duration = Date.now() - startTime;
+      this.hooks?.onCompletion?.({
+        provider: provider.name,
+        model: request.model,
+        latencyMs: duration,
+        error: true,
+      });
+      throw e;
+    }
     const duration = Date.now() - startTime;
 
     dbg('complete success duration=%dms tokens=%d', duration, response.usage?.totalTokens || 0);
+
+    this.requestSuccessCount++;
 
     // Track token usage
     if (response.usage) {
       this.tokenTracker.track(
         {
           userId: config?.userId,
+          provider: provider.name,
+          model: response.model,
+          latencyMs: duration,
           promptTokens: response.usage.promptTokens,
           completionTokens: response.usage.completionTokens,
           totalTokens: response.usage.totalTokens,
@@ -216,6 +254,29 @@ export class AIEnhancedService {
         },
         request.model
       );
+    }
+
+    this.hooks?.onCompletion?.({
+      provider: provider.name,
+      model: response.model,
+      latencyMs: duration,
+      usage: response.usage,
+      error: false,
+    });
+
+    try {
+      // Optional OpenTelemetry: enrich active span when @hazeljs/observability is used
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { trace } = require('@opentelemetry/api') as {
+        trace: { getActiveSpan: () => { setAttribute: (k: string, v: string | number) => void } | undefined };
+      };
+      const span = trace.getActiveSpan();
+      if (span && response.usage) {
+        span.setAttribute('llm.provider', provider.name);
+        span.setAttribute('llm.usage.total_tokens', response.usage.totalTokens);
+      }
+    } catch {
+      /* optional peer */
     }
 
     // Cache response
@@ -256,6 +317,8 @@ export class AIEnhancedService {
           this.tokenTracker.track(
             {
               userId: config?.userId,
+              provider: provider.name,
+              model: request.model,
               promptTokens: chunk.usage.promptTokens,
               completionTokens: chunk.usage.completionTokens,
               totalTokens: chunk.usage.totalTokens,
@@ -263,6 +326,7 @@ export class AIEnhancedService {
             },
             request.model
           );
+          this.requestSuccessCount++;
         }
       }
     } catch (error) {
@@ -305,6 +369,8 @@ export class AIEnhancedService {
       this.tokenTracker.track(
         {
           userId: config?.userId,
+          provider: provider.name,
+          model: request.model,
           promptTokens: response.usage.promptTokens,
           completionTokens: 0,
           totalTokens: response.usage.totalTokens,
@@ -338,6 +404,33 @@ export class AIEnhancedService {
    */
   getAvailableProviders(): AIProvider[] {
     return Array.from(this.providers.keys());
+  }
+
+  /**
+   * Aggregated metrics for {@link HazelAI.getMetrics}.
+   */
+  getAIMetrics(): AIMetrics {
+    const snap = this.tokenTracker.getSnapshotForMetrics();
+    const totalReq = this.requestSuccessCount + this.requestErrorCount;
+    const errorRate = totalReq > 0 ? this.requestErrorCount / totalReq : 0;
+    const avgLatency =
+      snap.latencySamples > 0 ? snap.totalLatencyMs / snap.latencySamples : 0;
+    const byProvider: AIMetrics['byProvider'] = {};
+    for (const [name, v] of Object.entries(snap.byProvider)) {
+      byProvider[name] = {
+        requests: v.requests,
+        tokens: v.tokens,
+        averageLatencyMs: v.averageLatencyMs,
+      };
+    }
+    return {
+      totalRequests: snap.requestCount,
+      totalTokens: snap.totalTokens,
+      averageLatencyMs: Number.isFinite(avgLatency) ? avgLatency : 0,
+      errorRate,
+      costEstimate: snap.totalCost,
+      byProvider,
+    };
   }
 
   /**
@@ -444,13 +537,21 @@ export class AIEnhancedService {
    * Estimate tokens for a request (rough estimation)
    */
   private estimateRequestTokens(request: AICompletionRequest): number {
-    const text = request.messages.map((m) => m.content).join('\n');
+    const text = request.messages
+      .map((m) =>
+        typeof m.content === 'string' ? m.content : messageContentToText(m.content)
+      )
+      .join('\n');
     const tik = this.tryTiktokenCount(text);
     let promptTokens = tik ?? 0;
 
     if (promptTokens === 0) {
       for (const message of request.messages) {
-        promptTokens += Math.ceil(message.content.length / 4);
+        const chunk =
+          typeof message.content === 'string'
+            ? message.content
+            : messageContentToText(message.content);
+        promptTokens += Math.ceil(chunk.length / 4);
         promptTokens += 4;
       }
     } else {

@@ -23,8 +23,12 @@ export class AuthModule {}
 
 const AUTH_SERVICE_TEMPLATE = `import { Service, BadRequestError, UnauthorizedError } from '@hazeljs/core';
 import { JwtService } from '@hazeljs/auth';
+import * as bcrypt from 'bcryptjs';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+
+/** Replace with your DB / Prisma / TypeORM repository */
+const users = new Map<string, { id: string; name: string; email: string; passwordHash: string }>();
 
 @Service()
 export class AuthService {
@@ -33,38 +37,52 @@ export class AuthService {
   ) {}
 
   async register(registerDto: RegisterDto) {
-    // TODO: Check if user already exists in your database
+    const email = registerDto.email.toLowerCase();
+    if (users.has(email)) {
+      throw new BadRequestError('User already exists');
+    }
 
-    // TODO: Hash the password (e.g., with bcryptjs)
-    // const hashedPassword = await bcrypt.hash(registerDto.password, 10);
-
-    // TODO: Create the user in your database
+    const passwordHash = await bcrypt.hash(registerDto.password, 10);
     const user = {
       id: Date.now().toString(),
       name: registerDto.name,
-      email: registerDto.email,
+      email,
+      passwordHash,
     };
+    users.set(email, user);
 
     const accessToken = this.jwtService.sign({
       sub: user.id,
       email: user.email,
     });
 
-    return { user, accessToken };
+    return {
+      user: { id: user.id, name: user.name, email: user.email },
+      accessToken,
+    };
   }
 
   async login(loginDto: LoginDto) {
-    // TODO: Find user by email in your database
-    // TODO: Verify password with bcrypt.compare()
+    const email = loginDto.email.toLowerCase();
+    const row = users.get(email);
+    if (!row) {
+      throw new UnauthorizedError('Invalid credentials');
+    }
 
-    const user = { id: '1', name: 'User', email: loginDto.email };
+    const ok = await bcrypt.compare(loginDto.password, row.passwordHash);
+    if (!ok) {
+      throw new UnauthorizedError('Invalid credentials');
+    }
 
     const accessToken = this.jwtService.sign({
-      sub: user.id,
-      email: user.email,
+      sub: row.id,
+      email: row.email,
     });
 
-    return { user, accessToken };
+    return {
+      user: { id: row.id, name: row.name, email: row.email },
+      accessToken,
+    };
   }
 }
 `;

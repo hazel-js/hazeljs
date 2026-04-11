@@ -23,3 +23,9 @@ export type {
 
 export type { GuardrailPipeOptions } from './pipes/guardrail.pipe';
 export type { GuardrailInterceptorOptions } from './interceptors/guardrail.interceptor';
+
+export { checkHallucinationHeuristic } from './checks/hallucination.check';
+export type { HallucinationCheckResult } from './checks/hallucination.check';
+export { detectPII, redactPII } from './checks/pii.check';
+export { checkPromptInjection } from './checks/injection.check';
+export { checkToxicity } from './checks/toxicity.check';

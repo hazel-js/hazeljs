@@ -1,4 +1,5 @@
 import { AIContext, AIMessage } from '../ai-enhanced.types';
+import { messageContentToText } from '../utils/message-content';
 import logger from '@hazeljs/core';
 
 /**
@@ -199,7 +200,9 @@ export class AIContextManager implements AIContext {
     let tokens = this.TOKENS_PER_MESSAGE;
 
     // Add tokens for content (rough estimate: 1 token ≈ 4 characters)
-    tokens += Math.ceil(message.content.length / 4);
+    const text =
+      typeof message.content === 'string' ? message.content : messageContentToText(message.content);
+    tokens += Math.ceil(text.length / 4);
 
     // Add tokens for name if present
     if (message.name) {

@@ -29,6 +29,7 @@
     "zod-to-json-schema": "^3.25.0"
   },
   "devDependencies": {
+    "@hazeljs/rag": "file:../rag",
     "@hazeljs/prompts": "file:../prompts",
     "@types/node": "^20.19.39",
     "@typescript-eslint/eslint-plugin": "^8.58.0",

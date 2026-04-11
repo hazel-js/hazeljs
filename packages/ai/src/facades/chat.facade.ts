@@ -1,5 +1,5 @@
 import { AIEnhancedService } from '../ai-enhanced.service';
-import type { AIStreamChunk } from '../ai-enhanced.types';
+import type { AIStreamChunk, AIMessage } from '../ai-enhanced.types';
 import type { HazelAIConfig, ChatOptions } from '../platform/hazel-ai.types';
 
 /**
@@ -23,13 +23,31 @@ export class ChatFacade {
    * @returns The assistant's response
    */
   async chat(message: string, options?: ChatOptions): Promise<string> {
+    if (options?.outputSchema) {
+      const out = await this.aiService.generateObject(
+        [
+          ...(options?.systemPrompt ? `${options.systemPrompt}\n\n` : ''),
+          message,
+        ].join(''),
+        options.outputSchema,
+        {
+          provider: options?.provider || this.config.defaultProvider,
+          model: options?.model || this.config.model,
+          temperature: options?.temperature ?? this.config.temperature,
+        }
+      );
+      return typeof out === 'string' ? out : JSON.stringify(out);
+    }
+
+    const userContent = this.buildUserContent(message, options);
+
     const response = await this.aiService.complete(
       {
         messages: [
           ...(options?.systemPrompt
             ? [{ role: 'system' as const, content: options.systemPrompt }]
             : []),
-          { role: 'user' as const, content: message },
+          { role: 'user' as const, content: userContent },
         ],
         model: options?.model || this.config.model,
         temperature: options?.temperature ?? this.config.temperature,
@@ -42,6 +60,17 @@ export class ChatFacade {
     );
 
     return response.content;
+  }
+
+  private buildUserContent(message: string, options?: ChatOptions): AIMessage['content'] {
+    if (!options?.contentParts?.length) {
+      return message;
+    }
+    const parts: NonNullable<ChatOptions['contentParts']> = [
+      { type: 'text', text: message },
+      ...options.contentParts,
+    ];
+    return parts;
   }
 
   /**

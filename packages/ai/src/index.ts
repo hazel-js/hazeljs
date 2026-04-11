@@ -72,6 +72,8 @@ export { AIError, AIErrorCode } from './errors/ai.error';
 export type { IUsageStore, AIUsageRecord } from './tracking/usage.store';
 export { InMemoryUsageStore } from './tracking/usage.store';
 
+export type { AIEnhancedServiceHooks } from './ai-enhanced.service';
+
 export {
   composeAIMiddleware,
   AILoggingMiddleware,
@@ -83,10 +85,14 @@ export {
   type AICacheAdapter,
 } from './middleware/ai-middleware';
 
+export { createGuardrailPreflightMiddleware } from './middleware/guardrails-ai.middleware';
+
 export type { AIContextManagerOptions, ContextTrimStrategy } from './context/context.manager';
 
 // Debug utility
 export { debug, setDebugEnabled } from './utils/debug';
+
+export { messageContentToText, isMultipartContent } from './utils/message-content';
 
 // ── Unified AI Platform (NEW) ─────────────────────────────────
 export { HazelAI } from './platform/hazel-ai';
@@ -114,6 +120,21 @@ export {
   AgentPipelineOperation,
   AgentSupervisorOperation,
   AgentGraphCompiledOperation,
+  PromptOperation,
+  RAGOperation,
+  AgentOperation,
+  MLOperation,
+  ParallelOperation,
+  ConditionalOperation,
+  SequenceOperation,
+  HCELOperationFactory,
+  createBuilder,
+  compose,
+  conditional,
+  setHCELGlobalTraceEnabled,
+  getHCELTraceSnapshot,
+  clearHCELTraceBuffer,
+  isHCELGlobalTraceEnabled,
 } from './platform/hcel';
 export type {
   HCELOperation,

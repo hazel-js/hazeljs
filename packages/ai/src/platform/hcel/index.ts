@@ -52,6 +52,13 @@ export {
   type HCELResultCache,
 } from './hcel.cache';
 
+export {
+  setHCELGlobalTraceEnabled,
+  getHCELTraceSnapshot,
+  clearHCELTraceBuffer,
+  isHCELGlobalTraceEnabled,
+} from './hcel-trace.global';
+
 // Utility exports
 export { createBuilder, compose, conditional } from './hcel.builder';
 

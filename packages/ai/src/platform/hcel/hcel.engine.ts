@@ -17,6 +17,7 @@ import { HCELError, HCELErrorCode } from './hcel.error';
 import type { HCELResultCache } from './hcel.cache';
 import { getDefaultHCELResultCache } from './hcel.cache';
 import { PromptOperation } from './hcel.operations';
+import { pushHCELTraceEvent } from './hcel-trace.global';
 
 function fingerprintOperations(ops: HCELOperation[], input: unknown): string {
   const body = ops.map((op) => JSON.stringify({ type: op.type, config: op.config })).join('\n');
@@ -446,6 +447,7 @@ export class HCELEngine {
   }
 
   private emitEvent(event: HCELEvent): void {
+    pushHCELTraceEvent(event);
     const listeners = this.eventListeners.get(event.type);
     if (listeners) {
       listeners.forEach((listener) => {

@@ -22,7 +22,7 @@
     "test": "jest --config jest.config.js --coverage --passWithNoTests",
     "lint": "eslint \"src/**/*.ts\"",
     "lint:fix": "eslint \"src/**/*.ts\" --fix",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist && find src -type f \\( -name '*.js' -o -name '*.d.ts' -o -name '*.d.ts.map' \\) -delete 2>/dev/null || true"
   },
   "dependencies": {
     "@hazeljs/prompts": "file:../prompts",
