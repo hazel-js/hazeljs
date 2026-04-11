@@ -49,6 +49,11 @@ export class AgentExecutor {
     private eventEmitter?: (type: AgentEventType, executionId: string, data: unknown) => void
   ) {}
 
+  /** Replace the LLM provider at runtime (e.g. after AI module bootstraps). */
+  setLlmProvider(provider: LLMProvider | undefined): void {
+    this.llmProvider = provider;
+  }
+
   /**
    * Helper to handle both sync and async state manager calls
    */

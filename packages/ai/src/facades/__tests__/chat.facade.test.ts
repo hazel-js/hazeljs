@@ -192,4 +192,55 @@ describe('ChatFacade', () => {
       );
     });
   });
+
+  describe('streamFull', () => {
+    it('yields full AIStreamChunk objects', async () => {
+      const fullChunks = [
+        { id: '1', delta: 'a', done: false, usage: { totalTokens: 1 } },
+        { id: '2', delta: 'b', done: true, usage: { totalTokens: 2 } },
+      ];
+      mockAIService.streamComplete.mockReturnValue(
+        (async function* () {
+          for (const c of fullChunks) {
+            yield c;
+          }
+        })()
+      );
+
+      const out: unknown[] = [];
+      for await (const chunk of chatFacade.streamFull('hello')) {
+        out.push(chunk);
+      }
+
+      expect(out).toEqual(fullChunks);
+      expect(mockAIService.streamComplete).toHaveBeenCalled();
+    });
+
+    it('passes system prompt and options to streamComplete', async () => {
+      mockAIService.streamComplete.mockReturnValue(
+        (async function* () {
+          yield { id: 'x', delta: '', done: true };
+        })()
+      );
+
+      for await (const _ of chatFacade.streamFull('q', {
+        systemPrompt: 'sys',
+        model: 'gpt-4',
+        provider: 'openai',
+      })) {
+        /* consume */
+      }
+
+      expect(mockAIService.streamComplete).toHaveBeenCalledWith(
+        expect.objectContaining({
+          messages: [
+            { role: 'system', content: 'sys' },
+            { role: 'user', content: 'q' },
+          ],
+          model: 'gpt-4',
+        }),
+        { provider: 'openai' }
+      );
+    });
+  });
 });

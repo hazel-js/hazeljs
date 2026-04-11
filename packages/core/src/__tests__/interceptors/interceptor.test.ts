@@ -245,8 +245,9 @@ describe('Interceptors', () => {
 
     it('should retry on failure and succeed on second attempt', async () => {
       const interceptor = new RetryInterceptor();
-      (context as RequestContext & { retryOptions?: { count: number; delay?: number } }).retryOptions =
-        { count: 2, delay: 1 };
+      (
+        context as RequestContext & { retryOptions?: { count: number; delay?: number } }
+      ).retryOptions = { count: 2, delay: 1 };
       const next = jest
         .fn()
         .mockRejectedValueOnce(new Error('fail'))
@@ -259,8 +260,9 @@ describe('Interceptors', () => {
 
     it('should throw after exhausting retries', async () => {
       const interceptor = new RetryInterceptor();
-      (context as RequestContext & { retryOptions?: { count: number; delay?: number } }).retryOptions =
-        { count: 2, delay: 1 };
+      (
+        context as RequestContext & { retryOptions?: { count: number; delay?: number } }
+      ).retryOptions = { count: 2, delay: 1 };
       const next = jest.fn().mockRejectedValue(new Error('always fail'));
 
       await expect(interceptor.intercept(context, next)).rejects.toThrow('always fail');
@@ -269,8 +271,11 @@ describe('Interceptors', () => {
 
     it('should not retry when retryIf returns false', async () => {
       const interceptor = new RetryInterceptor();
-      (context as RequestContext & { retryOptions?: { count: number; retryIf?: (e: Error) => boolean } }).retryOptions =
-        { count: 2, retryIf: () => false };
+      (
+        context as RequestContext & {
+          retryOptions?: { count: number; retryIf?: (e: Error) => boolean };
+        }
+      ).retryOptions = { count: 2, retryIf: () => false };
       const next = jest.fn().mockRejectedValue(new Error('no retry'));
 
       await expect(interceptor.intercept(context, next)).rejects.toThrow('no retry');

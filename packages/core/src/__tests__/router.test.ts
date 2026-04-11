@@ -180,7 +180,7 @@ describe('Router', () => {
     beforeEach(() => {
       const handler = jest.fn();
       router.get('/users/:id', [handler]);
-      
+
       // Also add to method-specific cache
       const methodRoutes = (router as any).routesByMethod.get('GET');
       if (methodRoutes) {
@@ -375,7 +375,14 @@ describe('Router', () => {
 
       router.registerController(TestController);
 
-      const context = { params: { id: '123' }, query: {}, body: {}, headers: {}, method: 'GET', url: '/users/123' };
+      const context = {
+        params: { id: '123' },
+        query: {},
+        body: {},
+        headers: {},
+        method: 'GET',
+        url: '/users/123',
+      };
       const route = await router.match('GET', '/users/123', context);
 
       expect(route).toBeDefined();
@@ -399,14 +406,28 @@ describe('Router', () => {
       Reflect.defineMetadata('hazel:controller', { path: '/users' }, TestController);
       Reflect.defineMetadata(
         'hazel:routes',
-        [{ method: 'GET', path: '/:id', propertyKey: 'getUser', interceptors: [{ type: TestInterceptor }] }],
+        [
+          {
+            method: 'GET',
+            path: '/:id',
+            propertyKey: 'getUser',
+            interceptors: [{ type: TestInterceptor }],
+          },
+        ],
         TestController
       );
       Reflect.defineMetadata('hazel:inject', [], TestController, 'getUser');
 
       router.registerController(TestController);
 
-      const context = { params: { id: '123' }, query: {}, body: {}, headers: {}, method: 'GET', url: '/users/123' };
+      const context = {
+        params: { id: '123' },
+        query: {},
+        body: {},
+        headers: {},
+        method: 'GET',
+        url: '/users/123',
+      };
       const route = await router.match('GET', '/users/123', context);
 
       expect(route).toBeDefined();
@@ -490,7 +511,12 @@ describe('Router', () => {
         [{ method: 'GET', path: '/', propertyKey: 'handleRequest' }],
         TestController
       );
-      Reflect.defineMetadata('hazel:inject', ['request', 'response'], TestController, 'handleRequest');
+      Reflect.defineMetadata(
+        'hazel:inject',
+        ['request', 'response'],
+        TestController,
+        'handleRequest'
+      );
 
       router.registerController(TestController);
 
@@ -816,15 +842,14 @@ describe('Router', () => {
     });
 
     it('should handle ValidationError', async () => {
-      
       class TestController {
         throwValidation() {
           throw new ValidationError('Validation failed', [
-            { 
-              property: 'name', 
+            {
+              property: 'name',
               constraints: { required: 'Required' },
-              value: undefined 
-            }
+              value: undefined,
+            },
           ]);
         }
       }
@@ -865,7 +890,6 @@ describe('Router', () => {
     });
 
     it('should handle HttpError', async () => {
-      
       class TestController {
         throwHttp() {
           throw new HttpError(404, 'Not found');
@@ -1047,12 +1071,7 @@ describe('Router', () => {
         [{ method: 'GET', path: '/me', propertyKey: 'whoAmI' }],
         TestController
       );
-      Reflect.defineMetadata(
-        'hazel:inject',
-        [{ type: 'user' }],
-        TestController,
-        'whoAmI'
-      );
+      Reflect.defineMetadata('hazel:inject', [{ type: 'user' }], TestController, 'whoAmI');
 
       router.registerController(TestController);
 
@@ -1322,12 +1341,7 @@ describe('Router', () => {
         TestController
       );
       Reflect.defineMetadata('hazel:inject', [], TestController, 'create');
-      Reflect.defineMetadata(
-        'hazel:http-code',
-        201,
-        TestController.prototype,
-        'create'
-      );
+      Reflect.defineMetadata('hazel:http-code', 201, TestController.prototype, 'create');
 
       router.registerController(TestController);
 
@@ -1365,12 +1379,7 @@ describe('Router', () => {
         TestController
       );
       Reflect.defineMetadata('hazel:inject', [], TestController, 'noContent');
-      Reflect.defineMetadata(
-        'hazel:http-code',
-        204,
-        TestController.prototype,
-        'noContent'
-      );
+      Reflect.defineMetadata('hazel:http-code', 204, TestController.prototype, 'noContent');
 
       router.registerController(TestController);
 
@@ -1462,12 +1471,7 @@ describe('Router', () => {
         [{ method: 'GET', path: '/user-propagate', propertyKey: 'whoAmI' }],
         TestController
       );
-      Reflect.defineMetadata(
-        'hazel:inject',
-        [{ type: 'user' }],
-        TestController,
-        'whoAmI'
-      );
+      Reflect.defineMetadata('hazel:inject', [{ type: 'user' }], TestController, 'whoAmI');
       Reflect.defineMetadata('hazel:guards', [AllowGuard], TestController);
 
       router.registerController(TestController);

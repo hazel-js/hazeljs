@@ -18,10 +18,13 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@hazeljs/core": "file:../core",
     "reflect-metadata": "^0.2.2"
   },
+  "peerDependencies": {
+    "@hazeljs/core": ">=0.2.0-beta.0"
+  },
   "devDependencies": {
+    "@hazeljs/core": "file:../core",
     "@types/jest": "^29.5.14",
     "@types/node": "^20.19.39",
     "@typescript-eslint/eslint-plugin": "^8.58.0",

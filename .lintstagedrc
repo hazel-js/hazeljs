@@ -1,6 +1,4 @@
 {
-  "src/**/*.ts": [
-    "prettier --write",
-    "eslint --fix"
-  ]
-} 
+  "packages/**/src/**/*.ts": ["prettier --write", "eslint --fix"],
+  "hazeljs-starter-example/**/*.ts": ["prettier --write", "eslint --fix"]
+}

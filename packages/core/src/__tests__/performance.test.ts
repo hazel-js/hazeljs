@@ -1,4 +1,9 @@
-import { PerformanceMonitor, BuiltinPerformanceHooks, type PerformanceHook, type PerformanceMetrics } from '../performance';
+import {
+  PerformanceMonitor,
+  BuiltinPerformanceHooks,
+  type PerformanceHook,
+  type PerformanceMetrics,
+} from '../performance';
 
 describe('PerformanceMonitor', () => {
   let monitor: PerformanceMonitor;
@@ -22,12 +27,12 @@ describe('PerformanceMonitor', () => {
         name: 'test-hook',
         onRequest: jest.fn(),
       };
-      
+
       monitor.addHook(mockHook);
-      
+
       const requestId = monitor.startRequest(mockRequest);
       monitor.endRequest(requestId, 200);
-      
+
       expect(mockHook.onRequest).toHaveBeenCalled();
     });
 
@@ -40,13 +45,13 @@ describe('PerformanceMonitor', () => {
         name: 'test-hook-2',
         onResponse: jest.fn(),
       };
-      
+
       monitor.addHook(hook1);
       monitor.addHook(hook2);
-      
+
       const requestId = monitor.startRequest(mockRequest);
       monitor.endRequest(requestId, 200);
-      
+
       expect(hook1.onRequest).toHaveBeenCalled();
       expect(hook2.onResponse).toHaveBeenCalled();
     });
@@ -58,13 +63,13 @@ describe('PerformanceMonitor', () => {
         name: 'test-hook',
         onRequest: jest.fn(),
       };
-      
+
       monitor.addHook(namedHook);
       monitor.removeHook('test-hook');
-      
+
       const requestId = monitor.startRequest(mockRequest);
       monitor.endRequest(requestId, 200);
-      
+
       expect(namedHook.onRequest).not.toHaveBeenCalled();
     });
 
@@ -78,7 +83,7 @@ describe('PerformanceMonitor', () => {
   describe('startRequest', () => {
     it('should start tracking a request and return ID', () => {
       const requestId = monitor.startRequest(mockRequest);
-      
+
       expect(requestId).toBeDefined();
       expect(typeof requestId).toBe('string');
     });
@@ -86,9 +91,9 @@ describe('PerformanceMonitor', () => {
     it('should track multiple requests', () => {
       const id1 = monitor.startRequest(mockRequest);
       const id2 = monitor.startRequest({ ...mockRequest, url: '/test2' });
-      
+
       expect(id1).not.toBe(id2);
-      
+
       const activeRequests = monitor.getActiveRequests();
       expect(activeRequests).toHaveLength(2);
     });
@@ -96,8 +101,8 @@ describe('PerformanceMonitor', () => {
     it('should include request metadata', () => {
       const requestId = monitor.startRequest(mockRequest);
       const activeRequests = monitor.getActiveRequests();
-      
-      const request = activeRequests.find(r => r.requestId === requestId);
+
+      const request = activeRequests.find((r) => r.requestId === requestId);
       expect(request).toBeDefined();
       expect(request?.method).toBe('GET');
       expect(request?.path).toBe('/test');
@@ -110,11 +115,11 @@ describe('PerformanceMonitor', () => {
   describe('endRequest', () => {
     it('should end request and calculate metrics', () => {
       const requestId = monitor.startRequest(mockRequest);
-      
+
       // Wait a bit to ensure duration > 0
       setTimeout(() => {
         monitor.endRequest(requestId, 200);
-        
+
         const metrics = monitor.getMetrics();
         expect(metrics.activeRequests).toBe(0);
         expect(metrics.totalHooks).toBeGreaterThan(0);
@@ -124,11 +129,11 @@ describe('PerformanceMonitor', () => {
     it('should track error responses', () => {
       const requestId = monitor.startRequest(mockRequest);
       const error = new Error('Test error');
-      
+
       monitor.endRequest(requestId, 500, error);
-      
+
       const activeRequests = monitor.getActiveRequests();
-      const request = activeRequests.find(r => r.requestId === requestId);
+      const request = activeRequests.find((r) => r.requestId === requestId);
       expect(request).toBeUndefined(); // Should be removed from active requests
     });
 
@@ -141,7 +146,7 @@ describe('PerformanceMonitor', () => {
     it('should remove from active requests when ended', () => {
       const requestId = monitor.startRequest(mockRequest);
       expect(monitor.getActiveRequests()).toHaveLength(1);
-      
+
       monitor.endRequest(requestId, 200);
       expect(monitor.getActiveRequests()).toHaveLength(0);
     });
@@ -150,7 +155,7 @@ describe('PerformanceMonitor', () => {
   describe('getMetrics', () => {
     it('should return zero metrics initially', () => {
       const metrics = monitor.getMetrics();
-      
+
       expect(metrics.activeRequests).toBe(0);
       expect(metrics.totalHooks).toBe(0);
     });
@@ -164,10 +169,10 @@ describe('PerformanceMonitor', () => {
         name: 'test-hook-2',
         onResponse: jest.fn(),
       };
-      
+
       monitor.addHook(hook1);
       monitor.addHook(hook2);
-      
+
       const metrics = monitor.getMetrics();
       expect(metrics.totalHooks).toBe(2);
     });
@@ -182,11 +187,11 @@ describe('PerformanceMonitor', () => {
     it('should return active requests', () => {
       const id1 = monitor.startRequest(mockRequest);
       const id2 = monitor.startRequest({ ...mockRequest, url: '/test2' });
-      
+
       const active = monitor.getActiveRequests();
       expect(active).toHaveLength(2);
-      expect(active.map(r => r.requestId)).toContain(id1);
-      expect(active.map(r => r.requestId)).toContain(id2);
+      expect(active.map((r) => r.requestId)).toContain(id1);
+      expect(active.map((r) => r.requestId)).toContain(id2);
     });
   });
 
@@ -197,10 +202,10 @@ describe('PerformanceMonitor', () => {
         name: 'test-hook',
         onRequest,
       };
-      
+
       monitor.addHook(hook);
       monitor.startRequest(mockRequest);
-      
+
       expect(onRequest).toHaveBeenCalledWith(
         expect.objectContaining({
           requestId: expect.any(String),
@@ -219,12 +224,12 @@ describe('PerformanceMonitor', () => {
         name: 'test-hook',
         onResponse,
       };
-      
+
       monitor.addHook(hook);
-      
+
       const requestId = monitor.startRequest(mockRequest);
       monitor.endRequest(requestId, 200);
-      
+
       expect(onResponse).toHaveBeenCalledWith(
         expect.objectContaining({
           requestId,
@@ -244,13 +249,13 @@ describe('PerformanceMonitor', () => {
         name: 'test-hook',
         onError,
       };
-      
+
       monitor.addHook(hook);
-      
+
       const requestId = monitor.startRequest(mockRequest);
       const error = new Error('Test error');
       monitor.endRequest(requestId, 500, error);
-      
+
       expect(onError).toHaveBeenCalledWith(
         expect.objectContaining({
           requestId,
@@ -284,15 +289,15 @@ describe('BuiltinPerformanceHooks', () => {
     it('should log slow requests', () => {
       const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
       const slowHook = BuiltinPerformanceHooks.slowRequestLogger(50); // 50ms threshold
-      
+
       monitor.addHook(slowHook);
-      
+
       const requestId = monitor.startRequest(mockRequest);
-      
+
       // Simulate slow request by manually setting duration
       setTimeout(() => {
         monitor.endRequest(requestId, 200);
-        
+
         // The hook should be called, but we can't easily test the duration check
         // without accessing internal state. Let's just verify the hook was added.
         expect(consoleSpy).not.toHaveBeenCalled(); // Fast requests shouldn't trigger
@@ -303,12 +308,12 @@ describe('BuiltinPerformanceHooks', () => {
     it('should not log fast requests', () => {
       const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
       const slowHook = BuiltinPerformanceHooks.slowRequestLogger(1000);
-      
+
       monitor.addHook(slowHook);
-      
+
       const requestId = monitor.startRequest(mockRequest);
       monitor.endRequest(requestId, 200);
-      
+
       expect(consoleSpy).not.toHaveBeenCalled();
       consoleSpy.mockRestore();
     });
@@ -324,12 +329,12 @@ describe('BuiltinPerformanceHooks', () => {
         external: 100000,
         arrayBuffers: 50000,
       });
-      
+
       monitor.addHook(memoryHook);
-      
+
       const requestId = monitor.startRequest(mockRequest);
       monitor.endRequest(requestId, 200);
-      
+
       expect(processSpy).toHaveBeenCalled();
       processSpy.mockRestore();
     });
@@ -338,17 +343,17 @@ describe('BuiltinPerformanceHooks', () => {
   describe('rateLimiter', () => {
     it('should limit requests per window', () => {
       const rateLimitHook = BuiltinPerformanceHooks.rateLimiter(2, 1000); // 2 requests per second
-      
+
       monitor.addHook(rateLimitHook);
-      
+
       const requestId1 = monitor.startRequest(mockRequest);
       const requestId2 = monitor.startRequest(mockRequest);
       const requestId3 = monitor.startRequest(mockRequest);
-      
+
       monitor.endRequest(requestId1, 200);
       monitor.endRequest(requestId2, 200);
       monitor.endRequest(requestId3, 200);
-      
+
       // The hook should have executed but we can't easily test the rate limiting logic
       // without accessing internal state
       expect(monitor.getActiveRequests()).toHaveLength(0);
@@ -358,12 +363,12 @@ describe('BuiltinPerformanceHooks', () => {
   describe('metricsCollector', () => {
     it('should collect metrics', () => {
       const metricsHook = BuiltinPerformanceHooks.metricsCollector();
-      
+
       monitor.addHook(metricsHook);
-      
+
       const requestId = monitor.startRequest(mockRequest);
       monitor.endRequest(requestId, 200);
-      
+
       const metrics = monitor.getMetrics();
       expect(metrics.totalHooks).toBe(1);
     });
@@ -395,15 +400,15 @@ describe('PerformanceHook Types', () => {
         throw new Error('Hook error');
       }),
     };
-    
+
     const monitor = new PerformanceMonitor();
     monitor.addHook(faultyHook);
-    
+
     expect(() => {
       const requestId = monitor.startRequest({ method: 'GET', url: '/test', headers: {} });
       monitor.endRequest(requestId, 200);
     }).not.toThrow();
-    
+
     expect(faultyHook.onRequest).toHaveBeenCalled();
   });
 });

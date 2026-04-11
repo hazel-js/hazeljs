@@ -137,7 +137,7 @@ describe('FileUploadInterceptor', () => {
 
     it('should parse multipart data with boundary', async () => {
       const interceptor = new FileUploadInterceptor({ storage: 'memory' });
-      
+
       const boundary = '----WebKitFormBoundary';
       const fileContent = 'test file content';
       const multipartData = [
@@ -196,7 +196,7 @@ describe('FileUploadInterceptor', () => {
     it('should extract boundary from content type', () => {
       const interceptor = new FileUploadInterceptor();
       const contentType = 'multipart/form-data; boundary=----WebKitFormBoundary';
-      
+
       const boundary = (interceptor as any).extractBoundary(contentType);
 
       expect(boundary).toBe('----WebKitFormBoundary');
@@ -205,7 +205,7 @@ describe('FileUploadInterceptor', () => {
     it('should trim boundary whitespace', () => {
       const interceptor = new FileUploadInterceptor();
       const contentType = 'multipart/form-data; boundary= ----WebKitFormBoundary ';
-      
+
       const boundary = (interceptor as any).extractBoundary(contentType);
 
       expect(boundary).toBe('----WebKitFormBoundary');
@@ -214,7 +214,7 @@ describe('FileUploadInterceptor', () => {
     it('should return null for missing boundary', () => {
       const interceptor = new FileUploadInterceptor();
       const contentType = 'multipart/form-data';
-      
+
       const boundary = (interceptor as any).extractBoundary(contentType);
 
       expect(boundary).toBeNull();
@@ -258,9 +258,9 @@ describe('FileUploadInterceptor', () => {
       const interceptor = new FileUploadInterceptor();
       const part = Buffer.from(
         'Content-Disposition: form-data; name="field"\r\n' +
-        'Content-Type: text/plain\r\n' +
-        '\r\n' +
-        'body content'
+          'Content-Type: text/plain\r\n' +
+          '\r\n' +
+          'body content'
       );
 
       const result = (interceptor as any).parsePart(part);
@@ -284,10 +284,10 @@ describe('FileUploadInterceptor', () => {
       const interceptor = new FileUploadInterceptor();
       const part = Buffer.from(
         'Content-Disposition: form-data\r\n' +
-        'Content-Type: application/json\r\n' +
-        'X-Custom-Header: value\r\n' +
-        '\r\n' +
-        'body'
+          'Content-Type: application/json\r\n' +
+          'X-Custom-Header: value\r\n' +
+          '\r\n' +
+          'body'
       );
 
       const result = (interceptor as any).parsePart(part);
@@ -382,9 +382,7 @@ describe('FileUploadInterceptor', () => {
         buffer: Buffer.from('x'.repeat(100)),
       };
 
-      await expect((interceptor as any).processFile(file)).rejects.toThrow(
-        'File too large'
-      );
+      await expect((interceptor as any).processFile(file)).rejects.toThrow('File too large');
     });
 
     it('should use custom filename function', async () => {
@@ -413,7 +411,7 @@ describe('FileUploadInterceptor', () => {
   describe('defaultFilename', () => {
     it('should generate unique filename', () => {
       const interceptor = new FileUploadInterceptor();
-      
+
       const file = {
         originalname: 'test.txt',
       };
@@ -428,7 +426,7 @@ describe('FileUploadInterceptor', () => {
 
     it('should preserve file extension', () => {
       const interceptor = new FileUploadInterceptor();
-      
+
       const file = {
         originalname: 'document.pdf',
       };
@@ -440,7 +438,7 @@ describe('FileUploadInterceptor', () => {
 
     it('should handle files without extension', () => {
       const interceptor = new FileUploadInterceptor();
-      
+
       const file = {
         originalname: 'README',
       };
@@ -461,11 +459,7 @@ describe('UploadedFileDecorator', () => {
       }
     }
 
-    const metadata = Reflect.getMetadata(
-      'hazel:inject',
-      TestController,
-      'upload'
-    );
+    const metadata = Reflect.getMetadata('hazel:inject', TestController, 'upload');
 
     expect(metadata).toBeDefined();
     expect(metadata[0]).toEqual({
@@ -481,11 +475,7 @@ describe('UploadedFileDecorator', () => {
       }
     }
 
-    const metadata = Reflect.getMetadata(
-      'hazel:inject',
-      TestController,
-      'upload'
-    );
+    const metadata = Reflect.getMetadata('hazel:inject', TestController, 'upload');
 
     expect(metadata).toBeDefined();
     expect(metadata[0].type).toBe('file');
@@ -507,11 +497,7 @@ describe('UploadedFilesDecorator', () => {
       }
     }
 
-    const metadata = Reflect.getMetadata(
-      'hazel:inject',
-      TestController,
-      'uploadMultiple'
-    );
+    const metadata = Reflect.getMetadata('hazel:inject', TestController, 'uploadMultiple');
 
     expect(metadata).toBeDefined();
     expect(metadata[0]).toEqual({
@@ -527,11 +513,7 @@ describe('UploadedFilesDecorator', () => {
       }
     }
 
-    const metadata = Reflect.getMetadata(
-      'hazel:inject',
-      TestController,
-      'uploadMultiple'
-    );
+    const metadata = Reflect.getMetadata('hazel:inject', TestController, 'uploadMultiple');
 
     expect(metadata).toBeDefined();
     expect(metadata[0].type).toBe('files');
@@ -554,11 +536,7 @@ describe('UploadedFilesDecorator', () => {
       }
     }
 
-    const metadata = Reflect.getMetadata(
-      'hazel:inject',
-      TestController,
-      'upload'
-    );
+    const metadata = Reflect.getMetadata('hazel:inject', TestController, 'upload');
 
     expect(metadata).toBeDefined();
     expect(metadata[0].type).toBe('file');

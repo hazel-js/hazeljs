@@ -7,6 +7,7 @@ import {
   AIEmbeddingRequest,
   AIEmbeddingResponse,
   AIModelConfig,
+  AIJsonSchema,
 } from './ai-enhanced.types';
 import { ChatBuilder } from './chat-builder';
 import { Service } from '@hazeljs/core';
@@ -15,11 +16,18 @@ import { AnthropicProvider } from './providers/anthropic.provider';
 import { GeminiProvider } from './providers/gemini.provider';
 import { CohereProvider } from './providers/cohere.provider';
 import { OllamaProvider } from './providers/ollama.provider';
-import { AIContextManager } from './context/context.manager';
+import {
+  AIContextManager,
+  type AIContextManagerOptions,
+  type ContextTrimStrategy,
+} from './context/context.manager';
 import { TokenTracker } from './tracking/token.tracker';
 import { CacheService } from '@hazeljs/cache';
 import logger from '@hazeljs/core';
 import { debug } from './utils/debug';
+import { AIError, AIErrorCode } from './errors/ai.error';
+import { z } from 'zod';
+import { zodToJsonSchema } from 'zod-to-json-schema';
 
 const dbg = debug('ai');
 
@@ -115,7 +123,10 @@ export class AIEnhancedService {
    */
   setDefaultProvider(provider: AIProvider): void {
     if (!this.providers.has(provider)) {
-      throw new Error(`Provider ${provider} is not registered`);
+      throw new AIError(
+        `Provider "${provider}" is not registered.`,
+        AIErrorCode.PROVIDER_NOT_FOUND
+      );
     }
     this.defaultProvider = provider;
     logger.info(`Default provider set to: ${provider}`);
@@ -124,8 +135,15 @@ export class AIEnhancedService {
   /**
    * Create a context manager for conversation
    */
-  createContext(maxTokens?: number): AIContextManager {
-    this.contextManager = new AIContextManager(maxTokens);
+  createContext(
+    maxTokens?: number,
+    trimStrategy?: ContextTrimStrategy,
+    options?: Pick<AIContextManagerOptions, 'summarizeDropped'>
+  ): AIContextManager {
+    this.contextManager = new AIContextManager(maxTokens, {
+      trimStrategy,
+      summarizeDropped: options?.summarizeDropped,
+    });
     return this.contextManager;
   }
 
@@ -174,7 +192,7 @@ export class AIEnhancedService {
 
     if (!limitCheck.allowed) {
       dbg('complete rate limited reason=%s', limitCheck.reason || 'unknown');
-      throw new Error(`Rate limit exceeded: ${limitCheck.reason}`);
+      throw new AIError(`Rate limit exceeded: ${limitCheck.reason}`, AIErrorCode.RATE_LIMIT);
     }
 
     // Execute with retry logic
@@ -226,7 +244,7 @@ export class AIEnhancedService {
     const limitCheck = await this.tokenTracker.checkLimits(config?.userId, estimatedTokens);
 
     if (!limitCheck.allowed) {
-      throw new Error(`Rate limit exceeded: ${limitCheck.reason}`);
+      throw new AIError(`Rate limit exceeded: ${limitCheck.reason}`, AIErrorCode.RATE_LIMIT);
     }
 
     try {
@@ -338,7 +356,7 @@ export class AIEnhancedService {
   configureModel(config: AIModelConfig): void {
     const provider = this.providers.get(config.provider);
     if (!provider) {
-      throw new Error(`Provider ${config.provider} not found`);
+      throw new AIError(`Provider "${config.provider}" not found.`, AIErrorCode.PROVIDER_NOT_FOUND);
     }
 
     // Provider-specific configuration would go here
@@ -353,7 +371,10 @@ export class AIEnhancedService {
     const provider = this.providers.get(name);
 
     if (!provider) {
-      throw new Error(`Provider ${name} is not registered or available`);
+      throw new AIError(
+        `Provider "${name}" is not registered or available. Available: ${[...this.providers.keys()].join(', ') || '(none)'}.`,
+        AIErrorCode.PROVIDER_NOT_FOUND
+      );
     }
 
     return provider;
@@ -423,18 +444,94 @@ export class AIEnhancedService {
    * Estimate tokens for a request (rough estimation)
    */
   private estimateRequestTokens(request: AICompletionRequest): number {
-    let tokens = 0;
+    const text = request.messages.map((m) => m.content).join('\n');
+    const tik = this.tryTiktokenCount(text);
+    let promptTokens = tik ?? 0;
 
-    for (const message of request.messages) {
-      // Rough estimate: 1 token ≈ 4 characters
-      tokens += Math.ceil(message.content.length / 4);
-      tokens += 4; // Message overhead
+    if (promptTokens === 0) {
+      for (const message of request.messages) {
+        promptTokens += Math.ceil(message.content.length / 4);
+        promptTokens += 4;
+      }
+    } else {
+      promptTokens += request.messages.length * 4;
     }
 
-    // Add estimated completion tokens
-    tokens += request.maxTokens || 1000;
+    return promptTokens + (request.maxTokens || 1000);
+  }
 
-    return tokens;
+  /** Optional `tiktoken` install yields more accurate counts (cl100k_base). */
+  private tryTiktokenCount(text: string): number | null {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const mod = require('tiktoken') as {
+        get_encoding?: (name: string) => { encode: (s: string) => number[]; free: () => void };
+      };
+      if (typeof mod.get_encoding !== 'function') {
+        return null;
+      }
+      const enc = mod.get_encoding('cl100k_base');
+      try {
+        return enc.encode(text).length;
+      } finally {
+        enc.free();
+      }
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Generate JSON matching a Zod schema (OpenAI-style JSON schema response format when supported).
+   */
+  async generateObject<T>(
+    prompt: string,
+    schema: z.ZodType<T>,
+    options?: {
+      provider?: AIProvider;
+      model?: string;
+      temperature?: number;
+      maxRetries?: number;
+    }
+  ): Promise<T> {
+    const zodSchema = schema as z.ZodTypeAny;
+    // zod-to-json-schema + Zod can trigger TS2589 on some schemas; keep output loosely typed.
+    const jsonSchemaRaw = zodToJsonSchema(zodSchema as never, { target: 'openApi3' }) as Record<
+      string,
+      unknown
+    >;
+    const schemaWrapper: AIJsonSchema = {
+      name: 'structured_response',
+      description: 'Structured model output',
+      schema: jsonSchemaRaw,
+      strict: true,
+    };
+    let lastErr: Error | undefined;
+    const attempts = Math.max(1, options?.maxRetries ?? 2);
+    for (let i = 0; i < attempts; i++) {
+      try {
+        const res = await this.complete(
+          {
+            messages: [{ role: 'user', content: prompt }],
+            model: options?.model,
+            temperature: options?.temperature ?? 0.2,
+            responseFormat: schemaWrapper,
+          },
+          { provider: options?.provider }
+        );
+        const parsed = schema.safeParse(JSON.parse(res.content));
+        if (parsed.success) {
+          return parsed.data;
+        }
+        lastErr = new Error(parsed.error.message);
+      } catch (e) {
+        lastErr = e instanceof Error ? e : new Error(String(e));
+      }
+    }
+    throw AIError.completionFailed(
+      `generateObject failed after ${attempts} attempt(s): ${lastErr?.message || 'unknown'}`,
+      lastErr
+    );
   }
 
   /**
@@ -452,10 +549,11 @@ export class AIEnhancedService {
   ensureProvider(name: AIProvider): IAIProvider {
     const provider = this.providers.get(name);
     if (!provider) {
-      throw new Error(
+      throw new AIError(
         `AI provider "${name}" is not registered. ` +
           `Available providers: ${[...this.providers.keys()].join(', ') || '(none)'}. ` +
-          `Set the appropriate API key environment variable or call registerProvider().`
+          `Set the appropriate API key environment variable or call registerProvider().`,
+        AIErrorCode.PROVIDER_NOT_FOUND
       );
     }
     return provider;

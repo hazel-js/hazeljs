@@ -40,7 +40,7 @@ export class AIError extends Error {
     const envVars: Record<string, string> = {
       openai: 'OPENAI_API_KEY',
       anthropic: 'ANTHROPIC_API_KEY',
-      gemini: 'GOOGLE_API_KEY',
+      gemini: 'GEMINI_API_KEY (or GOOGLE_API_KEY)',
       cohere: 'COHERE_API_KEY',
     };
     const envVar = envVars[name.toLowerCase()] || `${name.toUpperCase()}_API_KEY`;

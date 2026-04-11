@@ -881,7 +881,11 @@ describe('Decorators', () => {
         }
       }
 
-      const guardMeta = Reflect.getMetadata('hazel:guards', TestController.prototype, 'getProtected');
+      const guardMeta = Reflect.getMetadata(
+        'hazel:guards',
+        TestController.prototype,
+        'getProtected'
+      );
       expect(guardMeta).toBeDefined();
       expect(guardMeta).toContain(RoleGuard);
     });
@@ -1041,14 +1045,20 @@ describe('Decorators', () => {
           return {};
         }
       }
-      expect(Reflect.getMetadata('hazel:api:tags', TestController.prototype, 'login')).toEqual(['auth']);
+      expect(Reflect.getMetadata('hazel:api:tags', TestController.prototype, 'login')).toEqual([
+        'auth',
+      ]);
     });
   });
 
   describe('ApiOperation', () => {
     it('should store operation options when given object', () => {
       class TestController {
-        @ApiOperation({ summary: 'Get user', description: 'Returns a user', operationId: 'getUser' })
+        @ApiOperation({
+          summary: 'Get user',
+          description: 'Returns a user',
+          operationId: 'getUser',
+        })
         @Get('/')
         get() {
           return {};
@@ -1079,7 +1089,9 @@ describe('Decorators', () => {
       @SetMetadata('roles', ['admin'])
       class AdminController {}
       expect(getMetadata('roles', AdminController)).toEqual(['admin']);
-      expect(Reflect.getMetadata(`${CUSTOM_METADATA_PREFIX}roles`, AdminController)).toEqual(['admin']);
+      expect(Reflect.getMetadata(`${CUSTOM_METADATA_PREFIX}roles`, AdminController)).toEqual([
+        'admin',
+      ]);
     });
     it('should set and get method-level metadata', () => {
       class TestController {

@@ -1,7 +1,7 @@
 import { Type } from './types';
 import { RequestContext, Request, Response } from './types';
 import { Container } from './container';
-import { MiddlewareHandler } from './middleware';
+import { MiddlewareHandler, type Middleware } from './middleware';
 import { PipeTransform, ValidationError } from './pipes/pipe';
 import { Interceptor } from './interceptors/interceptor';
 import { HttpError, UnauthorizedError, RequestTimeoutError } from './errors/http.error';
@@ -11,6 +11,14 @@ import logger from './logger';
 import { RequestParser } from './request-parser';
 import { HazelHttpResponse } from './hazel-response';
 import { ValidationPipe } from './pipes/validation.pipe';
+import {
+  extractVersion,
+  getVersionMetadata,
+  matchVersion,
+  type VersioningOptions,
+} from './routing/version.decorator';
+import { RouteTrie } from './routing/route-trie';
+import type { RouteEntry, RouteHandler } from './routing/route.types';
 
 const ROUTE_METADATA_KEY = 'hazel:routes';
 const CONTROLLER_METADATA_KEY = 'hazel:controller';
@@ -19,27 +27,36 @@ const HEADER_METADATA_KEY = 'hazel:headers';
 const REDIRECT_METADATA_KEY = 'hazel:redirect';
 const TIMEOUT_METADATA_KEY = 'hazel:timeout';
 const OPTIONAL_INDICES_METADATA_KEY = 'hazel:optional-indices';
+const PUBLIC_METADATA_KEY = 'hazel:public';
 
 interface RouteMatch {
   handler: RouteHandler;
   context: RequestContext;
 }
 
-type RouteHandler = (req: Request, res: Response, context?: RequestContext) => void;
+export type { RouteEntry, RouteHandler };
 
 export class Router {
   private routes: Map<string, RouteHandler[]> = new Map();
-  private routesByMethod: Map<string, Map<string, RouteHandler[]>> = new Map();
+  /** Static path index (no `:param` segments) — O(1) lookup per method. */
+  private routesByMethod: Map<string, Map<string, RouteEntry>> = new Map();
+  /** Parameterized routes — radix trie per method. */
+  private dynamicRouteTrieByMethod: Map<string, RouteTrie> = new Map();
   private middlewareHandler: MiddlewareHandler;
+  private versioningOptions?: VersioningOptions;
 
   constructor(private container: Container) {
     this.middlewareHandler = new MiddlewareHandler(container);
-    // Initialize route cache for common HTTP methods
-    this.routesByMethod.set('GET', new Map());
-    this.routesByMethod.set('POST', new Map());
-    this.routesByMethod.set('PUT', new Map());
-    this.routesByMethod.set('DELETE', new Map());
-    this.routesByMethod.set('PATCH', new Map());
+    const methods = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'] as const;
+    for (const m of methods) {
+      this.routesByMethod.set(m, new Map());
+      this.dynamicRouteTrieByMethod.set(m, new RouteTrie());
+    }
+  }
+
+  /** Enable URI / header / media-type versioning for route matching. */
+  setVersioningOptions(options: VersioningOptions): void {
+    this.versioningOptions = options;
   }
 
   registerController(controller: Type<unknown>): void {
@@ -73,17 +90,29 @@ export class Router {
       const handler = this.createRouteHandler(controller, propertyKey);
       const methodUpper = method.toUpperCase();
       const routeKey = `${methodUpper} ${fullPath}`;
-      
+      const versions =
+        getVersionMetadata(controller.prototype, propertyKey) || getVersionMetadata(controller);
+
       // Store in both maps for compatibility
       this.routes.set(routeKey, [handler]);
-      
+
       // Store in method-specific cache for faster lookup
       let methodRoutes = this.routesByMethod.get(methodUpper);
       if (!methodRoutes) {
         methodRoutes = new Map();
         this.routesByMethod.set(methodUpper, methodRoutes);
       }
-      methodRoutes.set(fullPath, [handler]);
+      const entry: RouteEntry = {
+        handlers: [handler],
+        versions: versions && versions.length > 0 ? versions : undefined,
+      };
+      if (!fullPath.includes(':')) {
+        methodRoutes.set(fullPath, entry);
+      } else {
+        const trie = this.dynamicRouteTrieByMethod.get(methodUpper) || new RouteTrie();
+        trie.insert(fullPath, entry);
+        this.dynamicRouteTrieByMethod.set(methodUpper, trie);
+      }
 
       // Log the route pattern for debugging
       const pattern = this.createRoutePattern(fullPath);
@@ -146,7 +175,7 @@ export class Router {
     return async (req: Request, res: Response, matchedContext?: RequestContext): Promise<void> => {
       // Generate a unique request ID for request-scoped providers
       const requestId = `req-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      
+
       try {
         logger.debug('=== Request Handler Start ===');
         logger.debug(`Method: ${req.method}, URL: ${req.url}`);
@@ -185,225 +214,282 @@ export class Router {
           method: req.method || 'GET',
           url: req.url || '/',
         };
-        context.retryOptions = Reflect.getMetadata('hazel:retry', controllerClass.prototype, methodName);
+        context.retryOptions = Reflect.getMetadata(
+          'hazel:retry',
+          controllerClass.prototype,
+          methodName
+        );
 
-        // Execute guards (class-level + method-level)
-        const classGuards: Type<CanActivate>[] =
-          Reflect.getMetadata('hazel:guards', controllerClass) || [];
-        const methodGuards: Type<CanActivate>[] =
-          Reflect.getMetadata('hazel:guards', controllerClass.prototype, methodName) || [];
-        const allGuards = [...classGuards, ...methodGuards];
+        const runHandlerCore = async (): Promise<void> => {
+          // Execute guards (class-level + method-level) unless route/controller is @Public / @SkipAuth
+          const classGuards: Type<CanActivate>[] =
+            Reflect.getMetadata('hazel:guards', controllerClass) || [];
+          const methodGuards: Type<CanActivate>[] =
+            Reflect.getMetadata('hazel:guards', controllerClass.prototype, methodName) || [];
+          const allGuards = [...classGuards, ...methodGuards];
 
-        if (allGuards.length > 0) {
-          const executionContext: ExecutionContext = {
-            switchToHttp: () => ({
-              getRequest: () => req,
-              getResponse: () => res,
-              getContext: () => context,
-            }),
-          };
+          const isPublic =
+            Reflect.getMetadata(PUBLIC_METADATA_KEY, controllerClass) === true ||
+            Reflect.getMetadata(PUBLIC_METADATA_KEY, controllerClass.prototype, methodName) ===
+              true;
 
-          for (const guardType of allGuards) {
-            const guard = this.container.resolve(guardType) as CanActivate;
-            const result = await guard.canActivate(executionContext);
-            if (!result) {
-              throw new UnauthorizedError('Unauthorized');
+          if (!isPublic && allGuards.length > 0) {
+            const executionContext: ExecutionContext = {
+              switchToHttp: () => ({
+                getRequest: () => req,
+                getResponse: () => res,
+                getContext: () => context,
+              }),
+            };
+
+            for (const guardType of allGuards) {
+              const guard = this.container.resolve(guardType) as CanActivate;
+              const result = await guard.canActivate(executionContext);
+              if (!result) {
+                throw new UnauthorizedError('Unauthorized');
+              }
+            }
+
+            // Propagate user set by guard to context
+            if ((req as Record<string, unknown>).user) {
+              context.user = (req as Record<string, unknown>).user as RequestContext['user'];
             }
           }
 
-          // Propagate user set by guard to context
-          if ((req as Record<string, unknown>).user) {
-            context.user = (req as Record<string, unknown>).user as RequestContext['user'];
-          }
-        }
-
-        // Set DTO type from the first parameter that has a DTO type
-        for (const injection of injections) {
-          if (injection?.dtoType) {
-            context.dtoType = injection.dtoType;
-            break;
-          }
-        }
-
-        // Get pipes for this route
-        const routePipes = (route as { pipes?: { type: Type<PipeTransform> }[] }).pipes || [];
-
-        // Prepare arguments for the controller method
-        const args: unknown[] = [];
-        for (let i = 0; i < injections.length; i++) {
-          const injection = injections[i];
-          if (typeof injection === 'string') {
-            // Handle @Body, @Param, @Query decorators
-            if (injection === 'body') {
-              args[i] = context.body;
-            } else if (injection === 'param') {
-              args[i] = context.params;
-            } else if (injection === 'query') {
-              args[i] = context.query;
-            } else if (injection === 'headers') {
-              args[i] = context.headers;
+          // Set DTO type from the first parameter that has a DTO type
+          for (const injection of injections) {
+            if (injection?.dtoType) {
+              context.dtoType = injection.dtoType;
+              break;
             }
-          } else if (typeof injection === 'object' && injection !== null) {
-            if (injection.type === 'headers') {
-              // Handle @Headers decorator
-              const headerName = injection.name;
-              if (headerName) {
-                args[i] = context.headers[headerName.toLowerCase()];
-              } else {
+          }
+
+          // Get pipes for this route
+          const routePipes = (route as { pipes?: { type: Type<PipeTransform> }[] }).pipes || [];
+
+          // Prepare arguments for the controller method
+          const args: unknown[] = [];
+          for (let i = 0; i < injections.length; i++) {
+            const injection = injections[i];
+            if (typeof injection === 'string') {
+              // Handle @Body, @Param, @Query decorators
+              if (injection === 'body') {
+                args[i] = context.body;
+              } else if (injection === 'param') {
+                args[i] = context.params;
+              } else if (injection === 'query') {
+                args[i] = context.query;
+              } else if (injection === 'headers') {
                 args[i] = context.headers;
               }
-            } else if (injection.type === 'request') {
-              // Handle @Req() / @Request() decorator - raw request for multipart, etc.
-              args[i] = req;
-            } else if (injection.type === 'response') {
-              // Handle @Res decorator
-              args[i] = new HazelHttpResponse(res);
-            } else if (injection.type === 'body') {
-              // Handle @Body decorator with DTO type
-              if (injection.dtoType) {
-                context.dtoType = injection.dtoType;
-                logger.debug('Setting DTO type in context:', injection.dtoType.name);
+            } else if (typeof injection === 'object' && injection !== null) {
+              if (injection.type === 'headers') {
+                // Handle @Headers decorator
+                const headerName = injection.name;
+                if (headerName) {
+                  args[i] = context.headers[headerName.toLowerCase()];
+                } else {
+                  args[i] = context.headers;
+                }
+              } else if (injection.type === 'request') {
+                // Handle @Req() / @Request() decorator - raw request for multipart, etc.
+                args[i] = req;
+              } else if (injection.type === 'response') {
+                // Handle @Res decorator
+                args[i] = new HazelHttpResponse(res);
+              } else if (injection.type === 'body') {
+                // Handle @Body decorator with DTO type
+                if (injection.dtoType) {
+                  context.dtoType = injection.dtoType;
+                  logger.debug('Setting DTO type in context:', injection.dtoType.name);
+                }
+                args[i] = context.body;
+              } else if (injection.type === 'param') {
+                // Handle @Param decorator with pipe
+                const paramName = injection.name;
+                const paramValue = matchedContext?.params[paramName] || context.params[paramName];
+                if (injection.pipe) {
+                  const pipe = this.container.resolve(injection.pipe) as PipeTransform;
+                  args[i] = await pipe.transform(paramValue, context);
+                } else {
+                  args[i] = paramValue;
+                }
+              } else if (injection.type === 'query') {
+                // Handle @Query decorator with pipe
+                const paramName = injection.name;
+                const queryValue = paramName ? context.query[paramName] : context.query;
+                if (injection.pipe) {
+                  const pipe = this.container.resolve(injection.pipe) as PipeTransform;
+                  args[i] = await pipe.transform(queryValue, context);
+                } else {
+                  args[i] = queryValue;
+                }
+              } else if (injection.type === 'user') {
+                // Handle @CurrentUser() decorator — reads from context.user (set by a guard)
+                const user = context.user ?? (req as Record<string, unknown>).user;
+                args[i] = injection.field
+                  ? (user as Record<string, unknown>)?.[injection.field]
+                  : user;
+              } else if (injection.type === 'ip') {
+                const r = req as {
+                  socket?: { remoteAddress?: string };
+                  headers?: Record<string, string | string[] | undefined>;
+                };
+                const forwarded = r.headers?.['x-forwarded-for'];
+                const ip =
+                  typeof forwarded === 'string'
+                    ? forwarded.split(',')[0].trim()
+                    : Array.isArray(forwarded)
+                      ? forwarded[0]?.trim()
+                      : r.socket?.remoteAddress;
+                args[i] = ip ?? undefined;
+              } else if (injection.type === 'host') {
+                const host = (req as { headers?: Record<string, string | string[] | undefined> })
+                  .headers?.['host'];
+                args[i] =
+                  typeof host === 'string' ? host : Array.isArray(host) ? host[0] : undefined;
+              } else if (injection.type === 'session') {
+                args[i] = (req as { session?: unknown }).session;
+              } else if (injection.type === 'custom' && typeof injection.resolve === 'function') {
+                // Handle custom parameter decorators (e.g. @Ability() from @hazeljs/casl).
+                // The decorator stores a resolver function; call it with request, context, container.
+                args[i] = await (
+                  injection.resolve as (
+                    req: unknown,
+                    ctx: RequestContext,
+                    container: Container
+                  ) => unknown
+                )(req, context, this.container);
               }
-              args[i] = context.body;
-            } else if (injection.type === 'param') {
-              // Handle @Param decorator with pipe
-              const paramName = injection.name;
-              const paramValue = matchedContext?.params[paramName] || context.params[paramName];
-              if (injection.pipe) {
-                const pipe = this.container.resolve(injection.pipe) as PipeTransform;
-                args[i] = await pipe.transform(paramValue, context);
-              } else {
-                args[i] = paramValue;
-              }
-            } else if (injection.type === 'query') {
-              // Handle @Query decorator with pipe
-              const paramName = injection.name;
-              const queryValue = paramName ? context.query[paramName] : context.query;
-              if (injection.pipe) {
-                const pipe = this.container.resolve(injection.pipe) as PipeTransform;
-                args[i] = await pipe.transform(queryValue, context);
-              } else {
-                args[i] = queryValue;
-              }
-            } else if (injection.type === 'user') {
-              // Handle @CurrentUser() decorator — reads from context.user (set by a guard)
-              const user = context.user ?? (req as Record<string, unknown>).user;
-              args[i] = injection.field ? (user as Record<string, unknown>)?.[injection.field] : user;
-            } else if (injection.type === 'ip') {
-              const r = req as { socket?: { remoteAddress?: string }; headers?: Record<string, string | string[] | undefined> };
-              const forwarded = r.headers?.['x-forwarded-for'];
-              const ip = typeof forwarded === 'string'
-                ? forwarded.split(',')[0].trim()
-                : Array.isArray(forwarded)
-                  ? forwarded[0]?.trim()
-                  : r.socket?.remoteAddress;
-              args[i] = ip ?? undefined;
-            } else if (injection.type === 'host') {
-              const host = (req as { headers?: Record<string, string | string[] | undefined> }).headers?.['host'];
-              args[i] = typeof host === 'string' ? host : Array.isArray(host) ? host[0] : undefined;
-            } else if (injection.type === 'session') {
-              args[i] = (req as { session?: unknown }).session;
-            } else if (injection.type === 'custom' && typeof injection.resolve === 'function') {
-              // Handle custom parameter decorators (e.g. @Ability() from @hazeljs/casl).
-              // The decorator stores a resolver function; call it with request, context, container.
-              args[i] = await (injection.resolve as (req: unknown, ctx: RequestContext, container: Container) => unknown)(req, context, this.container);
             }
           }
-        }
 
-        const optionalIndices: number[] = Reflect.getMetadata(OPTIONAL_INDICES_METADATA_KEY, controllerClass, methodName) || [];
-        for (const i of optionalIndices) {
-          if (i < args.length && (args[i] === undefined || args[i] === null)) {
-            args[i] = undefined;
+          const optionalIndices: number[] =
+            Reflect.getMetadata(OPTIONAL_INDICES_METADATA_KEY, controllerClass, methodName) || [];
+          for (const i of optionalIndices) {
+            if (i < args.length && (args[i] === undefined || args[i] === null)) {
+              args[i] = undefined;
+            }
           }
-        }
 
-        // Auto-inject RequestContext for undecorated parameters
-        const paramTypes =
-          Reflect.getMetadata('design:paramtypes', controllerClass.prototype, methodName) || [];
-        for (let i = 0; i < paramTypes.length; i++) {
-          if (args[i] === undefined && !injections[i]) {
-            args[i] = context;
+          // Auto-inject RequestContext for undecorated parameters
+          const paramTypes =
+            Reflect.getMetadata('design:paramtypes', controllerClass.prototype, methodName) || [];
+          for (let i = 0; i < paramTypes.length; i++) {
+            if (args[i] === undefined && !injections[i]) {
+              args[i] = context;
+            }
           }
-        }
 
-        // Apply ValidationPipe to the body if a DTO type is present
-        if (context.body && context.dtoType) {
-          logger.debug('Applying ValidationPipe with DTO type:', context.dtoType.name);
-          const validationPipe = this.container.resolve(ValidationPipe);
-          context.body = await validationPipe.transform(context.body, context);
-          args[
-            injections.findIndex(
-              (i: unknown) =>
-                typeof i === 'object' && i !== null && (i as { type?: string }).type === 'body'
-            )
-          ] = context.body;
-        }
-
-        // Apply other pipes to the body if it exists
-        if (context.body) {
-          context.body = await this.applyPipes(context.body, routePipes, context);
-        }
-
-        // Get the controller method
-        const method = (controller as Record<string | symbol, unknown>)[methodName] as (
-          ...args: unknown[]
-        ) => Promise<unknown>;
-
-        const timeoutMs = Reflect.getMetadata(TIMEOUT_METADATA_KEY, controllerClass.prototype, methodName) as number | undefined;
-        let handlerPromise = this.applyInterceptors(
-          Reflect.getMetadata('hazel:interceptors', controllerClass, methodName) || [],
-          context,
-          async () => {
-            return method.apply(controller, args);
+          // Apply ValidationPipe to the body if a DTO type is present
+          if (context.body && context.dtoType) {
+            logger.debug('Applying ValidationPipe with DTO type:', context.dtoType.name);
+            const validationPipe = this.container.resolve(ValidationPipe);
+            context.body = await validationPipe.transform(context.body, context);
+            args[
+              injections.findIndex(
+                (i: unknown) =>
+                  typeof i === 'object' && i !== null && (i as { type?: string }).type === 'body'
+              )
+            ] = context.body;
           }
-        );
-        if (timeoutMs != null && timeoutMs > 0) {
-          handlerPromise = Promise.race([
-            handlerPromise,
-            new Promise<never>((_, reject) => {
-              setTimeout(() => reject(new RequestTimeoutError(`Request timed out after ${timeoutMs}ms`)), timeoutMs);
-            }),
-          ]);
-        }
-        const result = await handlerPromise;
 
-        // Apply @Redirect metadata
-        const redirectMeta = Reflect.getMetadata(REDIRECT_METADATA_KEY, controllerClass.prototype, methodName);
-        if (redirectMeta) {
-          res.status(redirectMeta.statusCode).setHeader('Location', redirectMeta.url);
-          res.end();
-          return;
-        }
-
-        // Apply @Header metadata (response headers)
-        const headersMeta: Array<{ name: string; value: string }> | undefined =
-          Reflect.getMetadata(HEADER_METADATA_KEY, controllerClass.prototype, methodName);
-        if (headersMeta) {
-          for (const h of headersMeta) {
-            res.setHeader(h.name, h.value);
+          // Apply other pipes to the body if it exists
+          if (context.body) {
+            context.body = await this.applyPipes(context.body, routePipes, context);
           }
-        }
 
-        // Apply @HttpCode metadata
-        const httpCode: number | undefined =
-          Reflect.getMetadata(HTTP_CODE_METADATA_KEY, controllerClass.prototype, methodName);
+          // Get the controller method
+          const method = (controller as Record<string | symbol, unknown>)[methodName] as (
+            ...args: unknown[]
+          ) => Promise<unknown>;
 
-        // Handle the response
-        if (result !== undefined) {
-          if (httpCode) {
-            res.status(httpCode);
+          const timeoutMs = Reflect.getMetadata(
+            TIMEOUT_METADATA_KEY,
+            controllerClass.prototype,
+            methodName
+          ) as number | undefined;
+          let handlerPromise = this.applyInterceptors(
+            Reflect.getMetadata('hazel:interceptors', controllerClass, methodName) || [],
+            context,
+            async () => {
+              return method.apply(controller, args);
+            }
+          );
+          if (timeoutMs != null && timeoutMs > 0) {
+            handlerPromise = Promise.race([
+              handlerPromise,
+              new Promise<never>((_, reject) => {
+                setTimeout(
+                  () => reject(new RequestTimeoutError(`Request timed out after ${timeoutMs}ms`)),
+                  timeoutMs
+                );
+              }),
+            ]);
           }
-          if (typeof result === 'string' && result.trim().startsWith('<!DOCTYPE html>')) {
-            // Handle HTML response
-            res.setHeader('Content-Type', 'text/html');
-            res.send(result);
-          } else {
-            // Handle JSON response
-            res.json(result);
+          const result = await handlerPromise;
+
+          // Apply @Redirect metadata
+          const redirectMeta = Reflect.getMetadata(
+            REDIRECT_METADATA_KEY,
+            controllerClass.prototype,
+            methodName
+          );
+          if (redirectMeta) {
+            res.status(redirectMeta.statusCode).setHeader('Location', redirectMeta.url);
+            res.end();
+            return;
           }
-        } else if (httpCode) {
-          res.status(httpCode).end();
+
+          // Apply @Header metadata (response headers)
+          const headersMeta: Array<{ name: string; value: string }> | undefined =
+            Reflect.getMetadata(HEADER_METADATA_KEY, controllerClass.prototype, methodName);
+          if (headersMeta) {
+            for (const h of headersMeta) {
+              res.setHeader(h.name, h.value);
+            }
+          }
+
+          // Apply @HttpCode metadata
+          const httpCode: number | undefined = Reflect.getMetadata(
+            HTTP_CODE_METADATA_KEY,
+            controllerClass.prototype,
+            methodName
+          );
+
+          // Handle the response
+          if (result !== undefined) {
+            if (httpCode) {
+              res.status(httpCode);
+            }
+            if (typeof result === 'string' && result.trim().startsWith('<!DOCTYPE html>')) {
+              // Handle HTML response
+              res.setHeader('Content-Type', 'text/html');
+              res.send(result);
+            } else {
+              // Handle JSON response
+              res.json(result);
+            }
+          } else if (httpCode) {
+            res.status(httpCode).end();
+          }
+        };
+
+        const routeMiddlewares: Type<Middleware>[] = (
+          (route as { middlewares?: Type<Middleware>[] }).middlewares || []
+        ).filter(Boolean);
+        if (routeMiddlewares.length > 0) {
+          context.req = req;
+          await this.middlewareHandler.executeMiddlewareChain(
+            routeMiddlewares,
+            context,
+            async () => {
+              await runHandlerCore();
+              return undefined;
+            }
+          );
+        } else {
+          await runHandlerCore();
         }
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
@@ -423,12 +509,19 @@ export class Router {
           });
         } else {
           // Log unhandled errors (message only; no stack to keep logs clean)
-          logger.error(`Unhandled error: ${message}`, { requestId, method: req.method, url: req.url });
+          logger.error(`Unhandled error: ${message}`, {
+            requestId,
+            method: req.method,
+            url: req.url,
+          });
           res.status(500).json({
             statusCode: 500,
-            message: process.env.NODE_ENV === 'production' 
-              ? 'Internal server error'
-              : error instanceof Error ? error.message : 'Unknown error',
+            message:
+              process.env.NODE_ENV === 'production'
+                ? 'Internal server error'
+                : error instanceof Error
+                  ? error.message
+                  : 'Unknown error',
           });
         }
       } finally {
@@ -490,42 +583,95 @@ export class Router {
     return path.startsWith('/') ? path : `/${path}`;
   }
 
-  async match(method: string, url: string, context: RequestContext): Promise<RouteMatch | null> {
+  async match(
+    method: string,
+    url: string,
+    context: RequestContext,
+    rawReq?: Request
+  ): Promise<RouteMatch | null> {
+    const httpMethod = method.toUpperCase();
     const path = this.normalizePath(url.split('?')[0] || '/');
-    logger.debug(`Matching route: ${method} ${path}`);
+    logger.debug(`Matching route: ${httpMethod} ${path}`);
+
+    const requestedVersion =
+      this.versioningOptions && rawReq ? extractVersion(rawReq, this.versioningOptions) : undefined;
 
     // Use method-specific cache for O(1) method lookup instead of O(n)
-    const methodRoutes = this.routesByMethod.get(method);
+    const methodRoutes = this.routesByMethod.get(httpMethod);
     if (!methodRoutes) {
-      logger.debug(`No routes registered for method: ${method}`);
+      logger.debug(`No routes registered for method: ${httpMethod}`);
       return null;
     }
 
-    // Now only iterate through routes for this specific HTTP method
-    for (const [routePath, handlers] of methodRoutes.entries()) {
-      if (this.matchPath(path, routePath)) {
-        const params = this.extractParams(path, routePath);
-        logger.debug('Matched route:', { method, url, params });
+    const tryEntry = (routePath: string, entry: RouteEntry): RouteMatch | null => {
+      const versionMatches =
+        !this.versioningOptions ||
+        !entry.versions ||
+        entry.versions.length === 0 ||
+        matchVersion(entry.versions, requestedVersion, this.versioningOptions);
 
-        // Create a new context with the matched parameters
-        const matchedContext: RequestContext = {
-          ...context,
-          params: params, // Don't merge, just use the extracted params
-        };
-        logger.debug('Created matched context:', matchedContext);
+      if (!versionMatches || !this.matchPath(path, routePath)) {
+        return null;
+      }
 
-        // Create a new handler that ensures the context is passed
-        const handler = handlers[0];
-        const wrappedHandler: RouteHandler = async (
-          req: Request,
-          res: Response,
-          ctx?: RequestContext
-        ) => {
-          logger.debug('Wrapped handler called with context:', ctx);
-          await handler(req, res, matchedContext);
-        };
+      const params = this.extractParams(path, routePath);
+      logger.debug('Matched route:', { method: httpMethod, url, params });
 
-        return { handler: wrappedHandler, context: matchedContext };
+      const matchedContext: RequestContext = {
+        ...context,
+        params: params,
+      };
+      logger.debug('Created matched context:', matchedContext);
+
+      const handler = entry.handlers[0];
+      const wrappedHandler: RouteHandler = async (
+        req: Request,
+        res: Response,
+        ctx?: RequestContext
+      ) => {
+        logger.debug('Wrapped handler called with context:', ctx);
+        await handler(req, res, matchedContext);
+      };
+
+      return { handler: wrappedHandler, context: matchedContext };
+    };
+
+    const staticHit = methodRoutes.get(path);
+    if (staticHit) {
+      const hit = tryEntry(path, staticHit);
+      if (hit) {
+        return hit;
+      }
+    }
+
+    const trie = this.dynamicRouteTrieByMethod.get(httpMethod);
+    if (trie) {
+      const trieHit = trie.match(path);
+      if (trieHit) {
+        const entry = trieHit.entry;
+        const versionMatches =
+          !this.versioningOptions ||
+          !entry.versions ||
+          entry.versions.length === 0 ||
+          matchVersion(entry.versions, requestedVersion, this.versioningOptions);
+        if (versionMatches) {
+          const params = trieHit.params;
+          logger.debug('Matched route (trie):', { method: httpMethod, url, params });
+          const matchedContext: RequestContext = {
+            ...context,
+            params: params,
+          };
+          const handler = entry.handlers[0];
+          const wrappedHandler: RouteHandler = async (
+            req: Request,
+            res: Response,
+            ctx?: RequestContext
+          ) => {
+            logger.debug('Wrapped handler called with context:', ctx);
+            await handler(req, res, matchedContext);
+          };
+          return { handler: wrappedHandler, context: matchedContext };
+        }
       }
     }
 
@@ -550,7 +696,21 @@ export class Router {
 
   private addRoute(method: string, path: string, handlers: RouteHandler[]): void {
     const normalizedPath = this.normalizePath(path);
-    this.routes.set(`${method.toUpperCase()} ${normalizedPath}`, handlers);
+    const methodUpper = method.toUpperCase();
+    this.routes.set(`${methodUpper} ${normalizedPath}`, handlers);
+    let methodRoutes = this.routesByMethod.get(methodUpper);
+    if (!methodRoutes) {
+      methodRoutes = new Map();
+      this.routesByMethod.set(methodUpper, methodRoutes);
+    }
+    const entry: RouteEntry = { handlers, versions: undefined };
+    if (!normalizedPath.includes(':')) {
+      methodRoutes.set(normalizedPath, entry);
+    } else {
+      const trie = this.dynamicRouteTrieByMethod.get(methodUpper) || new RouteTrie();
+      trie.insert(normalizedPath, entry);
+      this.dynamicRouteTrieByMethod.set(methodUpper, trie);
+    }
   }
 
   async handleRequest(req: Request, res: Response): Promise<void> {

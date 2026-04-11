@@ -114,7 +114,11 @@ describe('MiddlewareHandler', () => {
       container.registerProvider({ token: TransformMiddleware, useClass: TransformMiddleware });
       const finalHandler = jest.fn().mockResolvedValue({ data: 'original' });
 
-      const result = await handler.executeMiddlewareChain([TransformMiddleware], context, finalHandler);
+      const result = await handler.executeMiddlewareChain(
+        [TransformMiddleware],
+        context,
+        finalHandler
+      );
 
       expect(result).toEqual({ data: 'original', transformed: true });
     });
@@ -199,7 +203,10 @@ describe('MiddlewareHandler', () => {
         }
       }
 
-      container.registerProvider({ token: ShortCircuitMiddleware, useClass: ShortCircuitMiddleware });
+      container.registerProvider({
+        token: ShortCircuitMiddleware,
+        useClass: ShortCircuitMiddleware,
+      });
       const finalHandler = jest.fn();
 
       const result = await handler.executeMiddlewareChain(

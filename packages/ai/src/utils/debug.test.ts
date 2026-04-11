@@ -64,6 +64,18 @@ describe('Debug Utility', () => {
       );
     });
 
+    it('should stringify %o placeholders', () => {
+      setDebugEnabled(true);
+      debugLogger('obj %o', { a: 1 });
+      expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('"a":1'));
+    });
+
+    it('should stringify %j placeholders', () => {
+      setDebugEnabled(true);
+      debugLogger('json %j', [1, 2]);
+      expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('[1,2]'));
+    });
+
     it('should handle empty message', () => {
       setDebugEnabled(true);
 

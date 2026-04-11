@@ -122,7 +122,6 @@ describe('Index exports', () => {
       expect(HazelExports.ParseIntPipe).toBeDefined();
     });
 
-
     it('should export ValidationError', () => {
       expect(HazelExports.ValidationError).toBeDefined();
     });

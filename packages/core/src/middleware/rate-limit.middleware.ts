@@ -140,7 +140,9 @@ export class RateLimitMiddleware implements MiddlewareClass {
       keyGenerator: (req: Request): string => {
         const forwarded = req.headers?.['x-forwarded-for'];
         const ip = forwarded
-          ? (Array.isArray(forwarded) ? forwarded[0] : forwarded.split(',')[0].trim())
+          ? Array.isArray(forwarded)
+            ? forwarded[0]
+            : forwarded.split(',')[0].trim()
           : (req as { socket?: { remoteAddress?: string } }).socket?.remoteAddress || 'unknown';
         return ip;
       },
@@ -167,22 +169,25 @@ export class RateLimitMiddleware implements MiddlewareClass {
     if (this.options.standardHeaders) {
       res.setHeader('RateLimit-Limit', this.options.max.toString());
       res.setHeader('RateLimit-Remaining', Math.max(0, this.options.max - count).toString());
-      res.setHeader('RateLimit-Reset', new Date(Date.now() + this.options.windowMs * 1000).toISOString());
+      res.setHeader(
+        'RateLimit-Reset',
+        new Date(Date.now() + this.options.windowMs * 1000).toISOString()
+      );
     }
 
     if (this.options.legacyHeaders) {
       res.setHeader('X-RateLimit-Limit', this.options.max.toString());
       res.setHeader('X-RateLimit-Remaining', Math.max(0, this.options.max - count).toString());
-      res.setHeader('X-RateLimit-Reset', new Date(Date.now() + this.options.windowMs * 1000).toISOString());
+      res.setHeader(
+        'X-RateLimit-Reset',
+        new Date(Date.now() + this.options.windowMs * 1000).toISOString()
+      );
     }
 
     // Check if limit exceeded
     if (count > this.options.max) {
       logger.warn(`Rate limit exceeded for ${key}: ${count}/${this.options.max}`);
-      throw new HttpError(
-        this.options.statusCode!,
-        this.options.message!
-      );
+      throw new HttpError(this.options.statusCode!, this.options.message!);
     }
 
     await next();
@@ -203,4 +208,3 @@ export class RateLimitMiddleware implements MiddlewareClass {
     }
   }
 }
-

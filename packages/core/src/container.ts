@@ -63,7 +63,7 @@ export class Container {
     scope: Scope = Scope.SINGLETON
   ): void {
     const tokenName = this.getTokenName(token);
-      logger.debug(`Registering provider: ${tokenName} with scope: ${scope}`);
+    logger.debug(`Registering provider: ${tokenName} with scope: ${scope}`);
 
     if (this.isProvider(provider)) {
       this.registerProvider(provider);
@@ -80,11 +80,13 @@ export class Container {
    */
   registerProvider<T>(provider: Provider<T>): void {
     const tokenName = this.getTokenName(provider.token);
-    logger.debug(`Registering provider configuration: ${tokenName} (lazy: ${provider.lazy || false})`);
+    logger.debug(
+      `Registering provider configuration: ${tokenName} (lazy: ${provider.lazy || false})`
+    );
 
     const scope = provider.scope || Scope.SINGLETON;
-    const metadata: ProviderMetadata = { 
-      scope, 
+    const metadata: ProviderMetadata = {
+      scope,
       lazy: provider.lazy,
       loaded: false,
     };
@@ -108,7 +110,11 @@ export class Container {
   /**
    * Resolve a dependency from the container
    */
-  resolve<T>(token: InjectionToken<T>, requestId?: string, resolutionStack?: Set<InjectionToken>): T {
+  resolve<T>(
+    token: InjectionToken<T>,
+    requestId?: string,
+    resolutionStack?: Set<InjectionToken>
+  ): T {
     if (!token) {
       if (logger.isDebugEnabled()) {
         logger.debug('No token provided for resolution');
@@ -153,7 +159,7 @@ export class Container {
     // Use per-chain resolution stack to detect circular deps (thread-safe)
     const stack = resolutionStack || new Set<InjectionToken>();
     if (stack.has(token)) {
-      const chain = Array.from(stack).map(t => this.getTokenName(t));
+      const chain = Array.from(stack).map((t) => this.getTokenName(t));
       chain.push(tokenName);
       throw new Error(`Circular dependency detected: ${chain.join(' → ')}`);
     }
@@ -169,7 +175,9 @@ export class Container {
           }
           if (metadata.isResolving) {
             // Another resolve is already creating this singleton — wait would deadlock in sync, so error
-            throw new Error(`Singleton ${tokenName} is already being resolved (possible async race)`);
+            throw new Error(
+              `Singleton ${tokenName} is already being resolved (possible async race)`
+            );
           }
           if (metadata.factory) {
             // Check if this is a lazy provider that hasn't been loaded yet
@@ -248,7 +256,11 @@ export class Container {
   /**
    * Auto-resolve a class without explicit registration
    */
-  private autoResolve<T>(token: Type<T>, requestId?: string, resolutionStack?: Set<InjectionToken>): T {
+  private autoResolve<T>(
+    token: Type<T>,
+    requestId?: string,
+    resolutionStack?: Set<InjectionToken>
+  ): T {
     if (logger.isDebugEnabled()) {
       logger.debug(`Auto-resolving: ${token.name}`);
     }
@@ -272,7 +284,11 @@ export class Container {
   /**
    * Create instance of a class with dependency injection
    */
-  private createInstance<T>(token: Type<T>, requestId?: string, resolutionStack?: Set<InjectionToken>): T {
+  private createInstance<T>(
+    token: Type<T>,
+    requestId?: string,
+    resolutionStack?: Set<InjectionToken>
+  ): T {
     // Get constructor parameters
     const params = Reflect.getMetadata('design:paramtypes', token) || [];
     if (logger.isDebugEnabled()) {
@@ -305,7 +321,7 @@ export class Container {
     // Create instance with dependencies
     const instance = new token(...dependencies);
     if (logger.isDebugEnabled()) {
-        logger.debug(`Created instance of: ${this.getTokenName(token)}`);
+      logger.debug(`Created instance of: ${this.getTokenName(token)}`);
     }
 
     return instance;
@@ -319,6 +335,20 @@ export class Container {
       logger.debug(`Clearing request scope: ${requestId}`);
     }
     this.requestScopedProviders.delete(requestId);
+  }
+
+  /**
+   * Await any singleton `useFactory` results that returned a Promise (fixes async factories before serving traffic).
+   * Call from application bootstrap (e.g. {@link HazelApp.listen}).
+   */
+  async hydrateAsyncFactoryResults(): Promise<void> {
+    for (const metadata of this.providers.values()) {
+      const inst = metadata.instance;
+      if (inst != null && typeof (inst as Promise<unknown>).then === 'function') {
+        metadata.instance = await (inst as Promise<unknown>);
+        metadata.loaded = true;
+      }
+    }
   }
 
   /**

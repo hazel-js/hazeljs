@@ -3,7 +3,8 @@
  * Wires together @hazeljs/ai, @hazeljs/agent, @hazeljs/rag.
  */
 
-import { AgentRuntime, createLLMProviderFromAI } from '@hazeljs/agent';
+import { AgentRuntime } from '@hazeljs/agent';
+import { createLLMProviderFromIAI } from '@hazeljs/ai';
 import { MemoryManager, BufferMemory } from '@hazeljs/rag';
 import { OpsAgent } from './ops-agent';
 import type { CreateOpsRuntimeOptions } from './types';
@@ -16,9 +17,7 @@ import type { CreateOpsRuntimeOptions } from './types';
  * Pass a custom MemoryManager for persistent memory.
  */
 export function createOpsRuntime(options: CreateOpsRuntimeOptions): AgentRuntime {
-  const llmProvider = createLLMProviderFromAI(options.aiService, {
-    model: options.model ?? 'gpt-4',
-  });
+  const llmProvider = createLLMProviderFromIAI(options.aiService, options.model ?? 'gpt-4');
 
   const agent = new OpsAgent(options.tools);
 

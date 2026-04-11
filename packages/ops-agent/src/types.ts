@@ -34,8 +34,8 @@ export interface OpsAgentToolsConfig {
   slack: SlackToolLike;
 }
 
-/** AI service for LLM - e.g. AIEnhancedService from @hazeljs/ai */
-export type AIServiceAdapter = import('@hazeljs/agent').AIServiceAdapter;
+/** AI provider for LLM — e.g. `AIEnhancedService` from `@hazeljs/ai` (`IAIProvider`). */
+export type AIServiceAdapter = import('@hazeljs/ai').IAIProvider;
 
 export interface CreateOpsRuntimeOptions {
   /** AI service for LLM (e.g. AIEnhancedService from @hazeljs/ai) */

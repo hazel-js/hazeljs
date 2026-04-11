@@ -1,4 +1,5 @@
 import { Type } from './types';
+import type { VersioningOptions } from './routing/version.decorator';
 import { HazelModuleInstance, collectControllersFromModule } from './hazel-module';
 import { Container } from './container';
 import { Router } from './router';
@@ -14,14 +15,34 @@ import { ShutdownManager } from './shutdown';
 import { HealthCheckManager, BuiltInHealthChecks } from './health';
 import { TimeoutMiddleware, TimeoutOptions } from './middleware/timeout.middleware';
 import { CorsOptions } from './middleware/cors.middleware';
-import { PerformanceMonitor, PerformanceHook, BuiltinPerformanceHooks, PerformanceMetrics } from './performance';
+import {
+  PerformanceMonitor,
+  PerformanceHook,
+  BuiltinPerformanceHooks,
+  PerformanceMetrics,
+} from './performance';
 import { ErrorHandler } from './enhanced-errors';
+import {
+  GlobalMiddlewareManager,
+  type MiddlewareClass,
+  type MiddlewareFunction,
+} from './middleware/global-middleware';
+import {
+  type ExceptionFilter,
+  ArgumentsHostImpl,
+  getFilterExceptions,
+} from './filters/exception-filter';
+
+const DEFAULT_BODY_LIMIT_BYTES = 1024 * 1024; // 1 MiB
+
+/** Options for {@link HazelApp} construction / {@link HazelApp.create}. */
+export interface HazelAppOptions {
+  /** Max request body size in bytes for JSON/urlencoded bodies (default 1 MiB). */
+  bodyLimit?: number;
+}
 
 /** Early HTTP handler (e.g. for GraphQL) - receives raw req/res before body parsing */
-export type EarlyHttpHandler = (
-  req: IncomingMessage,
-  res: ServerResponse
-) => void | Promise<void>;
+export type EarlyHttpHandler = (req: IncomingMessage, res: ServerResponse) => void | Promise<void>;
 
 /** Proxy handler - runs after body parsing, receives (req, res, context). Returns true if handled. */
 export type ProxyHandler = (
@@ -30,7 +51,8 @@ export type ProxyHandler = (
   context: RequestContext
 ) => Promise<boolean>;
 
-class HttpResponse implements Response {
+/** HTTP response adapter for raw Node `ServerResponse` (used by app + global middleware). */
+export class HttpResponse implements Response {
   private statusCode: number = 200;
   private headers: Record<string, string> = { 'Content-Type': 'application/json' };
   private headersSent: boolean = false;
@@ -84,7 +106,7 @@ class HttpResponse implements Response {
       this.res.writeHead(this.statusCode, {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
+        Connection: 'keep-alive',
         'Access-Control-Allow-Origin': '*',
       });
     }
@@ -116,8 +138,15 @@ export class HazelApp {
   private timeoutMiddleware?: TimeoutMiddleware;
   private earlyHandlers: Array<{ path: string; handler: EarlyHttpHandler }> = [];
   private proxyHandlers: Array<{ pathPrefix: string; handler: ProxyHandler }> = [];
+  private bodyLimitBytes: number = DEFAULT_BODY_LIMIT_BYTES;
+  private readonly globalMiddlewareManager = new GlobalMiddlewareManager();
+  private globalExceptionFilters: Array<Type<ExceptionFilter<unknown>> | ExceptionFilter<unknown>> =
+    [];
 
-  constructor(private readonly moduleType: Type<unknown>) {
+  constructor(
+    private readonly moduleType: Type<unknown>,
+    options?: HazelAppOptions
+  ) {
     logger.debug('Initializing HazelApp');
     this.container = Container.getInstance();
     this.container.register(HazelApp, this);
@@ -127,16 +156,20 @@ export class HazelApp {
     this.shutdownManager = new ShutdownManager();
     this.healthManager = new HealthCheckManager();
     this.performanceMonitor = new PerformanceMonitor();
-    
+
+    if (options?.bodyLimit !== undefined) {
+      this.bodyLimitBytes = options.bodyLimit;
+    }
+
     // Register built-in health checks
     this.healthManager.registerCheck(BuiltInHealthChecks.memoryCheck());
     this.healthManager.registerCheck(BuiltInHealthChecks.eventLoopCheck());
-    
+
     // Register default performance hooks
     this.performanceMonitor.addHook(BuiltinPerformanceHooks.slowRequestLogger(1000));
     this.performanceMonitor.addHook(BuiltinPerformanceHooks.memoryMonitor());
     this.performanceMonitor.addHook(BuiltinPerformanceHooks.metricsCollector());
-    
+
     this.initialize();
   }
 
@@ -163,6 +196,54 @@ export class HazelApp {
   register<T>(component: Type<T>): HazelApp {
     const instance = new component();
     this.container.register(component, instance);
+    return this;
+  }
+
+  /**
+   * Factory for future async bootstrap (e.g. module lifecycle). Currently equivalent to `new HazelApp(module, options)`.
+   */
+  static async create(moduleType: Type<unknown>, options?: HazelAppOptions): Promise<HazelApp> {
+    return new HazelApp(moduleType, options);
+  }
+
+  /** Set max body size in bytes for JSON / urlencoded bodies (not multipart). */
+  setBodyLimit(bytes: number): HazelApp {
+    this.bodyLimitBytes = bytes;
+    return this;
+  }
+
+  /**
+   * Register global middleware (function or class with `use(req, res, next)`).
+   * Runs after body parsing and global prefix strip, before proxy handlers and routing.
+   */
+  useGlobalMiddleware(...middleware: Array<MiddlewareFunction | MiddlewareClass>): HazelApp {
+    for (const m of middleware) {
+      this.globalMiddlewareManager.use(m);
+    }
+    return this;
+  }
+
+  /** Access the global middleware manager for `useFor` / `useExcept` patterns. */
+  getGlobalMiddlewareManager(): GlobalMiddlewareManager {
+    return this.globalMiddlewareManager;
+  }
+
+  /**
+   * Register global exception filters (class with optional `@Catch()`, or instance).
+   * Invoked before the default enhanced error handler when an error propagates from the request pipeline.
+   */
+  useGlobalExceptionFilter(
+    ...filters: Array<Type<ExceptionFilter<unknown>> | ExceptionFilter<unknown>>
+  ): HazelApp {
+    this.globalExceptionFilters.push(...filters);
+    return this;
+  }
+
+  /**
+   * Enable API versioning (URI, header, or media type). Applies to controller routes registered with @Version().
+   */
+  enableVersioning(options: VersioningOptions): HazelApp {
+    this.router.setVersioningOptions(options);
     return this;
   }
 
@@ -210,11 +291,22 @@ export class HazelApp {
   }
 
   async listen(port: number): Promise<void> {
+    await this.container.hydrateAsyncFactoryResults();
+    await this.invokeModuleInitHooks();
+
     return new Promise((resolve) => {
+      this.shutdownManager.registerHandler({
+        name: 'module-destroy',
+        handler: async () => {
+          await this.invokeModuleDestroyHooks();
+        },
+        timeout: 15000,
+      });
+
       this.server = new Server(async (req: IncomingMessage, res: ServerResponse) => {
         // Start performance monitoring
         const requestId = this.performanceMonitor.startRequest(req as Request);
-        
+
         const startTime = Date.now();
         const method = req.method || 'GET';
         const url = req.url || '/';
@@ -229,7 +321,7 @@ export class HazelApp {
           logger.info(
             `${chalk.bold(method)} ${path} ${statusColor(String(status))} ${chalk.gray(duration + 'ms')}`
           );
-          
+
           // End performance monitoring
           this.performanceMonitor.endRequest(requestId, status);
         });
@@ -281,11 +373,19 @@ export class HazelApp {
           if (this.corsEnabled) {
             const origin = headers['origin'] || '*';
             const allowedOrigin = this.corsOptions?.origin
-              ? (typeof this.corsOptions.origin === 'string' ? this.corsOptions.origin : origin)
+              ? typeof this.corsOptions.origin === 'string'
+                ? this.corsOptions.origin
+                : origin
               : '*';
             res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
-            res.setHeader('Access-Control-Allow-Methods', this.corsOptions?.methods?.join(', ') || 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
-            res.setHeader('Access-Control-Allow-Headers', this.corsOptions?.allowedHeaders?.join(', ') || 'Content-Type, Authorization');
+            res.setHeader(
+              'Access-Control-Allow-Methods',
+              this.corsOptions?.methods?.join(', ') || 'GET, POST, PUT, DELETE, PATCH, OPTIONS'
+            );
+            res.setHeader(
+              'Access-Control-Allow-Headers',
+              this.corsOptions?.allowedHeaders?.join(', ') || 'Content-Type, Authorization'
+            );
             if (this.corsOptions?.credentials) {
               res.setHeader('Access-Control-Allow-Credentials', 'true');
             }
@@ -309,10 +409,27 @@ export class HazelApp {
           if ((method === 'POST' || method === 'PUT' || method === 'PATCH') && !isMultipart) {
             try {
               const chunks: Buffer[] = [];
-              req.on('data', (chunk: Buffer) => chunks.push(chunk));
+              let received = 0;
+              let payloadTooLarge = false;
+              const maxBody = this.bodyLimitBytes;
+              req.on('data', (chunk: Buffer) => {
+                received += chunk.length;
+                if (received > maxBody) {
+                  payloadTooLarge = true;
+                  chunks.length = 0;
+                  return;
+                }
+                if (!payloadTooLarge) {
+                  chunks.push(chunk);
+                }
+              });
               await new Promise<void>((resolve, reject) => {
                 req.on('end', () => {
                   try {
+                    if (payloadTooLarge) {
+                      resolve();
+                      return;
+                    }
                     const bodyStr = Buffer.concat(chunks).toString();
                     rawBody = bodyStr;
                     if (bodyStr) {
@@ -332,9 +449,23 @@ export class HazelApp {
                 });
                 req.on('error', reject);
               });
+              if (payloadTooLarge) {
+                if (!res.writableEnded) {
+                  res.writeHead(413, { 'Content-Type': 'application/json' });
+                  res.end(
+                    JSON.stringify({
+                      statusCode: 413,
+                      message: 'Payload Too Large',
+                    })
+                  );
+                }
+                return;
+              }
             } catch (error: unknown) {
               const err = error as NodeJS.ErrnoException;
-              const msg = err?.message ?? (err && typeof (err as Error).message === 'string' ? (err as Error).message : '');
+              const msg =
+                err?.message ??
+                (err && typeof (err as Error).message === 'string' ? (err as Error).message : '');
               const isClientAbort =
                 err?.code === 'ECONNRESET' ||
                 err?.code === 'EPIPE' ||
@@ -398,6 +529,14 @@ export class HazelApp {
             }
           }
 
+          // Global middleware (Nest-style) — after prefix strip so paths match route patterns
+          const reqForMw = req as unknown as Request;
+          const resForMw = new HttpResponse(res);
+          await this.globalMiddlewareManager.execute(reqForMw, resForMw);
+          if (res.writableEnded) {
+            return;
+          }
+
           // Proxy handlers (e.g. API gateway) - run before router
           const pathname = (req.url || '/').split('?')[0];
           for (const { pathPrefix, handler } of this.proxyHandlers) {
@@ -430,6 +569,20 @@ export class HazelApp {
 
           await this.handleRoute(req, res, context);
         } catch (error) {
+          const filterHandled = await this.tryGlobalExceptionFilters(
+            error,
+            req as unknown as Request,
+            new HttpResponse(res)
+          );
+          if (filterHandled || res.writableEnded) {
+            this.performanceMonitor.endRequest(
+              requestId,
+              res.statusCode || 500,
+              error instanceof Error ? error : new Error(String(error))
+            );
+            return;
+          }
+
           // Enhance the error with helpful suggestions
           const enhancedError = ErrorHandler.enhanceError(
             error as Error,
@@ -440,13 +593,21 @@ export class HazelApp {
           ErrorHandler.logEnhancedError(enhancedError);
 
           // End performance monitoring with error
-          this.performanceMonitor.endRequest(requestId, (enhancedError as HttpError).statusCode || 500, error as Error);
+          this.performanceMonitor.endRequest(
+            requestId,
+            (enhancedError as HttpError).statusCode || 500,
+            error as Error
+          );
 
           // Format enhanced error response
           const errorResponse = ErrorHandler.formatErrorResponse(enhancedError);
-          
-          res.writeHead((enhancedError as HttpError).statusCode || 500, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify(errorResponse));
+
+          if (!res.writableEnded) {
+            res.writeHead((enhancedError as HttpError).statusCode || 500, {
+              'Content-Type': 'application/json',
+            });
+            res.end(JSON.stringify(errorResponse));
+          }
         }
       });
 
@@ -489,10 +650,19 @@ export class HazelApp {
     });
   }
 
-  private async handleRoute(req: IncomingMessage, res: ServerResponse, context: RequestContext): Promise<void> {
+  private async handleRoute(
+    req: IncomingMessage,
+    res: ServerResponse,
+    context: RequestContext
+  ): Promise<void> {
     let route;
     try {
-      route = await this.router.match(req.method || 'GET', req.url || '/', context);
+      route = await this.router.match(
+        req.method || 'GET',
+        req.url || '/',
+        context,
+        req as unknown as Request
+      );
       if (!route) {
         if (req.url === '/.well-known/appspecific/com.chrome.devtools.json') {
           res.writeHead(404);
@@ -520,35 +690,151 @@ export class HazelApp {
     try {
       const response = new HttpResponse(res);
       const result = await route.handler(req as Request, response);
-      logger.debug('Request handled successfully:', result);
-
       if (result !== undefined) {
+        logger.debug('Request handled successfully; sending JSON body');
         response.json(result);
+      } else {
+        logger.debug('Request handled successfully (no return value)');
       }
     } catch (error: unknown) {
-      logger.error('Error in route handler:', error instanceof HttpError);
-
-      if (error instanceof HttpError) {
-        logger.error('Error in route handler:', error.message);
-        res.writeHead(error.statusCode, { 'Content-Type': 'application/json' });
-        res.end(
-          JSON.stringify({
-            statusCode: error.statusCode,
-            message: error.message,
-            ...(error.errors && { errors: error.errors }),
-          })
-        );
+      const wrapped = new HttpResponse(res);
+      const handled = await this.tryGlobalExceptionFilters(
+        error,
+        req as unknown as Request,
+        wrapped
+      );
+      if (handled || res.writableEnded) {
         return;
       }
 
-      res.writeHead(500, { 'Content-Type': 'application/json' });
-      res.end(
-        JSON.stringify({
-          statusCode: 500,
-          message: 'Internal Server Error',
-        })
-      );
+      if (error instanceof HttpError) {
+        logger.error('Error in route handler:', error.message);
+        if (!res.writableEnded) {
+          res.writeHead(error.statusCode, { 'Content-Type': 'application/json' });
+          res.end(
+            JSON.stringify({
+              statusCode: error.statusCode,
+              message: error.message,
+              ...(error.errors && { errors: error.errors }),
+            })
+          );
+        }
+        return;
+      }
+
+      logger.error('Error in route handler:', error instanceof Error ? error.message : error);
+      if (!res.writableEnded) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(
+          JSON.stringify({
+            statusCode: 500,
+            message: 'Internal Server Error',
+          })
+        );
+      }
     }
+  }
+
+  private resolveExceptionFilterInstance(
+    filterRef: Type<ExceptionFilter<unknown>> | ExceptionFilter<unknown>
+  ): ExceptionFilter<unknown> | null {
+    if (
+      typeof filterRef === 'function' &&
+      filterRef.prototype &&
+      typeof (filterRef.prototype as { catch?: unknown }).catch === 'function'
+    ) {
+      const F = filterRef as Type<ExceptionFilter<unknown>>;
+      try {
+        if (this.container.has(F)) {
+          return this.container.resolve(F);
+        }
+      } catch {
+        // fall through to manual construction
+      }
+      try {
+        return new (F as new () => ExceptionFilter<unknown>)();
+      } catch {
+        return null;
+      }
+    }
+    return filterRef as ExceptionFilter<unknown>;
+  }
+
+  /** @returns true if a filter wrote a response (caller should not send another body). */
+  private async invokeModuleInitHooks(): Promise<void> {
+    const seen = new Set<object>();
+    for (const token of this.container.getTokens()) {
+      try {
+        const inst = this.container.resolve(token);
+        if (!inst || typeof inst !== 'object') {
+          continue;
+        }
+        if (seen.has(inst as object)) {
+          continue;
+        }
+        seen.add(inst as object);
+        const init = (inst as { onModuleInit?: () => void | Promise<void> }).onModuleInit;
+        if (typeof init === 'function') {
+          await Promise.resolve(init.call(inst));
+        }
+      } catch {
+        // Skip tokens that cannot be resolved at bootstrap
+      }
+    }
+  }
+
+  private async invokeModuleDestroyHooks(): Promise<void> {
+    const seen = new Set<object>();
+    const tokens = [...this.container.getTokens()].reverse();
+    for (const token of tokens) {
+      try {
+        const inst = this.container.resolve(token);
+        if (!inst || typeof inst !== 'object') {
+          continue;
+        }
+        if (seen.has(inst as object)) {
+          continue;
+        }
+        seen.add(inst as object);
+        const destroy = (inst as { onModuleDestroy?: () => void | Promise<void> }).onModuleDestroy;
+        if (typeof destroy === 'function') {
+          await Promise.resolve(destroy.call(inst));
+        }
+      } catch {
+        // ignore
+      }
+    }
+  }
+
+  private async tryGlobalExceptionFilters(
+    error: unknown,
+    req: Request,
+    res: Response
+  ): Promise<boolean> {
+    if (this.globalExceptionFilters.length === 0) {
+      return false;
+    }
+    const host = new ArgumentsHostImpl(req, res);
+    for (const filterRef of this.globalExceptionFilters) {
+      const filter = this.resolveExceptionFilterInstance(filterRef);
+      if (!filter) {
+        continue;
+      }
+      const caughtTypes = getFilterExceptions(filter as object);
+      const matches =
+        caughtTypes.length === 0 ||
+        caughtTypes.some((C: new (...args: unknown[]) => unknown) => error instanceof C);
+      if (!matches) {
+        continue;
+      }
+      try {
+        await filter.catch(error, host);
+        return true;
+      } catch (filterErr) {
+        logger.error('Exception filter threw:', filterErr);
+      }
+    }
+    return false;
   }
 
   /**
@@ -561,11 +847,18 @@ export class HazelApp {
       if (typeof token !== 'function' || !token.prototype) continue;
       try {
         const instance = this.container.resolve(token);
-        if (instance && typeof (instance as { onApplicationBootstrap?: unknown }).onApplicationBootstrap === 'function') {
-          await (instance as { onApplicationBootstrap: (app: HazelApp) => void | Promise<void> }).onApplicationBootstrap(this);
+        if (
+          instance &&
+          typeof (instance as { onApplicationBootstrap?: unknown }).onApplicationBootstrap ===
+            'function'
+        ) {
+          await (
+            instance as { onApplicationBootstrap: (app: HazelApp) => void | Promise<void> }
+          ).onApplicationBootstrap(this);
         }
       } catch (err) {
-        const tokenName = typeof token === 'function' ? (token as { name?: string }).name : String(token);
+        const tokenName =
+          typeof token === 'function' ? (token as { name?: string }).name : String(token);
         logger.error(`OnApplicationBootstrap failed for ${tokenName}`, err);
       }
     }
@@ -589,14 +882,27 @@ export class HazelApp {
   /**
    * Register a custom shutdown handler
    */
-  registerShutdownHandler(handler: { name: string; handler: () => Promise<void>; timeout?: number }): void {
+  registerShutdownHandler(handler: {
+    name: string;
+    handler: () => Promise<void>;
+    timeout?: number;
+  }): void {
     this.shutdownManager.registerHandler(handler);
   }
 
   /**
    * Register a custom health check
    */
-  registerHealthCheck(check: { name: string; check: () => Promise<{ status: 'healthy' | 'unhealthy' | 'degraded'; message?: string; details?: Record<string, unknown> }>; critical?: boolean; timeout?: number }): void {
+  registerHealthCheck(check: {
+    name: string;
+    check: () => Promise<{
+      status: 'healthy' | 'unhealthy' | 'degraded';
+      message?: string;
+      details?: Record<string, unknown>;
+    }>;
+    critical?: boolean;
+    timeout?: number;
+  }): void {
     this.healthManager.registerCheck(check);
   }
 

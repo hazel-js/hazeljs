@@ -190,7 +190,7 @@ describe('AIEnhancedService', () => {
 
     it('throws for an unregistered provider', () => {
       expect(() => service.setDefaultProvider('anthropic')).toThrow(
-        'Provider anthropic is not registered'
+        'Provider "anthropic" is not registered.'
       );
     });
   });
@@ -233,7 +233,7 @@ describe('AIEnhancedService', () => {
 
     it('throws when provider is not registered', async () => {
       await expect(service.complete(REQUEST, { provider: 'anthropic' })).rejects.toThrow(
-        'Provider anthropic is not registered or available'
+        'Provider "anthropic" is not registered or available'
       );
     });
 
@@ -610,7 +610,7 @@ describe('AIEnhancedService', () => {
     it('throws for an unregistered provider', () => {
       expect(() =>
         service.configureModel({ provider: 'anthropic', model: 'claude-3', temperature: 0.5 })
-      ).toThrow('Provider anthropic not found');
+      ).toThrow('Provider "anthropic" not found.');
     });
   });
 

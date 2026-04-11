@@ -60,8 +60,30 @@ export {
   type AIValidationOptions,
 } from './ai-enhanced.types';
 
+/** Bridge IAIProvider to @hazeljs/agent-compatible LLM runtime */
+export {
+  createLLMProviderFromIAI,
+  type AgentCompatibleLLMProvider,
+} from './adapters/create-llm-provider-from-iai';
+
 // Errors
 export { AIError, AIErrorCode } from './errors/ai.error';
+
+export type { IUsageStore, AIUsageRecord } from './tracking/usage.store';
+export { InMemoryUsageStore } from './tracking/usage.store';
+
+export {
+  composeAIMiddleware,
+  AILoggingMiddleware,
+  AICachingMiddleware,
+  AIRetryMiddleware,
+  AIFallbackMiddleware,
+  type AIMiddleware,
+  type AICompletionHandler,
+  type AICacheAdapter,
+} from './middleware/ai-middleware';
+
+export type { AIContextManagerOptions, ContextTrimStrategy } from './context/context.manager';
 
 // Debug utility
 export { debug, setDebugEnabled } from './utils/debug';

@@ -124,7 +124,7 @@ describe('RequestParser', () => {
         method: 'GET',
         url: '/test',
         headers: {
-          'accept': ['application/json', 'text/html'],
+          accept: ['application/json', 'text/html'],
         } as any,
         params: {},
       };

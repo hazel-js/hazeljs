@@ -130,6 +130,14 @@
     { "path": "./packages/flow-runtime"},
     { "path": "./packages/realtime"},
     { "path": "./packages/inspector"},
-    { "path": "./packages/worker"}
+    { "path": "./packages/worker"},
+    { "path": "./packages/i18n" },
+    { "path": "./packages/data" },
+    { "path": "./packages/ml" },
+    { "path": "./packages/mcp" },
+    { "path": "./packages/casl" },
+    { "path": "./packages/pdf-to-audio" },
+    { "path": "./packages/observability" },
+    { "path": "./packages/ops-agent" }
   ]
 }

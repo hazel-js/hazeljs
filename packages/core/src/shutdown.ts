@@ -85,7 +85,7 @@ export class ShutdownManager {
       // Execute all shutdown handlers
       for (const { name, handler, timeout } of this.handlers) {
         logger.info(`Executing shutdown handler: ${name}`);
-        
+
         try {
           if (timeout) {
             await Promise.race([

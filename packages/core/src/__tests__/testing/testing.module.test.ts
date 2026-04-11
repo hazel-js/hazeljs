@@ -408,11 +408,11 @@ describe('Testing Module', () => {
 
       const controller = module.get(UserController);
       const service = module.get(UserService);
-      
+
       // Verify the mock is registered
       const db = module.get(DatabaseService);
       expect(db.query()).toBe('mock-db');
-      
+
       // The controller may still use the original service instance
       // This tests the actual behavior
       expect(controller).toBeInstanceOf(UserController);

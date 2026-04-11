@@ -257,7 +257,7 @@ describe('Version Decorator', () => {
     it('should use custom extractor', () => {
       const request = { customField: 'v1' };
       const extractor = (req: any) => req.customField?.replace('v', '');
-      
+
       const version = extractVersion(request, {
         type: VersioningType.CUSTOM,
         extractor,
@@ -269,7 +269,7 @@ describe('Version Decorator', () => {
     it('should return undefined when extractor returns undefined', () => {
       const request = {};
       const extractor = () => undefined;
-      
+
       const version = extractVersion(request, {
         type: VersioningType.CUSTOM,
         extractor,
@@ -286,7 +286,7 @@ describe('Version Decorator', () => {
         const header = req.headers?.['x-custom'];
         return header?.split('-')[1];
       };
-      
+
       const version = extractVersion(request, {
         type: VersioningType.CUSTOM,
         extractor,

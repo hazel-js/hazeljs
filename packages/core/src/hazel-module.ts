@@ -38,7 +38,12 @@ export function getModuleMetadata(target: object): ModuleOptions | undefined {
   if (fromDecorator) return fromDecorator;
   // Support dynamic modules: { module, providers?, controllers?, imports? }
   if (target && typeof target === 'object' && 'module' in target) {
-    const dyn = target as { module: Type<unknown>; providers?: unknown[]; controllers?: unknown[]; imports?: unknown[] };
+    const dyn = target as {
+      module: Type<unknown>;
+      providers?: unknown[];
+      controllers?: unknown[];
+      imports?: unknown[];
+    };
     return {
       providers: dyn.providers as Type<unknown>[] | undefined,
       controllers: dyn.controllers as Type<unknown>[] | undefined,
@@ -118,7 +123,10 @@ export class HazelModuleInstance {
   private container: Container;
 
   constructor(private readonly moduleType: Type<unknown> | DynamicModule) {
-    const name = (moduleType as { name?: string })?.name ?? (moduleType as DynamicModule)?.module?.name ?? 'DynamicModule';
+    const name =
+      (moduleType as { name?: string })?.name ??
+      (moduleType as DynamicModule)?.module?.name ??
+      'DynamicModule';
     logger.debug(`Initializing HazelModule: ${name}`);
     this.container = Container.getInstance();
     this.initialize();
@@ -132,7 +140,11 @@ export class HazelModuleInstance {
     if (metadata.imports) {
       logger.debug(
         'Initializing imported modules:',
-        metadata.imports.map((m: unknown) => (m && typeof m === 'object' && 'module' in m ? (m as { module: { name?: string } }).module?.name : (m as { name?: string })?.name))
+        metadata.imports.map((m: unknown) =>
+          m && typeof m === 'object' && 'module' in m
+            ? (m as { module: { name?: string } }).module?.name
+            : (m as { name?: string })?.name
+        )
       );
       metadata.imports.forEach((moduleType: unknown) => {
         new HazelModuleInstance(moduleType as Type<unknown>);
@@ -144,16 +156,33 @@ export class HazelModuleInstance {
       logger.debug(
         'Registering providers:',
         metadata.providers.map((p: unknown) => {
-          const val = p && typeof p === 'object' && 'provide' in p ? (p as { provide: unknown }).provide : (p as { name?: string })?.name;
+          const val =
+            p && typeof p === 'object' && 'provide' in p
+              ? (p as { provide: unknown }).provide
+              : (p as { name?: string })?.name;
           return typeof val === 'symbol' ? val.toString() : val;
         })
       );
       metadata.providers.forEach((provider: unknown) => {
         // Dynamic module provider: { provide, useFactory?, useClass?, useValue?, lazy? }
-        if (provider && typeof provider === 'object' && ('provide' in provider || 'token' in provider)) {
-          const p = provider as { provide?: unknown; token?: unknown; useFactory?: unknown; useClass?: unknown; useValue?: unknown; inject?: unknown[]; lazy?: boolean };
+        if (
+          provider &&
+          typeof provider === 'object' &&
+          ('provide' in provider || 'token' in provider)
+        ) {
+          const p = provider as {
+            provide?: unknown;
+            token?: unknown;
+            useFactory?: unknown;
+            useClass?: unknown;
+            useValue?: unknown;
+            inject?: unknown[];
+            lazy?: boolean;
+          };
           const token = p.token ?? p.provide;
-          logger.debug(`Registering provider config for: ${typeof token === 'symbol' ? token.toString() : token} (lazy: ${p.lazy || false || metadata.lazy})`);
+          logger.debug(
+            `Registering provider config for: ${typeof token === 'symbol' ? token.toString() : token} (lazy: ${p.lazy || false || metadata.lazy})`
+          );
           this.container.registerProvider({
             token,
             useFactory: p.useFactory,

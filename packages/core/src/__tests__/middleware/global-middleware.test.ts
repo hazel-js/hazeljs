@@ -212,7 +212,7 @@ describe('GlobalMiddlewareManager', () => {
 
     it('should handle async middleware', async () => {
       const middleware = jest.fn(async (req, res, next) => {
-        await new Promise(resolve => setTimeout(resolve, 10));
+        await new Promise((resolve) => setTimeout(resolve, 10));
         next();
       });
       manager.use(middleware);
@@ -279,17 +279,13 @@ describe('GlobalMiddlewareManager', () => {
 
   describe('edge cases', () => {
     it('should handle empty middleware list', async () => {
-      await expect(
-        manager.execute(mockReq as Request, mockRes as Response)
-      ).resolves.not.toThrow();
+      await expect(manager.execute(mockReq as Request, mockRes as Response)).resolves.not.toThrow();
     });
 
     it('should handle undefined URL', async () => {
       mockReq.url = undefined;
 
-      await expect(
-        manager.execute(mockReq as Request, mockRes as Response)
-      ).resolves.not.toThrow();
+      await expect(manager.execute(mockReq as Request, mockRes as Response)).resolves.not.toThrow();
     });
 
     it('should handle undefined method', async () => {
@@ -321,9 +317,9 @@ describe('GlobalMiddlewareManager', () => {
     it('should clear all middleware', () => {
       const middleware = jest.fn((req, res, next) => next());
       manager.use(middleware);
-      
+
       manager.clear();
-      
+
       const allMiddleware = manager.getMiddleware();
       expect(allMiddleware).toHaveLength(0);
     });
@@ -333,10 +329,10 @@ describe('GlobalMiddlewareManager', () => {
     it('should return all registered middleware', () => {
       const middleware1 = jest.fn((req, res, next) => next());
       const middleware2 = jest.fn((req, res, next) => next());
-      
+
       manager.use(middleware1);
       manager.use(middleware2);
-      
+
       const allMiddleware = manager.getMiddleware();
       expect(allMiddleware).toHaveLength(2);
     });
@@ -344,14 +340,14 @@ describe('GlobalMiddlewareManager', () => {
     it('should return copy of middleware array', () => {
       const middleware = jest.fn((req, res, next) => next());
       manager.use(middleware);
-      
+
       const allMiddleware = manager.getMiddleware();
       allMiddleware.push({
         handler: jest.fn(),
         routes: [],
         excludedRoutes: [],
       });
-      
+
       // Original should not be affected
       expect(manager.getMiddleware()).toHaveLength(1);
     });

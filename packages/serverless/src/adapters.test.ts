@@ -58,7 +58,7 @@ describe('LambdaAdapter', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockMatch = jest.fn().mockResolvedValue(null);
-    (HazelApp as jest.Mock).mockImplementation(() => ({
+    (HazelApp as unknown as jest.Mock).mockImplementation(() => ({
       getRouter: jest.fn().mockReturnValue({ match: mockMatch }),
     }));
     ColdStartOptimizer.getInstance().reset();
@@ -281,7 +281,7 @@ describe('LambdaAdapter', () => {
 
   describe('createHandler() – initialization errors', () => {
     it('returns 500 when HazelApp constructor throws', async () => {
-      (HazelApp as jest.Mock).mockImplementationOnce(() => {
+      (HazelApp as unknown as jest.Mock).mockImplementationOnce(() => {
         throw new Error('Module init failed');
       });
       const result = await new LambdaAdapter(MockModule).createHandler()(
@@ -325,7 +325,7 @@ describe('LambdaAdapter', () => {
 describe('createLambdaHandler()', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    (HazelApp as jest.Mock).mockImplementation(() => ({
+    (HazelApp as unknown as jest.Mock).mockImplementation(() => ({
       getRouter: jest.fn().mockReturnValue({ match: jest.fn().mockResolvedValue(null) }),
     }));
     ColdStartOptimizer.getInstance().reset();
@@ -377,7 +377,7 @@ describe('CloudFunctionAdapter', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockMatch = jest.fn().mockResolvedValue(null);
-    (HazelApp as jest.Mock).mockImplementation(() => ({
+    (HazelApp as unknown as jest.Mock).mockImplementation(() => ({
       getRouter: jest.fn().mockReturnValue({ match: mockMatch }),
     }));
     ColdStartOptimizer.getInstance().reset();
@@ -408,7 +408,7 @@ describe('CloudFunctionAdapter', () => {
     });
 
     it('calls res.status(500).json() on handler init error', async () => {
-      (HazelApp as jest.Mock).mockImplementationOnce(() => {
+      (HazelApp as unknown as jest.Mock).mockImplementationOnce(() => {
         throw new Error('crash');
       });
       const res = makeCloudRes();
@@ -524,7 +524,7 @@ describe('CloudFunctionAdapter', () => {
     });
 
     it('rethrows errors from initialization', async () => {
-      (HazelApp as jest.Mock).mockImplementationOnce(() => {
+      (HazelApp as unknown as jest.Mock).mockImplementationOnce(() => {
         throw new Error('init failed');
       });
       const handler = new CloudFunctionAdapter(MockModule).createEventHandler();
@@ -542,7 +542,7 @@ describe('CloudFunctionAdapter', () => {
 describe('createCloudFunctionHandler()', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    (HazelApp as jest.Mock).mockImplementation(() => ({
+    (HazelApp as unknown as jest.Mock).mockImplementation(() => ({
       getRouter: jest.fn().mockReturnValue({ match: jest.fn().mockResolvedValue(null) }),
     }));
     ColdStartOptimizer.getInstance().reset();
@@ -559,7 +559,7 @@ describe('createCloudFunctionHandler()', () => {
 describe('createCloudFunctionEventHandler()', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    (HazelApp as jest.Mock).mockImplementation(() => ({
+    (HazelApp as unknown as jest.Mock).mockImplementation(() => ({
       getRouter: jest.fn().mockReturnValue({ match: jest.fn() }),
     }));
     ColdStartOptimizer.getInstance().reset();

@@ -5,6 +5,7 @@
  */
 
 import { AgentContext, AgentState, AgentStep } from '../types/agent.types';
+import { AgentError } from '../errors/agent.error';
 import { IAgentStateManager } from './agent-state.interface';
 import { randomUUID } from 'crypto';
 
@@ -182,7 +183,7 @@ export class RedisStateManager implements IAgentStateManager {
   async updateState(executionId: string, newState: AgentState): Promise<void> {
     const context = await this.getContext(executionId);
     if (!context) {
-      throw new Error(`Execution context ${executionId} not found`);
+      throw AgentError.executionNotFound(executionId);
     }
 
     context.state = newState;
@@ -198,7 +199,7 @@ export class RedisStateManager implements IAgentStateManager {
   async addStep(executionId: string, step: AgentStep): Promise<void> {
     const context = await this.getContext(executionId);
     if (!context) {
-      throw new Error(`Execution context ${executionId} not found`);
+      throw AgentError.executionNotFound(executionId);
     }
 
     context.steps.push(step);
@@ -214,7 +215,7 @@ export class RedisStateManager implements IAgentStateManager {
   async updateLastStep(executionId: string, updates: Partial<AgentStep>): Promise<void> {
     const context = await this.getContext(executionId);
     if (!context) {
-      throw new Error(`Execution context ${executionId} not found`);
+      throw AgentError.executionNotFound(executionId);
     }
 
     if (context.steps.length === 0) {
@@ -239,7 +240,7 @@ export class RedisStateManager implements IAgentStateManager {
   ): Promise<void> {
     const context = await this.getContext(executionId);
     if (!context) {
-      throw new Error(`Execution context ${executionId} not found`);
+      throw AgentError.executionNotFound(executionId);
     }
 
     context.memory.conversationHistory.push({
@@ -259,7 +260,7 @@ export class RedisStateManager implements IAgentStateManager {
   async setWorkingMemory(executionId: string, key: string, value: unknown): Promise<void> {
     const context = await this.getContext(executionId);
     if (!context) {
-      throw new Error(`Execution context ${executionId} not found`);
+      throw AgentError.executionNotFound(executionId);
     }
 
     context.memory.workingMemory[key] = value;
@@ -275,7 +276,7 @@ export class RedisStateManager implements IAgentStateManager {
   async getWorkingMemory(executionId: string, key: string): Promise<unknown> {
     const context = await this.getContext(executionId);
     if (!context) {
-      throw new Error(`Execution context ${executionId} not found`);
+      throw AgentError.executionNotFound(executionId);
     }
 
     return context.memory.workingMemory[key];
@@ -284,7 +285,7 @@ export class RedisStateManager implements IAgentStateManager {
   async addRAGContext(executionId: string, contexts: string[]): Promise<void> {
     const context = await this.getContext(executionId);
     if (!context) {
-      throw new Error(`Execution context ${executionId} not found`);
+      throw AgentError.executionNotFound(executionId);
     }
 
     context.ragContext = contexts;

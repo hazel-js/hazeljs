@@ -104,7 +104,7 @@ describe('RouteMatcher', () => {
 
     it('should handle optional parameter patterns', () => {
       const matcher = new RouteMatcher('/users/:userId?/posts/:postId?');
-      
+
       // Test that the pattern compiles without errors
       expect(matcher.getParamNames()).toContain('userId');
       expect(matcher.getParamNames()).toContain('postId');
@@ -200,7 +200,7 @@ describe('RouteMatcher', () => {
       const matcher = new RouteMatcher('/users/:id');
       const names1 = matcher.getParamNames();
       const names2 = matcher.getParamNames();
-      
+
       expect(names1).toEqual(names2);
       expect(names1).not.toBe(names2);
     });

@@ -1,9 +1,9 @@
 module.exports = {
-  root: true,
   ignorePatterns: ['src/ui/**', '**/dist/**', '**/ui-dist/**'],
   extends: ['../../.eslintrc.js'],
   parserOptions: {
     project: './tsconfig.json',
+    tsconfigRootDir: __dirname,
   },
   rules: {
     '@typescript-eslint/no-require-imports': 'off',

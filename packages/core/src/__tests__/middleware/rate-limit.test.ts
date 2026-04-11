@@ -82,10 +82,7 @@ describe('RateLimitMiddleware', () => {
 
       expect(mockRes.setHeader).toHaveBeenCalledWith('RateLimit-Limit', '10');
       expect(mockRes.setHeader).toHaveBeenCalledWith('RateLimit-Remaining', '9');
-      expect(mockRes.setHeader).toHaveBeenCalledWith(
-        'RateLimit-Reset',
-        expect.any(String)
-      );
+      expect(mockRes.setHeader).toHaveBeenCalledWith('RateLimit-Reset', expect.any(String));
     });
 
     it('should set legacy rate limit headers', async () => {
@@ -99,10 +96,7 @@ describe('RateLimitMiddleware', () => {
 
       expect(mockRes.setHeader).toHaveBeenCalledWith('X-RateLimit-Limit', '10');
       expect(mockRes.setHeader).toHaveBeenCalledWith('X-RateLimit-Remaining', '9');
-      expect(mockRes.setHeader).toHaveBeenCalledWith(
-        'X-RateLimit-Reset',
-        expect.any(String)
-      );
+      expect(mockRes.setHeader).toHaveBeenCalledWith('X-RateLimit-Reset', expect.any(String));
     });
 
     it('should throw error when limit exceeded', async () => {
@@ -115,9 +109,9 @@ describe('RateLimitMiddleware', () => {
       await middleware.use(mockReq as Request, mockRes as Response, nextFn);
       await middleware.use(mockReq as Request, mockRes as Response, nextFn);
 
-      await expect(
-        middleware.use(mockReq as Request, mockRes as Response, nextFn)
-      ).rejects.toThrow(HttpError);
+      await expect(middleware.use(mockReq as Request, mockRes as Response, nextFn)).rejects.toThrow(
+        HttpError
+      );
     });
 
     it('should use custom error message', async () => {
@@ -306,7 +300,7 @@ describe('RateLimitMiddleware', () => {
 
       await middleware.use(reqWithForwardedFor, mockRes as Response, nextFn);
       await middleware.use(reqWithForwardedFor, mockRes as Response, nextFn);
-      
+
       // Third request should be rate limited
       await expect(
         middleware.use(reqWithForwardedFor, mockRes as Response, nextFn)
@@ -320,11 +314,11 @@ describe('RateLimitMiddleware', () => {
       });
 
       await middleware.use(mockReq as Request, mockRes as Response, nextFn);
-      
+
       // Second request should be rate limited
-      await expect(
-        middleware.use(mockReq as Request, mockRes as Response, nextFn)
-      ).rejects.toThrow(HttpError);
+      await expect(middleware.use(mockReq as Request, mockRes as Response, nextFn)).rejects.toThrow(
+        HttpError
+      );
     });
 
     it('should use custom message when provided', async () => {
@@ -336,7 +330,7 @@ describe('RateLimitMiddleware', () => {
       });
 
       await middleware.use(mockReq as Request, mockRes as Response, nextFn);
-      
+
       try {
         await middleware.use(mockReq as Request, mockRes as Response, nextFn);
       } catch (error) {

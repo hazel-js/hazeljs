@@ -38,7 +38,10 @@ describe('CorsMiddleware', () => {
       const middleware = new CorsMiddleware({ origin: 'https://example.com' });
       middleware.handle(mockReq as Request, mockRes as Response, nextFn);
 
-      expect(mockRes.setHeader).toHaveBeenCalledWith('Access-Control-Allow-Origin', 'https://example.com');
+      expect(mockRes.setHeader).toHaveBeenCalledWith(
+        'Access-Control-Allow-Origin',
+        'https://example.com'
+      );
       expect(mockRes.setHeader).toHaveBeenCalledWith('Vary', 'Origin');
       expect(nextFn).toHaveBeenCalled();
     });
@@ -47,7 +50,10 @@ describe('CorsMiddleware', () => {
       const middleware = new CorsMiddleware({ origin: 'https://allowed.com' });
       middleware.handle(mockReq as Request, mockRes as Response, nextFn);
 
-      expect(mockRes.setHeader).not.toHaveBeenCalledWith('Access-Control-Allow-Origin', expect.anything());
+      expect(mockRes.setHeader).not.toHaveBeenCalledWith(
+        'Access-Control-Allow-Origin',
+        expect.anything()
+      );
       expect(nextFn).toHaveBeenCalled();
     });
   });
@@ -59,7 +65,10 @@ describe('CorsMiddleware', () => {
       });
       middleware.handle(mockReq as Request, mockRes as Response, nextFn);
 
-      expect(mockRes.setHeader).toHaveBeenCalledWith('Access-Control-Allow-Origin', 'https://example.com');
+      expect(mockRes.setHeader).toHaveBeenCalledWith(
+        'Access-Control-Allow-Origin',
+        'https://example.com'
+      );
       expect(nextFn).toHaveBeenCalled();
     });
   });
@@ -73,7 +82,10 @@ describe('CorsMiddleware', () => {
       mockReq.headers = { origin: 'https://app.example.com' };
       middleware.handle(mockReq as Request, mockRes as Response, nextFn);
 
-      expect(mockRes.setHeader).toHaveBeenCalledWith('Access-Control-Allow-Origin', 'https://app.example.com');
+      expect(mockRes.setHeader).toHaveBeenCalledWith(
+        'Access-Control-Allow-Origin',
+        'https://app.example.com'
+      );
       expect(nextFn).toHaveBeenCalled();
     });
   });
@@ -110,7 +122,10 @@ describe('CorsMiddleware', () => {
       const middleware = new CorsMiddleware();
       middleware.handle(mockReq as Request, mockRes as Response, nextFn);
 
-      expect(mockRes.setHeader).toHaveBeenCalledWith('Access-Control-Allow-Methods', expect.any(String));
+      expect(mockRes.setHeader).toHaveBeenCalledWith(
+        'Access-Control-Allow-Methods',
+        expect.any(String)
+      );
       expect(mockRes.status).toHaveBeenCalledWith(204);
       expect(mockRes.end).toHaveBeenCalled();
       expect(nextFn).not.toHaveBeenCalled();

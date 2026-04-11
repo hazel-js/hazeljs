@@ -589,7 +589,8 @@ export function Optional(): ParameterDecorator {
     }
     const constructor = (target as { constructor: { new (...args: unknown[]): object } })
       .constructor;
-    const indices: number[] = Reflect.getMetadata(OPTIONAL_INDICES_METADATA_KEY, constructor, propertyKey) || [];
+    const indices: number[] =
+      Reflect.getMetadata(OPTIONAL_INDICES_METADATA_KEY, constructor, propertyKey) || [];
     if (!indices.includes(parameterIndex)) {
       indices.push(parameterIndex);
     }
@@ -627,12 +628,20 @@ export function Retry(options: RetryDecoratorOptions): MethodDecorator {
     descriptor: PropertyDescriptor
   ): PropertyDescriptor => {
     Reflect.defineMetadata(RETRY_METADATA_KEY, options, target, propertyKey);
-    const routes = Reflect.getMetadata(ROUTE_METADATA_KEY, (target as { constructor: object }).constructor) || [];
-    const route = routes.find((r: { propertyKey: string | symbol }) => r.propertyKey === propertyKey);
+    const routes =
+      Reflect.getMetadata(ROUTE_METADATA_KEY, (target as { constructor: object }).constructor) ||
+      [];
+    const route = routes.find(
+      (r: { propertyKey: string | symbol }) => r.propertyKey === propertyKey
+    );
     if (route) {
       route.interceptors = route.interceptors || [];
       route.interceptors.unshift({ type: RetryInterceptor, options });
-      Reflect.defineMetadata(ROUTE_METADATA_KEY, routes, (target as { constructor: object }).constructor);
+      Reflect.defineMetadata(
+        ROUTE_METADATA_KEY,
+        routes,
+        (target as { constructor: object }).constructor
+      );
     }
     return descriptor;
   };

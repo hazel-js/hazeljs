@@ -15,7 +15,7 @@ interface AIProvider {
 }
 
 /**
- * @deprecated Use `AIEnhancedService` instead. `AIService` will be removed in v0.4.0.
+ * @deprecated Use `AIEnhancedService` instead. `AIService` will be removed in v0.9.0.
  *
  * `AIEnhancedService` provides the same functionality plus:
  * - Multi-provider management (OpenAI, Anthropic, Gemini, Cohere, Ollama)
@@ -37,9 +37,16 @@ interface AIProvider {
  */
 @Service()
 export class AIService {
+  private static deprecationWarned = false;
   private providers: Map<string, AIProvider> = new Map();
 
   constructor() {
+    if (!AIService.deprecationWarned) {
+      AIService.deprecationWarned = true;
+      logger.warn(
+        '[@hazeljs/ai] AIService is deprecated and scheduled for removal in v0.9.0. Use AIEnhancedService instead.'
+      );
+    }
     // Initialize providers
     this.initializeProviders();
   }

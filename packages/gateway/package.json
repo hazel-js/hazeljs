@@ -38,6 +38,9 @@
     "typescript": "^5.9.3"
   },
   "peerDependencies": {
+    "@hazeljs/core": ">=0.2.0-beta.0",
+    "@hazeljs/discovery": ">=0.2.0-beta.0",
+    "@hazeljs/resilience": ">=0.2.0-beta.0",
     "@hazeljs/config": "*"
   },
   "peerDependenciesMeta": {

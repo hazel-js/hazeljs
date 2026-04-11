@@ -64,7 +64,10 @@ describe('CsrfMiddleware', () => {
       const middleware = new CsrfMiddleware();
       middleware.use(mockReq as Request, mockRes as Response, nextFn);
 
-      expect(mockRes.setHeader).toHaveBeenCalledWith('Set-Cookie', expect.stringContaining('_csrf='));
+      expect(mockRes.setHeader).toHaveBeenCalledWith(
+        'Set-Cookie',
+        expect.stringContaining('_csrf=')
+      );
     });
 
     it('should generate token with signature', () => {

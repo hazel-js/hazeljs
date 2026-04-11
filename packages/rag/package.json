@@ -19,7 +19,7 @@
   ],
   "scripts": {
     "build": "rm -rf dist tsconfig.tsbuildinfo && tsc --skipLibCheck",
-    "test": "jest --coverage --passWithNoTests",
+    "test": "jest --config jest.config.js --coverage --passWithNoTests",
     "lint": "eslint \"src/**/*.ts\"",
     "lint:fix": "eslint \"src/**/*.ts\" --fix",
     "clean": "rm -rf dist"
@@ -33,7 +33,7 @@
     "weaviate-ts-client": "^2.0.0",
     "@qdrant/js-client-rest": "^1.9.0",
     "chromadb": "^1.8.0",
-    "openai": "^4.0.0",
+    "openai": "^6.0.0",
     "cohere-ai": "^7.0.0",
     "@huggingface/inference": "^2.0.0",
     "@hazeljs/ai": ">=0.2.0-beta.0",
@@ -78,51 +78,9 @@
       "optional": true
     }
   },
-  "jest": {
-    "preset": "ts-jest",
-    "testEnvironment": "node",
-    "testMatch": [
-      "**/src/__tests__/**/*.test.ts"
-    ],
-    "moduleNameMapper": {
-      "^@hazeljs/prompts$": "<rootDir>/../prompts/src/index.ts",
-      "^@hazeljs/memory$": "<rootDir>/../memory/src/index.ts",
-      "^@hazeljs/memory/prisma$": "<rootDir>/../memory/src/prisma.ts"
-    },
-    "collectCoverageFrom": [
-      "src/**/*.ts",
-      "!src/**/*.d.ts",
-      "!src/index.ts",
-      "!src/rag.module.ts",
-      "!src/rag.service.ts",
-      "!src/rag-pipeline-with-memory.ts",
-      "!src/vector-stores/**",
-      "!src/embeddings/**",
-      "!src/agentic/**",
-      "!src/decorators/**",
-      "!src/memory/**",
-      "!src/loaders/pdf.loader.ts",
-      "!src/loaders/docx.loader.ts",
-      "!src/loaders/web.loader.ts",
-      "!src/loaders/github.loader.ts",
-      "!src/loaders/youtube-transcript.loader.ts",
-      "!src/loaders/index.ts",
-      "!src/graph/index.ts",
-      "!src/prompts/**",
-      "!src/types/**"
-    ],
-    "coverageThreshold": {
-      "global": {
-        "statements": 85,
-        "branches": 75,
-        "functions": 85,
-        "lines": 85
-      }
-    }
-  },
   "devDependencies": {
     "@hazeljs/memory": "file:../memory",
-    "openai": "^4.104.0",
+    "openai": "^6.33.0",
     "@types/node": "^20.19.39",
     "@typescript-eslint/eslint-plugin": "^8.58.0",
     "@typescript-eslint/parser": "^8.58.0",

@@ -1,3 +1,6 @@
+import * as http from 'http';
+import type { AddressInfo } from 'net';
+import WebSocket from 'ws';
 import { RoomManager } from './room/room.manager';
 import { SSEHandler, createSSEResponse, sendSSEMessage } from './sse/sse.handler';
 import { WebSocketGateway, createWebSocketClient } from './websocket.gateway';
@@ -924,6 +927,92 @@ describe('WebSocketGateway', () => {
       expect(stats.connectedClients).toBe(1);
       expect(stats.totalRooms).toBe(1);
       expect(stats.messagesSent).toBe(1);
+    });
+  });
+
+  describe('close() without server', () => {
+    it('resolves when no WebSocketServer was started', async () => {
+      const g = new WebSocketGateway();
+      await expect(g.close()).resolves.toBeUndefined();
+    });
+  });
+
+  describe('attachToServer (integration)', () => {
+    it('registers clients, handles JSON messages, invalid payload, and close', async () => {
+      const httpServer = http.createServer();
+      const gw = new WebSocketGateway();
+      gw.attachToServer(httpServer, {
+        path: '/custom-ws',
+        perMessageDeflate: true,
+        maxPayload: 512 * 1024,
+      });
+
+      await new Promise<void>((resolve) => httpServer.listen(0, resolve));
+      const { port } = httpServer.address() as AddressInfo;
+
+      const ws = new WebSocket(`ws://127.0.0.1:${port}/custom-ws`);
+      await new Promise<void>((resolve, reject) => {
+        ws.once('open', () => resolve());
+        ws.once('error', reject);
+      });
+
+      expect(gw.getClientCount()).toBe(1);
+
+      ws.send(JSON.stringify({ event: 'ping', data: { n: 1 }, timestamp: Date.now() }));
+      await new Promise((r) => setTimeout(r, 30));
+
+      ws.send('not-valid-json');
+      await new Promise((r) => setTimeout(r, 30));
+
+      await new Promise<void>((resolve) => {
+        ws.once('close', () => resolve());
+        ws.close();
+      });
+
+      await new Promise((r) => setTimeout(r, 50));
+
+      await gw.close();
+      await new Promise<void>((resolve, reject) => {
+        httpServer.close((err) => (err ? reject(err) : resolve()));
+      });
+    });
+
+    it('invokes wss error handler without throwing', async () => {
+      const httpServer = http.createServer();
+      const gw = new WebSocketGateway();
+      const wss = gw.attachToServer(httpServer, { path: '/ws' });
+      await new Promise<void>((resolve) => httpServer.listen(0, resolve));
+
+      await new Promise<void>((resolve) => {
+        wss.emit('error', new Error('synthetic'));
+        setImmediate(() => resolve());
+      });
+
+      await gw.close();
+      await new Promise<void>((resolve, reject) => {
+        httpServer.close((err) => (err ? reject(err) : resolve()));
+      });
+    });
+  });
+
+  describe('listen (standalone integration)', () => {
+    it('accepts connections on ephemeral port', async () => {
+      const gw = new WebSocketGateway();
+      const wss = gw.listen(0, { path: '/ws' });
+      const addr = wss.address();
+      const port = typeof addr === 'object' && addr !== null ? addr.port : 0;
+      expect(port).toBeGreaterThan(0);
+
+      const ws = new WebSocket(`ws://127.0.0.1:${port}/ws`);
+      await new Promise<void>((resolve, reject) => {
+        ws.once('open', () => resolve());
+        ws.once('error', reject);
+      });
+
+      expect(gw.getClientCount()).toBe(1);
+      ws.close();
+      await new Promise<void>((r) => ws.once('close', () => r()));
+      await gw.close();
     });
   });
 });

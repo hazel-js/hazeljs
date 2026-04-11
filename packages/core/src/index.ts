@@ -8,7 +8,13 @@
 import 'reflect-metadata';
 
 // Core exports
-export { HazelApp, type EarlyHttpHandler, type ProxyHandler } from './hazel-app';
+export {
+  HazelApp,
+  HttpResponse,
+  type HazelAppOptions,
+  type EarlyHttpHandler,
+  type ProxyHandler,
+} from './hazel-app';
 export {
   HazelModule,
   Module,
@@ -169,14 +175,8 @@ export {
   SecurityHeadersMiddleware,
   type SecurityHeadersOptions,
 } from './middleware/security-headers.middleware';
-export {
-  RateLimitMiddleware,
-  type RateLimitOptions,
-} from './middleware/rate-limit.middleware';
-export {
-  CsrfMiddleware,
-  type CsrfOptions,
-} from './middleware/csrf.middleware';
+export { RateLimitMiddleware, type RateLimitOptions } from './middleware/rate-limit.middleware';
+export { CsrfMiddleware, type CsrfOptions } from './middleware/csrf.middleware';
 
 // File Upload
 export {
@@ -195,7 +195,7 @@ export { default } from './logger';
 export { Validator } from './validator';
 
 // Router
-export { Router } from './router';
+export { Router, type RouteEntry } from './router';
 
 // Request utilities
 export { RequestParser } from './request-parser';

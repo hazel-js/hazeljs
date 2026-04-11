@@ -4,6 +4,7 @@
  */
 
 import { AgentContext, AgentState, AgentStep } from '../types/agent.types';
+import { AgentError } from '../errors/agent.error';
 import { IAgentStateManager } from './agent-state.interface';
 import { randomUUID } from 'crypto';
 
@@ -64,7 +65,7 @@ export class AgentStateManager implements IAgentStateManager {
   updateState(executionId: string, newState: AgentState): void {
     const context = this.contexts.get(executionId);
     if (!context) {
-      throw new Error(`Execution context ${executionId} not found`);
+      throw AgentError.executionNotFound(executionId);
     }
 
     context.state = newState;
@@ -77,7 +78,7 @@ export class AgentStateManager implements IAgentStateManager {
   addStep(executionId: string, step: AgentStep): void {
     const context = this.contexts.get(executionId);
     if (!context) {
-      throw new Error(`Execution context ${executionId} not found`);
+      throw AgentError.executionNotFound(executionId);
     }
 
     context.steps.push(step);
@@ -90,7 +91,7 @@ export class AgentStateManager implements IAgentStateManager {
   updateLastStep(executionId: string, updates: Partial<AgentStep>): void {
     const context = this.contexts.get(executionId);
     if (!context) {
-      throw new Error(`Execution context ${executionId} not found`);
+      throw AgentError.executionNotFound(executionId);
     }
 
     if (context.steps.length === 0) {
@@ -112,7 +113,7 @@ export class AgentStateManager implements IAgentStateManager {
   ): void {
     const context = this.contexts.get(executionId);
     if (!context) {
-      throw new Error(`Execution context ${executionId} not found`);
+      throw AgentError.executionNotFound(executionId);
     }
 
     context.memory.conversationHistory.push({
@@ -129,7 +130,7 @@ export class AgentStateManager implements IAgentStateManager {
   setWorkingMemory(executionId: string, key: string, value: unknown): void {
     const context = this.contexts.get(executionId);
     if (!context) {
-      throw new Error(`Execution context ${executionId} not found`);
+      throw AgentError.executionNotFound(executionId);
     }
 
     context.memory.workingMemory[key] = value;
@@ -142,7 +143,7 @@ export class AgentStateManager implements IAgentStateManager {
   getWorkingMemory(executionId: string, key: string): unknown {
     const context = this.contexts.get(executionId);
     if (!context) {
-      throw new Error(`Execution context ${executionId} not found`);
+      throw AgentError.executionNotFound(executionId);
     }
 
     return context.memory.workingMemory[key];
@@ -154,7 +155,7 @@ export class AgentStateManager implements IAgentStateManager {
   addRAGContext(executionId: string, contexts: string[]): void {
     const context = this.contexts.get(executionId);
     if (!context) {
-      throw new Error(`Execution context ${executionId} not found`);
+      throw AgentError.executionNotFound(executionId);
     }
 
     context.ragContext = contexts;

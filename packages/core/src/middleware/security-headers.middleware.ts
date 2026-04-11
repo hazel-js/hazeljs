@@ -37,27 +37,37 @@ export interface SecurityHeadersOptions {
    * Enable Content-Security-Policy header
    * Controls resource loading
    */
-  contentSecurityPolicy?: string | {
-    defaultSrc?: string[];
-    scriptSrc?: string[];
-    styleSrc?: string[];
-    imgSrc?: string[];
-    connectSrc?: string[];
-    fontSrc?: string[];
-    objectSrc?: string[];
-    mediaSrc?: string[];
-    frameSrc?: string[];
-    baseUri?: string[];
-    formAction?: string[];
-    frameAncestors?: string[];
-    upgradeInsecureRequests?: boolean;
-  };
+  contentSecurityPolicy?:
+    | string
+    | {
+        defaultSrc?: string[];
+        scriptSrc?: string[];
+        styleSrc?: string[];
+        imgSrc?: string[];
+        connectSrc?: string[];
+        fontSrc?: string[];
+        objectSrc?: string[];
+        mediaSrc?: string[];
+        frameSrc?: string[];
+        baseUri?: string[];
+        formAction?: string[];
+        frameAncestors?: string[];
+        upgradeInsecureRequests?: boolean;
+      };
 
   /**
    * Enable Referrer-Policy header
    * Controls referrer information
    */
-  referrerPolicy?: 'no-referrer' | 'no-referrer-when-downgrade' | 'origin' | 'origin-when-cross-origin' | 'same-origin' | 'strict-origin' | 'strict-origin-when-cross-origin' | 'unsafe-url';
+  referrerPolicy?:
+    | 'no-referrer'
+    | 'no-referrer-when-downgrade'
+    | 'origin'
+    | 'origin-when-cross-origin'
+    | 'same-origin'
+    | 'strict-origin'
+    | 'strict-origin-when-cross-origin'
+    | 'unsafe-url';
 
   /**
    * Enable Permissions-Policy header
@@ -115,7 +125,10 @@ export class SecurityHeadersMiddleware implements MiddlewareClass {
     }
 
     // Strict-Transport-Security
-    if (this.options.hsts && (req.headers?.['x-forwarded-proto'] === 'https' || process.env.NODE_ENV === 'production')) {
+    if (
+      this.options.hsts &&
+      (req.headers?.['x-forwarded-proto'] === 'https' || process.env.NODE_ENV === 'production')
+    ) {
       const hstsValue = [
         `max-age=${this.options.hsts.maxAge || 31536000}`,
         this.options.hsts.includeSubDomains ? 'includeSubDomains' : '',
@@ -129,9 +142,10 @@ export class SecurityHeadersMiddleware implements MiddlewareClass {
 
     // Content-Security-Policy
     if (this.options.contentSecurityPolicy) {
-      const csp = typeof this.options.contentSecurityPolicy === 'string'
-        ? this.options.contentSecurityPolicy
-        : this.buildCSP(this.options.contentSecurityPolicy);
+      const csp =
+        typeof this.options.contentSecurityPolicy === 'string'
+          ? this.options.contentSecurityPolicy
+          : this.buildCSP(this.options.contentSecurityPolicy);
 
       res.setHeader('Content-Security-Policy', csp);
     }
@@ -206,4 +220,3 @@ export class SecurityHeadersMiddleware implements MiddlewareClass {
     return directives.join('; ');
   }
 }
-

@@ -81,7 +81,7 @@ const getCategoryColor = (message: string): ((text: string) => string) => {
 const customFormat = winston.format.printf((info: winston.Logform.TransformableInfo) => {
   const { level, message, timestamp, ...metadata } = info;
   // Get the appropriate color for the log level
-  const levelColor = colors[(level as string) as keyof typeof colors] || chalk.white;
+  const levelColor = colors[level as string as keyof typeof colors] || chalk.white;
 
   // Format the timestamp with subtle color
   const time = chalk.gray.dim(String(timestamp ?? ''));
@@ -176,7 +176,11 @@ const customFormat = winston.format.printf((info: winston.Logform.TransformableI
 // When LOG_PACKAGE=http, only allow logs that look like HTTP requests
 const isHttpLog = (info: winston.Logform.TransformableInfo): boolean => {
   const msg = String((info as { message?: unknown }).message ?? '');
-  return /^(GET|POST|PUT|PATCH|DELETE|OPTIONS|HEAD)\s+/i.test(msg) || msg.includes(' → ') || msg.includes(' ← ');
+  return (
+    /^(GET|POST|PUT|PATCH|DELETE|OPTIONS|HEAD)\s+/i.test(msg) ||
+    msg.includes(' → ') ||
+    msg.includes(' ← ')
+  );
 };
 
 const transports: winston.transport[] = [];
@@ -186,7 +190,9 @@ if (logEnabled) {
     transports.push(
       new winston.transports.Console({
         format: winston.format.combine(
-          winston.format((info: winston.Logform.TransformableInfo) => (isHttpLog(info) ? info : false))(),
+          winston.format((info: winston.Logform.TransformableInfo) =>
+            isHttpLog(info) ? info : false
+          )(),
           customFormat
         ),
       })
@@ -207,31 +213,30 @@ if (logEnabled) {
           winston.format.printf((info: winston.Logform.TransformableInfo) => {
             const { level, message, timestamp, ...metadata } = info;
             let msg = `${timestamp} [${String(level).toUpperCase()}] ${message}`;
-              if (Object.keys(metadata).length > 0) {
-                // Use the same comprehensive circular reference handling as console logger
-                const seen = new WeakSet();
-                msg += ` | ${JSON.stringify(metadata, (key, val) => {
-                  // Skip known circular references
-                  if (key === 'socket' || key === 'parser' || key === 'res' || key === 'req') {
+            if (Object.keys(metadata).length > 0) {
+              // Use the same comprehensive circular reference handling as console logger
+              const seen = new WeakSet();
+              msg += ` | ${JSON.stringify(metadata, (key, val) => {
+                // Skip known circular references
+                if (key === 'socket' || key === 'parser' || key === 'res' || key === 'req') {
+                  return '[Circular]';
+                }
+                // Skip Node.js internal objects
+                if (key === '_idlePrev' || key === '_idleNext' || key === 'cleanupInterval') {
+                  return '[Internal]';
+                }
+                // Handle circular references
+                if (typeof val === 'object' && val !== null) {
+                  if (seen.has(val)) {
                     return '[Circular]';
                   }
-                  // Skip Node.js internal objects
-                  if (key === '_idlePrev' || key === '_idleNext' || key === 'cleanupInterval') {
-                    return '[Internal]';
-                  }
-                  // Handle circular references
-                  if (typeof val === 'object' && val !== null) {
-                    if (seen.has(val)) {
-                      return '[Circular]';
-                    }
-                    seen.add(val);
-                  }
-                  return val;
-                })}`;
-              }
-              return msg;
+                  seen.add(val);
+                }
+                return val;
+              })}`;
             }
-          )
+            return msg;
+          })
         ),
       }),
       new winston.transports.File({
@@ -242,31 +247,30 @@ if (logEnabled) {
           winston.format.printf((info: winston.Logform.TransformableInfo) => {
             const { level, message, timestamp, ...metadata } = info;
             let msg = `${timestamp} [${String(level).toUpperCase()}] ${message}`;
-              if (Object.keys(metadata).length > 0) {
-                // Use the same comprehensive circular reference handling as console logger
-                const seen = new WeakSet();
-                msg += ` | ${JSON.stringify(metadata, (key, val) => {
-                  // Skip known circular references
-                  if (key === 'socket' || key === 'parser' || key === 'res' || key === 'req') {
+            if (Object.keys(metadata).length > 0) {
+              // Use the same comprehensive circular reference handling as console logger
+              const seen = new WeakSet();
+              msg += ` | ${JSON.stringify(metadata, (key, val) => {
+                // Skip known circular references
+                if (key === 'socket' || key === 'parser' || key === 'res' || key === 'req') {
+                  return '[Circular]';
+                }
+                // Skip Node.js internal objects
+                if (key === '_idlePrev' || key === '_idleNext' || key === 'cleanupInterval') {
+                  return '[Internal]';
+                }
+                // Handle circular references
+                if (typeof val === 'object' && val !== null) {
+                  if (seen.has(val)) {
                     return '[Circular]';
                   }
-                  // Skip Node.js internal objects
-                  if (key === '_idlePrev' || key === '_idleNext' || key === 'cleanupInterval') {
-                    return '[Internal]';
-                  }
-                  // Handle circular references
-                  if (typeof val === 'object' && val !== null) {
-                    if (seen.has(val)) {
-                      return '[Circular]';
-                    }
-                    seen.add(val);
-                  }
-                  return val;
-                })}`;
-              }
-              return msg;
+                  seen.add(val);
+                }
+                return val;
+              })}`;
             }
-          )
+            return msg;
+          })
         ),
       })
     );

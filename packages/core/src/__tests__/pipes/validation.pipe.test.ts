@@ -92,7 +92,9 @@ describe('ValidationPipe', () => {
       } as RequestContext;
 
       await expect(pipe.transform(value, context)).rejects.toThrow(ValidationError);
-      await expect(pipe.transform(value, context)).rejects.toThrow('Invalid input: expected an object');
+      await expect(pipe.transform(value, context)).rejects.toThrow(
+        'Invalid input: expected an object'
+      );
     });
 
     it('should throw ValidationError when value is null', async () => {

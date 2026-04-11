@@ -1,8 +1,4 @@
-import {
-  ArgumentsHostImpl,
-  Catch,
-  getFilterExceptions,
-} from '../../filters/exception-filter';
+import { ArgumentsHostImpl, Catch, getFilterExceptions } from '../../filters/exception-filter';
 import { Request, Response } from '../../types';
 import 'reflect-metadata';
 
@@ -63,7 +59,7 @@ describe('Exception Filters', () => {
     it('should support generic types', () => {
       const host = new ArgumentsHostImpl(mockReq as Request, mockRes as Response);
       const http = host.switchToHttp();
-      
+
       const request = http.getRequest<Request>();
       const response = http.getResponse<Response>();
 

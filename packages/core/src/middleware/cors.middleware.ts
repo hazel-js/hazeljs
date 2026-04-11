@@ -144,6 +144,8 @@ export class CorsMiddleware {
 /**
  * Simple CORS helper for common use cases
  */
-export function enableCors(options?: CorsOptions): (req: Request, res: Response, next: () => void) => void {
+export function enableCors(
+  options?: CorsOptions
+): (req: Request, res: Response, next: () => void) => void {
   return CorsMiddleware.create(options);
 }

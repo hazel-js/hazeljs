@@ -31,7 +31,21 @@ export function sanitizeString(input: string): string {
   }
 
   return input
-    .replace(/[\x00-\x1F\x7F-\x9F]/g, '') // Remove control characters
+    .split('')
+    .filter((ch) => {
+      const c = ch.charCodeAt(0);
+      if (c <= 0x1f) {
+        return false;
+      }
+      if (c === 0x7f) {
+        return false;
+      }
+      if (c >= 0x80 && c <= 0x9f) {
+        return false;
+      }
+      return true;
+    })
+    .join('')
     .trim()
     .replace(/\s+/g, ' '); // Normalize whitespace
 }
@@ -187,4 +201,3 @@ export function escapeHtml(input: string): string {
 
   return input.replace(/[&<>"']/g, (m) => map[m]);
 }
-

@@ -12,6 +12,8 @@ export interface InterceptorMetadata {
 
 export interface CacheOptions {
   ttl?: number;
+  /** Max cached GET keys (LRU eviction). Default 1000. */
+  maxEntries?: number;
 }
 
 export class LoggingInterceptor implements Interceptor {
@@ -36,9 +38,21 @@ export class LoggingInterceptor implements Interceptor {
 export class CacheInterceptor implements Interceptor {
   private static cache = new Map<string, { data: unknown; timestamp: number }>();
   private readonly ttl: number;
+  private readonly maxEntries: number;
 
   constructor(options?: CacheOptions) {
-    this.ttl = options?.ttl || 60000;
+    this.ttl = options?.ttl ?? 60000;
+    this.maxEntries = options?.maxEntries ?? 1000;
+  }
+
+  private evictLRUIfNeeded(): void {
+    while (CacheInterceptor.cache.size >= this.maxEntries) {
+      const first = CacheInterceptor.cache.keys().next().value as string | undefined;
+      if (first === undefined) {
+        break;
+      }
+      CacheInterceptor.cache.delete(first);
+    }
   }
 
   async intercept(context: RequestContext, next: () => Promise<unknown>): Promise<unknown> {
@@ -48,12 +62,16 @@ export class CacheInterceptor implements Interceptor {
 
     const cacheKey = `${context.method}:${context.url}`;
     const cached = CacheInterceptor.cache.get(cacheKey);
+    const now = Date.now();
 
-    if (cached && Date.now() - cached.timestamp < this.ttl) {
+    if (cached && now - cached.timestamp < this.ttl) {
+      CacheInterceptor.cache.delete(cacheKey);
+      CacheInterceptor.cache.set(cacheKey, cached);
       return cached.data;
     }
 
     const result = await next();
+    this.evictLRUIfNeeded();
     CacheInterceptor.cache.set(cacheKey, { data: result, timestamp: Date.now() });
     return result;
   }

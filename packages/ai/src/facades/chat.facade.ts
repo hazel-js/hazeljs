@@ -1,4 +1,5 @@
 import { AIEnhancedService } from '../ai-enhanced.service';
+import type { AIStreamChunk } from '../ai-enhanced.types';
 import type { HazelAIConfig, ChatOptions } from '../platform/hazel-ai.types';
 
 /**
@@ -71,6 +72,33 @@ export class ChatFacade {
 
     for await (const chunk of chunks) {
       yield chunk.delta;
+    }
+  }
+
+  /**
+   * Like {@link ChatFacade.stream} but yields full {@link AIStreamChunk} objects (delta, usage, done, id).
+   */
+  async *streamFull(message: string, options?: ChatOptions): AsyncGenerator<AIStreamChunk> {
+    const chunks = this.aiService.streamComplete(
+      {
+        messages: [
+          ...(options?.systemPrompt
+            ? [{ role: 'system' as const, content: options.systemPrompt }]
+            : []),
+          { role: 'user' as const, content: message },
+        ],
+        model: options?.model || this.config.model,
+        temperature: options?.temperature ?? this.config.temperature,
+        maxTokens: options?.maxTokens ?? this.config.maxTokens,
+        responseFormat: options?.responseFormat,
+      },
+      {
+        provider: options?.provider || this.config.defaultProvider,
+      }
+    );
+
+    for await (const chunk of chunks) {
+      yield chunk;
     }
   }
 }

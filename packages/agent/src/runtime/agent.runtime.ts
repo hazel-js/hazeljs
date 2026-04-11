@@ -170,8 +170,7 @@ export class AgentRuntime {
    */
   setLLMProvider(provider: LLMProvider): void {
     this.config.llmProvider = provider;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (this.agentExecutor as any).llmProvider = provider;
+    this.agentExecutor.setLlmProvider(provider);
   }
 
   /**

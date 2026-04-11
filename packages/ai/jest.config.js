@@ -22,10 +22,23 @@ module.exports = {
     'src/**/*.ts',
     '!src/**/*.d.ts',
     '!src/**/*.test.ts',
-    '!src/**/__tests__/**'
+    '!src/**/__tests__/**',
+    // Pure re-export barrels (no executable logic)
+    '!src/index.ts',
+    '!src/facades/index.ts',
+    '!src/platform/index.ts',
+    '!src/platform/hcel/index.ts',
   ],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'clover'],
+  coverageThreshold: {
+    global: {
+      branches: 70,
+      functions: 80,
+      lines: 80,
+      statements: 80,
+    },
+  },
   verbose: true,
   forceExit: true,
   detectOpenHandles: false,

@@ -50,7 +50,7 @@ export class HealthCheckManager {
     for (const [name, check] of this.checks) {
       try {
         const startTime = Date.now();
-        
+
         // Run check with timeout
         const result = await Promise.race([
           check.check(),

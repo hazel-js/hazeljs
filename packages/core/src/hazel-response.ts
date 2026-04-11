@@ -55,12 +55,19 @@ export class HazelHttpResponse implements HazelResponse {
 
   redirect(url: string, statusCode: number = 302): void {
     if (this.headersSent) return;
-    if (typeof (this.res as { redirect?: (u: string, c?: number) => void }).redirect === 'function') {
-      (this.res as unknown as { redirect: (u: string, c?: number) => void }).redirect(url, statusCode);
+    if (
+      typeof (this.res as { redirect?: (u: string, c?: number) => void }).redirect === 'function'
+    ) {
+      (this.res as unknown as { redirect: (u: string, c?: number) => void }).redirect(
+        url,
+        statusCode
+      );
       return;
     }
     this.headersSent = true;
-    (this.res as unknown as { writeHead: (code: number, headers: Record<string, string>) => void }).writeHead(statusCode, { Location: url });
+    (
+      this.res as unknown as { writeHead: (code: number, headers: Record<string, string>) => void }
+    ).writeHead(statusCode, { Location: url });
     this.res.end();
   }
 

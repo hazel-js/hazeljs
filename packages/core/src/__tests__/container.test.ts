@@ -14,7 +14,7 @@ jest.mock('../logger', () => ({
 class LazyService {
   public instantiated = false;
   public value = 'lazy-service';
-  
+
   constructor() {
     this.instantiated = true;
   }
@@ -23,7 +23,7 @@ class LazyService {
 class EagerService {
   public instantiated = false;
   public value = 'eager-service';
-  
+
   constructor() {
     this.instantiated = true;
   }

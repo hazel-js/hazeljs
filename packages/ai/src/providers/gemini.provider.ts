@@ -33,7 +33,7 @@ export class GeminiProvider implements IAIProvider {
   private endpoint: string;
 
   constructor(apiKey?: string, endpoint?: string) {
-    this.apiKey = apiKey || process.env.GEMINI_API_KEY || '';
+    this.apiKey = apiKey || process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || '';
     this.endpoint = endpoint || 'https://generativelanguage.googleapis.com/v1';
 
     if (!this.apiKey) {

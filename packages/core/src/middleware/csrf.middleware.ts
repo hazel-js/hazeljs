@@ -88,7 +88,7 @@ export class CsrfMiddleware implements MiddlewareClass {
     const path = req.url?.split('?')[0] || '/';
 
     // Skip excluded paths
-    if (this.options.excludePaths?.some(excluded => path.startsWith(excluded))) {
+    if (this.options.excludePaths?.some((excluded) => path.startsWith(excluded))) {
       next();
       return;
     }
@@ -195,7 +195,7 @@ export class CsrfMiddleware implements MiddlewareClass {
     if (req.headers?.cookie) {
       const sessionCookie = req.headers.cookie
         .split(';')
-        .find(c => c.trim().startsWith('sessionId='));
+        .find((c) => c.trim().startsWith('sessionId='));
       if (sessionCookie) {
         return sessionCookie.split('=')[1].trim();
       }
@@ -245,4 +245,3 @@ export class CsrfMiddleware implements MiddlewareClass {
     }
   }
 }
-

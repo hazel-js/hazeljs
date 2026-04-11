@@ -197,7 +197,7 @@ export class ErrorHandler {
     logger.error(`Enhanced Error [${error.requestId || 'unknown'}]:`, {
       message: error.message,
       statusCode: (error as HttpError).statusCode || 500,
-      suggestions: error.suggestions.map(s => s.message),
+      suggestions: error.suggestions.map((s) => s.message),
       context: error.context,
     });
 
@@ -223,68 +223,53 @@ export function createEnhancedError(
 
 // Common enhanced error creators
 export const EnhancedErrors = {
-  validationFailed: (details?: string): EnhancedError => createEnhancedError(
-    `Validation failed${details ? `: ${details}` : ''}`,
-    400,
-    [
+  validationFailed: (details?: string): EnhancedError =>
+    createEnhancedError(`Validation failed${details ? `: ${details}` : ''}`, 400, [
       {
         message: 'Request validation failed',
         code: 'VALIDATION_FAILED',
         fix: 'Check your request body format and required fields',
         relatedDocs: '/docs/validation',
       },
-    ]
-  ),
+    ]),
 
-  unauthorized: (details?: string): EnhancedError => createEnhancedError(
-    `Unauthorized${details ? `: ${details}` : ''}`,
-    401,
-    [
+  unauthorized: (details?: string): EnhancedError =>
+    createEnhancedError(`Unauthorized${details ? `: ${details}` : ''}`, 401, [
       {
         message: 'Authentication required',
         code: 'AUTH_REQUIRED',
         fix: 'Provide valid authentication credentials',
         relatedDocs: '/docs/authentication',
       },
-    ]
-  ),
+    ]),
 
-  notFound: (resource?: string): EnhancedError => createEnhancedError(
-    `${resource || 'Resource'} not found`,
-    404,
-    [
+  notFound: (resource?: string): EnhancedError =>
+    createEnhancedError(`${resource || 'Resource'} not found`, 404, [
       {
         message: 'Resource not found',
         code: 'RESOURCE_NOT_FOUND',
         fix: 'Check the resource ID and endpoint path',
         relatedDocs: '/docs/endpoints',
       },
-    ]
-  ),
+    ]),
 
-  methodNotAllowed: (method?: string): EnhancedError => createEnhancedError(
-    `Method ${method || 'used'} not allowed`,
-    405,
-    [
+  methodNotAllowed: (method?: string): EnhancedError =>
+    createEnhancedError(`Method ${method || 'used'} not allowed`, 405, [
       {
         message: 'HTTP method not supported',
         code: 'METHOD_NOT_ALLOWED',
         fix: 'Check allowed HTTP methods for this endpoint',
         relatedDocs: '/docs/http-methods',
       },
-    ]
-  ),
+    ]),
 
-  rateLimitExceeded: (retryAfter?: number): EnhancedError => createEnhancedError(
-    'Rate limit exceeded',
-    429,
-    [
+  rateLimitExceeded: (retryAfter?: number): EnhancedError =>
+    createEnhancedError('Rate limit exceeded', 429, [
       {
         message: 'Too many requests',
         code: 'RATE_LIMIT_EXCEEDED',
         fix: `Wait ${retryAfter || 'a few seconds'} before retrying`,
         relatedDocs: '/docs/rate-limiting',
       },
-    ]
-  ),
+    ]),
 };

@@ -1,4 +1,4 @@
-import { Service, Inject, HazelModule } from '@hazeljs/core';
+import { Service, Inject, HazelModule, logger } from '@hazeljs/core';
 import { AgentRuntime, AgentRuntimeConfig } from './runtime/agent.runtime';
 import { AgentGraph } from './graph/agent-graph';
 import type { SupervisorConfig } from './graph/agent-graph.types';
@@ -90,7 +90,7 @@ export class AgentService {
       const llmProvider = AgentService.createLLMProviderFromAI(aiService);
       this.runtime.setLLMProvider(llmProvider);
       // eslint-disable-next-line no-console
-      console.log('AgentService: ✓ LLM provider configured from AIEnhancedService');
+      logger.info('AgentService: LLM provider configured from AIEnhancedService');
     } else if (retryCount < 10) {
       setTimeout(() => this.resolveLLMProvider(retryCount + 1), 50);
     }
@@ -234,7 +234,7 @@ export class AgentService {
           this.agentInstances.set(agentName, agentInstance);
         } catch (_error) {
           // eslint-disable-next-line no-console
-          console.warn(`AgentService: Failed to register agent ${agentClass.name}:`, _error);
+          logger.warn(`AgentService: Failed to register agent ${agentClass.name}:`, _error);
         }
       }
 

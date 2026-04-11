@@ -67,10 +67,15 @@ describe('SecurityHeadersMiddleware', () => {
     });
 
     it('should set custom value', () => {
-      const middleware = new SecurityHeadersMiddleware({ frameOptions: 'ALLOW-FROM https://example.com' });
+      const middleware = new SecurityHeadersMiddleware({
+        frameOptions: 'ALLOW-FROM https://example.com',
+      });
       middleware.use(mockReq as Request, mockRes as Response, nextFn);
 
-      expect(mockRes.setHeader).toHaveBeenCalledWith('X-Frame-Options', 'ALLOW-FROM https://example.com');
+      expect(mockRes.setHeader).toHaveBeenCalledWith(
+        'X-Frame-Options',
+        'ALLOW-FROM https://example.com'
+      );
     });
   });
 

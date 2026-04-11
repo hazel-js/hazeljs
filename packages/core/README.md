@@ -254,13 +254,13 @@ Use the custom param decorator **without** parentheses: `@CurrentUser`. See the 
 ### Global Middleware
 
 ```typescript
-import { Middleware, MiddlewareContext } from '@hazeljs/core';
+import { Middleware, type RequestContext } from '@hazeljs/core';
 
 @Injectable()
 export class LoggerMiddleware implements Middleware {
-  async use(context: MiddlewareContext, next: () => Promise<void>) {
-    console.log(`${context.request.method} ${context.request.url}`);
-    await next();
+  async use(context: RequestContext, next: () => Promise<unknown>) {
+    console.log(`${context.method} ${context.url}`);
+    return next();
   }
 }
 
@@ -285,19 +285,28 @@ export class AdminController {
 }
 ```
 
+## Global exception filters
+
+```typescript
+import { HazelApp, HttpExceptionFilter, type ExceptionFilter } from '@hazeljs/core';
+
+const app = await HazelApp.create(AppModule);
+app.useGlobalExceptionFilter(new HttpExceptionFilter());
+```
+
 ## Guards
 
 ```typescript
-import { Guard, GuardContext } from '@hazeljs/core';
+import { CanActivate, ExecutionContext, Injectable, UseGuards } from '@hazeljs/core';
 
 @Injectable()
-export class AuthGuard implements Guard {
-  canActivate(context: GuardContext): boolean | Promise<boolean> {
+export class AuthGuard implements CanActivate {
+  canActivate(context: ExecutionContext): boolean | Promise<boolean> {
     const token = context.request.headers.authorization;
     return this.validateToken(token);
   }
 
-  private validateToken(token: string): boolean {
+  private validateToken(token: string | undefined): boolean {
     // Validate JWT token
     return !!token;
   }
@@ -305,7 +314,7 @@ export class AuthGuard implements Guard {
 
 // Use in controller
 @Controller('/protected')
-@UseGuard(AuthGuard)
+@UseGuards(AuthGuard)
 export class ProtectedController {
   @Get()
   getData() {
@@ -317,35 +326,35 @@ export class ProtectedController {
 ## Interceptors
 
 ```typescript
-import { Interceptor, InterceptorContext } from '@hazeljs/core';
+import { Interceptor, Injectable, UseInterceptors, type RequestContext } from '@hazeljs/core';
 
 @Injectable()
 export class TransformInterceptor implements Interceptor {
-  async intercept(context: InterceptorContext, next: () => Promise<any>) {
+  async intercept(context: RequestContext, next: () => Promise<unknown>) {
     const result = await next();
-    
+
     return {
       data: result,
       timestamp: new Date().toISOString(),
-      path: context.request.url,
+      path: context.url,
     };
   }
 }
 
 // Use globally or per route
 @Controller('/api')
-@UseInterceptor(TransformInterceptor)
+@UseInterceptors(TransformInterceptor)
 export class ApiController {}
 ```
 
 ## Pipes
 
 ```typescript
-import { Pipe, PipeContext } from '@hazeljs/core';
+import { Injectable, PipeTransform, type RequestContext } from '@hazeljs/core';
 
 @Injectable()
-export class ValidationPipe implements Pipe {
-  transform(value: any, context: PipeContext) {
+export class NonEmptyPipe implements PipeTransform<string, string> {
+  transform(value: string, _context: RequestContext): string {
     if (!value) {
       throw new Error('Value is required');
     }
@@ -353,11 +362,7 @@ export class ValidationPipe implements Pipe {
   }
 }
 
-// Use in route
-@Post()
-create(@Body(ValidationPipe) createDto: CreateDto) {
-  return createDto;
-}
+// Prefer the built-in ValidationPipe with class-validator DTOs (see Validation below).
 ```
 
 ## Validation

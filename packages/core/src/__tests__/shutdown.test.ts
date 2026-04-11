@@ -140,24 +140,24 @@ describe('ShutdownManager', () => {
   describe('signal handling', () => {
     it('should handle SIGTERM signal', () => {
       const shutdownSpy = jest.spyOn(shutdownManager, 'shutdown').mockResolvedValue();
-      
+
       // Simulate SIGTERM
       process.emit('SIGTERM' as any);
-      
+
       // Note: The actual signal handling is set up in constructor
       expect(shutdownManager).toBeDefined();
-      
+
       shutdownSpy.mockRestore();
     });
 
     it('should handle SIGINT signal', () => {
       const shutdownSpy = jest.spyOn(shutdownManager, 'shutdown').mockResolvedValue();
-      
+
       // Simulate SIGINT
       process.emit('SIGINT' as any);
-      
+
       expect(shutdownManager).toBeDefined();
-      
+
       shutdownSpy.mockRestore();
     });
   });
@@ -165,11 +165,11 @@ describe('ShutdownManager', () => {
   describe('timeout handling', () => {
     it('should use default timeout', async () => {
       const manager = new ShutdownManager();
-      
+
       const slowHandler = {
         name: 'slow-handler',
         handler: jest.fn(async () => {
-          await new Promise(resolve => setTimeout(resolve, 100));
+          await new Promise((resolve) => setTimeout(resolve, 100));
         }),
       };
 
@@ -183,7 +183,7 @@ describe('ShutdownManager', () => {
       const handler = {
         name: 'timed-handler',
         handler: jest.fn(async () => {
-          await new Promise(resolve => setTimeout(resolve, 50));
+          await new Promise((resolve) => setTimeout(resolve, 50));
         }),
         timeout: 100,
       };
@@ -226,7 +226,7 @@ describe('ShutdownManager', () => {
 
     it('should handle multiple shutdown calls gracefully', async () => {
       const handler = jest.fn(async () => {});
-      
+
       shutdownManager.registerHandler({
         name: 'test',
         handler,
@@ -262,13 +262,13 @@ describe('ShutdownManager', () => {
 
       expect(errorHandler).toHaveBeenCalled();
       expect(successHandler).toHaveBeenCalled();
-      
+
       exitSpy.mockRestore();
     });
 
     it('should handle handler timeout', async () => {
       const slowHandler = jest.fn(async () => {
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await new Promise((resolve) => setTimeout(resolve, 200));
       });
 
       shutdownManager.registerHandler({
@@ -282,7 +282,7 @@ describe('ShutdownManager', () => {
       await shutdownManager.shutdown('TEST');
 
       expect(slowHandler).toHaveBeenCalled();
-      
+
       exitSpy.mockRestore();
     });
   });
@@ -290,39 +290,39 @@ describe('ShutdownManager', () => {
   describe('setupSignalHandlers', () => {
     it('should setup signal handlers', () => {
       shutdownManager.setupSignalHandlers();
-      
+
       // Verify the manager is still functional
       expect(shutdownManager).toBeDefined();
     });
 
     it('should handle uncaught exceptions', async () => {
       const exitSpy = jest.spyOn(process, 'exit').mockImplementation(() => undefined as never);
-      
+
       shutdownManager.setupSignalHandlers();
-      
+
       // Simulate uncaught exception
       const error = new Error('Test error');
       process.emit('uncaughtException', error);
 
       // Give time for async shutdown
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
       exitSpy.mockRestore();
     });
 
     it('should handle unhandled rejections', async () => {
       const exitSpy = jest.spyOn(process, 'exit').mockImplementation(() => undefined as never);
-      
+
       shutdownManager.setupSignalHandlers();
-      
+
       // Simulate unhandled rejection - catch it to prevent test failure
       const reason = 'Test rejection';
       const promise = Promise.reject(reason).catch(() => {});
       process.emit('unhandledRejection', reason, promise);
 
       // Give time for async shutdown
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
       exitSpy.mockRestore();
     });
   });

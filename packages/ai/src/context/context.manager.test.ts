@@ -203,4 +203,47 @@ describe('AIContextManager', () => {
       expect(manager.messages[0].content).toBe('It is sunny');
     });
   });
+
+  describe('reconcileAsync()', () => {
+    it('no-ops when under token limit', async () => {
+      const m = new AIContextManager(500);
+      m.addMessage({ role: 'user', content: 'short' });
+      await m.reconcileAsync();
+      expect(m.messages).toHaveLength(1);
+    });
+
+    it('window strategy trims when over limit', async () => {
+      const m = new AIContextManager(25, { trimStrategy: 'window' });
+      m.addMessage({ role: 'user', content: 'x'.repeat(400) });
+      await m.reconcileAsync();
+      expect(m.currentTokens).toBeLessThanOrEqual(25);
+    });
+
+    it('summarize strategy uses summarizeDropped', async () => {
+      const m = new AIContextManager(80, {
+        trimStrategy: 'summarize',
+        summarizeDropped: async (dropped) => `SUM(${dropped.length})`,
+      });
+      m.addMessage({ role: 'user', content: 'a'.repeat(500) });
+      await m.reconcileAsync();
+      const text = m
+        .getMessages()
+        .map((x) => x.content)
+        .join('\n');
+      expect(text).toContain('Earlier conversation summary');
+      expect(text).toContain('SUM(');
+    });
+
+    it('summarize falls back to window trim when callback throws', async () => {
+      const m = new AIContextManager(80, {
+        trimStrategy: 'summarize',
+        summarizeDropped: async () => {
+          throw new Error('summarizer down');
+        },
+      });
+      m.addMessage({ role: 'user', content: 'b'.repeat(500) });
+      await m.reconcileAsync();
+      expect(m.currentTokens).toBeLessThanOrEqual(80);
+    });
+  });
 });

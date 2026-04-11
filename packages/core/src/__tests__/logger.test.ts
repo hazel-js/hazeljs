@@ -127,7 +127,7 @@ describe('Logger', () => {
     it('should handle logging errors gracefully', () => {
       const circularObj: any = { name: 'test' };
       circularObj.self = circularObj;
-      
+
       // Should not throw even with circular reference
       expect(() => {
         logger.info('Circular object', { data: 'safe' });

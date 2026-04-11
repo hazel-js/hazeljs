@@ -215,7 +215,7 @@ describe('HazelApp', () => {
 
     it('should handle multiple listen calls', async () => {
       await app.listen(0);
-      
+
       // Server should be running
       expect(true).toBe(true);
 
@@ -515,7 +515,7 @@ describe('HazelApp', () => {
       class TestService {}
       class TestController {
         constructor(private service: TestService) {}
-        
+
         getTest() {
           return { message: 'test' };
         }
@@ -557,40 +557,40 @@ describe('HazelApp', () => {
     it('should register GET route', () => {
       const handler = jest.fn();
       const result = app.get('/test', handler);
-      
+
       expect(result).toBe(app);
     });
 
     it('should register POST route', () => {
       const handler = jest.fn();
       const result = app.post('/test', handler);
-      
+
       expect(result).toBe(app);
     });
 
     it('should register PUT route', () => {
       const handler = jest.fn();
       const result = app.put('/test', handler);
-      
+
       expect(result).toBe(app);
     });
 
     it('should register DELETE route', () => {
       const handler = jest.fn();
       const result = app.delete('/test', handler);
-      
+
       expect(result).toBe(app);
     });
 
     it('should support method chaining', () => {
       const handler = jest.fn();
-      
+
       const result = app
         .get('/get', handler)
         .post('/post', handler)
         .put('/put', handler)
         .delete('/delete', handler);
-      
+
       expect(result).toBe(app);
     });
   });
@@ -621,7 +621,7 @@ describe('HazelApp', () => {
       class Component3 {}
 
       app.register(Component1).register(Component2).register(Component3);
-      
+
       expect(app).toBeDefined();
     });
   });
@@ -632,7 +632,7 @@ describe('HazelApp', () => {
       class AppModule {}
       Reflect.defineMetadata('hazel:module', {}, AppModule);
       const app = new HazelApp(AppModule);
-      
+
       expect(app).toBeDefined();
     });
 
@@ -640,7 +640,7 @@ describe('HazelApp', () => {
       class AppModule {}
       Reflect.defineMetadata('hazel:module', {}, AppModule);
       const app = new HazelApp(AppModule);
-      
+
       expect(app).toBeDefined();
     });
 
@@ -648,7 +648,7 @@ describe('HazelApp', () => {
       class AppModule {}
       Reflect.defineMetadata('hazel:module', {}, AppModule);
       const app = new HazelApp(AppModule);
-      
+
       expect(app).toBeDefined();
     });
 
@@ -656,7 +656,7 @@ describe('HazelApp', () => {
       class AppModule {}
       Reflect.defineMetadata('hazel:module', {}, AppModule);
       const app = new HazelApp(AppModule);
-      
+
       expect(app).toBeDefined();
     });
 
@@ -664,7 +664,7 @@ describe('HazelApp', () => {
       class AppModule {}
       Reflect.defineMetadata('hazel:module', {}, AppModule);
       const app = new HazelApp(AppModule);
-      
+
       expect(app).toBeDefined();
     });
 
@@ -672,7 +672,7 @@ describe('HazelApp', () => {
       class AppModule {}
       Reflect.defineMetadata('hazel:module', {}, AppModule);
       const app = new HazelApp(AppModule);
-      
+
       expect(app).toBeDefined();
     });
   });
@@ -783,7 +783,7 @@ describe('HazelApp', () => {
 
       const app = new HazelApp(AppModule);
       const healthManager = app.getHealthManager();
-      
+
       expect(healthManager).toBeDefined();
     });
 
@@ -793,7 +793,7 @@ describe('HazelApp', () => {
 
       const app = new HazelApp(AppModule);
       const shutdownManager = app.getShutdownManager();
-      
+
       expect(shutdownManager).toBeDefined();
     });
   });

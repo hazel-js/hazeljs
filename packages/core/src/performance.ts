@@ -42,7 +42,7 @@ export class PerformanceMonitor {
   }
 
   removeHook(name: string): void {
-    this.hooks = this.hooks.filter(hook => hook.name !== name);
+    this.hooks = this.hooks.filter((hook) => hook.name !== name);
     logger.debug(`Removed performance hook: ${name}`);
   }
 
@@ -108,8 +108,8 @@ export class PerformanceMonitor {
     metrics: PerformanceMetrics
   ): Promise<void> {
     const promises = this.hooks
-      .filter(hook => hook[hookType])
-      .map(async hook => {
+      .filter((hook) => hook[hookType])
+      .map(async (hook) => {
         try {
           await hook[hookType]!(metrics);
         } catch (error) {
@@ -140,7 +140,8 @@ export const BuiltinPerformanceHooks = {
     name: 'memory-monitor',
     onRequest: (metrics): void => {
       const memUsage = metrics.memoryUsage!;
-      if (memUsage.heapUsed > 100 * 1024 * 1024) { // 100MB
+      if (memUsage.heapUsed > 100 * 1024 * 1024) {
+        // 100MB
         logger.warn(
           `High memory usage during request ${metrics.requestId}: ${Math.round(memUsage.heapUsed / 1024 / 1024)}MB`
         );
@@ -151,24 +152,22 @@ export const BuiltinPerformanceHooks = {
   // Request rate limiting
   rateLimiter: (maxRequests: number = 100, windowMs: number = 60000): PerformanceHook => {
     const requests: number[] = [];
-    
+
     return {
       name: 'rate-limiter',
       onRequest: (_metrics): void => {
         const now = Date.now();
         const windowStart = now - windowMs;
-        
+
         // Remove old requests
         while (requests.length > 0 && requests[0] < windowStart) {
           requests.shift();
         }
-        
+
         requests.push(now);
-        
+
         if (requests.length > maxRequests) {
-          logger.warn(
-            `Rate limit exceeded: ${requests.length} requests in ${windowMs}ms`
-          );
+          logger.warn(`Rate limit exceeded: ${requests.length} requests in ${windowMs}ms`);
         }
       },
     };
@@ -177,20 +176,20 @@ export const BuiltinPerformanceHooks = {
   // Performance metrics collector
   metricsCollector: (): PerformanceHook => {
     const metrics: PerformanceMetrics[] = [];
-    
+
     return {
       name: 'metrics-collector',
       onResponse: (metricsData): void => {
         metrics.push(metricsData);
-        
+
         // Keep only last 1000 metrics
         if (metrics.length > 1000) {
           metrics.splice(0, 100);
         }
-        
+
         // Calculate average response time
         const avgTime = metrics.reduce((sum, m) => sum + (m.duration || 0), 0) / metrics.length;
-        
+
         if (metrics.length % 100 === 0) {
           logger.debug(
             `Performance metrics - Avg response time: ${Math.round(avgTime)}ms, Requests: ${metrics.length}`

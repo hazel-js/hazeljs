@@ -94,7 +94,10 @@ describe('BaseService', () => {
     it('should log debug message', () => {
       service.testLogDebug('Debug message');
 
-      expect(logger.debug).toHaveBeenCalledWith('[TestService.testMethod] Debug message', undefined);
+      expect(logger.debug).toHaveBeenCalledWith(
+        '[TestService.testMethod] Debug message',
+        undefined
+      );
     });
 
     it('should log debug message with data', () => {
@@ -112,7 +115,10 @@ describe('BaseService', () => {
       };
       service.testLogDebug('Complex operation', complexData);
 
-      expect(logger.debug).toHaveBeenCalledWith('[TestService.testMethod] Complex operation', complexData);
+      expect(logger.debug).toHaveBeenCalledWith(
+        '[TestService.testMethod] Complex operation',
+        complexData
+      );
     });
   });
 

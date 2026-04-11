@@ -1,6 +1,7 @@
 import { TokenUsage, TokenLimitConfig } from '../ai-enhanced.types';
 import { Service } from '@hazeljs/core';
 import logger from '@hazeljs/core';
+import type { IUsageStore } from './usage.store';
 
 /**
  * Token Usage Tracker
@@ -11,6 +12,7 @@ export class TokenTracker {
   private usageHistory: TokenUsage[] = [];
   private config: TokenLimitConfig;
   private userUsage: Map<string, TokenUsage[]> = new Map();
+  private readonly usageStore?: IUsageStore;
 
   // Token costs per 1K tokens (as of 2024)
   private readonly TOKEN_COSTS: Record<string, { prompt: number; completion: number }> = {
@@ -25,13 +27,14 @@ export class TokenTracker {
     'claude-3.5-sonnet': { prompt: 0.003, completion: 0.015 },
   };
 
-  constructor(config?: TokenLimitConfig) {
+  constructor(config?: TokenLimitConfig, usageStore?: IUsageStore) {
     this.config = {
       maxTokensPerRequest: config?.maxTokensPerRequest || 4096,
       maxTokensPerDay: config?.maxTokensPerDay || 100000,
       maxTokensPerMonth: config?.maxTokensPerMonth || 1000000,
       costPerToken: config?.costPerToken,
     };
+    this.usageStore = usageStore;
     logger.info('Token Tracker initialized', this.config);
   }
 
@@ -58,6 +61,20 @@ export class TokenTracker {
       totalTokens: usage.totalTokens,
       cost: usage.cost,
     });
+
+    if (this.usageStore) {
+      void this.usageStore
+        .save({
+          userId: usage.userId,
+          provider: 'tracked',
+          promptTokens: usage.promptTokens,
+          completionTokens: usage.completionTokens,
+          totalTokens: usage.totalTokens,
+          costUsd: usage.cost,
+          createdAt: new Date().toISOString(),
+        })
+        .catch((err) => logger.warn('Usage store save failed', err));
+    }
   }
 
   /**

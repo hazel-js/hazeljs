@@ -1,7 +1,7 @@
 /**
  * AI Provider types
  */
-export type AIProvider = 'openai' | 'anthropic' | 'gemini' | 'cohere' | 'ollama' | 'huggingface';
+export type AIProvider = 'openai' | 'anthropic' | 'gemini' | 'cohere' | 'ollama';
 
 /**
  * AI model configuration
