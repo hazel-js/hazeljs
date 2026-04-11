@@ -1,4 +1,9 @@
-import { createMemoryStore, MemoryCategory, MemoryService } from '@hazeljs/memory';
+import {
+  createMemoryStore,
+  MemoryCategory,
+  MemoryService,
+  type MemoryItem,
+} from '@hazeljs/memory';
 import { HazelAI } from '../../hazel-ai';
 import { HCELError } from '../hcel.error';
 
@@ -53,7 +58,9 @@ describe('HCEL @hazeljs/memory integration', () => {
     const items = await memory.getByUserAndCategory('u1', MemoryCategory.SEMANTIC_SUMMARY, {
       limit: 10,
     });
-    expect(items.some((i) => i.key === 'turn' && i.value === 'assistant reply')).toBe(true);
+    expect(
+      items.some((i: MemoryItem) => i.key === 'turn' && i.value === 'assistant reply')
+    ).toBe(true);
   });
 
   it('memorySearch passes through when store has no hits', async () => {

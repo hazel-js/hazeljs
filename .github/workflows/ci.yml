@@ -10,6 +10,8 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
     environment: prod
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/hazeljs_ci
 
     strategy:
       matrix:

@@ -10,7 +10,8 @@
     "paths": {
       "@hazeljs/core": ["../core/src"],
       "@hazeljs/cache": ["../cache/src"],
-      "@hazeljs/prompts": ["../prompts/src"]
+      "@hazeljs/prompts": ["../prompts/src"],
+      "@hazeljs/memory": ["../memory/src"]
     },
     "types": ["jest", "node"]
   },
@@ -25,6 +26,9 @@
     },
     {
       "path": "../prompts"
+    },
+    {
+      "path": "../memory"
     }
   ]
 }

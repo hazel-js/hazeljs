@@ -212,13 +212,16 @@ export class GatewayServer extends EventEmitter {
 
       // Return 429 for rate limit exceeded (RFC 6585)
       if (error instanceof RateLimitError) {
-        const retryAfterSec = error.retryAfterMs ? Math.ceil(error.retryAfterMs / 1000) : 60;
+        const rateLimitErr = error;
+        const retryAfterSec = rateLimitErr.retryAfterMs
+          ? Math.ceil(rateLimitErr.retryAfterMs / 1000)
+          : 60;
         return {
           status: 429,
           headers: { 'Retry-After': String(retryAfterSec) },
           body: {
             error: 'Too Many Requests',
-            message: error.message,
+            message: rateLimitErr.message,
             retryAfter: retryAfterSec,
           },
         };

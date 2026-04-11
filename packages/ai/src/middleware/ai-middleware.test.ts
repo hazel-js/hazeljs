@@ -13,6 +13,8 @@ const req: AICompletionRequest = {
 };
 
 const res: AICompletionResponse = {
+  id: 'test-res-1',
+  role: 'assistant',
   content: 'ok',
   model: 'gpt-4',
   usage: { promptTokens: 1, completionTokens: 1, totalTokens: 2 },

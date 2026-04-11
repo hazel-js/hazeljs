@@ -196,8 +196,20 @@ describe('ChatFacade', () => {
   describe('streamFull', () => {
     it('yields full AIStreamChunk objects', async () => {
       const fullChunks = [
-        { id: '1', delta: 'a', done: false, usage: { totalTokens: 1 } },
-        { id: '2', delta: 'b', done: true, usage: { totalTokens: 2 } },
+        {
+          id: '1',
+          content: 'a',
+          delta: 'a',
+          done: false,
+          usage: { promptTokens: 0, completionTokens: 1, totalTokens: 1 },
+        },
+        {
+          id: '2',
+          content: 'ab',
+          delta: 'b',
+          done: true,
+          usage: { promptTokens: 0, completionTokens: 2, totalTokens: 2 },
+        },
       ];
       mockAIService.streamComplete.mockReturnValue(
         (async function* () {
@@ -219,7 +231,7 @@ describe('ChatFacade', () => {
     it('passes system prompt and options to streamComplete', async () => {
       mockAIService.streamComplete.mockReturnValue(
         (async function* () {
-          yield { id: 'x', delta: '', done: true };
+          yield { id: 'x', content: '', delta: '', done: true };
         })()
       );
 

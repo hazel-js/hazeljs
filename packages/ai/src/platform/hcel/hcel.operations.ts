@@ -629,7 +629,9 @@ export class MemorySearchOperation implements HCELOperation<string, string> {
       return text;
     }
     const header = this.config.header ?? 'Memory search results:';
-    const lines = hits.map((i) => `- ${i.key}: ${formatMemoryValue(i.value)}`).join('\n');
+    const lines = hits
+      .map((i: MemoryItem) => `- ${i.key}: ${formatMemoryValue(i.value)}`)
+      .join('\n');
     return `${header}\n${lines}\n\n${text}`;
   }
 

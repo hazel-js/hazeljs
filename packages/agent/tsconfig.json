@@ -11,7 +11,9 @@
     "emitDecoratorMetadata": true,
     "baseUrl": ".",
     "paths": {
-      "@hazeljs/prompts": ["../prompts/src"]
+      "@hazeljs/prompts": ["../prompts/src"],
+      "@hazeljs/rag": ["../rag/src"],
+      "@hazeljs/resilience": ["../resilience/src"]
     },
     "types": ["jest", "node"]
   },
@@ -26,6 +28,9 @@
     },
     {
       "path": "../rag"
+    },
+    {
+      "path": "../resilience"
     }
   ]
 }
