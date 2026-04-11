@@ -29,7 +29,7 @@
     "lint": "npm run lint --workspaces --if-present",
     "lint:fix": "npm run lint:fix --workspaces --if-present",
     "format": "prettier --write \"**/*.{ts,tsx,json,md}\"",
-    "format:check": "prettier --check \"**/*.{ts,tsx,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,json,md}\" \"!packages/cli/cli-manifest.json\"",
     "typecheck": "tsc -b",
     "clean": "npm run clean --workspaces --if-present && rm -rf node_modules",
     "prisma:generate": "ts-node scripts/migrate.ts generate",
