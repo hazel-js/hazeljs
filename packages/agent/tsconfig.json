@@ -11,7 +11,7 @@
     "emitDecoratorMetadata": true,
     "baseUrl": ".",
     "paths": {
-      "@hazeljs/eval": ["../eval/dist/index.d.ts"],
+      "@hazeljs/eval": ["../eval/src/index.ts"],
       "@hazeljs/prompts": ["../prompts/src"],
       "@hazeljs/rag": ["../rag/src"],
       "@hazeljs/resilience": ["../resilience/src"]

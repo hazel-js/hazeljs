@@ -36,6 +36,22 @@ import { RAGFacade } from '../rag.facade';
 import { AIEnhancedService } from '../../ai-enhanced.service';
 import type { HazelAIConfig, RAGSource } from '../../platform/hazel-ai.types';
 
+/** Jest mock surface for `@hazeljs/rag` (see jest.mock above); real package types omit these in some resolutions. */
+type MockedRagExports = {
+  RAGPipeline: jest.Mock;
+  RAGService: jest.Mock;
+  OpenAIEmbeddings: jest.Mock;
+  CohereEmbeddings: jest.Mock;
+  PineconeVectorStore: jest.Mock;
+  QdrantVectorStore: jest.Mock;
+  WeaviateVectorStore: jest.Mock;
+  ChromaVectorStore: jest.Mock;
+};
+
+async function loadMockedRag(): Promise<MockedRagExports> {
+  return (await import('@hazeljs/rag')) as unknown as MockedRagExports;
+}
+
 describe('RAGFacade', () => {
   let facade: RAGFacade;
   let mockAIService: jest.Mocked<AIEnhancedService>;
@@ -91,7 +107,7 @@ describe('RAGFacade', () => {
     });
 
     it('should not initialize multiple times', async () => {
-      const { RAGPipeline } = await import('@hazeljs/rag');
+      const { RAGPipeline } = await loadMockedRag();
 
       await (facade as any).ensureRAG();
       await (facade as any).ensureRAG();
@@ -126,9 +142,9 @@ describe('RAGFacade', () => {
     it('should use default provider when none specified', async () => {
       await (facade as any).ensureRAG();
 
-      const { RAGPipeline } = await import('@hazeljs/rag');
+      const { RAGPipeline } = await loadMockedRag();
       expect(RAGPipeline).toHaveBeenCalled();
-      const [pipelineConfig] = (RAGPipeline as jest.Mock).mock.calls[0];
+      const [pipelineConfig] = (RAGPipeline as unknown as jest.Mock).mock.calls[0];
       expect(pipelineConfig).toEqual(
         expect.objectContaining({
           vectorStore: expect.anything(),
@@ -325,7 +341,7 @@ describe('RAGFacade', () => {
     it('should not load RAG service until first method call', async () => {
       expect((facade as any).initialized).toBe(false);
 
-      const { RAGPipeline } = await import('@hazeljs/rag');
+      const { RAGPipeline } = await loadMockedRag();
 
       await facade.ask('test');
 
@@ -354,8 +370,10 @@ describe('RAGFacade', () => {
 
       await (facade as unknown as { ensureRAG: () => Promise<void> }).ensureRAG();
 
-      const { RAGPipeline } = await import('@hazeljs/rag');
-      const llm = (RAGPipeline as jest.Mock).mock.calls[0][1] as (p: string) => Promise<string>;
+      const { RAGPipeline } = await loadMockedRag();
+      const llm = (RAGPipeline as unknown as jest.Mock).mock.calls[0][1] as (
+        p: string
+      ) => Promise<string>;
 
       await expect(llm('test')).rejects.toThrow('AI service error');
     });
@@ -369,7 +387,7 @@ describe('RAGFacade', () => {
       facade = new RAGFacade(mockAIService, mockConfig);
       jest.clearAllMocks();
       await (facade as any).ensureRAG();
-      const { CohereEmbeddings } = await import('@hazeljs/rag');
+      const { CohereEmbeddings } = await loadMockedRag();
       expect(CohereEmbeddings).toHaveBeenCalled();
       process.env.COHERE_API_KEY = prev;
     });
@@ -398,7 +416,7 @@ describe('RAGFacade', () => {
       };
       facade = new RAGFacade(mockAIService, mockConfig);
       await (facade as any).ensureRAG();
-      const { PineconeVectorStore } = await import('@hazeljs/rag');
+      const { PineconeVectorStore } = await loadMockedRag();
       expect(PineconeVectorStore).toHaveBeenCalled();
     });
 
@@ -416,7 +434,7 @@ describe('RAGFacade', () => {
       };
       facade = new RAGFacade(mockAIService, mockConfig);
       await (facade as any).ensureRAG();
-      const { QdrantVectorStore } = await import('@hazeljs/rag');
+      const { QdrantVectorStore } = await loadMockedRag();
       expect(QdrantVectorStore).toHaveBeenCalled();
     });
 
@@ -435,7 +453,7 @@ describe('RAGFacade', () => {
       };
       facade = new RAGFacade(mockAIService, mockConfig);
       await (facade as any).ensureRAG();
-      const { WeaviateVectorStore } = await import('@hazeljs/rag');
+      const { WeaviateVectorStore } = await loadMockedRag();
       expect(WeaviateVectorStore).toHaveBeenCalled();
     });
 
@@ -453,7 +471,7 @@ describe('RAGFacade', () => {
       };
       facade = new RAGFacade(mockAIService, mockConfig);
       await (facade as any).ensureRAG();
-      const { ChromaVectorStore } = await import('@hazeljs/rag');
+      const { ChromaVectorStore } = await loadMockedRag();
       expect(ChromaVectorStore).toHaveBeenCalled();
     });
   });
