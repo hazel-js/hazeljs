@@ -37,12 +37,10 @@ const cohere = new CohereProvider('your-api-key-here');
 
 ```typescript
 const response = await cohere.complete({
-  messages: [
-    { role: 'user', content: 'Explain machine learning in simple terms' }
-  ],
+  messages: [{ role: 'user', content: 'Explain machine learning in simple terms' }],
   model: 'command-r-plus',
   temperature: 0.7,
-  maxTokens: 1000
+  maxTokens: 1000,
 });
 
 console.log(response.content);
@@ -53,15 +51,13 @@ console.log(response.usage); // Token usage statistics
 
 ```typescript
 const stream = cohere.streamComplete({
-  messages: [
-    { role: 'user', content: 'Write a creative story about AI' }
-  ],
-  model: 'command-r'
+  messages: [{ role: 'user', content: 'Write a creative story about AI' }],
+  model: 'command-r',
 });
 
 for await (const chunk of stream) {
   process.stdout.write(chunk.delta);
-  
+
   if (chunk.done) {
     console.log('\n\nUsage:', chunk.usage);
   }
@@ -74,9 +70,9 @@ for await (const chunk of stream) {
 const embeddings = await cohere.embed({
   input: [
     'Natural language processing is a branch of AI',
-    'Deep learning models use neural networks'
+    'Deep learning models use neural networks',
   ],
-  model: 'embed-english-v3.0'
+  model: 'embed-english-v3.0',
 });
 
 console.log(embeddings.embeddings); // Array of 1024-dimensional vectors
@@ -92,7 +88,7 @@ const documents = [
   'Python is a programming language',
   'JavaScript is used for web development',
   'Machine learning uses algorithms to learn from data',
-  'React is a JavaScript library'
+  'React is a JavaScript library',
 ];
 
 const reranked = await cohere.rerank(
@@ -102,7 +98,7 @@ const reranked = await cohere.rerank(
   'rerank-english-v3.0'
 );
 
-reranked.forEach(result => {
+reranked.forEach((result) => {
   console.log(`Score: ${result.score.toFixed(3)} - ${result.document}`);
 });
 // Output:
@@ -120,6 +116,7 @@ console.log('Cohere available:', isAvailable);
 ## Supported Models
 
 ### Text Generation
+
 - **command-r-plus** - Most powerful model for complex reasoning tasks
 - **command-r** - Balanced performance and cost, great for most use cases
 - **command** - Standard text generation model
@@ -127,12 +124,14 @@ console.log('Cohere available:', isAvailable);
 - **command-nightly** - Latest experimental features
 
 ### Embeddings
+
 - **embed-english-v3.0** - English text embeddings (1024 dimensions)
 - **embed-multilingual-v3.0** - Multilingual embeddings (1024 dimensions)
 - **embed-english-light-v3.0** - Faster English embeddings
 - **embed-multilingual-light-v3.0** - Faster multilingual embeddings
 
 ### Reranking
+
 - **rerank-english-v3.0** - English document reranking
 - **rerank-multilingual-v3.0** - Multilingual document reranking
 
@@ -143,7 +142,7 @@ The provider includes comprehensive error handling:
 ```typescript
 try {
   const response = await cohere.complete({
-    messages: [{ role: 'user', content: 'Hello!' }]
+    messages: [{ role: 'user', content: 'Hello!' }],
   });
 } catch (error) {
   console.error('Cohere API error:', error.message);
@@ -171,11 +170,9 @@ export class AIController {
   @Post('/generate')
   async generate(@Body() body: { prompt: string }) {
     const response = await this.cohere.complete({
-      messages: [
-        { role: 'user', content: body.prompt }
-      ],
+      messages: [{ role: 'user', content: body.prompt }],
       model: 'command-r',
-      temperature: 0.8
+      temperature: 0.8,
     });
 
     return { text: response.content };
@@ -183,11 +180,7 @@ export class AIController {
 
   @Post('/rerank')
   async rerank(@Body() body: { query: string; documents: string[] }) {
-    const results = await this.cohere.rerank(
-      body.query,
-      body.documents,
-      5
-    );
+    const results = await this.cohere.rerank(body.query, body.documents, 5);
 
     return { results };
   }
@@ -212,28 +205,28 @@ class SmartRAG {
   async search(query: string) {
     // Step 1: Initial retrieval (get more candidates)
     const candidates = await this.rag.search(query, { topK: 20 });
-    
+
     // Step 2: Rerank with Cohere for better relevance
     const reranked = await this.cohere.rerank(
       query,
-      candidates.map(c => c.content),
+      candidates.map((c) => c.content),
       5 // Get top 5 after reranking
     );
 
     // Step 3: Use reranked results for generation
-    const context = reranked.map(r => r.document).join('\n\n');
-    
+    const context = reranked.map((r) => r.document).join('\n\n');
+
     const response = await this.cohere.complete({
       messages: [
         { role: 'system', content: 'Answer based on the context provided.' },
-        { role: 'user', content: `Context:\n${context}\n\nQuestion: ${query}` }
+        { role: 'user', content: `Context:\n${context}\n\nQuestion: ${query}` },
       ],
-      model: 'command-r-plus'
+      model: 'command-r-plus',
     });
 
     return {
       answer: response.content,
-      sources: reranked
+      sources: reranked,
     };
   }
 }
@@ -285,7 +278,7 @@ Monitor your usage in the [Cohere Dashboard](https://dashboard.cohere.com/).
    - Use `command-r` for balanced performance (recommended for most cases)
    - Use `command-light` for simple, fast responses
 
-2. **Leverage Reranking**: 
+2. **Leverage Reranking**:
    - Always use reranking for RAG applications
    - Retrieve 2-3x more candidates than needed, then rerank
    - Reranking significantly improves retrieval quality
@@ -308,17 +301,21 @@ Monitor your usage in the [Cohere Dashboard](https://dashboard.cohere.com/).
 ## Cohere-Specific Advantages
 
 ### 1. Superior Reranking
+
 Cohere's reranking models are industry-leading for improving search relevance in RAG applications.
 
 ### 2. Multilingual Support
+
 Excellent multilingual capabilities across generation and embeddings.
 
 ### 3. Enterprise Features
+
 - Fine-tuning support
 - Custom models
 - Dedicated support
 
 ### 4. Cost-Effective
+
 Competitive pricing with excellent performance/cost ratio.
 
 ## Migration from Mock Implementation
@@ -334,19 +331,23 @@ The provider will automatically use the real API instead of mock responses.
 ## Troubleshooting
 
 ### "API key not configured"
+
 - Ensure `COHERE_API_KEY` is set in your environment
 - Or pass the API key directly to the constructor
 
 ### "Cannot find module 'cohere-ai'"
+
 - Run `npm install cohere-ai` in your project
 - Rebuild with `npm run build`
 
 ### Rate limit errors
+
 - Implement retry logic with exponential backoff
 - Consider upgrading to a higher tier for more requests
 - Use `command-light` for less critical requests
 
 ### Reranking returns unexpected results
+
 - Ensure documents array is not empty
 - Check that `topN` is less than or equal to documents length
 - Verify the query is relevant to the documents
@@ -375,42 +376,37 @@ class ProductionRAG {
     // 1. Embed the question
     const questionEmbedding = await this.cohere.embed({
       input: question,
-      model: 'embed-english-v3.0'
+      model: 'embed-english-v3.0',
     });
 
     // 2. Find similar documents (simplified - use vector DB in production)
     const candidates = documents.slice(0, 20);
 
     // 3. Rerank for better relevance
-    const reranked = await this.cohere.rerank(
-      question,
-      candidates,
-      5,
-      'rerank-english-v3.0'
-    );
+    const reranked = await this.cohere.rerank(question, candidates, 5, 'rerank-english-v3.0');
 
     // 4. Generate answer with context
-    const context = reranked.map(r => r.document).join('\n\n');
-    
+    const context = reranked.map((r) => r.document).join('\n\n');
+
     const response = await this.cohere.complete({
       messages: [
         {
           role: 'system',
-          content: 'You are a helpful assistant. Answer questions based on the provided context.'
+          content: 'You are a helpful assistant. Answer questions based on the provided context.',
         },
         {
           role: 'user',
-          content: `Context:\n${context}\n\nQuestion: ${question}`
-        }
+          content: `Context:\n${context}\n\nQuestion: ${question}`,
+        },
       ],
       model: 'command-r-plus',
-      temperature: 0.3
+      temperature: 0.3,
     });
 
     return {
       answer: response.content,
       sources: reranked,
-      usage: response.usage
+      usage: response.usage,
     };
   }
 }

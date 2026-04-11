@@ -59,16 +59,16 @@ import { OptimizeColdStart } from '@hazeljs/core/serverless';
 
 @Controller('/api')
 @Serverless({
-  memory: 512,              // Memory allocation in MB
-  timeout: 30,              // Timeout in seconds
-  coldStartOptimization: true,  // Enable cold start optimization
-  runtime: 'aws-lambda',    // Target platform
+  memory: 512, // Memory allocation in MB
+  timeout: 30, // Timeout in seconds
+  coldStartOptimization: true, // Enable cold start optimization
+  runtime: 'aws-lambda', // Target platform
 })
 export class ApiController {
   constructor(private apiService: ApiService) {}
 
   @Get('/hello')
-  @OptimizeColdStart()  // Pre-warm this endpoint
+  @OptimizeColdStart() // Pre-warm this endpoint
   async hello() {
     return {
       message: 'Hello from HazelJS Serverless!',
@@ -140,6 +140,7 @@ serverless --version  # 3.x.x
 
 1. **Create AWS Account** - https://aws.amazon.com
 2. **Configure AWS CLI**:
+
    ```bash
    aws configure
    # AWS Access Key ID: YOUR_ACCESS_KEY
@@ -187,14 +188,14 @@ npm test
 
 HazelJS supports multiple deployment strategies:
 
-| Method | Complexity | Best For | Cost |
-|--------|------------|----------|------|
-| **Serverless Framework** | Low | Quick deployments, multi-cloud | Free |
-| **AWS SAM** | Medium | AWS-native, infrastructure as code | Free |
-| **AWS CDK** | High | Complex infrastructure, TypeScript IaC | Free |
-| **Docker + Lambda** | Medium | Custom runtimes, large dependencies | Free |
-| **Terraform** | High | Multi-cloud, enterprise | Free |
-| **Manual AWS CLI** | Low | Learning, simple apps | Free |
+| Method                   | Complexity | Best For                               | Cost |
+| ------------------------ | ---------- | -------------------------------------- | ---- |
+| **Serverless Framework** | Low        | Quick deployments, multi-cloud         | Free |
+| **AWS SAM**              | Medium     | AWS-native, infrastructure as code     | Free |
+| **AWS CDK**              | High       | Complex infrastructure, TypeScript IaC | Free |
+| **Docker + Lambda**      | Medium     | Custom runtimes, large dependencies    | Free |
+| **Terraform**            | High       | Multi-cloud, enterprise                | Free |
+| **Manual AWS CLI**       | Low        | Learning, simple apps                  | Free |
 
 **Recommendation:** Start with **Serverless Framework** for ease of use, then migrate to AWS CDK for production.
 
@@ -391,13 +392,13 @@ provider:
   region: ${opt:region, 'us-east-1'}
   memorySize: 512
   timeout: 30
-  
+
   # Environment variables
   environment:
     NODE_ENV: ${self:provider.stage}
     LOG_LEVEL: ${self:custom.logLevel.${self:provider.stage}, 'info'}
     STAGE: ${self:provider.stage}
-  
+
   # IAM permissions
   iam:
     role:
@@ -414,13 +415,13 @@ provider:
         #     - dynamodb:Query
         #     - dynamodb:GetItem
         #   Resource: 'arn:aws:dynamodb:*:*:table/YourTable'
-  
+
   # API Gateway configuration
   apiGateway:
     shouldStartNameWithService: true
-    minimumCompressionSize: 1024  # Enable compression
-    metrics: true  # Enable CloudWatch metrics
-  
+    minimumCompressionSize: 1024 # Enable compression
+    metrics: true # Enable CloudWatch metrics
+
   # CloudWatch Logs
   logs:
     restApi: true
@@ -449,10 +450,10 @@ functions:
           method: ANY
           cors:
             origin: '*'
-    
+
     # Reserved concurrency (optional)
     # reservedConcurrency: 10
-    
+
     # Provisioned concurrency (for production)
     # provisionedConcurrency: 2
 
@@ -462,7 +463,7 @@ custom:
     dev: debug
     staging: info
     prod: warn
-  
+
   # Serverless Offline plugin config
   serverless-offline:
     httpPort: 3000
@@ -471,8 +472,8 @@ custom:
 
 # Plugins
 plugins:
-  - serverless-offline  # Local development
-  - serverless-plugin-typescript  # TypeScript support
+  - serverless-offline # Local development
+  - serverless-plugin-typescript # TypeScript support
 
 # Package configuration
 package:
@@ -492,7 +493,7 @@ resources:
   Resources:
     # Add custom resources here
     # Example: DynamoDB table, S3 bucket, etc.
-  
+
   Outputs:
     ApiUrl:
       Description: API Gateway endpoint URL
@@ -528,9 +529,9 @@ serverless deploy --stage prod --region us-east-1
 
 # Expected output:
 # Deploying hazeljs-serverless-api to stage prod (us-east-1)
-# 
+#
 # ✔ Service deployed to stack hazeljs-serverless-api-prod (112s)
-# 
+#
 # endpoint: ANY - https://abc123xyz.execute-api.us-east-1.amazonaws.com/prod/{proxy+}
 # functions:
 #   api: hazeljs-serverless-api-prod-api (15 MB)
@@ -697,6 +698,7 @@ export class ApiController {
 ```
 
 **What it does:**
+
 - Pre-initializes DI container
 - Preloads critical modules
 - Warms up database connections
@@ -711,10 +713,11 @@ For production workloads, use provisioned concurrency:
 functions:
   api:
     handler: dist/lambda.handler
-    provisionedConcurrency: 5  # Keep 5 instances warm
+    provisionedConcurrency: 5 # Keep 5 instances warm
 ```
 
 **Cost vs Benefit:**
+
 - **Cost:** ~$0.015 per GB-hour
 - **Benefit:** Zero cold starts
 - **Use case:** Production APIs with consistent traffic
@@ -726,17 +729,17 @@ functions:
 export const config = {
   isDev: process.env.NODE_ENV === 'development',
   isProd: process.env.NODE_ENV === 'production',
-  
+
   database: {
     url: process.env.DATABASE_URL,
     poolSize: process.env.DB_POOL_SIZE || 5,
   },
-  
+
   cache: {
     enabled: process.env.CACHE_ENABLED === 'true',
     ttl: parseInt(process.env.CACHE_TTL || '3600'),
   },
-  
+
   logging: {
     level: process.env.LOG_LEVEL || 'info',
   },
@@ -836,7 +839,7 @@ export class ApiService {
 
   async processRequest(data: unknown) {
     this.logger.log('Processing request', { data });
-    
+
     try {
       const result = await this.process(data);
       this.logger.log('Request processed successfully', { result });
@@ -850,6 +853,7 @@ export class ApiService {
 ```
 
 **View logs:**
+
 ```bash
 # Serverless Framework
 serverless logs -f api --tail --stage prod
@@ -868,15 +872,19 @@ import { CloudWatch } from 'aws-sdk';
 const cloudwatch = new CloudWatch();
 
 async function recordMetric(name: string, value: number) {
-  await cloudwatch.putMetricData({
-    Namespace: 'HazelJS/API',
-    MetricData: [{
-      MetricName: name,
-      Value: value,
-      Unit: 'Count',
-      Timestamp: new Date(),
-    }],
-  }).promise();
+  await cloudwatch
+    .putMetricData({
+      Namespace: 'HazelJS/API',
+      MetricData: [
+        {
+          MetricName: name,
+          Value: value,
+          Unit: 'Count',
+          Timestamp: new Date(),
+        },
+      ],
+    })
+    .promise();
 }
 
 // Usage
@@ -939,9 +947,7 @@ Sentry.AWSLambda.init({
   tracesSampleRate: 1.0,
 });
 
-export const handler = Sentry.AWSLambda.wrapHandler(
-  createLambdaHandler(AppModule)
-);
+export const handler = Sentry.AWSLambda.wrapHandler(createLambdaHandler(AppModule));
 ```
 
 ### 5. CloudWatch Alarms
@@ -967,7 +973,7 @@ resources:
             Value: !Ref ApiLambdaFunction
         AlarmActions:
           - !Ref AlertTopic
-    
+
     AlertTopic:
       Type: AWS::SNS::Topic
       Properties:
@@ -984,6 +990,7 @@ resources:
 ### Understanding Lambda Pricing
 
 **AWS Lambda Pricing (as of 2024):**
+
 - **Requests:** $0.20 per 1M requests
 - **Compute:** $0.0000166667 per GB-second
 - **Free Tier:** 1M requests + 400,000 GB-seconds per month
@@ -1008,7 +1015,7 @@ for mem in 128 256 512 1024; do
   aws lambda update-function-configuration \
     --function-name hazeljs-api \
     --memory-size $mem
-  
+
   # Run load test
   artillery run load-test.yml
 done
@@ -1026,7 +1033,7 @@ export const handler = async (event, context) => {
   if (!dbConnection) {
     dbConnection = new PrismaClient();
   }
-  
+
   // Use existing connection
   const result = await dbConnection.user.findMany();
   return result;
@@ -1061,7 +1068,7 @@ aws lambda update-function-configuration \
 @Controller('/api')
 export class ApiController {
   @Get('/data')
-  @Cache({ ttl: 3600 })  // Cache for 1 hour
+  @Cache({ ttl: 3600 }) // Cache for 1 hour
   async getData() {
     // Expensive operation cached
     return await this.expensiveQuery();
@@ -1082,9 +1089,9 @@ resources:
         MetricName: EstimatedCharges
         Namespace: AWS/Billing
         Statistic: Maximum
-        Period: 21600  # 6 hours
+        Period: 21600 # 6 hours
         EvaluationPeriods: 1
-        Threshold: 100  # Alert if > $100
+        Threshold: 100 # Alert if > $100
         ComparisonOperator: GreaterThanThreshold
 ```
 
@@ -1099,6 +1106,7 @@ resources:
 **Problem:** Function times out on first request
 
 **Solution:**
+
 ```typescript
 // Increase timeout
 @Serverless({
@@ -1118,6 +1126,7 @@ functions:
 **Problem:** Deployment package exceeds 50MB limit
 
 **Solution:**
+
 ```bash
 # Use webpack to bundle
 npm install --save-dev webpack webpack-cli
@@ -1131,6 +1140,7 @@ docker build -t hazeljs-api .
 **Problem:** "Too many connections" error
 
 **Solution:**
+
 ```typescript
 // Use connection pooling
 const prisma = new PrismaClient({
@@ -1150,11 +1160,12 @@ const prisma = new PrismaClient({
 **Problem:** Function runs out of memory
 
 **Solution:**
+
 ```yaml
 # Increase memory allocation
 functions:
   api:
-    memorySize: 1024  # Increase from 512 to 1024MB
+    memorySize: 1024 # Increase from 512 to 1024MB
 ```
 
 #### 5. CORS Errors
@@ -1162,6 +1173,7 @@ functions:
 **Problem:** CORS errors in browser
 
 **Solution:**
+
 ```typescript
 // lambda.ts
 export const handler = createLambdaHandler(AppModule, {
@@ -1205,7 +1217,7 @@ import { IsString, IsEmail } from 'class-validator';
 class CreateUserDto {
   @IsEmail()
   email: string;
-  
+
   @IsString()
   name: string;
 }
@@ -1236,7 +1248,7 @@ export class ApiController {
     } catch (error) {
       // Log error
       this.logger.error('Processing failed', error);
-      
+
       // Return user-friendly error
       throw new HttpError(500, 'Processing failed. Please try again.');
     }
@@ -1253,7 +1265,7 @@ import { AppModule } from '../src/app.module';
 
 describe('Lambda Handler', () => {
   const handler = createLambdaHandler(AppModule);
-  
+
   it('should handle GET request', async () => {
     const event = {
       httpMethod: 'GET',
@@ -1261,9 +1273,9 @@ describe('Lambda Handler', () => {
       headers: {},
       body: null,
     };
-    
+
     const result = await handler(event, {} as any);
-    
+
     expect(result.statusCode).toBe(200);
     expect(JSON.parse(result.body)).toHaveProperty('message');
   });
@@ -1283,24 +1295,24 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    
+
     steps:
       - uses: actions/checkout@v3
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '20'
-      
+
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Run tests
         run: npm test
-      
+
       - name: Build
         run: npm run build
-      
+
       - name: Deploy to AWS
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}

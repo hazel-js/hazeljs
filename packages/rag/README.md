@@ -15,6 +15,7 @@ Part of the HazelJS AI-Native Backend Framework. Load documents from any source,
 Built for **AI-native applications** - not just another RAG library. When you combine @hazeljs/rag with @hazeljs/core, @hazeljs/ai, and @hazeljs/agent, you get a complete stack for intelligent backends.
 
 **Perfect for:**
+
 - AI startups building knowledge-based applications
 - Teams implementing document Q&A systems
 - Developers who want semantic search without complexity
@@ -110,19 +111,19 @@ Every loader extends `BaseDocumentLoader` and returns `Document[]` ready for chu
 
 ### Built-in loaders
 
-| Loader | Source | Extra install |
-|--------|--------|:---:|
-| `TextFileLoader` | `.txt` files | — |
-| `MarkdownFileLoader` | `.md` / `.mdx` with heading splits and YAML front-matter | — |
-| `JSONFileLoader` | `.json` with `textKey` / JSON Pointer extraction | — |
-| `CSVFileLoader` | `.csv` rows mapped to documents | — |
-| `HtmlFileLoader` | `.html` tag stripping; optional CSS selector via cheerio | opt. |
-| `DirectoryLoader` | Recursive walk; auto-detects loader by extension | — |
-| `PdfLoader` | PDFs; split by page or full document | `pdf-parse` |
-| `DocxLoader` | Word documents; plain text or HTML output | `mammoth` |
-| `WebLoader` | HTTP scraping with retry/timeout; optional CSS selector | opt. |
-| `YouTubeTranscriptLoader` | YouTube transcripts; no API key; segment by duration | — |
-| `GitHubLoader` | GitHub REST API; filter by path, extension, `maxFiles` | — |
+| Loader                    | Source                                                   | Extra install |
+| ------------------------- | -------------------------------------------------------- | :-----------: |
+| `TextFileLoader`          | `.txt` files                                             |       —       |
+| `MarkdownFileLoader`      | `.md` / `.mdx` with heading splits and YAML front-matter |       —       |
+| `JSONFileLoader`          | `.json` with `textKey` / JSON Pointer extraction         |       —       |
+| `CSVFileLoader`           | `.csv` rows mapped to documents                          |       —       |
+| `HtmlFileLoader`          | `.html` tag stripping; optional CSS selector via cheerio |     opt.      |
+| `DirectoryLoader`         | Recursive walk; auto-detects loader by extension         |       —       |
+| `PdfLoader`               | PDFs; split by page or full document                     |  `pdf-parse`  |
+| `DocxLoader`              | Word documents; plain text or HTML output                |   `mammoth`   |
+| `WebLoader`               | HTTP scraping with retry/timeout; optional CSS selector  |     opt.      |
+| `YouTubeTranscriptLoader` | YouTube transcripts; no API key; segment by duration     |       —       |
+| `GitHubLoader`            | GitHub REST API; filter by path, extension, `maxFiles`   |       —       |
 
 ### Examples
 
@@ -176,7 +177,7 @@ const webDocs = await new WebLoader({
 // YouTube transcript (no API key needed)
 const ytDocs = await new YouTubeTranscriptLoader({
   videoUrl: 'https://www.youtube.com/watch?v=VIDEO_ID',
-  segmentDuration: 60,   // group into 60-second chunks
+  segmentDuration: 60, // group into 60-second chunks
 }).load();
 
 // GitHub repository
@@ -203,12 +204,14 @@ import { BaseDocumentLoader, Loader, DocumentLoaderRegistry } from '@hazeljs/rag
 
 @Loader({ name: 'NotionLoader', extensions: [] })
 export class NotionLoader extends BaseDocumentLoader {
-  constructor(private readonly databaseId: string) { super(); }
+  constructor(private readonly databaseId: string) {
+    super();
+  }
 
   async load() {
     const pages = await fetchNotionPages(this.databaseId);
-    return pages.map(p =>
-      this.createDocument(p.content, { source: `notion:${p.id}`, title: p.title }),
+    return pages.map((p) =>
+      this.createDocument(p.content, { source: `notion:${p.id}`, title: p.title })
     );
   }
 }
@@ -225,12 +228,12 @@ GraphRAG builds a **knowledge graph** from your documents — entities, relation
 
 ### Why GraphRAG?
 
-| Question type | Traditional RAG | GraphRAG |
-|---|---|---|
-| "What does X do?" | ✅ Good | ✅ Excellent (entity traversal) |
-| "How do X and Y relate?" | ❌ Poor | ✅ Excellent (relationships) |
-| "What are the main architectural layers?" | ❌ Poor | ✅ Excellent (community reports) |
-| Multi-document cross-referencing | ❌ Fragmented | ✅ Native |
+| Question type                             | Traditional RAG | GraphRAG                         |
+| ----------------------------------------- | --------------- | -------------------------------- |
+| "What does X do?"                         | ✅ Good         | ✅ Excellent (entity traversal)  |
+| "How do X and Y relate?"                  | ❌ Poor         | ✅ Excellent (relationships)     |
+| "What are the main architectural layers?" | ❌ Poor         | ✅ Excellent (community reports) |
+| Multi-document cross-referencing          | ❌ Fragmented   | ✅ Native                        |
 
 ### Build the graph
 
@@ -250,12 +253,12 @@ const graphRag = new GraphRAGPipeline({
     });
     return res.choices[0].message.content ?? '';
   },
-  extractionChunkSize: 2000,      // chars per LLM extraction call
+  extractionChunkSize: 2000, // chars per LLM extraction call
   generateCommunityReports: true, // LLM summaries per community cluster
-  maxCommunitySize: 15,           // split clusters larger than this
-  localSearchDepth: 2,            // BFS hops for local search
-  localSearchTopK: 5,             // seed entities per query
-  globalSearchTopK: 5,            // community reports for global search
+  maxCommunitySize: 15, // split clusters larger than this
+  localSearchDepth: 2, // BFS hops for local search
+  localSearchTopK: 5, // seed entities per query
+  globalSearchTopK: 5, // community reports for global search
 });
 
 const docs = await new DirectoryLoader({ dirPath: './knowledge-base', recursive: true }).load();
@@ -269,21 +272,17 @@ const stats = await graphRag.build(docs);
 ```typescript
 // LOCAL — entity-centric, BFS graph traversal
 // Best for: specific questions about named concepts, classes, or technologies
-const local = await graphRag.search(
-  'How does dependency injection work?',
-  { mode: 'local' },
-);
+const local = await graphRag.search('How does dependency injection work?', { mode: 'local' });
 console.log(local.answer);
-console.log(local.entities);      // entities found and traversed
+console.log(local.entities); // entities found and traversed
 console.log(local.relationships); // evidence relationships
 
 // GLOBAL — community report ranking
 // Best for: broad thematic questions, architecture overviews
-const global = await graphRag.search(
-  'What are the main architectural layers of this system?',
-  { mode: 'global' },
-);
-console.log(global.communities);  // ranked community reports used
+const global = await graphRag.search('What are the main architectural layers of this system?', {
+  mode: 'global',
+});
+console.log(global.communities); // ranked community reports used
 
 // HYBRID — runs both in parallel, single synthesis call (recommended default)
 const result = await graphRag.search('What vector stores does @hazeljs/rag support?');
@@ -307,11 +306,11 @@ const graph = graphRag.getGraph();
 // Entities, relationships, community reports
 console.log([...graph.entities.values()].slice(0, 5));
 console.log([...graph.relationships.values()].slice(0, 5));
-console.log([...graph.communityReports.values()].map(r => r.title));
+console.log([...graph.communityReports.values()].map((r) => r.title));
 
 // Statistics
 const stats = graphRag.getStats();
-console.log(stats.entityTypeBreakdown);   // { TECHNOLOGY: 14, CONCEPT: 12, ... }
+console.log(stats.entityTypeBreakdown); // { TECHNOLOGY: 14, CONCEPT: 12, ... }
 console.log(stats.topEntities.slice(0, 5)); // most-connected entities
 ```
 
@@ -358,12 +357,12 @@ const vectorStore = new ChromaVectorStore(embeddings, {
 
 ### Vector store comparison
 
-| | Memory | Pinecone | Qdrant | Weaviate | ChromaDB |
-|---|:---:|:---:|:---:|:---:|:---:|
-| Setup | None | API Key | Docker | Docker | Docker |
-| Persistence | ❌ | ✅ | ✅ | ✅ | ✅ |
-| Best for | Dev/Test | Production | High-perf | GraphQL | Prototyping |
-| Cost | Free | Paid | OSS | OSS | OSS |
+|             |  Memory  |  Pinecone  |  Qdrant   | Weaviate |  ChromaDB   |
+| ----------- | :------: | :--------: | :-------: | :------: | :---------: |
+| Setup       |   None   |  API Key   |  Docker   |  Docker  |   Docker    |
+| Persistence |    ❌    |     ✅     |    ✅     |    ✅    |     ✅      |
+| Best for    | Dev/Test | Production | High-perf | GraphQL  | Prototyping |
+| Cost        |   Free   |    Paid    |    OSS    |   OSS    |     OSS     |
 
 ---
 
@@ -375,7 +374,7 @@ import { OpenAIEmbeddings, CohereEmbeddings } from '@hazeljs/rag';
 // OpenAI
 const openaiEmbed = new OpenAIEmbeddings({
   apiKey: process.env.OPENAI_API_KEY,
-  model: 'text-embedding-3-small',  // 1536 dims
+  model: 'text-embedding-3-small', // 1536 dims
   // model: 'text-embedding-3-large', // 3072 dims, highest quality
 });
 
@@ -418,8 +417,8 @@ const results2 = await multiQuery.search('How do I deploy my app?', { topK: 5 })
 import { RecursiveTextSplitter } from '@hazeljs/rag';
 
 const splitter = new RecursiveTextSplitter({
-  chunkSize: 1000,      // target chars per chunk
-  chunkOverlap: 200,    // overlap for context continuity
+  chunkSize: 1000, // target chars per chunk
+  chunkOverlap: 200, // overlap for context continuity
   separators: ['\n\n', '\n', '. ', ' '],
 });
 
@@ -448,7 +447,7 @@ const rag = new RAGPipelineWithMemory(config, memory, llmFunction);
 const response = await rag.queryWithMemory(
   'What did we discuss about deployment?',
   'session-123',
-  'user-456',
+  'user-456'
 );
 console.log(response.answer);
 console.log(response.memories);

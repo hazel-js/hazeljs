@@ -184,12 +184,14 @@ describe('createStdioTransport — concurrent requests', () => {
     let resolveFirst!: (v: AnyResponse) => void;
     let resolveSecond!: (v: AnyResponse) => void;
 
-    const first = new Promise<AnyResponse>((res) => { resolveFirst = res; });
-    const second = new Promise<AnyResponse>((res) => { resolveSecond = res; });
+    const first = new Promise<AnyResponse>((res) => {
+      resolveFirst = res;
+    });
+    const second = new Promise<AnyResponse>((res) => {
+      resolveSecond = res;
+    });
 
-    const handler = jest.fn()
-      .mockReturnValueOnce(first)
-      .mockReturnValueOnce(second);
+    const handler = jest.fn().mockReturnValueOnce(first).mockReturnValueOnce(second);
 
     createStdioTransport(handler);
 

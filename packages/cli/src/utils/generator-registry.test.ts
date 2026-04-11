@@ -7,4 +7,3 @@ describe('generator-registry', () => {
     expect(result.error).toContain('Unknown generator type');
   });
 });
-

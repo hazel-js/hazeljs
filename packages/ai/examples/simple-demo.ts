@@ -1,6 +1,6 @@
 /**
  * Simple HazelJS Unified AI Platform Demo
- * 
+ *
  * This example demonstrates the basic setup and usage without requiring API keys.
  */
 
@@ -35,16 +35,16 @@ async function demonstrateSimpleDemo() {
   // Show workflow example (doesn't require API calls)
   console.log('🔄 Workflow Example:');
   const workflow = ai.workflow('demo-workflow');
-  
+
   const workflowResult = await workflow
     .step('process', async (input: string) => {
       console.log(`Processing: "${input}"`);
-      await new Promise(resolve => setTimeout(resolve, 100)); // Simulate work
+      await new Promise((resolve) => setTimeout(resolve, 100)); // Simulate work
       return input.toUpperCase();
     })
     .step('format', async (input: string) => {
       console.log(`Formatting: "${input}"`);
-      await new Promise(resolve => setTimeout(resolve, 50)); // Simulate work
+      await new Promise((resolve) => setTimeout(resolve, 50)); // Simulate work
       return `Result: ${input}`;
     })
     .run('hello world');
@@ -63,7 +63,7 @@ async function demonstrateSimpleDemo() {
 
   console.log(`📝 Assistant created with session: ${assistant.sessionId}`);
   console.log(`📚 History length: ${assistant.getHistory().length} messages`);
-  
+
   // Show assistant methods (just check the history, don't add messages since that requires API calls)
   console.log(`📚 Assistant ready for chat (history: ${assistant.getHistory().length} messages)`);
   console.log();

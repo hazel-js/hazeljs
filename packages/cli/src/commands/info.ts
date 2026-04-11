@@ -30,19 +30,17 @@ export function infoCommand(program: Command) {
     .action(() => {
       try {
         const packageJsonPath = path.join(process.cwd(), 'package.json');
-        
+
         if (!fs.existsSync(packageJsonPath)) {
           console.log(chalk.yellow('⚠ No package.json found in current directory'));
           console.log(chalk.gray('This does not appear to be a Node.js project'));
           return;
         }
 
-        const packageJson: PackageJson = JSON.parse(
-          fs.readFileSync(packageJsonPath, 'utf-8')
-        );
+        const packageJson: PackageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
 
         console.log(chalk.bold.blue('\n📦 Project Information\n'));
-        
+
         // Basic info
         console.log(chalk.bold('Name:'), packageJson.name || 'N/A');
         console.log(chalk.bold('Version:'), packageJson.version || 'N/A');

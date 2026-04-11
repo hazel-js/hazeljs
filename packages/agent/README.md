@@ -15,6 +15,7 @@ Part of the HazelJS AI-Native Backend Framework. Stateful, tool-using, memory-en
 Built for **AI-native applications** - not just another agent framework. When you combine @hazeljs/agent with @hazeljs/core, @hazeljs/ai, and @hazeljs/rag, you get a complete stack for intelligent backends.
 
 **Perfect for:**
+
 - AI startups building production agent systems
 - Teams creating customer support or automation agents
 - Developers who want stateful, long-running workflows
@@ -67,10 +68,10 @@ export class SupportAgent {
 
   @Tool({
     description: 'Process a refund for an order',
-    requiresApproval: true,   // requires human approval before execution
+    requiresApproval: true, // requires human approval before execution
     parameters: [
       { name: 'orderId', type: 'string', required: true },
-      { name: 'amount',  type: 'number', required: true },
+      { name: 'amount', type: 'number', required: true },
     ],
   })
   async processRefund(input: { orderId: string; amount: number }) {
@@ -101,11 +102,11 @@ runtime.registerAgentInstance('support-agent', agent);
 ### 3. Execute
 
 ```typescript
-const result = await runtime.execute(
-  'support-agent',
-  'I need to check my order #12345',
-  { sessionId: 'user-session-123', userId: 'user-456', enableMemory: true },
-);
+const result = await runtime.execute('support-agent', 'I need to check my order #12345', {
+  sessionId: 'user-session-123',
+  userId: 'user-456',
+  enableMemory: true,
+});
 
 console.log(result.response);
 console.log(`Completed in ${result.steps.length} steps`);
@@ -170,7 +171,10 @@ export class OrchestratorAgent {
 
 @Agent({ name: 'ResearchAgent', systemPrompt: 'You are an expert researcher.' })
 export class ResearchAgent {
-  @Tool({ description: 'Search the web', parameters: [{ name: 'query', type: 'string', required: true }] })
+  @Tool({
+    description: 'Search the web',
+    parameters: [{ name: 'query', type: 'string', required: true }],
+  })
   async searchWeb(input: { query: string }) {
     return `Research findings for: ${input.query}`;
   }
@@ -178,7 +182,10 @@ export class ResearchAgent {
 
 @Agent({ name: 'WriterAgent', systemPrompt: 'You are a professional technical writer.' })
 export class WriterAgent {
-  @Tool({ description: 'Format content as Markdown', parameters: [{ name: 'raw', type: 'string', required: true }] })
+  @Tool({
+    description: 'Format content as Markdown',
+    parameters: [{ name: 'raw', type: 'string', required: true }],
+  })
   async formatMarkdown(input: { raw: string }) {
     return `## Article\n\n${input.raw}`;
   }
@@ -189,12 +196,15 @@ export class WriterAgent {
 
 ```typescript
 const orchestrator = new OrchestratorAgent();
-const researcher  = new ResearchAgent();
-const writer      = new WriterAgent();
+const researcher = new ResearchAgent();
+const writer = new WriterAgent();
 
-[ResearchAgent, WriterAgent, OrchestratorAgent].forEach(A => runtime.registerAgent(A));
-[['OrchestratorAgent', orchestrator], ['ResearchAgent', researcher], ['WriterAgent', writer]]
-  .forEach(([name, inst]) => runtime.registerAgentInstance(name as string, inst));
+[ResearchAgent, WriterAgent, OrchestratorAgent].forEach((A) => runtime.registerAgent(A));
+[
+  ['OrchestratorAgent', orchestrator],
+  ['ResearchAgent', researcher],
+  ['WriterAgent', writer],
+].forEach(([name, inst]) => runtime.registerAgentInstance(name as string, inst));
 
 const result = await runtime.execute('OrchestratorAgent', 'Write a blog post about LLMs');
 console.log(result.response);
@@ -227,7 +237,7 @@ const graph = runtime.createGraph('research-pipeline');
 const pipeline = runtime
   .createGraph('blog-pipeline')
   .addNode('researcher', { type: 'agent', agentName: 'ResearchAgent' })
-  .addNode('writer',     { type: 'agent', agentName: 'WriterAgent' })
+  .addNode('writer', { type: 'agent', agentName: 'WriterAgent' })
   .addEdge('researcher', 'writer')
   .addEdge('writer', END)
   .setEntryPoint('researcher')
@@ -243,13 +253,11 @@ console.log(result.output);
 const router = runtime
   .createGraph('router')
   .addNode('classifier', { type: 'agent', agentName: 'ClassifierAgent' })
-  .addNode('coder',      { type: 'agent', agentName: 'CoderAgent' })
-  .addNode('writer',     { type: 'agent', agentName: 'WriterAgent' })
+  .addNode('coder', { type: 'agent', agentName: 'CoderAgent' })
+  .addNode('writer', { type: 'agent', agentName: 'WriterAgent' })
   .setEntryPoint('classifier')
-  .addConditionalEdge('classifier', (state) =>
-    state.data?.type === 'code' ? 'coder' : 'writer',
-  )
-  .addEdge('coder',  END)
+  .addConditionalEdge('classifier', (state) => (state.data?.type === 'code' ? 'coder' : 'writer'))
+  .addEdge('coder', END)
   .addEdge('writer', END)
   .compile();
 
@@ -265,19 +273,19 @@ async function splitTask(state: GraphState) {
 
 async function mergeResults(state: GraphState) {
   const results = state.data?.branchResults as ParallelBranchResult[];
-  return { ...state, output: results.map(r => r.output).join('\n---\n') };
+  return { ...state, output: results.map((r) => r.output).join('\n---\n') };
 }
 
 const parallel = runtime
   .createGraph('parallel-research')
-  .addNode('splitter',    { type: 'function', fn: splitTask })
+  .addNode('splitter', { type: 'function', fn: splitTask })
   .addNode('parallel-1', { type: 'parallel', branches: ['tech-researcher', 'market-researcher'] })
-  .addNode('tech-researcher',   { type: 'agent', agentName: 'TechResearchAgent' })
+  .addNode('tech-researcher', { type: 'agent', agentName: 'TechResearchAgent' })
   .addNode('market-researcher', { type: 'agent', agentName: 'MarketResearchAgent' })
-  .addNode('combiner',   { type: 'function', fn: mergeResults })
-  .addEdge('splitter',   'parallel-1')
+  .addNode('combiner', { type: 'function', fn: mergeResults })
+  .addEdge('splitter', 'parallel-1')
   .addEdge('parallel-1', 'combiner')
-  .addEdge('combiner',    END)
+  .addEdge('combiner', END)
   .setEntryPoint('splitter')
   .compile();
 
@@ -308,7 +316,7 @@ interface AgentGraph {
 interface CompiledGraph {
   execute(input: string, options?: GraphExecutionOptions): Promise<GraphExecutionResult>;
   stream(input: string, options?: GraphExecutionOptions): AsyncIterable<GraphStreamChunk>;
-  visualize(): string;   // returns a Mermaid diagram string
+  visualize(): string; // returns a Mermaid diagram string
 }
 ```
 
@@ -346,26 +354,27 @@ const supervisor = runtime.createSupervisor({
   },
 });
 
-const result = await supervisor.run(
-  'Build and document a REST API for a todo app',
-  { sessionId: 'proj-001' },
-);
+const result = await supervisor.run('Build and document a REST API for a todo app', {
+  sessionId: 'proj-001',
+});
 
 console.log(result.response);
 result.rounds.forEach((round, i) => {
-  console.log(`Round ${i + 1}: routed to ${round.worker} — ${round.workerResult.response.slice(0, 80)}`);
+  console.log(
+    `Round ${i + 1}: routed to ${round.worker} — ${round.workerResult.response.slice(0, 80)}`
+  );
 });
 ```
 
 **`SupervisorConfig`:**
 
-| Field | Type | Default | Description |
-|-------|------|---------|-------------|
-| `name` | string | — | Supervisor instance name |
-| `workers` | string[] | — | Registered agent names available to the supervisor |
-| `maxRounds` | number | 5 | Maximum routing iterations |
-| `llm` | `(prompt: string) => Promise<string>` | — | LLM function for routing decisions |
-| `sessionId` | string | auto | Session for memory continuity across rounds |
+| Field       | Type                                  | Default | Description                                        |
+| ----------- | ------------------------------------- | ------- | -------------------------------------------------- |
+| `name`      | string                                | —       | Supervisor instance name                           |
+| `workers`   | string[]                              | —       | Registered agent names available to the supervisor |
+| `maxRounds` | number                                | 5       | Maximum routing iterations                         |
+| `llm`       | `(prompt: string) => Promise<string>` | —       | LLM function for routing decisions                 |
+| `sessionId` | string                                | auto    | Session for memory continuity across rounds        |
 
 ---
 
@@ -412,17 +421,17 @@ idle → thinking → using_tool → thinking → ... → completed
 ```typescript
 import { AgentEventType } from '@hazeljs/agent';
 
-runtime.on(AgentEventType.EXECUTION_STARTED,   e => console.log('started:',    e.data));
-runtime.on(AgentEventType.EXECUTION_COMPLETED, e => console.log('completed:',  e.data));
-runtime.on(AgentEventType.STEP_STARTED,        e => console.log('step:',       e.data));
-runtime.on(AgentEventType.TOOL_EXECUTION_STARTED,   e => console.log('tool:',  e.data));
-runtime.on(AgentEventType.TOOL_APPROVAL_REQUESTED,  e => {
+runtime.on(AgentEventType.EXECUTION_STARTED, (e) => console.log('started:', e.data));
+runtime.on(AgentEventType.EXECUTION_COMPLETED, (e) => console.log('completed:', e.data));
+runtime.on(AgentEventType.STEP_STARTED, (e) => console.log('step:', e.data));
+runtime.on(AgentEventType.TOOL_EXECUTION_STARTED, (e) => console.log('tool:', e.data));
+runtime.on(AgentEventType.TOOL_APPROVAL_REQUESTED, (e) => {
   console.log('approval needed:', e.data);
   runtime.approveToolExecution(e.data.requestId, 'admin');
 });
 
 // Catch-all
-runtime.onAny(e => console.log(e.type, e.data));
+runtime.onAny((e) => console.log(e.type, e.data));
 ```
 
 ---
@@ -436,7 +445,9 @@ import { RagModule } from '@hazeljs/rag';
 
 @HazelModule({
   imports: [
-    RagModule.forRoot({ /* ... */ }),
+    RagModule.forRoot({
+      /* ... */
+    }),
     AgentModule.forRoot({
       runtime: { defaultMaxSteps: 10, enableObservability: true },
       agents: [SupportAgent, ResearchAgent, WriterAgent, OrchestratorAgent],
@@ -467,11 +478,11 @@ Keep each agent focused on one domain. `@Delegate` lets the orchestrator combine
 
 ### Choose the right multi-agent pattern
 
-| Pattern | Use when |
-|---------|----------|
-| `@Delegate` | Two or three agents with a clear orchestrator / worker split |
-| `AgentGraph` | Workflow is known at design time; conditional routing matters |
-| `SupervisorAgent` | Task decomposition is dynamic; you want LLM-driven routing |
+| Pattern           | Use when                                                      |
+| ----------------- | ------------------------------------------------------------- |
+| `@Delegate`       | Two or three agents with a clear orchestrator / worker split  |
+| `AgentGraph`      | Workflow is known at design time; conditional routing matters |
+| `SupervisorAgent` | Task decomposition is dynamic; you want LLM-driven routing    |
 
 ### Require approval for destructive actions
 
@@ -501,7 +512,11 @@ async callExternalAPI(input: { endpoint: string }) {
 
 ```typescript
 class AgentRuntime {
-  execute(agentName: string, input: string, options?: ExecuteOptions): Promise<AgentExecutionResult>;
+  execute(
+    agentName: string,
+    input: string,
+    options?: ExecuteOptions
+  ): Promise<AgentExecutionResult>;
   resume(executionId: string, input?: string): Promise<AgentExecutionResult>;
   registerAgent(agentClass: new (...args: unknown[]) => unknown): void;
   registerAgentInstance(name: string, instance: unknown): void;
@@ -516,10 +531,10 @@ class AgentRuntime {
 
 ### Decorators
 
-| Decorator | Target | Description |
-|-----------|--------|-------------|
-| `@Agent(config)` | Class | Declares a class as an agent |
-| `@Tool(config)` | Method | Exposes a method as an LLM-callable tool |
+| Decorator           | Target | Description                                                              |
+| ------------------- | ------ | ------------------------------------------------------------------------ |
+| `@Agent(config)`    | Class  | Declares a class as an agent                                             |
+| `@Tool(config)`     | Method | Exposes a method as an LLM-callable tool                                 |
 | `@Delegate(config)` | Method | Delegates a method to another agent (registers as `@Tool` automatically) |
 
 ### `GraphNodeConfig` types

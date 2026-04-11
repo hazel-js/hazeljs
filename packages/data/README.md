@@ -107,9 +107,7 @@ import { OrderProcessingPipeline } from './pipelines/order-processing.pipeline';
 
 @Controller('data')
 export class DataController {
-  constructor(
-    @Inject(OrderProcessingPipeline) private pipeline: OrderProcessingPipeline
-  ) {}
+  constructor(@Inject(OrderProcessingPipeline) private pipeline: OrderProcessingPipeline) {}
 
   @Post('pipeline/orders')
   async processOrder(@Body() body: unknown) {
@@ -151,17 +149,17 @@ if (result.success) {
 
 ### Schema types and modifiers
 
-| Type | Example |
-|------|---------|
-| `Schema.string()` | `.email()`, `.url()`, `.min()`, `.max()`, `.uuid()`, `.oneOf()`, `.pattern()`, `.required()`, `.trim()` |
-| `Schema.number()` | `.min()`, `.max()`, `.integer()`, `.positive()`, `.negative()`, `.multipleOf()` |
-| `Schema.boolean()` | `.default()` |
-| `Schema.date()` | `.min()`, `.max()`, `.default()` |
-| `Schema.object({...})` | `.strict()`, `.pick()`, `.omit()`, `.extend()` |
-| `Schema.array(itemSchema)` | `.min()`, `.max()`, `.nonempty()` |
-| `Schema.literal(value)` | Literal values |
-| `Schema.union([a, b])` | Discriminated unions |
-| Modifiers | `.optional()`, `.nullable()`, `.default()`, `.transform()`, `.refine()`, `.refineAsync()` |
+| Type                       | Example                                                                                                 |
+| -------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `Schema.string()`          | `.email()`, `.url()`, `.min()`, `.max()`, `.uuid()`, `.oneOf()`, `.pattern()`, `.required()`, `.trim()` |
+| `Schema.number()`          | `.min()`, `.max()`, `.integer()`, `.positive()`, `.negative()`, `.multipleOf()`                         |
+| `Schema.boolean()`         | `.default()`                                                                                            |
+| `Schema.date()`            | `.min()`, `.max()`, `.default()`                                                                        |
+| `Schema.object({...})`     | `.strict()`, `.pick()`, `.omit()`, `.extend()`                                                          |
+| `Schema.array(itemSchema)` | `.min()`, `.max()`, `.nonempty()`                                                                       |
+| `Schema.literal(value)`    | Literal values                                                                                          |
+| `Schema.union([a, b])`     | Discriminated unions                                                                                    |
+| Modifiers                  | `.optional()`, `.nullable()`, `.default()`, `.transform()`, `.refine()`, `.refineAsync()`               |
 
 ## Pipeline options
 
@@ -189,17 +187,17 @@ Build pipelines in code without decorators:
 import { PipelineBuilder } from '@hazeljs/data';
 
 const pipeline = new PipelineBuilder('orders')
-  .addTransform('normalize', (d) => ({ ...d, email: (d as { email: string }).email?.toLowerCase() }))
+  .addTransform('normalize', (d) => ({
+    ...d,
+    email: (d as { email: string }).email?.toLowerCase(),
+  }))
   .branch(
     'classify',
     (d) => (d as { type: string }).type === 'premium',
     (b) => b.addTransform('enrichPremium', enrichPremium),
     (b) => b.addTransform('enrichStandard', enrichStandard)
   )
-  .parallel('enrich', [
-    (d) => ({ ...d, a: 1 }),
-    (d) => ({ ...d, b: 2 }),
-  ])
+  .parallel('enrich', [(d) => ({ ...d, a: 1 }), (d) => ({ ...d, b: 2 })])
   .catch((data, err) => ({ ...data, error: err.message }));
 
 const result = await pipeline.execute(rawData);
@@ -233,7 +231,10 @@ qualityService.registerCheck('notNull', qualityService.notNull(['id']));
 qualityService.registerCheck('uniqueness', qualityService.uniqueness(['id']));
 qualityService.registerCheck('range', qualityService.range('age', { min: 0, max: 120 }));
 qualityService.registerCheck('pattern', qualityService.pattern('phone', /^\d{10}$/));
-qualityService.registerCheck('ref', qualityService.referentialIntegrity('status', ['active', 'inactive']));
+qualityService.registerCheck(
+  'ref',
+  qualityService.referentialIntegrity('status', ['active', 'inactive'])
+);
 
 const report = await qualityService.runChecks('users', records);
 const profile = qualityService.profile('users', records);
@@ -276,14 +277,14 @@ const sink = new MockSink();
 
 ## Built-in transformers
 
-| Transformer | Description |
-|-------------|-------------|
-| `trimString` | Trim whitespace from strings |
-| `toLowerCase` / `toUpperCase` | Case conversion |
-| `parseJson` / `stringifyJson` | JSON parsing and serialization |
-| `pick` | Select specific keys from objects |
-| `omit` | Remove specific keys from objects |
-| `renameKeys` | Rename object keys |
+| Transformer                   | Description                       |
+| ----------------------------- | --------------------------------- |
+| `trimString`                  | Trim whitespace from strings      |
+| `toLowerCase` / `toUpperCase` | Case conversion                   |
+| `parseJson` / `stringifyJson` | JSON parsing and serialization    |
+| `pick`                        | Select specific keys from objects |
+| `omit`                        | Remove specific keys from objects |
+| `renameKeys`                  | Rename object keys                |
 
 ## Flink configuration (optional)
 

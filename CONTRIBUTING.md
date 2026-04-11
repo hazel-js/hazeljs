@@ -49,6 +49,7 @@ We follow [Conventional Commits](https://www.conventionalcommits.org/):
 ```
 
 **Types:**
+
 - `feat`: A new feature
 - `fix`: A bug fix
 - `docs`: Documentation only changes
@@ -59,6 +60,7 @@ We follow [Conventional Commits](https://www.conventionalcommits.org/):
 - `chore`: Changes to build process or auxiliary tools
 
 **Examples:**
+
 ```
 feat(cache): add multi-tier caching support
 
@@ -81,34 +83,39 @@ Fixes #456
 
 ### Prerequisites
 
-- Node.js 18+ 
+- Node.js 18+
 - npm or yarn
 - Docker (for database testing)
 
 ### Setup Steps
 
 1. **Clone your fork:**
+
    ```bash
    git clone https://github.com/YOUR_USERNAME/hazeljs.git
    cd hazeljs
    ```
 
 2. **Install dependencies:**
+
    ```bash
    npm install
    ```
 
 3. **Start the database:**
+
    ```bash
    npm run db:up
    ```
 
 4. **Run migrations:**
+
    ```bash
    npm run prisma:migrate
    ```
 
 5. **Run tests:**
+
    ```bash
    npm test
    ```
@@ -161,6 +168,7 @@ hazeljs/
 - **Follow AAA pattern** (Arrange, Act, Assert)
 
 Example:
+
 ```typescript
 describe('CacheService', () => {
   it('should cache values with TTL', async () => {
@@ -187,22 +195,23 @@ describe('CacheService', () => {
 - **Keep CHANGELOG.md** updated
 
 Example:
-```typescript
+
+````typescript
 /**
  * Caches a value with the specified key and options.
- * 
+ *
  * @param key - The cache key
  * @param value - The value to cache
  * @param options - Cache options including TTL
  * @returns Promise that resolves when cached
- * 
+ *
  * @example
  * ```typescript
  * await cache.set('user:123', userData, { ttl: 3600 });
  * ```
  */
 async set<T>(key: string, value: T, options?: CacheOptions): Promise<void>
-```
+````
 
 ## Running Tests
 
@@ -266,6 +275,7 @@ npm run build:watch
 ## Recognition
 
 Contributors will be recognized in:
+
 - README.md contributors section
 - Release notes
 - Project website (coming soon)

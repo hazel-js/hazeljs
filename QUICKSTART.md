@@ -55,7 +55,7 @@ export class UserService {
   }
 
   findById(id: number) {
-    return this.users.find(u => u.id === id);
+    return this.users.find((u) => u.id === id);
   }
 
   create(user: { name: string; email: string }) {
@@ -207,10 +207,12 @@ import { GlobalMiddlewareManager, CorsMiddleware, LoggerMiddleware } from '@haze
 const middlewareManager = new GlobalMiddlewareManager();
 
 // Add CORS
-middlewareManager.use(new CorsMiddleware({
-  origin: '*',
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-}));
+middlewareManager.use(
+  new CorsMiddleware({
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  })
+);
 
 // Add logging
 middlewareManager.use(new LoggerMiddleware());
@@ -338,11 +340,13 @@ JWT_SECRET=your-secret-key
 ## Running the Application
 
 ### Development
+
 ```bash
 npm run dev
 ```
 
 ### Production
+
 ```bash
 npm run build
 npm start
@@ -412,12 +416,12 @@ export class LoggingInterceptor implements Interceptor {
   async intercept(context: RequestContext, next: () => Promise<unknown>) {
     const start = Date.now();
     console.log(`→ ${context.method} ${context.url}`);
-    
+
     const result = await next();
-    
+
     const duration = Date.now() - start;
     console.log(`← ${context.method} ${context.url} ${duration}ms`);
-    
+
     return result;
   }
 }

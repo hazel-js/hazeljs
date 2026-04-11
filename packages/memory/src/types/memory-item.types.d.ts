@@ -8,25 +8,28 @@ export type MemorySource = 'explicit' | 'inferred' | 'system';
  */
 export type MemoryValue = string | Record<string, unknown> | number[];
 export interface MemoryItem {
-    id: string;
-    userId: string;
-    category: MemoryCategory;
-    key: string;
-    value: MemoryValue;
-    confidence: number;
-    source: MemorySource;
-    evidence: string[];
-    createdAt: Date;
-    updatedAt: Date;
-    expiresAt?: Date;
-    accessCount: number;
-    sessionId?: string;
+  id: string;
+  userId: string;
+  category: MemoryCategory;
+  key: string;
+  value: MemoryValue;
+  confidence: number;
+  source: MemorySource;
+  evidence: string[];
+  createdAt: Date;
+  updatedAt: Date;
+  expiresAt?: Date;
+  accessCount: number;
+  sessionId?: string;
 }
 /**
  * Input for creating a memory (id and timestamps can be omitted).
  */
-export interface MemoryItemInput extends Omit<MemoryItem, 'id' | 'createdAt' | 'updatedAt' | 'accessCount'> {
-    id?: string;
-    accessCount?: number;
+export interface MemoryItemInput extends Omit<
+  MemoryItem,
+  'id' | 'createdAt' | 'updatedAt' | 'accessCount'
+> {
+  id?: string;
+  accessCount?: number;
 }
 //# sourceMappingURL=memory-item.types.d.ts.map

@@ -111,6 +111,7 @@ const result = await client.mutate(`
 ## Decorators Reference
 
 ### Server
+
 - `@ObjectType(name?)` - Mark class as GraphQL object type
 - `@Field(name?)` - Mark property/method as field
 - `@Resolver(name?)` - Mark class as resolver
@@ -119,6 +120,7 @@ const result = await client.mutate(`
 - `@Arg(name, type?)` - Mark parameter as GraphQL argument
 
 ### Client
+
 - `@GraphQLClientClass(url, headers?)` - Mark class as GraphQL client
 - `@GraphQLQuery()` - Mark method as query executor
 - `@GraphQLMutation()` - Mark method as mutation executor

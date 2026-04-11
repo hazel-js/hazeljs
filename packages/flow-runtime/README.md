@@ -51,23 +51,23 @@ import { OrderFlow } from './flows/OrderFlow';
 
 await runFlowRuntime({
   port: 3000,
-  databaseUrl: process.env.DATABASE_URL,  // optional; in-memory if omitted or connection fails
+  databaseUrl: process.env.DATABASE_URL, // optional; in-memory if omitted or connection fails
   flows: [buildFlowDefinition(OrderFlow)],
-  services: { logger: myLogger, slack: slackClient },  // optional; injected into flow context
+  services: { logger: myLogger, slack: slackClient }, // optional; injected into flow context
 });
 ```
 
 ## API
 
-| Method | Path | Description |
-|--------|------|-------------|
-| `POST` | `/v1/runs/start` | Start a flow run (body: `flowId`, `version`, `input`) |
-| `POST` | `/v1/runs/:runId/tick` | Advance a running run one step |
-| `POST` | `/v1/runs/:runId/resume` | Resume a waiting run (body: payload for the wait) |
-| `GET` | `/v1/runs/:runId` | Get run status |
-| `GET` | `/v1/runs/:runId/timeline` | Get run event timeline |
-| `GET` | `/v1/flows` | List registered flows |
-| `GET` | `/health` | Health check |
+| Method | Path                       | Description                                           |
+| ------ | -------------------------- | ----------------------------------------------------- |
+| `POST` | `/v1/runs/start`           | Start a flow run (body: `flowId`, `version`, `input`) |
+| `POST` | `/v1/runs/:runId/tick`     | Advance a running run one step                        |
+| `POST` | `/v1/runs/:runId/resume`   | Resume a waiting run (body: payload for the wait)     |
+| `GET`  | `/v1/runs/:runId`          | Get run status                                        |
+| `GET`  | `/v1/runs/:runId/timeline` | Get run event timeline                                |
+| `GET`  | `/v1/flows`                | List registered flows                                 |
+| `GET`  | `/health`                  | Health check                                          |
 
 ## Example
 

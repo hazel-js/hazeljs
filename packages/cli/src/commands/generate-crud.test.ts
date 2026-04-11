@@ -25,19 +25,20 @@ describe('generateCrud', () => {
     generateCrud(program);
     await program.parseAsync(['node', 'test', 'crud', 'product']);
 
-    const writtenFiles = mockFs.writeFileSync.mock.calls.map(call => call[0] as string);
-    expect(writtenFiles.some(f => f.includes('product.controller.ts'))).toBe(true);
-    expect(writtenFiles.some(f => f.includes('product.service.ts'))).toBe(true);
-    expect(writtenFiles.some(f => f.includes('product.dto.ts'))).toBe(true);
-    expect(writtenFiles.some(f => f.includes('product.module.ts'))).toBe(true);
+    const writtenFiles = mockFs.writeFileSync.mock.calls.map((call) => call[0] as string);
+    expect(writtenFiles.some((f) => f.includes('product.controller.ts'))).toBe(true);
+    expect(writtenFiles.some((f) => f.includes('product.service.ts'))).toBe(true);
+    expect(writtenFiles.some((f) => f.includes('product.dto.ts'))).toBe(true);
+    expect(writtenFiles.some((f) => f.includes('product.module.ts'))).toBe(true);
   });
 
   it('should use @hazeljs/core imports', async () => {
     generateCrud(program);
     await program.parseAsync(['node', 'test', 'crud', 'product']);
 
-    const controllerContent = mockFs.writeFileSync.mock.calls
-      .find(call => (call[0] as string).includes('controller'))?.[1] as string;
+    const controllerContent = mockFs.writeFileSync.mock.calls.find((call) =>
+      (call[0] as string).includes('controller')
+    )?.[1] as string;
     expect(controllerContent).toContain("from '@hazeljs/core'");
   });
 
@@ -52,8 +53,9 @@ describe('generateCrud', () => {
     generateCrud(program);
     await program.parseAsync(['node', 'test', 'crud', 'product', '-r', 'api/products']);
 
-    const controllerContent = mockFs.writeFileSync.mock.calls
-      .find(call => (call[0] as string).includes('controller'))?.[1] as string;
+    const controllerContent = mockFs.writeFileSync.mock.calls.find((call) =>
+      (call[0] as string).includes('controller')
+    )?.[1] as string;
     expect(controllerContent).toContain('api/products');
   });
 });

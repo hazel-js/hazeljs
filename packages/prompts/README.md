@@ -50,7 +50,7 @@ Context: {context}
 Question: {question}
 
 Answer:`,
-  { name: 'RAG Answer', version: '1.0.0' },
+  { name: 'RAG Answer', version: '1.0.0' }
 );
 
 // Register under a namespaced key — safe to call at module load time
@@ -82,8 +82,8 @@ PromptRegistry.override(
   'myapp:rag:answer',
   new PromptTemplate<{ context: string; question: string }>(
     `You are a helpful assistant. Use the context to answer.\nContext: {context}\nQ: {question}\nA:`,
-    { name: 'Custom Answer', version: '2.0.0' },
-  ),
+    { name: 'Custom Answer', version: '2.0.0' }
+  )
 );
 ```
 
@@ -99,7 +99,7 @@ import { PromptTemplate } from '@hazeljs/prompts';
 // Typed — TypeScript enforces the variable shape
 const tpl = new PromptTemplate<{ name: string; tier: string }>(
   'Hello {name}, you are on the {tier} plan.',
-  { name: 'Welcome Message', version: '1.0.0' },
+  { name: 'Welcome Message', version: '1.0.0' }
 );
 
 const text = tpl.render({ name: 'Alice', tier: 'pro' });
@@ -107,6 +107,7 @@ const text = tpl.render({ name: 'Alice', tier: 'pro' });
 ```
 
 **Placeholder rules:**
+
 - Syntax: `{variableName}` (alphanumeric + underscore)
 - Missing variable → placeholder left as-is (`{missing}` stays `{missing}`)
 - Extra variables in `.render()` are silently ignored
@@ -115,9 +116,9 @@ const text = tpl.render({ name: 'Alice', tier: 'pro' });
 
 ```typescript
 interface PromptMetadata {
-  name: string;          // Human-readable display name
-  version?: string;      // Semver string — enables get(key, version)
-  description?: string;  // Optional description
+  name: string; // Human-readable display name
+  version?: string; // Semver string — enables get(key, version)
+  description?: string; // Optional description
 }
 ```
 
@@ -155,7 +156,7 @@ const tpl = PromptRegistry.get('myapp:qa:answer');
 const v1 = PromptRegistry.get('myapp:qa:answer', '1.0.0');
 
 // Check existence
-PromptRegistry.has('myapp:qa:answer');          // → boolean
+PromptRegistry.has('myapp:qa:answer'); // → boolean
 PromptRegistry.has('myapp:qa:answer', '1.0.0'); // → boolean for version
 
 // List all registered keys
@@ -188,8 +189,8 @@ await PromptRegistry.save('myapp:qa:answer');
 await PromptRegistry.saveAll();
 
 // Load all prompts from the primary store into the cache
-await PromptRegistry.loadAll();           // does not overwrite existing cache entries
-await PromptRegistry.loadAll(true);       // overwrite = true
+await PromptRegistry.loadAll(); // does not overwrite existing cache entries
+await PromptRegistry.loadAll(true); // overwrite = true
 ```
 
 ---
@@ -215,8 +216,8 @@ import { FileStore, PromptRegistry } from '@hazeljs/prompts';
 
 PromptRegistry.configure([new FileStore({ filePath: './prompts/library.json' })]);
 
-await PromptRegistry.saveAll();  // write to disk
-await PromptRegistry.loadAll();  // read from disk on startup
+await PromptRegistry.saveAll(); // write to disk
+await PromptRegistry.loadAll(); // read from disk on startup
 ```
 
 ### RedisStore
@@ -229,9 +230,7 @@ import { RedisStore, PromptRegistry } from '@hazeljs/prompts';
 
 const redis = new Redis({ host: 'localhost', port: 6379 });
 
-PromptRegistry.configure([
-  new RedisStore({ client: redis, keyPrefix: 'hazel:prompts:' }),
-]);
+PromptRegistry.configure([new RedisStore({ client: redis, keyPrefix: 'hazel:prompts:' })]);
 
 // Load on startup
 await PromptRegistry.loadAll();
@@ -262,14 +261,22 @@ class PrismaPromptAdapter implements DatabaseAdapter {
   async set(entry: PromptEntry): Promise<void> {
     await this.prisma.prompt.upsert({
       where: { key: entry.key },
-      create: { key: entry.key, template: entry.template, metadata: JSON.stringify(entry.metadata) },
+      create: {
+        key: entry.key,
+        template: entry.template,
+        metadata: JSON.stringify(entry.metadata),
+      },
       update: { template: entry.template, metadata: JSON.stringify(entry.metadata) },
     });
   }
 
   async getAll(): Promise<PromptEntry[]> {
     const rows = await this.prisma.prompt.findMany();
-    return rows.map(r => ({ key: r.key, template: r.template, metadata: JSON.parse(r.metadata) }));
+    return rows.map((r) => ({
+      key: r.key,
+      template: r.template,
+      metadata: JSON.parse(r.metadata),
+    }));
   }
 }
 
@@ -326,8 +333,8 @@ PromptRegistry.override(
 Return JSON: { entities: [...], relationships: [...] }
 
 Text: {text}`,
-    { name: 'Legal Entity Extraction', version: '1.0.0' },
-  ),
+    { name: 'Legal Entity Extraction', version: '1.0.0' }
+  )
 );
 
 // Customise the supervisor routing prompt used by SupervisorAgent
@@ -338,8 +345,8 @@ PromptRegistry.override(
 Workers: {workers}
 Task: {task}
 Respond with JSON: [{ "worker": "...", "subtask": "..." }]`,
-    { name: 'Custom Supervisor', version: '2.0.0' },
-  ),
+    { name: 'Custom Supervisor', version: '2.0.0' }
+  )
 );
 ```
 
@@ -405,32 +412,32 @@ createMcpServer({ registry }).listenStdio();
 
 ### `PromptTemplate<TVariables>`
 
-| Method / Property | Description |
-|---|---|
-| `new PromptTemplate(template, metadata)` | Create a new template |
-| `.template` | Raw template string (read-only) |
-| `.metadata` | `PromptMetadata` object (read-only) |
-| `.render(variables: TVariables)` | Interpolate placeholders and return the rendered string |
+| Method / Property                        | Description                                             |
+| ---------------------------------------- | ------------------------------------------------------- |
+| `new PromptTemplate(template, metadata)` | Create a new template                                   |
+| `.template`                              | Raw template string (read-only)                         |
+| `.metadata`                              | `PromptMetadata` object (read-only)                     |
+| `.render(variables: TVariables)`         | Interpolate placeholders and return the rendered string |
 
 ### `PromptRegistry` (static)
 
-| Method | Description |
-|---|---|
-| `register(key, template)` | Register if key not already set |
-| `override(key, template)` | Always register (overwrites existing) |
-| `get(key, version?)` | Sync get — throws if not found |
-| `has(key, version?)` | Returns `boolean` |
-| `list()` | Returns all registered keys |
-| `versions(key)` | Returns all cached version strings for a key |
-| `unregister(key, version?)` | Remove from cache |
-| `clear()` | Remove all from cache |
-| `configure(stores)` | Replace store list |
-| `addStore(store)` | Append a store |
-| `storeNames()` | Names of configured stores |
-| `getAsync(key, version?)` | Async get — falls back to stores |
-| `save(key, version?)` | Persist one prompt to all stores |
-| `saveAll()` | Persist all prompts to all stores |
-| `loadAll(overwrite?)` | Load all from primary store into cache |
+| Method                      | Description                                  |
+| --------------------------- | -------------------------------------------- |
+| `register(key, template)`   | Register if key not already set              |
+| `override(key, template)`   | Always register (overwrites existing)        |
+| `get(key, version?)`        | Sync get — throws if not found               |
+| `has(key, version?)`        | Returns `boolean`                            |
+| `list()`                    | Returns all registered keys                  |
+| `versions(key)`             | Returns all cached version strings for a key |
+| `unregister(key, version?)` | Remove from cache                            |
+| `clear()`                   | Remove all from cache                        |
+| `configure(stores)`         | Replace store list                           |
+| `addStore(store)`           | Append a store                               |
+| `storeNames()`              | Names of configured stores                   |
+| `getAsync(key, version?)`   | Async get — falls back to stores             |
+| `save(key, version?)`       | Persist one prompt to all stores             |
+| `saveAll()`                 | Persist all prompts to all stores            |
+| `loadAll(overwrite?)`       | Load all from primary store into cache       |
 
 ### `PromptStore` interface
 

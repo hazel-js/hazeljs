@@ -89,9 +89,9 @@ describe('HealthChecker', () => {
     it('should handle timeout', async () => {
       const checker = new HealthChecker({ timeoutMs: 100 });
       const llmProvider: LLMProvider = {
-        isAvailable: jest.fn().mockImplementation(
-          () => new Promise((resolve) => setTimeout(() => resolve(true), 200))
-        ),
+        isAvailable: jest
+          .fn()
+          .mockImplementation(() => new Promise((resolve) => setTimeout(() => resolve(true), 200))),
       } as unknown as LLMProvider;
 
       const promise = checker.check(llmProvider);
@@ -148,9 +148,9 @@ describe('HealthChecker', () => {
     it('should measure latency for components', async () => {
       const checker = new HealthChecker();
       const llmProvider: LLMProvider = {
-        isAvailable: jest.fn().mockImplementation(
-          () => new Promise((resolve) => setTimeout(() => resolve(true), 50))
-        ),
+        isAvailable: jest
+          .fn()
+          .mockImplementation(() => new Promise((resolve) => setTimeout(() => resolve(true), 50))),
       } as unknown as LLMProvider;
 
       const promise = checker.check(llmProvider);
@@ -246,4 +246,3 @@ describe('HealthChecker', () => {
     });
   });
 });
-

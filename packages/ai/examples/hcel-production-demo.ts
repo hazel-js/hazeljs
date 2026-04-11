@@ -1,6 +1,6 @@
 /**
  * HCEL Production-Ready Demo
- * 
+ *
  * Demonstrates persistent memory, RAG, and chain state management
  */
 
@@ -15,7 +15,7 @@ import { HazelAI } from '../src';
 
 async function demonstrateProductionHCEL() {
   console.log('🚀 HCEL Production-Ready Demo\n');
-  
+
   // Check if OpenAI API key is available
   console.log('🔑 Environment check:');
   console.log(`OPENAI_API_KEY: ${process.env.OPENAI_API_KEY ? '✅ Set' : '❌ Not set'}`);
@@ -24,12 +24,12 @@ async function demonstrateProductionHCEL() {
   try {
     // ── Production HazelAI with Persistence Configuration ──────────────
     console.log('📦 Production HazelAI with Persistence:');
-    
+
     const ai = HazelAI.create({
       defaultProvider: 'openai',
       model: 'gpt-4o',
       temperature: 0.7,
-      
+
       // NEW: Production persistence configuration
       persistence: {
         memory: {
@@ -37,7 +37,7 @@ async function demonstrateProductionHCEL() {
           ttl: 3600, // 1 hour
           options: {
             // For production, provide pool/client here
-          }
+          },
         },
         rag: {
           vectorStore: 'in-memory', // Change to 'pinecone', 'qdrant', etc. for production
@@ -45,20 +45,20 @@ async function demonstrateProductionHCEL() {
             topK: 5,
             chunkSize: 1000,
             chunkOverlap: 200,
-          }
+          },
         },
         chains: {
           store: 'in-memory', // Change to 'postgres' or 'redis' for production
           ttl: 7200, // 2 hours
-        }
-      }
+        },
+      },
     });
 
     console.log('✅ HazelAI created with persistence configuration\n');
 
     // ── Persistent Assistant with Memory ─────────────────────────────────
     console.log('🤖 Persistent Assistant with Memory:');
-    
+
     const assistant = await ai.assistant({
       name: 'Production Assistant',
       systemPrompt: 'You are a helpful AI assistant with persistent memory.',
@@ -66,7 +66,7 @@ async function demonstrateProductionHCEL() {
       options: {
         userId: 'user-123',
         sessionId: 'session-456',
-      }
+      },
     });
 
     console.log('✅ Assistant created with persistent memory enabled');
@@ -82,7 +82,7 @@ async function demonstrateProductionHCEL() {
 
     // ── HCEL Chains with Persistence ───────────────────────────────────
     console.log('⛓️ HCEL Chains with Persistence:');
-    
+
     // Create a persistent analysis chain
     const analysisChain = ai.hazel
       .prompt('Analyze user feedback: This product is amazing! It works perfectly.')
@@ -101,7 +101,7 @@ async function demonstrateProductionHCEL() {
 
     // ── Chain Restoration (Mock Implementation) ─────────────────────────
     console.log('🔄 Chain Restoration:');
-    
+
     const restoredChain = ai.hazel
       .restore('user-feedback-analysis') // NEW: Restore existing chain
       .prompt('Continue analysis with new feedback');
@@ -111,7 +111,7 @@ async function demonstrateProductionHCEL() {
 
     // ── RAG with Persistent Knowledge Base ────────────────────────────
     console.log('📚 RAG with Persistent Knowledge Base:');
-    
+
     try {
       // Ingest documents into persistent RAG
       await ai.rag.ingest({
@@ -120,7 +120,7 @@ async function demonstrateProductionHCEL() {
         metadata: {
           source: 'documentation',
           category: 'framework-info',
-        }
+        },
       } as any);
 
       console.log('✅ Document ingested into persistent RAG');
@@ -130,27 +130,23 @@ async function demonstrateProductionHCEL() {
       console.log(`RAG Answer: ${ragResult.answer.slice(0, 100)}...`);
       console.log(`Sources: ${ragResult.sources.length} documents retrieved`);
       console.log('✅ Persistent RAG query successful\n');
-
     } catch (error) {
       console.log('RAG not fully configured, skipping...\n');
     }
 
     // ── Advanced Chain Composition with Persistence ───────────────────────
     console.log('🔧 Advanced Chain Composition:');
-    
+
     const advancedChain = ai.hazel
-      .context({ 
+      .context({
         userId: 'user-123',
         sessionId: 'session-456',
         metadata: {
-          environment: 'production'
-        }
+          environment: 'production',
+        },
       })
       .prompt('Analyze this user request')
-      .parallel(
-        ai.hazel.ml('sentiment'),
-        ai.hazel.rag('support-docs' as any)
-      )
+      .parallel(ai.hazel.ml('sentiment'), ai.hazel.rag('support-docs' as any))
       .conditional((result) => (result as any).confidence > 0.8)
       .agent('expert-reviewer')
       .persist('advanced-analysis-chain')
@@ -159,11 +155,13 @@ async function demonstrateProductionHCEL() {
       });
 
     console.log('✅ Advanced persistent chain created');
-    console.log('Features: Context propagation, parallel execution, conditional routing, persistence, observability\n');
+    console.log(
+      'Features: Context propagation, parallel execution, conditional routing, persistence, observability\n'
+    );
 
     // ── Agent Integration with Persistence ────────────────────────────
     console.log('🤖 Agent Integration with Persistence:');
-    
+
     // Create a simple text-based agent for demonstration
     const textAgent = ai.hazel
       .prompt('You are a helpful assistant. Respond to: Hello, I need help with TypeScript.')
@@ -172,7 +170,7 @@ async function demonstrateProductionHCEL() {
 
     console.log('✅ Text-based agent workflow created');
     console.log('Features: Prompt-based agent, persistence, caching');
-    
+
     // Execute the text agent
     try {
       const agentResult = await textAgent.execute();
@@ -184,28 +182,29 @@ async function demonstrateProductionHCEL() {
 
     // ── Multi-Agent Workflow Structure ───────────────────────────────
     console.log('🔄 Multi-Agent Workflow Structure:');
-    
+
     // Demonstrate the structure of a complex multi-agent workflow
     const multiAgentStructure = ai.hazel
-      .context({ 
+      .context({
         userId: 'user-123',
         sessionId: 'agent-session',
-        metadata: { workflow: 'customer-support', priority: 'high' }
+        metadata: { workflow: 'customer-support', priority: 'high' },
       })
       .prompt('Analyze customer feedback: "The product is great but shipping was slow"')
       .parallel(
         ai.hazel.prompt('Extract sentiment from feedback'), // Sentiment analysis
-        ai.hazel.prompt('Identify key topics mentioned')  // Topic extraction
+        ai.hazel.prompt('Identify key topics mentioned') // Topic extraction
       )
       .conditional((results) => {
         // Route based on sentiment analysis
         const analysis = results as any;
-        const hasNegativeSentiment = JSON.stringify(analysis).includes('slow') || 
-                                   JSON.stringify(analysis).includes('negative');
+        const hasNegativeSentiment =
+          JSON.stringify(analysis).includes('slow') ||
+          JSON.stringify(analysis).includes('negative');
         return hasNegativeSentiment;
       })
       .prompt('Generate response addressing shipping concerns') // Handle negative
-      .prompt('Create follow-up action items')                   // Always create actions
+      .prompt('Create follow-up action items') // Always create actions
       .persist('customer-support-workflow')
       .cache(3600) // Cache for 1 hour
       .observe((event) => {
@@ -214,7 +213,7 @@ async function demonstrateProductionHCEL() {
 
     console.log('✅ Multi-agent workflow structure created');
     console.log('Features: Parallel processing, conditional routing, context-aware, persistent');
-    
+
     // Execute the multi-agent workflow
     try {
       const multiAgentResult = await multiAgentStructure.execute();
@@ -226,13 +225,13 @@ async function demonstrateProductionHCEL() {
 
     // ── Agent with Memory Integration ────────────────────────────────
     console.log('🧠 Agent with Memory Integration:');
-    
+
     // Create a memory-enabled agent workflow
     const memoryAgentWorkflow = ai.hazel
-      .context({ 
+      .context({
         userId: 'user-123',
         sessionId: 'memory-session',
-        metadata: { agentType: 'memory-enabled' }
+        metadata: { agentType: 'memory-enabled' },
       })
       .prompt('Remember: User prefers TypeScript over JavaScript')
       .prompt('What programming language does this user prefer?')
@@ -241,7 +240,7 @@ async function demonstrateProductionHCEL() {
 
     console.log('✅ Memory-enabled agent workflow created');
     console.log('Features: Context retention, user preferences, long-term memory');
-    
+
     // Execute memory agent
     try {
       const memoryResult = await memoryAgentWorkflow.execute();
@@ -253,7 +252,7 @@ async function demonstrateProductionHCEL() {
 
     // ── Agent + RAG Integration ───────────────────────────────────────
     console.log('📚 Agent + RAG Integration:');
-    
+
     // Agent workflow that combines with RAG knowledge base
     const ragAgentWorkflow = ai.hazel
       .prompt('Answer: What are the best practices for TypeScript development?')
@@ -264,7 +263,7 @@ async function demonstrateProductionHCEL() {
 
     console.log('✅ RAG-enabled agent workflow created');
     console.log('Features: Knowledge retrieval, synthesis, persistent learning');
-    
+
     // Execute RAG agent
     try {
       const ragResult = await ragAgentWorkflow.execute();
@@ -290,7 +289,7 @@ async function demonstrateProductionHCEL() {
     console.log('✅ Type-safe configuration');
 
     console.log('\n🎉 Production HCEL demo completed successfully!');
-    
+
     console.log('\n💡 Production Migration Tips:');
     console.log('1. Set memory.store to "postgres" or "redis" for production');
     console.log('2. Configure rag.vectorStore to "pinecone" or "qdrant"');
@@ -299,10 +298,9 @@ async function demonstrateProductionHCEL() {
     console.log('5. Configure agent tools and capabilities');
     console.log('6. Set appropriate TTL values for agent caching');
     console.log('7. Add observability for agent performance monitoring');
-
   } catch (error) {
     console.error('❌ Error during production demo:', error);
-    
+
     if (error instanceof Error) {
       console.log('\n💡 Troubleshooting tips:');
       console.log('- Ensure OPENAI_API_KEY is set in your environment');

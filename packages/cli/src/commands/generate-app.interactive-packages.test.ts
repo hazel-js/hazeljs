@@ -71,7 +71,11 @@ describe('generateApp interactive package wiring', () => {
     mockFs.existsSync.mockImplementation((p: any) => {
       const s = String(p);
       if (s.includes(path.join('@template'))) return true; // template exists
-      if (s.endsWith(path.join('.', 'my-app')) || s.endsWith(path.join(process.cwd(), '.', 'my-app'))) return false; // dest doesn't exist
+      if (
+        s.endsWith(path.join('.', 'my-app')) ||
+        s.endsWith(path.join(process.cwd(), '.', 'my-app'))
+      )
+        return false; // dest doesn't exist
       if (s.endsWith(path.join('my-app', 'package.json'))) return true; // updatePackageJson path
       if (s.endsWith(path.join('my-app', 'src'))) return true;
       return false;
@@ -80,7 +84,8 @@ describe('generateApp interactive package wiring', () => {
     mockFs.readdirSync.mockImplementation((p: any) => {
       const s = String(p);
       if (s.includes('@template') && s.endsWith('@template')) return ['package.json', 'src'] as any;
-      if (s.includes('@template') && s.endsWith(path.join('@template', 'src'))) return ['index.ts', 'app.module.ts', 'hello.controller.ts'] as any;
+      if (s.includes('@template') && s.endsWith(path.join('@template', 'src')))
+        return ['index.ts', 'app.module.ts', 'hello.controller.ts'] as any;
       return [] as any;
     });
 
@@ -108,4 +113,3 @@ describe('generateApp interactive package wiring', () => {
     expect(out).toContain('Project created successfully');
   });
 });
-

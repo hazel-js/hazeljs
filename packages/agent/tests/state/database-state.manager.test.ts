@@ -1,4 +1,7 @@
-import { DatabaseStateManager, DatabaseStateManagerConfig } from '../../src/state/database-state.manager';
+import {
+  DatabaseStateManager,
+  DatabaseStateManagerConfig,
+} from '../../src/state/database-state.manager';
 import { AgentState } from '../../src/types/agent.types';
 
 describe('DatabaseStateManager', () => {
@@ -392,7 +395,9 @@ describe('DatabaseStateManager', () => {
 
       mockPrismaClient.agentContext.findUnique.mockResolvedValue(mockContext);
 
-      await expect(manager.updateLastStep('exec-1', { state: AgentState.COMPLETED })).rejects.toThrow('No steps to update');
+      await expect(
+        manager.updateLastStep('exec-1', { state: AgentState.COMPLETED })
+      ).rejects.toThrow('No steps to update');
     });
   });
 
@@ -436,4 +441,3 @@ describe('DatabaseStateManager', () => {
     });
   });
 });
-

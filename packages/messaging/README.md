@@ -93,12 +93,12 @@ MessagingModule.forRoot({
 
 ## Webhook URLs
 
-| Channel   | Method | URL                              |
-|-----------|--------|----------------------------------|
-| Telegram  | POST   | `/api/messaging/webhook/telegram` |
-| WhatsApp  | GET    | `/api/messaging/webhook/whatsapp` (verification) |
-| WhatsApp  | POST   | `/api/messaging/webhook/whatsapp` |
-| Viber     | POST   | `/api/messaging/webhook/viber`    |
+| Channel  | Method | URL                                              |
+| -------- | ------ | ------------------------------------------------ |
+| Telegram | POST   | `/api/messaging/webhook/telegram`                |
+| WhatsApp | GET    | `/api/messaging/webhook/whatsapp` (verification) |
+| WhatsApp | POST   | `/api/messaging/webhook/whatsapp`                |
+| Viber    | POST   | `/api/messaging/webhook/viber`                   |
 
 ## Configuration
 
@@ -168,6 +168,7 @@ MessagingModule.forRoot({
 ```
 
 The agent handler receives `{ message, sessionId, conversationTurns }` and can:
+
 - Call `AgentRuntime.execute()` with tools and RAG
 - Use external services (orders, inventory, tickets)
 - Return `string` or `{ response, sources }`

@@ -19,12 +19,12 @@ The inspector is a metadata explorer and runtime topology viewer for HazelJS. It
 
 ## Supported Decorator Categories
 
-| Package | Decorators | Metadata Keys |
-|---------|------------|---------------|
-| @hazeljs/core | @Controller, @Get/@Post/etc, @Injectable, @UseGuards, @UsePipes | hazel:controller, hazel:routes, hazel:inject |
-| @hazeljs/cron | @Cron | Symbol('cron:jobs') |
-| @hazeljs/queue | @Queue | Symbol('queue:processors') |
-| @hazeljs/websocket | @Realtime, @Subscribe, @OnConnect | hazel:realtime, hazel:subscribe |
+| Package            | Decorators                                                      | Metadata Keys                                |
+| ------------------ | --------------------------------------------------------------- | -------------------------------------------- |
+| @hazeljs/core      | @Controller, @Get/@Post/etc, @Injectable, @UseGuards, @UsePipes | hazel:controller, hazel:routes, hazel:inject |
+| @hazeljs/cron      | @Cron                                                           | Symbol('cron:jobs')                          |
+| @hazeljs/queue     | @Queue                                                          | Symbol('queue:processors')                   |
+| @hazeljs/websocket | @Realtime, @Subscribe, @OnConnect                               | hazel:realtime, hazel:subscribe              |
 
 ## Extension Points
 

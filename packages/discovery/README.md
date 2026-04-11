@@ -260,7 +260,7 @@ const consul = new Consul({
 });
 
 const backend = new ConsulRegistryBackend(consul, {
-  ttl: '30s',       // TTL check interval (supports "30s", "5m", "1h")
+  ttl: '30s', // TTL check interval (supports "30s", "5m", "1h")
   datacenter: 'dc1',
 });
 
@@ -298,19 +298,19 @@ const client = new DiscoveryClient({}, backend);
 
 `ServiceClient` only retries on transient errors. Client errors (4xx) are thrown immediately without wasting retries:
 
-| Error Type | Retried? |
-|---|---|
-| Network errors (ECONNREFUSED, timeout) | Yes |
-| 502 Bad Gateway | Yes |
-| 503 Service Unavailable | Yes |
-| 504 Gateway Timeout | Yes |
-| 408 Request Timeout | Yes |
-| 429 Too Many Requests | Yes |
-| 400 Bad Request | No |
-| 401 Unauthorized | No |
-| 403 Forbidden | No |
-| 404 Not Found | No |
-| Other 4xx | No |
+| Error Type                             | Retried? |
+| -------------------------------------- | -------- |
+| Network errors (ECONNREFUSED, timeout) | Yes      |
+| 502 Bad Gateway                        | Yes      |
+| 503 Service Unavailable                | Yes      |
+| 504 Gateway Timeout                    | Yes      |
+| 408 Request Timeout                    | Yes      |
+| 429 Too Many Requests                  | Yes      |
+| 400 Bad Request                        | No       |
+| 401 Unauthorized                       | No       |
+| 403 Forbidden                          | No       |
+| 404 Not Found                          | No       |
+| Other 4xx                              | No       |
 
 ## Custom Logging
 
@@ -339,8 +339,8 @@ import { ServiceRegistry, ConfigValidationError } from '@hazeljs/discovery';
 
 try {
   const registry = new ServiceRegistry({
-    name: '',     // invalid: empty string
-    port: -1,     // invalid: negative port
+    name: '', // invalid: empty string
+    port: -1, // invalid: negative port
   });
 } catch (error) {
   if (error instanceof ConfigValidationError) {
@@ -370,7 +370,11 @@ class ServiceRegistry {
 class DiscoveryClient {
   constructor(config?: DiscoveryClientConfig, backend?: RegistryBackend);
   getInstances(serviceName: string, filter?: ServiceFilter): Promise<ServiceInstance[]>;
-  getInstance(serviceName: string, strategy?: string, filter?: ServiceFilter): Promise<ServiceInstance | null>;
+  getInstance(
+    serviceName: string,
+    strategy?: string,
+    filter?: ServiceFilter
+  ): Promise<ServiceInstance | null>;
   getAllServices(): Promise<string[]>;
   clearCache(serviceName?: string): void;
   getLoadBalancerFactory(): LoadBalancerFactory;
@@ -399,8 +403,8 @@ interface ServiceRegistryConfig {
   port: number;
   host?: string;
   protocol?: 'http' | 'https' | 'grpc';
-  healthCheckPath?: string;       // default: '/health'
-  healthCheckInterval?: number;   // default: 30000 (ms)
+  healthCheckPath?: string; // default: '/health'
+  healthCheckInterval?: number; // default: 30000 (ms)
   metadata?: Record<string, unknown>;
   zone?: string;
   tags?: string[];
@@ -408,17 +412,17 @@ interface ServiceRegistryConfig {
 
 interface DiscoveryClientConfig {
   cacheEnabled?: boolean;
-  cacheTTL?: number;           // default: 30000 (ms)
-  refreshInterval?: number;    // auto-refresh cache interval (ms)
+  cacheTTL?: number; // default: 30000 (ms)
+  refreshInterval?: number; // auto-refresh cache interval (ms)
 }
 
 interface ServiceClientConfig {
   serviceName: string;
-  loadBalancingStrategy?: string;  // default: 'round-robin'
+  loadBalancingStrategy?: string; // default: 'round-robin'
   filter?: ServiceFilter;
-  timeout?: number;                // default: 5000 (ms)
-  retries?: number;                // default: 3
-  retryDelay?: number;             // default: 1000 (ms)
+  timeout?: number; // default: 5000 (ms)
+  retries?: number; // default: 3
+  retryDelay?: number; // default: 1000 (ms)
 }
 ```
 

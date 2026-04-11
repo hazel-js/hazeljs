@@ -66,12 +66,14 @@ npx ts-node src/rag/agentic/agentic-rag-agent-integration.example.ts
 ### Error: Property 'defineMetadata' does not exist on type 'typeof Reflect'
 
 **Solution**: This should not occur if you're using `@hazeljs/core` which automatically imports `reflect-metadata`. If you still see this error:
+
 - Ensure `reflect-metadata` is installed: `npm install reflect-metadata`
 - Make sure you're using the latest version of `@hazeljs/core`
 
 ### Error: Unable to resolve signature of method decorator
 
 **Solution**: Enable experimental decorators in `tsconfig.json`:
+
 ```json
 {
   "compilerOptions": {
@@ -84,6 +86,7 @@ npx ts-node src/rag/agentic/agentic-rag-agent-integration.example.ts
 ### Error: Cannot find module '@hazeljs/rag'
 
 **Solution**: Build the RAG package first:
+
 ```bash
 cd packages/rag
 npm run build
@@ -129,5 +132,6 @@ import {
 5. ✅ Build your own agentic RAG application
 
 For more information, see:
+
 - [Agentic RAG Documentation](./src/agentic/AGENTIC_RAG.md)
 - [Examples README](../example/src/rag/agentic/README.md)

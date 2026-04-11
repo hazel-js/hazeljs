@@ -194,7 +194,7 @@ const user = await userRepository.findOne({
 // If raw SQL is unavoidable, always use parameters — never string interpolation
 const users = await dataSource.query(
   'SELECT * FROM users WHERE email = $1',
-  [userInput], // ✅ parameterized
+  [userInput] // ✅ parameterized
 );
 // Never: `SELECT * FROM users WHERE email = '${userInput}'` ❌
 ```
@@ -280,10 +280,12 @@ We currently do not have a bug bounty program, but we deeply appreciate security
 ## Contact
 
 For security concerns, contact:
+
 - Email: info@hazeljs.ai
 - PGP Key: (Coming soon)
 
 For general questions:
+
 - GitHub Discussions: https://github.com/hazel-js/hazeljs/discussions
 - Discord: (Coming soon)
 

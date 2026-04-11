@@ -122,7 +122,9 @@ export function printGenerateResult(result: GenerateResult, options: { json?: bo
     console.error(chalk.red(result.error ?? 'Generation failed'));
     return;
   }
-  const prefix = result.dryRun ? chalk.blue('[dry-run] Would create ') : chalk.green('✓ Generated ');
+  const prefix = result.dryRun
+    ? chalk.blue('[dry-run] Would create ')
+    : chalk.green('✓ Generated ');
   for (const file of result.created) {
     console.log(prefix + file);
   }

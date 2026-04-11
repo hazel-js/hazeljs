@@ -57,7 +57,9 @@ describe('AgentRuntime', () => {
   describe('execute', () => {
     it('should throw error for non-existent agent', async () => {
       const runtime = new AgentRuntime();
-      await expect(runtime.execute('non-existent', 'input')).rejects.toThrow('Agent non-existent not found');
+      await expect(runtime.execute('non-existent', 'input')).rejects.toThrow(
+        'Agent non-existent not found'
+      );
     });
   });
 
@@ -315,7 +317,7 @@ describe('AgentRuntime', () => {
   describe('execute with options', () => {
     it('should handle rate limiting', async () => {
       const runtime = new AgentRuntime({ rateLimitPerMinute: 1 });
-      
+
       // Consume the token
       try {
         await runtime.execute('non-existent', 'input');
@@ -325,7 +327,7 @@ describe('AgentRuntime', () => {
 
       // Wait a bit and try again - should be rate limited if token not available
       await new Promise((resolve) => setTimeout(resolve, 100));
-      
+
       // Next call should be rate limited (if token not available)
       try {
         await runtime.execute('non-existent', 'input');
@@ -609,7 +611,7 @@ describe('AgentRuntime', () => {
 
     it('should throw error when pipeline has no agents', () => {
       const runtime = new AgentRuntime();
-      
+
       expect(() => {
         runtime.pipeline('empty-pipeline', []);
       }).toThrow('pipeline() requires at least one agent name');
@@ -652,7 +654,7 @@ describe('AgentRuntime', () => {
           { llmProvider: mockLLM as any },
           { maxSteps: 1 }
         );
-        
+
         // May fail without proper LLM setup, but should not throw on registration
         expect(result).toBeDefined();
       } catch (error) {
@@ -664,9 +666,9 @@ describe('AgentRuntime', () => {
     it('should throw error when quick is called with non-agent class', async () => {
       class NotAnAgent {}
 
-      await expect(
-        AgentRuntime.quick(NotAnAgent, 'test input')
-      ).rejects.toThrow('is not decorated with @Agent');
+      await expect(AgentRuntime.quick(NotAnAgent, 'test input')).rejects.toThrow(
+        'is not decorated with @Agent'
+      );
     });
 
     it('should handle quick with custom options', async () => {
@@ -701,4 +703,3 @@ describe('AgentRuntime', () => {
     });
   });
 });
-

@@ -1,6 +1,6 @@
 /**
  * HCEL + Flow Engine Integration Demo
- * 
+ *
  * Demonstrates seamless integration between HazelJS Flow Engine and HCEL
  * for AI-driven workflows with durable execution and persistence.
  */
@@ -57,12 +57,12 @@ class HCELFlowNode {
       const result = await this.chain.execute(input);
       return {
         status: 'ok',
-        output: result
+        output: result,
       };
     } catch (error) {
       return {
         status: 'error',
-        reason: error instanceof Error ? error.message : 'Unknown error'
+        reason: error instanceof Error ? error.message : 'Unknown error',
       };
     }
   }
@@ -89,14 +89,14 @@ class MockFlowEngine {
       version: args.version,
       input: args.input,
       startedAt: new Date(),
-      outputs: {} as Record<string, unknown>
+      outputs: {} as Record<string, unknown>,
     };
 
     this.executions.set(execution.runId, execution);
     console.log(`🚀 Flow run started: ${execution.runId}`);
 
     await this.executeFlow(flow, execution);
-    
+
     return { runId: execution.runId, status: execution.status };
   }
 
@@ -108,7 +108,7 @@ class MockFlowEngine {
       input: execution.input,
       state: {},
       outputs: execution.outputs,
-      meta: { attempts: {}, startedAt: execution.startedAt.toISOString() }
+      meta: { attempts: {}, startedAt: execution.startedAt.toISOString() },
     };
 
     try {
@@ -139,7 +139,7 @@ class MockFlowEngine {
 
 async function demonstrateFlowIntegration() {
   console.log('🌊 HCEL + Flow Engine Integration Demo\n');
-  
+
   console.log('🔑 Environment check:');
   console.log(`OPENAI_API_KEY: ${process.env.OPENAI_API_KEY ? '✅ Set' : '❌ Not set'}`);
   console.log();
@@ -157,7 +157,7 @@ async function demonstrateFlowIntegration() {
 
     // ── Flow 1: Customer Support Workflow ───────────────────────────────
     console.log('📞 Flow 1: Customer Support Workflow');
-    
+
     const customerSupportFlow: FlowDefinition = {
       flowId: 'customer-support',
       version: '1.0.0',
@@ -169,10 +169,10 @@ async function demonstrateFlowIntegration() {
               .prompt('Analyze customer request: My order is delayed and I need help tracking it')
               .ml('classify')
               .persist('customer-analysis');
-            
+
             const node = new HCELFlowNode(chain);
             return await node.execute(ctx.input);
-          }
+          },
         },
         'handle-shipping': {
           handler: async (ctx: FlowContext) => {
@@ -180,149 +180,147 @@ async function demonstrateFlowIntegration() {
               .prompt('Provide shipping status and solution for delayed order')
               .rag('shipping-docs')
               .persist('shipping-response');
-            
+
             const node = new HCELFlowNode(chain);
             return await node.execute(ctx.input);
-          }
+          },
         },
         'follow-up': {
           handler: async (ctx: FlowContext) => {
             console.log('📅 Follow-up scheduled');
             return {
               status: 'ok',
-              output: { scheduled: true, date: new Date(Date.now() + 86400000) }
+              output: { scheduled: true, date: new Date(Date.now() + 86400000) },
             };
-          }
-        }
+          },
+        },
       },
       edges: [
         { from: 'analyze-request', to: 'handle-shipping' },
-        { from: 'handle-shipping', to: 'follow-up' }
-      ]
+        { from: 'handle-shipping', to: 'follow-up' },
+      ],
     };
 
     await flowEngine.registerDefinition(customerSupportFlow);
     const supportRun = await flowEngine.startRun({
       flowId: 'customer-support',
       version: '1.0.0',
-      input: { request: 'Order delayed' }
+      input: { request: 'Order delayed' },
     });
 
     console.log(`✅ Support flow: ${supportRun.status}\n`);
 
     // ── Flow 2: Content Processing Pipeline ───────────────────────────
     console.log('📝 Flow 2: Content Processing Pipeline');
-    
+
     const contentFlow: FlowDefinition = {
       flowId: 'content-processing',
       version: '1.0.0',
       entry: 'analyze',
       nodes: {
-        'analyze': {
+        analyze: {
           handler: async (ctx: FlowContext) => {
             const chain = ai.hazel
               .prompt('Analyze: HazelJS is an amazing AI framework!')
               .ml('sentiment')
               .persist('content-analysis');
-            
+
             return await new HCELFlowNode(chain).execute(ctx.input);
-          }
+          },
         },
-        'summarize': {
+        summarize: {
           handler: async (ctx: FlowContext) => {
             const chain = ai.hazel
               .prompt('Summarize: HazelJS is an amazing AI framework!')
               .persist('summary');
-            
+
             return await new HCELFlowNode(chain).execute(ctx.input);
-          }
+          },
         },
-        'enhance': {
+        enhance: {
           handler: async (ctx: FlowContext) => {
             const chain = ai.hazel
               .prompt('Enhance content for engagement')
               .rag('content-guidelines')
               .persist('enhancement');
-            
+
             return await new HCELFlowNode(chain).execute(ctx.input);
-          }
-        }
+          },
+        },
       },
       edges: [
         { from: 'analyze', to: 'summarize' },
-        { from: 'summarize', to: 'enhance' }
-      ]
+        { from: 'summarize', to: 'enhance' },
+      ],
     };
 
     await flowEngine.registerDefinition(contentFlow);
     const contentRun = await flowEngine.startRun({
       flowId: 'content-processing',
       version: '1.0.0',
-      input: { content: 'HazelJS framework' }
+      input: { content: 'HazelJS framework' },
     });
 
     console.log(`✅ Content flow: ${contentRun.status}\n`);
 
     // ── Flow 3: Research Workflow ───────────────────────────
     console.log('🔬 Flow 3: Multi-Agent Research Workflow');
-    
+
     const researchFlow: FlowDefinition = {
       flowId: 'research',
       version: '1.0.0',
       entry: 'plan',
       nodes: {
-        'plan': {
+        plan: {
           handler: async (ctx: FlowContext) => {
             const chain = ai.hazel
               .prompt('Plan research: The future of AI in software development')
               .persist('research-plan');
-            
+
             return await new HCELFlowNode(chain).execute(ctx.input);
-          }
+          },
         },
-        'literature': {
+        literature: {
           handler: async (ctx: FlowContext) => {
             const chain = ai.hazel
               .prompt('Literature review: AI in software development')
               .rag('academic-papers')
               .persist('literature');
-            
+
             return await new HCELFlowNode(chain).execute(ctx.input);
-          }
+          },
         },
-        'market': {
+        market: {
           handler: async (ctx: FlowContext) => {
             const chain = ai.hazel
               .prompt('Market analysis: AI in software development')
               .rag('market-reports')
               .persist('market');
-            
+
             return await new HCELFlowNode(chain).execute(ctx.input);
-          }
+          },
         },
-        'synthesize': {
+        synthesize: {
           handler: async (ctx: FlowContext) => {
-            const chain = ai.hazel
-              .prompt('Synthesize research findings')
-              .persist('synthesis');
-            
+            const chain = ai.hazel.prompt('Synthesize research findings').persist('synthesis');
+
             return await new HCELFlowNode(chain).execute(ctx.input);
-          }
-        }
+          },
+        },
       },
       edges: [
         { from: 'plan', to: 'literature' },
         { from: 'plan', to: 'market' },
         { from: 'literature', to: 'synthesize' },
-        { from: 'market', to: 'synthesize' }
-      ]
+        { from: 'market', to: 'synthesize' },
+      ],
     };
 
     await flowEngine.registerDefinition(researchFlow);
     const researchRun = await flowEngine.startRun({
       flowId: 'research',
       version: '1.0.0',
-      input: { topic: 'AI in software' }
+      input: { topic: 'AI in software' },
     });
 
     console.log(`✅ Research flow: ${researchRun.status}\n`);
@@ -347,10 +345,9 @@ async function demonstrateFlowIntegration() {
     console.log('🔄 Persistent state management');
     console.log('⚡ Real-time processing capabilities');
     console.log('📊 Comprehensive monitoring');
-
   } catch (error) {
     console.error('❌ Error during flow demo:', error);
-    
+
     if (error instanceof Error) {
       console.log('\n💡 Troubleshooting tips:');
       console.log('- Ensure @hazeljs/flow package is installed');

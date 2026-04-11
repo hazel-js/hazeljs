@@ -94,10 +94,12 @@ const ws = new WebSocket('ws://localhost:3000/realtime');
 
 ws.onopen = () => {
   // Optional: update session config
-  ws.send(JSON.stringify({
-    type: 'session.update',
-    session: { instructions: 'Be extra friendly!' },
-  }));
+  ws.send(
+    JSON.stringify({
+      type: 'session.update',
+      session: { instructions: 'Be extra friendly!' },
+    })
+  );
 };
 
 ws.onmessage = (e) => {
@@ -110,10 +112,12 @@ ws.onmessage = (e) => {
 };
 
 // Send audio (base64 PCM 24kHz)
-ws.send(JSON.stringify({
-  type: 'input_audio_buffer.append',
-  audio: base64PcmChunk,
-}));
+ws.send(
+  JSON.stringify({
+    type: 'input_audio_buffer.append',
+    audio: base64PcmChunk,
+  })
+);
 ```
 
 ---
@@ -122,22 +126,22 @@ ws.send(JSON.stringify({
 
 ### RealtimeModule.forRoot(options)
 
-| Option | Type | Description |
-|--------|------|-------------|
-| `openaiApiKey` | string | OpenAI API key (or use `OPENAI_API_KEY` env) |
-| `path` | string | WebSocket path (default: `/realtime`) |
-| `defaultSessionConfig` | RealtimeSessionConfig | Default session config |
-| `defaultProvider` | 'openai' \| 'gemini' | Provider (OpenAI supported first) |
+| Option                 | Type                  | Description                                  |
+| ---------------------- | --------------------- | -------------------------------------------- |
+| `openaiApiKey`         | string                | OpenAI API key (or use `OPENAI_API_KEY` env) |
+| `path`                 | string                | WebSocket path (default: `/realtime`)        |
+| `defaultSessionConfig` | RealtimeSessionConfig | Default session config                       |
+| `defaultProvider`      | 'openai' \| 'gemini'  | Provider (OpenAI supported first)            |
 
 ### RealtimeSessionConfig
 
-| Option | Type | Description |
-|--------|------|-------------|
-| `instructions` | string | System prompt for the model |
-| `voice` | OpenAIVoice | alloy, ash, ballad, coral, echo, sage, shimmer, verse, marin, cedar |
-| `outputModalities` | ('audio' \| 'text')[] | Output modes (default: ['audio', 'text']) |
-| `inputFormat` | RealtimeAudioFormat | PCM format (default: 24kHz) |
-| `turnDetection` | boolean | Enable VAD (default: true) |
+| Option             | Type                  | Description                                                         |
+| ------------------ | --------------------- | ------------------------------------------------------------------- |
+| `instructions`     | string                | System prompt for the model                                         |
+| `voice`            | OpenAIVoice           | alloy, ash, ballad, coral, echo, sage, shimmer, verse, marin, cedar |
+| `outputModalities` | ('audio' \| 'text')[] | Output modes (default: ['audio', 'text'])                           |
+| `inputFormat`      | RealtimeAudioFormat   | PCM format (default: 24kHz)                                         |
+| `turnDetection`    | boolean               | Enable VAD (default: true)                                          |
 
 ---
 
@@ -145,14 +149,14 @@ ws.send(JSON.stringify({
 
 Send any [OpenAI Realtime client event](https://platform.openai.com/docs/api-reference/realtime-client-events) over the WebSocket:
 
-| Event | Description |
-|-------|-------------|
-| `session.update` | Update session config |
-| `input_audio_buffer.append` | Send base64 PCM audio |
+| Event                       | Description                       |
+| --------------------------- | --------------------------------- |
+| `session.update`            | Update session config             |
+| `input_audio_buffer.append` | Send base64 PCM audio             |
 | `input_audio_buffer.commit` | Commit buffer (when VAD disabled) |
-| `input_audio_buffer.clear` | Clear buffer |
-| `conversation.item.create` | Add text message |
-| `response.create` | Trigger model response |
+| `input_audio_buffer.clear`  | Clear buffer                      |
+| `conversation.item.create`  | Add text message                  |
+| `response.create`           | Trigger model response            |
 
 ---
 
@@ -160,14 +164,14 @@ Send any [OpenAI Realtime client event](https://platform.openai.com/docs/api-ref
 
 You receive `{ event: 'realtime', data: <OpenAI server event> }`:
 
-| Event | Description |
-|-------|-------------|
-| `session.created` / `session.updated` | Session lifecycle |
-| `response.output_audio.delta` | Audio chunk (base64) |
-| `response.output_audio.done` | Audio complete |
-| `response.output_text.delta` / `response.output_text.done` | Text stream |
-| `response.done` | Response complete |
-| `input_audio_buffer.speech_started` / `speech_stopped` | VAD events |
+| Event                                                      | Description          |
+| ---------------------------------------------------------- | -------------------- |
+| `session.created` / `session.updated`                      | Session lifecycle    |
+| `response.output_audio.delta`                              | Audio chunk (base64) |
+| `response.output_audio.done`                               | Audio complete       |
+| `response.output_text.delta` / `response.output_text.done` | Text stream          |
+| `response.done`                                            | Response complete    |
+| `input_audio_buffer.speech_started` / `speech_stopped`     | VAD events           |
 
 ---
 
@@ -197,7 +201,10 @@ Encode/decode base64 for transport over WebSocket.
 ```typescript
 class RealtimeGateway extends WebSocketGateway {
   constructor(realtimeService: RealtimeService, options?: RealtimeGatewayOptions);
-  attachToServer(server: HttpServer, options?: { path?: string; maxPayload?: number }): WebSocketServer;
+  attachToServer(
+    server: HttpServer,
+    options?: { path?: string; maxPayload?: number }
+  ): WebSocketServer;
 }
 ```
 

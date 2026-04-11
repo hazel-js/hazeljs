@@ -32,12 +32,12 @@ export class UsersController {
 
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
-    const user = this.users.find(u => u.id === id);
-    
+    const user = this.users.find((u) => u.id === id);
+
     if (!user) {
       throw new NotFoundError(`User with ID ${id} not found`);
     }
-    
+
     return user;
   }
 }
@@ -93,7 +93,7 @@ getProfile(@Headers('authorization') auth: string) {
   if (!auth) {
     throw new UnauthorizedError('Authentication required');
   }
-  
+
   const token = auth.replace('Bearer ', '');
   // Verify token...
 }
@@ -109,11 +109,11 @@ import { ForbiddenError } from '@hazeljs/core';
 @Delete(':id')
 remove(@Param('id', ParseIntPipe) id: number, @Req() req: Request) {
   const user = req.user;
-  
+
   if (user.role !== 'admin') {
     throw new ForbiddenError('Only admins can delete users');
   }
-  
+
   return this.service.remove(id);
 }
 ```
@@ -128,11 +128,11 @@ import { NotFoundError } from '@hazeljs/core';
 @Get(':id')
 findOne(@Param('id', ParseIntPipe) id: number) {
   const item = this.service.findOne(id);
-  
+
   if (!item) {
     throw new NotFoundError(`Item #${id} not found`);
   }
-  
+
   return item;
 }
 ```
@@ -147,11 +147,11 @@ import { ConflictError } from '@hazeljs/core';
 @Post()
 create(@Body() data: CreateUserDto) {
   const existing = this.service.findByEmail(data.email);
-  
+
   if (existing) {
     throw new ConflictError('User with this email already exists');
   }
-  
+
   return this.service.create(data);
 }
 ```
@@ -193,7 +193,7 @@ export class ValidationExceptionFilter implements ExceptionFilter<ValidationErro
     response.status(400).json({
       statusCode: 400,
       message: 'Validation failed',
-      errors: exception.errors.map(err => ({
+      errors: exception.errors.map((err) => ({
         field: err.property,
         messages: Object.values(err.constraints),
       })),
@@ -368,7 +368,7 @@ usePremiumFeature(@Req() req: Request) {
   if (!req.user.isPremium) {
     throw new PaymentRequiredError('This feature requires a premium subscription');
   }
-  
+
   return this.service.usePremiumFeature();
 }
 ```
@@ -431,10 +431,7 @@ import { HttpError } from '@hazeljs/core';
 
 export class InsufficientFundsError extends HttpError {
   constructor(required: number, available: number) {
-    super(
-      400,
-      `Insufficient funds. Required: $${required}, Available: $${available}`
-    );
+    super(400, `Insufficient funds. Required: $${required}, Available: $${available}`);
     this.name = 'InsufficientFundsError';
   }
 }
@@ -485,15 +482,15 @@ export class PaymentsController {
   @Post('transfer')
   transfer(@Body() data: { from: string; to: string; amount: number }) {
     const account = this.getAccount(data.from);
-    
+
     if (account.locked) {
       throw new AccountLockedError('Too many failed login attempts');
     }
-    
+
     if (account.balance < data.amount) {
       throw new InsufficientFundsError(data.amount, account.balance);
     }
-    
+
     return this.processTransfer(data);
   }
 }

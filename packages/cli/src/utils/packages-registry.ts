@@ -45,7 +45,7 @@ export const HAZEL_PACKAGES: HazelPackageMeta[] = [
     label: 'Audit Logging (@hazeljs/audit)',
     hint: 'import { AuditModule, ConsoleAuditTransport } from "@hazeljs/audit";\n  // AuditModule.forRoot({ transports: [new ConsoleAuditTransport()] })',
     moduleImport: "import { AuditModule, ConsoleAuditTransport } from '@hazeljs/audit';",
-    moduleExpression: "AuditModule.forRoot({ transports: [new ConsoleAuditTransport()] })",
+    moduleExpression: 'AuditModule.forRoot({ transports: [new ConsoleAuditTransport()] })',
     setupTemplate: `import { AuditModule, ConsoleAuditTransport } from '@hazeljs/audit';
 
 // Add AuditModule.forRoot(...) to your HazelModule imports.
@@ -58,7 +58,8 @@ export const auditImports = [AuditModule.forRoot({ transports: [new ConsoleAudit
     label: 'Authentication (@hazeljs/auth)',
     hint: 'import { JwtModule } from "@hazeljs/auth";\n  // JwtModule.forRoot({ secret: "your-secret", expiresIn: "1d" })',
     moduleImport: "import { JwtModule } from '@hazeljs/auth';",
-    moduleExpression: "JwtModule.forRoot({ secret: process.env.JWT_SECRET || 'change-me', expiresIn: '1d' })",
+    moduleExpression:
+      "JwtModule.forRoot({ secret: process.env.JWT_SECRET || 'change-me', expiresIn: '1d' })",
     setupTemplate: null,
   },
   {
@@ -67,7 +68,8 @@ export const auditImports = [AuditModule.forRoot({ transports: [new ConsoleAudit
     label: 'OAuth - Google/Microsoft/GitHub (@hazeljs/oauth)',
     hint: 'import { OAuthModule } from "@hazeljs/oauth";\n  // OAuthModule.forRoot({ providers: { google: {...}, microsoft: {...}, github: {...} } })',
     moduleImport: "import { OAuthModule } from '@hazeljs/oauth';",
-    moduleExpression: "OAuthModule.forRoot({ providers: { google: { clientId: process.env.GOOGLE_CLIENT_ID!, clientSecret: process.env.GOOGLE_CLIENT_SECRET!, redirectUri: process.env.OAUTH_REDIRECT_URI! } } })",
+    moduleExpression:
+      'OAuthModule.forRoot({ providers: { google: { clientId: process.env.GOOGLE_CLIENT_ID!, clientSecret: process.env.GOOGLE_CLIENT_SECRET!, redirectUri: process.env.OAUTH_REDIRECT_URI! } } })',
     setupTemplate: `import { OAuthModule } from '@hazeljs/oauth';
 
 // Example (Google). Put secrets in env vars:
@@ -168,7 +170,7 @@ export const gatewayImports = [GatewayModule];
     label: 'Guardrails (@hazeljs/guardrails)',
     hint: 'import { GuardrailsModule } from "@hazeljs/guardrails";\n  // GuardrailsModule.forRoot({ redactPIIByDefault: true })',
     moduleImport: "import { GuardrailsModule } from '@hazeljs/guardrails';",
-    moduleExpression: "GuardrailsModule.forRoot({ redactPIIByDefault: true })",
+    moduleExpression: 'GuardrailsModule.forRoot({ redactPIIByDefault: true })',
     setupTemplate: null,
   },
   {
@@ -385,9 +387,7 @@ SwaggerModule.setRootModule(AppModule);
  * @returns The matching package metadata, or undefined if not found
  */
 export function findPackage(nameOrNpm: string): HazelPackageMeta | undefined {
-  return HAZEL_PACKAGES.find(
-    (p) => p.shortName === nameOrNpm || p.npm === nameOrNpm
-  );
+  return HAZEL_PACKAGES.find((p) => p.shortName === nameOrNpm || p.npm === nameOrNpm);
 }
 
 /**

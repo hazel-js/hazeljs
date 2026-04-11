@@ -22,7 +22,7 @@ import { DistributedLockModule } from '@hazeljs/distributed-lock';
   imports: [
     DistributedLockModule.forRoot({
       backend: 'redis', // or 'memory'
-      prefix: 'myapp:', 
+      prefix: 'myapp:',
       redis: {
         host: 'localhost',
         port: 6379,
@@ -45,11 +45,11 @@ import { DistributedLock } from '@hazeljs/distributed-lock';
 @Controller('/inventory')
 export class InventoryController {
   @Post('/update')
-  @DistributedLock({ 
-    key: 'inventory:update:{{body.productId}}', 
-    ttl: 5000 
+  @DistributedLock({
+    key: 'inventory:update:{{body.productId}}',
+    ttl: 5000,
   })
-  async updateInventory(@Body() { productId, quantity }: { productId: string, quantity: number }) {
+  async updateInventory(@Body() { productId, quantity }: { productId: string; quantity: number }) {
     // This code is protected by a distributed lock for the specific productId
     // Only one instance can process this product at a time
     return await this.inventoryService.update(productId, quantity);
@@ -71,7 +71,7 @@ export class CriticalService {
 
   async processTask(id: string) {
     const lockKey = `task:${id}`;
-    
+
     // Acquire lock
     const lock = await this.lockManager.acquire(lockKey, {
       ttl: 10000,
@@ -92,16 +92,17 @@ export class CriticalService {
 
 ## 🛠️ Configuration Options
 
-| Option | Description | Default |
-|--------|-------------|---------|
-| `backend` | `memory` or `redis` | `memory` |
-| `prefix` | Prefix for all lock keys | `hazel:lock:` |
-| `defaultTtl` | Default lock timeout (ms) | `30000` |
-| `redis` | Redis connection options | `undefined` |
+| Option       | Description               | Default       |
+| ------------ | ------------------------- | ------------- |
+| `backend`    | `memory` or `redis`       | `memory`      |
+| `prefix`     | Prefix for all lock keys  | `hazel:lock:` |
+| `defaultTtl` | Default lock timeout (ms) | `30000`       |
+| `redis`      | Redis connection options  | `undefined`   |
 
 ## 🔑 Key Patterns
 
 The `@DistributedLock` decorator supports template strings for keys:
+
 - `{{body.fieldName}}` - Access request body
 - `{{params.id}}` - Access URL parameters
 - `{{query.name}}` - Access query parameters

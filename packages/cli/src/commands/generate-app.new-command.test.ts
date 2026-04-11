@@ -59,7 +59,9 @@ describe('generateApp (hazel new)', () => {
 
     const program = new Command();
     generateApp(program);
-    await program.parseAsync(['new', 'my-app', '--dest', '.', '--skip-install', '--skip-git'], { from: 'user' });
+    await program.parseAsync(['new', 'my-app', '--dest', '.', '--skip-install', '--skip-git'], {
+      from: 'user',
+    });
 
     expect(mockFs.mkdirSync).toHaveBeenCalled();
     expect(mockFs.writeFileSync).toHaveBeenCalled();
@@ -84,9 +86,11 @@ describe('generateApp (hazel new)', () => {
 
     const program = new Command();
     generateApp(program);
-    await program.parseAsync(['new', 'my-app', '--dest', '.', '--skip-install', '--skip-git', '--interactive'], { from: 'user' });
+    await program.parseAsync(
+      ['new', 'my-app', '--dest', '.', '--skip-install', '--skip-git', '--interactive'],
+      { from: 'user' }
+    );
 
     expect(mockInquirer.prompt).toHaveBeenCalled();
   });
 });
-

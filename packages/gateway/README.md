@@ -126,7 +126,15 @@ USER_SVC_RATE_LIMIT_MAX=500
 Decorators remain available for quick prototypes and when you prefer co-located configuration:
 
 ```typescript
-import { Gateway, Route, ServiceRoute, Canary, GatewayCircuitBreaker, GatewayRateLimit, GatewayServer } from '@hazeljs/gateway';
+import {
+  Gateway,
+  Route,
+  ServiceRoute,
+  Canary,
+  GatewayCircuitBreaker,
+  GatewayRateLimit,
+  GatewayServer,
+} from '@hazeljs/gateway';
 
 @Gateway({
   resilience: { defaultCircuitBreaker: { failureThreshold: 5 } },
@@ -194,12 +202,12 @@ gateway.on('canary:complete', (data) => {
 
 ## Version Routing Strategies
 
-| Strategy | How It Works | Example |
-|----------|-------------|---------|
-| Header | Client sends `X-API-Version: v2` | Opt-in for specific clients |
-| URI | Path prefix `/v2/api/users` | RESTful versioning |
-| Query | `?version=v2` | Quick testing |
-| Weighted | Percentage-based random | A/B testing, canary |
+| Strategy | How It Works                     | Example                     |
+| -------- | -------------------------------- | --------------------------- |
+| Header   | Client sends `X-API-Version: v2` | Opt-in for specific clients |
+| URI      | Path prefix `/v2/api/users`      | RESTful versioning          |
+| Query    | `?version=v2`                    | Quick testing               |
+| Weighted | Percentage-based random          | A/B testing, canary         |
 
 ## HazelJS Core Integration
 
@@ -242,13 +250,13 @@ const response = await gateway.handleRequest({
 
 ## Environment Variable Convention
 
-| Prefix | Scope | Example |
-|--------|-------|---------|
-| `GATEWAY_*` | Global gateway settings | `GATEWAY_DEFAULT_TIMEOUT=5000` |
-| `GATEWAY_CB_*` | Default circuit breaker | `GATEWAY_CB_THRESHOLD=5` |
-| `<SERVICE>_SVC_*` | Per-service overrides | `USER_SVC_RATE_LIMIT_MAX=100` |
-| `<SERVICE>_CANARY_*` | Canary deployment | `ORDER_CANARY_ERROR_THRESHOLD=5` |
-| `<SERVICE>_VERSION_*` | Version routing | `PAYMENT_DEFAULT_VERSION=v1` |
+| Prefix                | Scope                   | Example                          |
+| --------------------- | ----------------------- | -------------------------------- |
+| `GATEWAY_*`           | Global gateway settings | `GATEWAY_DEFAULT_TIMEOUT=5000`   |
+| `GATEWAY_CB_*`        | Default circuit breaker | `GATEWAY_CB_THRESHOLD=5`         |
+| `<SERVICE>_SVC_*`     | Per-service overrides   | `USER_SVC_RATE_LIMIT_MAX=100`    |
+| `<SERVICE>_CANARY_*`  | Canary deployment       | `ORDER_CANARY_ERROR_THRESHOLD=5` |
+| `<SERVICE>_VERSION_*` | Version routing         | `PAYMENT_DEFAULT_VERSION=v1`     |
 
 ## License
 

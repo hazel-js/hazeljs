@@ -1,6 +1,11 @@
 import fs from 'fs';
 import { Command } from 'commander';
-import { SIMPLE_GENERATORS, runSimpleGenerator, findSimpleGenerator, registerSimpleGenerators } from './generate-simple';
+import {
+  SIMPLE_GENERATORS,
+  runSimpleGenerator,
+  findSimpleGenerator,
+  registerSimpleGenerators,
+} from './generate-simple';
 
 jest.mock('fs');
 
@@ -82,14 +87,20 @@ describe('generate-simple', () => {
 
     it('handles serverless with cloud-function platform', async () => {
       const config = findSimpleGenerator('serverless')!;
-      const result = await runSimpleGenerator(config, 'api', { dryRun: true, platform: 'cloud-function' });
+      const result = await runSimpleGenerator(config, 'api', {
+        dryRun: true,
+        platform: 'cloud-function',
+      });
       expect(result.ok).toBe(true);
       expect(result.created[0]).toContain('api.handler.ts');
     });
 
     it('generates with custom path', async () => {
       const config = findSimpleGenerator('service')!;
-      const result = await runSimpleGenerator(config, 'order', { path: 'src/orders', dryRun: true });
+      const result = await runSimpleGenerator(config, 'order', {
+        path: 'src/orders',
+        dryRun: true,
+      });
       expect(result.ok).toBe(true);
       expect(result.created[0]).toContain('src/orders');
     });

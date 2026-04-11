@@ -306,7 +306,7 @@ SwaggerModule.forRoot({
   title: 'My API',
   description: 'Comprehensive API documentation',
   version: '1.0.0',
-  
+
   // Server info
   servers: [
     {
@@ -318,29 +318,29 @@ SwaggerModule.forRoot({
       description: 'Production server',
     },
   ],
-  
+
   // Contact info
   contact: {
     name: 'API Support',
     email: 'support@example.com',
     url: 'https://example.com/support',
   },
-  
+
   // License
   license: {
     name: 'Apache-2.0',
     url: 'https://www.apache.org/licenses/LICENSE-2.0',
   },
-  
+
   // Terms of service
   termsOfService: 'https://example.com/terms',
-  
+
   // External docs
   externalDocs: {
     description: 'Find more info here',
     url: 'https://docs.example.com',
   },
-  
+
   // Security schemes
   security: [
     {
@@ -356,7 +356,7 @@ SwaggerModule.forRoot({
       name: 'X-API-Key',
     },
   ],
-  
+
   // Swagger UI options
   swaggerOptions: {
     persistAuthorization: true,
@@ -364,16 +364,16 @@ SwaggerModule.forRoot({
     filter: true,
     showExtensions: true,
   },
-  
+
   // Path to serve docs
   path: '/api-docs',
-  
+
   // Custom CSS
   customCss: '.swagger-ui .topbar { display: none }',
-  
+
   // Custom site title
   customSiteTitle: 'My API Documentation',
-})
+});
 ```
 
 ## Authentication

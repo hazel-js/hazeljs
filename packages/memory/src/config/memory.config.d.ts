@@ -3,10 +3,10 @@
  */
 import { MemoryCategory, DEFAULT_CATEGORY_CONFIG } from '../types/category.types';
 export interface MemoryServiceConfig {
-    /** Default TTL in ms for emotional category when expiresAt not set. */
-    defaultEmotionalTtlMs?: number;
-    /** Enforce explicit over inferred on update (default true). */
-    explicitOverInferred?: boolean;
+  /** Default TTL in ms for emotional category when expiresAt not set. */
+  defaultEmotionalTtlMs?: number;
+  /** Enforce explicit over inferred on update (default true). */
+  explicitOverInferred?: boolean;
 }
 export declare const DEFAULT_MEMORY_SERVICE_CONFIG: Required<MemoryServiceConfig>;
 export { DEFAULT_CATEGORY_CONFIG };

@@ -48,13 +48,10 @@ describe('infoCommand', () => {
     const program = new Command();
     infoCommand(program);
     await program.parseAsync(['info'], { from: 'user' });
-    const out = logSpy.mock.calls
-      .map((c) => c.map((x: unknown) => String(x)).join(' '))
-      .join('\n');
+    const out = logSpy.mock.calls.map((c) => c.map((x: unknown) => String(x)).join(' ')).join('\n');
     expect(out).toContain('Project Information');
     expect(out).toContain('@hazeljs/core');
     expect(out).toContain('@hazeljs/swagger');
     expect(out).toContain('Project Structure');
   });
 });
-

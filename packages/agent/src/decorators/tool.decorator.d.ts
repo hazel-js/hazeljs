@@ -11,7 +11,10 @@ export declare function Tool(config?: Partial<ToolConfig>): MethodDecorator;
 /**
  * Get tool metadata from a method
  */
-export declare function getToolMetadata(target: object, propertyKey: string): ToolMetadata | undefined;
+export declare function getToolMetadata(
+  target: object,
+  propertyKey: string
+): ToolMetadata | undefined;
 /**
  * Get all tools from an agent class
  */

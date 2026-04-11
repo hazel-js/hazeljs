@@ -61,14 +61,10 @@ runtime.registerAgentInstance('my-agent', myAgent);
 ### Step 4: Execute
 
 ```typescript
-const result = await runtime.execute(
-  'my-agent',
-  'What time is it and what is 5 + 3?',
-  {
-    sessionId: 'user-session-123',
-    enableMemory: true,
-  }
-);
+const result = await runtime.execute('my-agent', 'What time is it and what is 5 + 3?', {
+  sessionId: 'user-session-123',
+  enableMemory: true,
+});
 
 console.log(result.response);
 // "The current time is 2024-12-13T15:30:00Z and 5 + 3 equals 8."
@@ -77,18 +73,23 @@ console.log(result.response);
 ## Key Concepts
 
 ### Agents
+
 Stateful entities that execute over multiple steps with memory and tools.
 
 ### Tools
+
 Functions that agents can call, with optional approval workflows.
 
 ### Memory
+
 Automatic conversation history and context persistence.
 
 ### State Machine
+
 Agents transition through states: idle → thinking → using_tool → completed
 
 ### Events
+
 Subscribe to execution events for monitoring and debugging.
 
 ## Next Steps
@@ -101,6 +102,7 @@ Subscribe to execution events for monitoring and debugging.
 ## Common Patterns
 
 ### Tool with Approval
+
 ```typescript
 @Tool({
   description: 'Delete user account',
@@ -112,6 +114,7 @@ async deleteAccount(input: { userId: string }) {
 ```
 
 ### Subscribe to Events
+
 ```typescript
 runtime.on('tool.approval.requested', (event) => {
   console.log('Approval needed:', event.data);
@@ -120,6 +123,7 @@ runtime.on('tool.approval.requested', (event) => {
 ```
 
 ### Pause and Resume
+
 ```typescript
 const result = await runtime.execute('agent', 'Start task');
 

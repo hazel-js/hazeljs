@@ -95,7 +95,10 @@ import { GuardrailsService, GuardrailInput, GuardrailOutput } from '@hazeljs/gua
 
 @Controller({ path: '/chat' })
 export class ChatController {
-  constructor(private aiService: AIService, private guardrailsService: GuardrailsService) {}
+  constructor(
+    private aiService: AIService,
+    private guardrailsService: GuardrailsService
+  ) {}
 
   @GuardrailInput()
   @GuardrailOutput()
@@ -113,24 +116,21 @@ When both `GuardrailsModule` and `AgentModule` are imported, tool input and outp
 
 ```typescript
 @HazelModule({
-  imports: [
-    GuardrailsModule.forRoot(),
-    AgentModule.forRoot(),
-  ],
+  imports: [GuardrailsModule.forRoot(), AgentModule.forRoot()],
 })
 export class AppModule {}
 ```
 
 ## Configuration
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `piiEntities` | `PIIEntityType[]` | `['email','phone','ssn','credit_card']` | Entities to detect/redact |
-| `redactPIIByDefault` | `boolean` | `false` | Redact PII in input by default |
-| `blockInjectionByDefault` | `boolean` | `true` | Block prompt injection by default |
-| `blockToxicityByDefault` | `boolean` | `true` | Block toxic content by default |
-| `injectionBlocklist` | `string[]` | — | Custom injection patterns |
-| `toxicityBlocklist` | `string[]` | — | Custom toxicity keywords |
+| Option                    | Type              | Default                                 | Description                       |
+| ------------------------- | ----------------- | --------------------------------------- | --------------------------------- |
+| `piiEntities`             | `PIIEntityType[]` | `['email','phone','ssn','credit_card']` | Entities to detect/redact         |
+| `redactPIIByDefault`      | `boolean`         | `false`                                 | Redact PII in input by default    |
+| `blockInjectionByDefault` | `boolean`         | `true`                                  | Block prompt injection by default |
+| `blockToxicityByDefault`  | `boolean`         | `true`                                  | Block toxic content by default    |
+| `injectionBlocklist`      | `string[]`        | —                                       | Custom injection patterns         |
+| `toxicityBlocklist`       | `string[]`        | —                                       | Custom toxicity keywords          |
 
 ## API
 

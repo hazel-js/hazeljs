@@ -1,6 +1,6 @@
 /**
  * Example demonstrating the HazelJS Unified AI Platform
- * 
+ *
  * This example shows how to use the new HazelAI class as a single
  * entry point for all AI capabilities in HazelJS.
  */
@@ -23,7 +23,7 @@ const ai = HazelAI.create({
 
 async function demonstrateUnifiedPlatform() {
   console.log('🚀 HazelJS Unified AI Platform Demo\n');
-  
+
   // Check if OpenAI API key is available
   console.log('🔑 Environment check:');
   console.log(`OPENAI_API_KEY: ${process.env.OPENAI_API_KEY ? '✅ Set' : '❌ Not set'}`);
@@ -60,7 +60,7 @@ async function demonstrateUnifiedPlatform() {
       criteria: 'Technical accuracy',
     });
     const scoreList = Array.isArray(scores) ? scores : [scores];
-    scoreList.forEach(score => {
+    scoreList.forEach((score) => {
       console.log(`Item ${score.id}: ${score.score} - ${score.reasoning}`);
     });
   } catch (err) {
@@ -76,12 +76,12 @@ async function demonstrateUnifiedPlatform() {
       const words = text.split(' ');
       return { words, count: words.length };
     })
-    .step('analyze', async (data: { words: string[], count: number }) => {
+    .step('analyze', async (data: { words: string[]; count: number }) => {
       const avgLength = data.words.reduce((sum, word) => sum + word.length, 0) / data.count;
       return { averageWordLength: avgLength, totalWords: data.count };
     })
     .run('The quick brown fox jumps over the lazy dog');
-  
+
   console.log(`Workflow result:`, workflowResult.output);
   console.log(`Total duration: ${workflowResult.totalDuration}ms`);
   console.log();

@@ -23,16 +23,19 @@ src/
 ## Getting Started
 
 1. **Install dependencies:**
+
    ```bash
    npm install
    ```
 
 2. **Run the app:**
+
    ```bash
    npm run start
    ```
 
 3. **Run tests:**
+
    ```bash
    npm test
    ```
@@ -58,4 +61,4 @@ src/
 
 ## License
 
-Apache 2.0 
+Apache 2.0

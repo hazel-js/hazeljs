@@ -52,7 +52,7 @@ export class SupportAgent {
     description: 'Open a new support ticket',
     parameters: [
       { name: 'customer_id', type: 'string', description: 'Customer ID', required: true },
-      { name: 'subject',     type: 'string', description: 'Ticket subject', required: true },
+      { name: 'subject', type: 'string', description: 'Ticket subject', required: true },
     ],
   })
   async createTicket(input: Record<string, unknown>) {
@@ -113,10 +113,18 @@ import type { IToolRegistry, HazelTool } from '@hazeljs/mcp';
 class SimpleRegistry implements IToolRegistry {
   private tools = new Map<string, HazelTool>();
 
-  register(tool: HazelTool) { this.tools.set(tool.name, tool); }
-  getAllTools()             { return [...this.tools.values()]; }
-  getTool(name: string)    { return this.tools.get(name); }
-  hasTool(name: string)    { return this.tools.has(name); }
+  register(tool: HazelTool) {
+    this.tools.set(tool.name, tool);
+  }
+  getAllTools() {
+    return [...this.tools.values()];
+  }
+  getTool(name: string) {
+    return this.tools.get(name);
+  }
+  hasTool(name: string) {
+    return this.tools.has(name);
+  }
 }
 
 const registry = new SimpleRegistry();
@@ -125,7 +133,7 @@ registry.register({
   name: 'add',
   description: 'Returns the sum of two numbers',
   parameters: [
-    { name: 'a', type: 'number', description: 'First operand',  required: true },
+    { name: 'a', type: 'number', description: 'First operand', required: true },
     { name: 'b', type: 'number', description: 'Second operand', required: true },
   ],
   target: {},
@@ -180,9 +188,9 @@ AI assistant in Cursor looks up customers, checks orders, and files tickets — 
 // AI does this automatically when you ask:
 // "Alice says her order hasn't arrived. Check the status and open a ticket."
 
-await adapter.invoke('lookup_customer',  { email: 'alice@example.com' });
+await adapter.invoke('lookup_customer', { email: 'alice@example.com' });
 await adapter.invoke('get_order_status', { order_id: 'ORD-1001' });
-await adapter.invoke('create_ticket',    { customer_id: 'cust_001', subject: 'Order not arrived' });
+await adapter.invoke('create_ticket', { customer_id: 'cust_001', subject: 'Order not arrived' });
 ```
 
 ### On-call runbook automation
@@ -213,15 +221,15 @@ async exportUserData(input: { userId: string }) { ... }
 
 ## Hazel → MCP field mapping
 
-| Hazel (`ToolMetadata`) | MCP (`McpToolDefinition`) |
-|---|---|
-| `name` | `name` |
-| `description` | `description` |
-| `parameters[].name` | `inputSchema.properties.<key>` |
-| `parameters[].type` | `inputSchema.properties.<key>.type` |
+| Hazel (`ToolMetadata`)     | MCP (`McpToolDefinition`)                  |
+| -------------------------- | ------------------------------------------ |
+| `name`                     | `name`                                     |
+| `description`              | `description`                              |
+| `parameters[].name`        | `inputSchema.properties.<key>`             |
+| `parameters[].type`        | `inputSchema.properties.<key>.type`        |
 | `parameters[].description` | `inputSchema.properties.<key>.description` |
-| `parameters[].enum` | `inputSchema.properties.<key>.enum` |
-| `parameters[].required` | `inputSchema.required[]` |
+| `parameters[].enum`        | `inputSchema.properties.<key>.enum`        |
+| `parameters[].required`    | `inputSchema.required[]`                   |
 
 If a tool has no `parameters`, an open schema is emitted that accepts any JSON object.
 
@@ -235,13 +243,13 @@ If a tool has no `parameters`, an open schema is emitted that accepts any JSON o
 function createMcpServer(options: McpServerOptions): McpServer;
 
 interface McpServerOptions {
-  name: string;           // server name advertised during MCP initialize
-  version: string;        // server version advertised during MCP initialize
+  name: string; // server name advertised during MCP initialize
+  version: string; // server version advertised during MCP initialize
   toolRegistry: IToolRegistry;
 }
 
 interface McpServer {
-  listenStdio(): void;              // attach to process.stdin / process.stdout
+  listenStdio(): void; // attach to process.stdin / process.stdout
   listTools(): McpToolDefinition[]; // inspect registered tools without serving
 }
 ```
@@ -273,7 +281,13 @@ interface IToolRegistry {
 interface HazelTool {
   name: string;
   description: string;
-  parameters?: Array<{ name: string; type: string; description: string; required?: boolean; enum?: unknown[] }>;
+  parameters?: Array<{
+    name: string;
+    type: string;
+    description: string;
+    required?: boolean;
+    enum?: unknown[];
+  }>;
   target: object;
   method: Function;
 }
@@ -281,23 +295,23 @@ interface HazelTool {
 
 ### Supported MCP methods
 
-| Method | Description |
-|---|---|
-| `initialize` | Handshake — returns server info and capabilities |
-| `ping` | Liveness probe |
-| `tools/list` | Returns all registered tool definitions |
+| Method       | Description                                         |
+| ------------ | --------------------------------------------------- |
+| `initialize` | Handshake — returns server info and capabilities    |
+| `ping`       | Liveness probe                                      |
+| `tools/list` | Returns all registered tool definitions             |
 | `tools/call` | Invokes a tool and returns a content block response |
 
 ### Error codes
 
-| Code | Constant | Meaning |
-|---|---|---|
-| -32700 | `PARSE_ERROR` | stdin line could not be parsed as JSON |
-| -32600 | `INVALID_REQUEST` | Not a valid JSON-RPC 2.0 request |
-| -32601 | `METHOD_NOT_FOUND` | No handler for the given method |
-| -32602 | `INVALID_PARAMS` | Required parameter missing or malformed |
-| -32603 | `INTERNAL_ERROR` | Unexpected exception inside a handler |
-| -32001 | `TOOL_NOT_FOUND` | Named tool is not registered |
+| Code   | Constant           | Meaning                                 |
+| ------ | ------------------ | --------------------------------------- |
+| -32700 | `PARSE_ERROR`      | stdin line could not be parsed as JSON  |
+| -32600 | `INVALID_REQUEST`  | Not a valid JSON-RPC 2.0 request        |
+| -32601 | `METHOD_NOT_FOUND` | No handler for the given method         |
+| -32602 | `INVALID_PARAMS`   | Required parameter missing or malformed |
+| -32603 | `INTERNAL_ERROR`   | Unexpected exception inside a handler   |
+| -32001 | `TOOL_NOT_FOUND`   | Named tool is not registered            |
 
 ---
 

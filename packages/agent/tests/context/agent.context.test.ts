@@ -227,10 +227,7 @@ describe('AgentContextBuilder', () => {
       };
 
       const ragService = {
-        search: jest.fn().mockResolvedValue([
-          { content: 'Result 1' },
-          { content: 'Result 2' },
-        ]),
+        search: jest.fn().mockResolvedValue([{ content: 'Result 1' }, { content: 'Result 2' }]),
       };
 
       await builder.buildWithRAG(context, ragService, 5);
@@ -291,10 +288,7 @@ describe('AgentContextBuilder', () => {
       };
 
       const ragService = {
-        search: jest.fn().mockResolvedValue([
-          { text: 'Text Result 1' },
-          { text: 'Text Result 2' },
-        ]),
+        search: jest.fn().mockResolvedValue([{ text: 'Text Result 1' }, { text: 'Text Result 2' }]),
       };
 
       await builder.buildWithRAG(context, ragService);
@@ -423,8 +417,16 @@ describe('AgentContextBuilder', () => {
 
       await builder.persistToMemory(context);
 
-      expect(mockMemoryManager.setContext).toHaveBeenCalledWith('current_task', 'test', 'session-1');
-      expect(mockMemoryManager.setContext).toHaveBeenCalledWith('user_preferences', { theme: 'dark' }, 'session-1');
+      expect(mockMemoryManager.setContext).toHaveBeenCalledWith(
+        'current_task',
+        'test',
+        'session-1'
+      );
+      expect(mockMemoryManager.setContext).toHaveBeenCalledWith(
+        'user_preferences',
+        { theme: 'dark' },
+        'session-1'
+      );
     });
 
     it('should update existing entities', async () => {
@@ -549,4 +551,3 @@ describe('AgentContextBuilder', () => {
     });
   });
 });
-

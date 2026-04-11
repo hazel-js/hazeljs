@@ -53,6 +53,7 @@ When adding items, please place them in the most appropriate category:
 ## Questions?
 
 If you have any questions, feel free to:
+
 - Open an issue
 - Ask in [GitHub Discussions](https://github.com/hazel-js/hazeljs/discussions)
 - Join our [Discord](https://discord.gg/PxNBPzvQk7)

@@ -87,10 +87,10 @@ hazel pdf-to-audio status <jobId> --api-url http://localhost:3000 -o audio.mp3
 
 ## Options
 
-| Option | Description | Default |
-|--------|-------------|---------|
-| voice | TTS voice (alloy, echo, fable, onyx, nova, shimmer) | alloy |
-| model | TTS model (tts-1, tts-1-hd) | tts-1 |
-| format | Output format (mp3, opus) | mp3 |
-| includeSummary | Include AI-generated document summary at the start of the audio | true |
-| summaryOnly | Output only the summary—do not read the full document | false |
+| Option         | Description                                                     | Default |
+| -------------- | --------------------------------------------------------------- | ------- |
+| voice          | TTS voice (alloy, echo, fable, onyx, nova, shimmer)             | alloy   |
+| model          | TTS model (tts-1, tts-1-hd)                                     | tts-1   |
+| format         | Output format (mp3, opus)                                       | mp3     |
+| includeSummary | Include AI-generated document summary at the start of the audio | true    |
+| summaryOnly    | Output only the summary—do not read the full document           | false   |

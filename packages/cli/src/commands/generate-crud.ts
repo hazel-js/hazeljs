@@ -1,7 +1,15 @@
 import { Command } from 'commander';
 import fs from 'fs';
 import path from 'path';
-import { toPascalCase, toKebabCase, toCamelCase, renderTemplate, GenerateResult, GenerateCLIOptions, printGenerateResult } from '../utils/generator';
+import {
+  toPascalCase,
+  toKebabCase,
+  toCamelCase,
+  renderTemplate,
+  GenerateResult,
+  GenerateCLIOptions,
+  printGenerateResult,
+} from '../utils/generator';
 
 const controllerTemplate = `import { Controller, Get, Post, Put, Delete, Body, Param } from '@hazeljs/core';
 import { {{className}}Service } from './{{fileName}}.service';

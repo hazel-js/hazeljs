@@ -15,6 +15,7 @@ Part of the HazelJS AI-Native Backend Framework. OpenAI, Anthropic, Gemini, Cohe
 Built for **AI-native applications** - not just another AI integration. When you combine @hazeljs/ai with @hazeljs/core, @hazeljs/agent, and @hazeljs/rag, you get a complete stack for intelligent backends.
 
 **Perfect for:**
+
 - AI startups adding chat/completion features
 - Teams building AI-powered APIs without complexity
 - Developers who want decorator-based AI integration
@@ -98,7 +99,7 @@ const aiService = new AIEnhancedService();
 const response = await aiService.complete({
   messages: [
     { role: 'system', content: 'You are a helpful assistant' },
-    { role: 'user', content: 'What is TypeScript?' }
+    { role: 'user', content: 'What is TypeScript?' },
   ],
   model: 'gpt-4',
   provider: 'openai',
@@ -157,10 +158,7 @@ const output = await chain.execute();
 
 ```typescript
 const parallelResult = await ai.hazel
-  .parallel(
-    ai.hazel.prompt('Summarize: {{input}}'),
-    ai.hazel.ml('sentiment')
-  )
+  .parallel(ai.hazel.prompt('Summarize: {{input}}'), ai.hazel.ml('sentiment'))
   .execute('HazelJS made our AI backend migration much simpler.');
 ```
 
@@ -433,16 +431,16 @@ export class ChatbotService {
   })
   async chat(message: string): Promise<string> {
     this.conversationHistory.push({ role: 'user', content: message });
-    
+
     const response = await this.aiService.complete({
       messages: this.conversationHistory,
       provider: 'openai',
       model: 'gpt-4',
     });
 
-    this.conversationHistory.push({ 
-      role: 'assistant', 
-      content: response.content 
+    this.conversationHistory.push({
+      role: 'assistant',
+      content: response.content,
     });
 
     return response.content;
@@ -559,6 +557,7 @@ Contributions are welcome! Please read our [Contributing Guide](../../CONTRIBUTI
 ### What's New?
 
 #### 🎯 **Unified API**
+
 ```typescript
 import { HazelAI } from '@hazeljs/ai';
 
@@ -578,6 +577,7 @@ const assistant = ai.assistant({ memory: true });
 ```
 
 #### 🏗️ **6 AI Facades**
+
 - **ChatFacade** - Simple chat and streaming
 - **RAGFacade** - Document Q&A with retrieval
 - **AgentFacade** - Specialized AI agents
@@ -586,6 +586,7 @@ const assistant = ai.assistant({ memory: true });
 - **AssistantFacade** - Memory-enabled conversations
 
 #### 📊 **Built-in Metrics**
+
 ```typescript
 const metrics = ai.getMetrics();
 console.log(`Requests: ${metrics.totalRequests}`);
@@ -597,6 +598,7 @@ console.log(`Cost: $${metrics.costEstimate}`);
 ### Benefits
 
 #### 🚀 **Developer Experience**
+
 - **Single Import** - `import { HazelAI } from '@hazeljs/ai'`
 - **HCEL Fluent API** - Compose AI pipelines with a single chain
 - **Type Safety** - Full TypeScript support with autocomplete
@@ -604,12 +606,14 @@ console.log(`Cost: $${metrics.costEstimate}`);
 - **Zero Boilerplate** - Get started in 3 lines of code
 
 #### 💪 **Powerful Features**
+
 - **Multi-Provider** - Switch between OpenAI, Anthropic, Gemini, Cohere, Ollama
 - **Graceful Fallbacks** - Automatic provider switching on errors
 - **Memory Management** - Built-in conversation history for assistants
 - **Workflow Orchestration** - Chain AI steps with timing and error handling
 
 #### 🔧 **Production Ready**
+
 - **Token Tracking** - Monitor usage and costs per provider
 - **Retry Logic** - Automatic retries with exponential backoff
 - **Error Handling** - Graceful degradation for optional dependencies
@@ -618,6 +622,7 @@ console.log(`Cost: $${metrics.costEstimate}`);
 ### Quick Examples
 
 #### Basic Chat
+
 ```typescript
 import { HazelAI } from '@hazeljs/ai';
 
@@ -634,6 +639,7 @@ for await (const chunk of ai.stream('Tell me a story')) {
 ```
 
 #### ML Operations
+
 ```typescript
 // Sentiment analysis
 const sentiment = await ai.sentiment('I love using HazelJS!');
@@ -652,13 +658,18 @@ const scores = await ai.score('Rate for accuracy', {
 ```
 
 #### Workflows
+
 ```typescript
-const result = await ai.workflow('process')
+const result = await ai
+  .workflow('process')
   .step('extract', async (text: string) => {
     return text.split(' ');
   })
   .step('analyze', async (words: string[]) => {
-    return { count: words.length, avgLength: words.reduce((sum, w) => sum + w.length, 0) / words.length };
+    return {
+      count: words.length,
+      avgLength: words.reduce((sum, w) => sum + w.length, 0) / words.length,
+    };
   })
   .run('Hello world');
 
@@ -667,6 +678,7 @@ console.log(result.totalDuration); // 5ms
 ```
 
 #### Assistants with Memory
+
 ```typescript
 const assistant = ai.assistant({
   name: 'HelpBot',
@@ -684,6 +696,7 @@ console.log(assistant.getHistory()); // Full conversation
 ### Migration Guide
 
 #### From AIEnhancedService
+
 ```typescript
 // Before
 import { AIEnhancedService } from '@hazeljs/ai';
@@ -697,6 +710,7 @@ await ai.chat('Hello');
 ```
 
 #### From Multiple Imports
+
 ```typescript
 // Before
 import { ChatService } from '@hazeljs/ai';
@@ -712,6 +726,7 @@ const ai = HazelAI.create();
 ### Advanced Usage
 
 #### Provider Configuration
+
 ```typescript
 const ai = HazelAI.create({
   defaultProvider: 'openai',
@@ -725,6 +740,7 @@ const ai = HazelAI.create({
 ```
 
 #### Error Handling
+
 ```typescript
 try {
   const response = await ai.chat('Hello');
@@ -737,6 +753,7 @@ try {
 ```
 
 #### Custom Workflows
+
 ```typescript
 const dataProcessor = ai.workflow('data-pipeline');
 
@@ -766,6 +783,7 @@ The Unified AI Platform is built on the same robust foundation you trust:
 - **Type Safety** - Full TypeScript coverage
 
 The `HazelAI` class is a thin, opinionated wrapper that combines:
+
 - All facades into one interface
 - Consistent configuration management
 - Unified error handling
@@ -780,6 +798,7 @@ Check out the `examples/` directory for complete, runnable examples:
 - **README.md** - Detailed setup and usage instructions
 
 Run examples:
+
 ```bash
 npm run demo:simple  # Basic demo
 npm run demo:full    # Full demo (requires API keys)

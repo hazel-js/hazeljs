@@ -37,6 +37,7 @@ npm install --save-dev @hazeljs/cli
 ### Create a New Application
 
 **AI-Native Application (Recommended for AI Projects):**
+
 ```bash
 hazel g app my-ai-app --template=ai-native
 cd my-ai-app && npm install && cp .env.example .env && docker-compose up -d && npm run dev
@@ -45,17 +46,20 @@ cd my-ai-app && npm install && cp .env.example .env && docker-compose up -d && n
 Creates a complete AI-powered application with agents, RAG (PostgreSQL + pgvector), Redis, and Docker.
 
 **Skeleton app (quick start):**
+
 ```bash
 hazel g app my-app
 cd my-app && npm install && npm run dev
 ```
 
 **Full setup with interactive package selection:**
+
 ```bash
 hazel new my-app -i
 ```
 
 **Options:**
+
 - `-d, --dest <path>` - Destination path (default: current directory)
 - `-i, --interactive` - Interactive setup with package selection
 - `--template <template>` - Template to use (`ai-native` or `default`)
@@ -79,6 +83,7 @@ hazel add [package] [--setup] [--dev]
 Install a HazelJS package and show usage hints. Use `--setup` to also generate a minimal starter file.
 
 **Examples:**
+
 ```bash
 hazel add                  # Interactive package selection
 hazel add ai               # Install @hazeljs/ai
@@ -95,46 +100,48 @@ hazel g <type> <name> [--path <path>] [--dry-run] [--json]
 ```
 
 **Discover generators:**
+
 ```bash
 hazel g --list              # Human-readable list
 hazel g --list --list-json  # JSON output
 ```
 
 **Common options** (work the same for every generator):
+
 - `-p, --path <path>` - Where to generate (default: `src`)
 - `--dry-run` - Preview files without writing them
 - `--json` - Output result as JSON (`{ ok, created, nextSteps }`)
 
 #### Multi-File Generators
 
-| Generator | Alias | Description | Creates |
-|-----------|-------|-------------|---------|
-| `crud <name>` | — | Complete CRUD resource | controller + service + module + DTOs |
-| `module <name>` | `m` | Feature module | module + controller + service + DTOs |
-| `dto <name>` | `d` | Create & update DTOs | two DTO files |
-| `auth` | — | Auth module | JWT guard + service + controller + DTOs |
+| Generator       | Alias | Description            | Creates                                 |
+| --------------- | ----- | ---------------------- | --------------------------------------- |
+| `crud <name>`   | —     | Complete CRUD resource | controller + service + module + DTOs    |
+| `module <name>` | `m`   | Feature module         | module + controller + service + DTOs    |
+| `dto <name>`    | `d`   | Create & update DTOs   | two DTO files                           |
+| `auth`          | —     | Auth module            | JWT guard + service + controller + DTOs |
 
 #### Single-File Generators
 
-| Generator | Alias | Description |
-|-----------|-------|-------------|
-| `controller <name>` | `c` | REST controller with CRUD methods |
-| `service <name>` | `s` | Injectable service class |
-| `guard <name>` | `gu` | Route guard (e.g. auth) |
-| `interceptor <name>` | `i` | Request/response interceptor |
-| `middleware <name>` | `mw` | Express-style middleware |
-| `pipe <name>` | — | Validation/transform pipe |
-| `filter <name>` | `f` | Exception filter |
-| `repository <name>` | `repo` | Prisma repository |
-| `gateway <name>` | `ws` | WebSocket gateway |
-| `ai-service <name>` | `ai` | AI service with decorators |
-| `agent <name>` | — | AI agent with @Agent and @Tool |
-| `cache <name>` | — | Cache service with decorators |
-| `cron <name>` | `job` | Cron/scheduled job service |
-| `rag <name>` | — | RAG service |
-| `discovery <name>` | — | Service discovery setup |
-| `config` | — | Config module setup |
-| `serverless <name>` | `sls` | Serverless handler (Lambda/Cloud Function) |
+| Generator            | Alias  | Description                                |
+| -------------------- | ------ | ------------------------------------------ |
+| `controller <name>`  | `c`    | REST controller with CRUD methods          |
+| `service <name>`     | `s`    | Injectable service class                   |
+| `guard <name>`       | `gu`   | Route guard (e.g. auth)                    |
+| `interceptor <name>` | `i`    | Request/response interceptor               |
+| `middleware <name>`  | `mw`   | Express-style middleware                   |
+| `pipe <name>`        | —      | Validation/transform pipe                  |
+| `filter <name>`      | `f`    | Exception filter                           |
+| `repository <name>`  | `repo` | Prisma repository                          |
+| `gateway <name>`     | `ws`   | WebSocket gateway                          |
+| `ai-service <name>`  | `ai`   | AI service with decorators                 |
+| `agent <name>`       | —      | AI agent with @Agent and @Tool             |
+| `cache <name>`       | —      | Cache service with decorators              |
+| `cron <name>`        | `job`  | Cron/scheduled job service                 |
+| `rag <name>`         | —      | RAG service                                |
+| `discovery <name>`   | —      | Service discovery setup                    |
+| `config`             | —      | Config module setup                        |
+| `serverless <name>`  | `sls`  | Serverless handler (Lambda/Cloud Function) |
 
 **Serverless** also accepts `--platform <lambda|cloud-function>` (default: `lambda`).
 
@@ -302,8 +309,9 @@ hazel g service users --json
 ```
 
 The manifest is automatically generated during build and always reflects the current package version. It includes:
+
 - Complete command schemas with options and arguments
-- All available generators with their capabilities  
+- All available generators with their capabilities
 - Package registry for `hazel add` commands
 - JSON schema validation for agent tool-use
 

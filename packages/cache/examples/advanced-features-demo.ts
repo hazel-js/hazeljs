@@ -1,6 +1,6 @@
 /**
  * Advanced Cache Features Demo
- * 
+ *
  * Demonstrates all new cache package features:
  * - Distributed cache locking
  * - Cache-aside pattern
@@ -32,36 +32,36 @@ class MockDatabase {
 
   async findProduct(id: string) {
     // Simulate slow database query
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise((resolve) => setTimeout(resolve, 100));
     return this.products.get(id) || null;
   }
 
   async findUser(id: string) {
     // Simulate slow database query
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise((resolve) => setTimeout(resolve, 100));
     return this.users.get(id) || null;
   }
 
   async updateProduct(id: string, data: any) {
-    await new Promise(resolve => setTimeout(resolve, 50));
+    await new Promise((resolve) => setTimeout(resolve, 50));
     this.products.set(id, { ...this.products.get(id), ...data });
     return this.products.get(id);
   }
 
   async updateUser(id: string, data: any) {
-    await new Promise(resolve => setTimeout(resolve, 50));
+    await new Promise((resolve) => setTimeout(resolve, 50));
     this.users.set(id, { ...this.users.get(id), ...data });
     return this.users.get(id);
   }
 
   async getAllProducts() {
-    await new Promise(resolve => setTimeout(resolve, 200));
+    await new Promise((resolve) => setTimeout(resolve, 200));
     return Array.from(this.products.values());
   }
 
   async getFeaturedProducts() {
-    await new Promise(resolve => setTimeout(resolve, 150));
-    return Array.from(this.products.values()).filter(p => p.featured);
+    await new Promise((resolve) => setTimeout(resolve, 150));
+    return Array.from(this.products.values()).filter((p) => p.featured);
   }
 }
 
@@ -80,19 +80,19 @@ export class ProductService {
     key: 'product-expensive-{id}',
     ttl: 30000, // 30 seconds
     retryDelay: 1000,
-    maxRetries: 3
+    maxRetries: 3,
   })
   async expensiveProductAnalysis(id: string) {
     console.log(`🔒 Executing expensive analysis for product ${id} (only one instance will run)`);
-    
+
     // Simulate expensive computation
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+
     const product = await this.db.findProduct(id);
     return {
       productId: id,
       analysis: `Complex analysis result for ${product?.name}`,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
   }
 
@@ -103,7 +103,7 @@ export class ProductService {
   @CacheAside({
     key: 'product-{id}',
     ttl: 3600, // 1 hour
-    fallback: () => Promise.resolve({ id: 'default', name: 'Default Product' })
+    fallback: () => Promise.resolve({ id: 'default', name: 'Default Product' }),
   })
   async getProduct(id: string) {
     console.log(`📥 Cache-aside: Fetching product ${id} from database`);
@@ -116,7 +116,7 @@ export class ProductService {
   @CacheAsideWithFallback({
     key: 'user-{id}',
     ttl: 1800, // 30 minutes
-    fallbackValue: { id: 'unknown', name: 'Guest User', role: 'guest' }
+    fallbackValue: { id: 'unknown', name: 'Guest User', role: 'guest' },
   })
   async getUser(id: string) {
     console.log(`👤 Cache-aside with fallback: Fetching user ${id}`);
@@ -129,7 +129,7 @@ export class ProductService {
    */
   @WriteThrough({
     key: 'product-{id}',
-    ttl: 3600
+    ttl: 3600,
   })
   async updateProduct(id: string, data: any) {
     console.log(`✏️ Write-through: Updating product ${id} in database and cache`);
@@ -143,7 +143,7 @@ export class ProductService {
   @WriteBehind({
     key: 'user-{id}',
     ttl: 1800,
-    async: true
+    async: true,
   })
   async updateUser(id: string, data: any) {
     console.log(`⏱️ Write-behind: Updating user ${id} in database, cache update queued`);
@@ -156,7 +156,7 @@ export class ProductService {
    */
   @CacheWarm({
     keys: ['featured-products', 'all-products'],
-    fetcher: async function(this: ProductService, key: string) {
+    fetcher: async function (this: ProductService, key: string) {
       console.log(`🔥 Warming cache key: ${key}`);
       if (key === 'featured-products') {
         return await this.db.getFeaturedProducts();
@@ -168,7 +168,7 @@ export class ProductService {
     ttl: 7200, // 2 hours
     parallel: true,
     schedule: '0 */6 * * *', // Every 6 hours
-    condition: 'low-traffic' // Only warm during low traffic hours
+    condition: 'low-traffic', // Only warm during low traffic hours
   })
   async warmProductCache() {
     console.log('🌡️ Cache warming method executed');
@@ -181,15 +181,15 @@ export class ProductService {
   @Cache({
     key: 'product-stats-{id}',
     ttl: 1800,
-    tags: ['products', 'stats']
+    tags: ['products', 'stats'],
   })
   async getProductStats(id: string) {
     console.log(`📊 Computing stats for product ${id}`);
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise((resolve) => setTimeout(resolve, 500));
     return {
       views: Math.floor(Math.random() * 1000),
       purchases: Math.floor(Math.random() * 100),
-      rating: (Math.random() * 5).toFixed(1)
+      rating: (Math.random() * 5).toFixed(1),
     };
   }
 
@@ -197,7 +197,7 @@ export class ProductService {
    * Example 8: Cache invalidation with tags
    */
   @CacheEvict({
-    tags: ['products', 'stats']
+    tags: ['products', 'stats'],
   })
   async clearProductStats() {
     console.log('🗑️ Cleared all product-related caches');
@@ -214,15 +214,12 @@ async function demonstrateAdvancedCacheFeatures() {
   // Initialize cache module
   const cacheModule = CacheModule.forRoot({
     strategy: 'memory',
-    cleanupInterval: 60000
+    cleanupInterval: 60000,
   });
 
   // Create services
   const db = new MockDatabase();
-  const productService = new ProductService(
-    new CacheService('memory'),
-    db
-  );
+  const productService = new ProductService(new CacheService('memory'), db);
 
   // Add some sample data
   db.products.set('1', { id: '1', name: 'Premium Laptop', featured: true });
@@ -231,28 +228,29 @@ async function demonstrateAdvancedCacheFeatures() {
 
   try {
     console.log('=== 1. Distributed Cache Locking ===');
-    
+
     // Simulate concurrent requests
-    const lockPromises = Array.from({ length: 3 }, (_, i) => 
-      productService.expensiveProductAnalysis('1')
-        .then(result => console.log(`Lock result ${i + 1}:`, result))
+    const lockPromises = Array.from({ length: 3 }, (_, i) =>
+      productService
+        .expensiveProductAnalysis('1')
+        .then((result) => console.log(`Lock result ${i + 1}:`, result))
     );
-    
+
     await Promise.all(lockPromises);
     console.log('');
 
     console.log('=== 2. Cache-Aside Pattern ===');
-    
+
     // First call - cache miss
     console.log('First call (cache miss):');
     const product1 = await productService.getProduct('1');
     console.log('Result:', product1);
-    
+
     // Second call - cache hit
     console.log('\nSecond call (cache hit):');
     const product2 = await productService.getProduct('1');
     console.log('Result:', product2);
-    
+
     // Call with non-existent ID - fallback
     console.log('\nCall with fallback:');
     const product3 = await productService.getProduct('999');
@@ -260,54 +258,54 @@ async function demonstrateAdvancedCacheFeatures() {
     console.log('');
 
     console.log('=== 3. Cache-Aside with Fallback ===');
-    
+
     const user1 = await productService.getUser('1');
     console.log('User result:', user1);
-    
+
     const user2 = await productService.getUser('999');
     console.log('Fallback user result:', user2);
     console.log('');
 
     console.log('=== 4. Write-Through Caching ===');
-    
+
     await productService.updateProduct('1', { name: 'Premium Laptop Pro' });
     console.log('Updated product, cache should be updated immediately');
-    
+
     // Verify cache is updated
     const updatedProduct = await productService.getProduct('1');
     console.log('Cached product after update:', updatedProduct);
     console.log('');
 
     console.log('=== 5. Write-Behind Caching ===');
-    
+
     await productService.updateUser('1', { name: 'John Smith' });
     console.log('Updated user, cache update is queued');
     console.log('');
 
     console.log('=== 6. Traditional Caching with Tags ===');
-    
+
     const stats1 = await productService.getProductStats('1');
     console.log('Product stats (computed):', stats1);
-    
+
     const stats2 = await productService.getProductStats('1');
     console.log('Product stats (cached):', stats2);
     console.log('');
 
     console.log('=== 7. Cache Invalidation ===');
-    
+
     await productService.clearProductStats();
     console.log('Cleared caches, next call will recompute');
-    
+
     const stats3 = await productService.getProductStats('1');
     console.log('Product stats after invalidation:', stats3);
     console.log('');
 
     console.log('=== 8. Cache Warming Utilities ===');
-    
+
     // List warming jobs
     const jobs = CacheWarmingUtils.listJobs();
     console.log('Active warming jobs:', jobs);
-    
+
     // Manual warm up
     if (jobs.length > 0) {
       console.log('Manually triggering cache warming...');
@@ -317,7 +315,7 @@ async function demonstrateAdvancedCacheFeatures() {
     console.log('');
 
     console.log('✅ Advanced cache features demo completed successfully!');
-    
+
     console.log('\n📋 Features Demonstrated:');
     console.log('✅ Distributed cache locking (prevents stampede)');
     console.log('✅ Cache-aside pattern (automatic get/set)');
@@ -328,7 +326,6 @@ async function demonstrateAdvancedCacheFeatures() {
     console.log('✅ Traditional caching with tags');
     console.log('✅ Cache invalidation with tags');
     console.log('✅ Cache warming utilities');
-
   } catch (error) {
     console.error('❌ Demo failed:', error);
   } finally {

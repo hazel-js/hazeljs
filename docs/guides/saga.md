@@ -42,12 +42,14 @@ export class OrderController {
   constructor(private orchestrator: SagaOrchestrator) {}
 
   @Post('/create')
-  async createOrder(@Body() { productId, quantity }: { productId: string, quantity: number }) {
+  async createOrder(@Body() { productId, quantity }: { productId: string; quantity: number }) {
     // Define a multi-step Saga
-    const saga = this.orchestrator.create('create-order')
+    const saga = this.orchestrator
+      .create('create-order')
       .step('inventory', {
         execute: async (ctx) => await this.inventoryService.reserve(productId, quantity),
-        compensate: async (ctx) => await this.inventoryService.cancelReservation(productId, quantity),
+        compensate: async (ctx) =>
+          await this.inventoryService.cancelReservation(productId, quantity),
       })
       .step('payment', {
         execute: async (ctx) => await this.paymentService.charge(quantity * 100),
@@ -59,12 +61,12 @@ export class OrderController {
 
     // Execute the transaction
     const result = await saga.execute({ productId, quantity });
-    
+
     if (result.status === 'failed') {
       // All previous steps are automatically rolled back (compensated)
       throw new Error('Order creation failed');
     }
-    
+
     return result;
   }
 }
@@ -84,12 +86,12 @@ export class InventoryService {
   async reserveInventory(@SagaEvent() event: OrderCreatedEvent) {
     // Run business logic
     const reserved = await this.reserve(event.productId, event.quantity);
-    
+
     if (!reserved) {
       // Trigger rollback by emitting a failure event
       return { status: 'failed', event: 'inventory:reserve:failed' };
     }
-    
+
     // Trigger next step by emitting success event
     return { status: 'success', event: 'inventory:reserved' };
   }
@@ -104,18 +106,18 @@ export class InventoryService {
 
 ## 🧠 Core Concepts
 
-| Concept | Description |
-|---------|-------------|
-| **Saga** | A sequence of local transactions. |
-| **Step** | A single operation in the Saga. |
-| **Execute** | The forward logic (the forward operation). |
-| **Compensate** | The reverse logic (the rollback operation). |
-| **Orchestrator** | A central coordinator for the Saga. |
-| **Choreographer** | Event-driven decentralized coordination. |
+| Concept           | Description                                 |
+| ----------------- | ------------------------------------------- |
+| **Saga**          | A sequence of local transactions.           |
+| **Step**          | A single operation in the Saga.             |
+| **Execute**       | The forward logic (the forward operation).  |
+| **Compensate**    | The reverse logic (the rollback operation). |
+| **Orchestrator**  | A central coordinator for the Saga.         |
+| **Choreographer** | Event-driven decentralized coordination.    |
 
 ## 🛡️ Reliability Features
 
-- **Automatic Rollback**: If any step in an Orchestration Saga fails, HazelJS automatically triggers the `compensate` methods of all *previously completed* steps in reverse order.
+- **Automatic Rollback**: If any step in an Orchestration Saga fails, HazelJS automatically triggers the `compensate` methods of all _previously completed_ steps in reverse order.
 - **Saga Persistence**: With the 'redis' backend, Sagas are stored durably, allowing recovery from crashes.
 - **Human-in-the-Loop**: You can pause a Saga and wait for manual approval.
 - **Timeout Support**: Automatically fail and compensate Sagas that take too long.

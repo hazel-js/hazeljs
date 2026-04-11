@@ -57,25 +57,25 @@ await service.initialize();
 
 ## Persistence
 
-| Backend | Module / Factory | Use case |
-|--------|-------------------|----------|
-| **In-memory** | `createDefaultMemoryStore()` | Development, tests, no DB |
-| **Prisma** | `createPrismaMemoryStore(prisma)` from `@hazeljs/memory/prisma` | Production, same app DB as flow/core |
-| **Postgres (raw)** | `PostgresStore` — pass a `pg` pool with a `query` method (see `postgres.store.ts`) | Existing Postgres without Prisma |
-| **Redis** | `RedisStore` — pass an ioredis-style client | High-throughput, shared across processes |
-| **Vector episodic** | `VectorEpisodicStore` | Episodic/semantic vector search |
-| **Composite** | `CompositeMemoryStore` | Route by category to primary + optional episodic store |
+| Backend             | Module / Factory                                                                   | Use case                                               |
+| ------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| **In-memory**       | `createDefaultMemoryStore()`                                                       | Development, tests, no DB                              |
+| **Prisma**          | `createPrismaMemoryStore(prisma)` from `@hazeljs/memory/prisma`                    | Production, same app DB as flow/core                   |
+| **Postgres (raw)**  | `PostgresStore` — pass a `pg` pool with a `query` method (see `postgres.store.ts`) | Existing Postgres without Prisma                       |
+| **Redis**           | `RedisStore` — pass an ioredis-style client                                        | High-throughput, shared across processes               |
+| **Vector episodic** | `VectorEpisodicStore`                                                              | Episodic/semantic vector search                        |
+| **Composite**       | `CompositeMemoryStore`                                                             | Route by category to primary + optional episodic store |
 
 ## Memory categories
 
-| Category | Description |
-|----------|-------------|
-| `profile` | User identity and static attributes |
-| `preference` | Stated preferences (e.g. language, theme) |
-| `behavioral` | Inferred behavior patterns |
-| `emotional` | Emotional state (often with TTL) |
-| `episodic` | Event-based memories (what happened when) |
-| `semantic_summary` | Summarized or semantic facts |
+| Category           | Description                               |
+| ------------------ | ----------------------------------------- |
+| `profile`          | User identity and static attributes       |
+| `preference`       | Stated preferences (e.g. language, theme) |
+| `behavioral`       | Inferred behavior patterns                |
+| `emotional`        | Emotional state (often with TTL)          |
+| `episodic`         | Event-based memories (what happened when) |
+| `semantic_summary` | Summarized or semantic facts              |
 
 See types in `src/types/`.
 

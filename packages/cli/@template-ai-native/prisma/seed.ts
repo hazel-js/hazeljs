@@ -15,7 +15,8 @@ async function main() {
   // Sample documents for RAG demonstration
   const sampleDocuments = [
     {
-      content: 'HazelJS is a TypeScript framework for building AI-native backend applications. It provides built-in support for AI agents, RAG (Retrieval-Augmented Generation), and seamless integration with LLM providers like OpenAI, Anthropic, and Ollama.',
+      content:
+        'HazelJS is a TypeScript framework for building AI-native backend applications. It provides built-in support for AI agents, RAG (Retrieval-Augmented Generation), and seamless integration with LLM providers like OpenAI, Anthropic, and Ollama.',
       metadata: {
         source: 'documentation',
         type: 'introduction',
@@ -24,7 +25,8 @@ async function main() {
       },
     },
     {
-      content: 'TypeScript decorators provide a way to add metadata and modify the behavior of classes, methods, and properties. In HazelJS, decorators like @Controller, @Get, @Post, @Service, and @Agent are used to define the application structure and routing.',
+      content:
+        'TypeScript decorators provide a way to add metadata and modify the behavior of classes, methods, and properties. In HazelJS, decorators like @Controller, @Get, @Post, @Service, and @Agent are used to define the application structure and routing.',
       metadata: {
         source: 'typescript-guide',
         type: 'tutorial',
@@ -33,7 +35,8 @@ async function main() {
       },
     },
     {
-      content: 'AI agents in HazelJS can use tools to perform actions like API calls, database queries, or external service integrations. The @Agent decorator defines an agent, and @Tool decorator defines its capabilities.',
+      content:
+        'AI agents in HazelJS can use tools to perform actions like API calls, database queries, or external service integrations. The @Agent decorator defines an agent, and @Tool decorator defines its capabilities.',
       metadata: {
         source: 'agent-guide',
         type: 'tutorial',
@@ -42,7 +45,8 @@ async function main() {
       },
     },
     {
-      content: 'RAG (Retrieval-Augmented Generation) combines document retrieval with LLM generation to provide more accurate and context-aware responses. HazelJS provides built-in RAG services with vector similarity search.',
+      content:
+        'RAG (Retrieval-Augmented Generation) combines document retrieval with LLM generation to provide more accurate and context-aware responses. HazelJS provides built-in RAG services with vector similarity search.',
       metadata: {
         source: 'rag-guide',
         type: 'tutorial',
@@ -51,7 +55,8 @@ async function main() {
       },
     },
     {
-      content: 'The HazelJS Inspector is a development dashboard available at /__hazel that provides real-time insights into your application, including module dependencies, request metrics, and AI agent performance.',
+      content:
+        'The HazelJS Inspector is a development dashboard available at /__hazel that provides real-time insights into your application, including module dependencies, request metrics, and AI agent performance.',
       metadata: {
         source: 'development-guide',
         type: 'tutorial',
@@ -66,7 +71,7 @@ async function main() {
     try {
       // Generate embedding for the document
       const embedding = await embeddings.embed(doc.content);
-      
+
       // Use raw SQL to insert document with vector embedding
       await prisma.$executeRaw`
         INSERT INTO documents (id, content, metadata, embedding, "createdAt", "updatedAt")
@@ -79,7 +84,7 @@ async function main() {
           NOW()
         )
       `;
-      
+
       console.log(`✅ Created document: ${doc.metadata.source}`);
     } catch (error) {
       console.error(`❌ Failed to create document: ${doc.metadata.source}`, error);
@@ -128,14 +133,16 @@ async function main() {
     {
       sessionId: 'chat-session-1',
       userMessage: 'What is HazelJS?',
-      aiResponse: 'HazelJS is a TypeScript framework for building AI-native backend applications with built-in support for AI agents, RAG, and LLM integration.',
+      aiResponse:
+        'HazelJS is a TypeScript framework for building AI-native backend applications with built-in support for AI agents, RAG, and LLM integration.',
       model: 'gpt-4',
       tokensUsed: 156,
     },
     {
       sessionId: 'chat-session-1',
       userMessage: 'How do I create an AI agent?',
-      aiResponse: 'You can create an AI agent in HazelJS using the @Agent decorator and defining tools with @Tool decorator. Here\'s an example: @Agent({name: "MyAgent"}) class MyAgent { @Tool({description: "My tool"}) async myTool() { return "result"; } }',
+      aiResponse:
+        'You can create an AI agent in HazelJS using the @Agent decorator and defining tools with @Tool decorator. Here\'s an example: @Agent({name: "MyAgent"}) class MyAgent { @Tool({description: "My tool"}) async myTool() { return "result"; } }',
       model: 'gpt-4',
       tokensUsed: 234,
     },

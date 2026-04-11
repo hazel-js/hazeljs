@@ -17,9 +17,7 @@ describe('toSerializable', () => {
           timeoutMs: 5000,
         },
       },
-      edges: [
-        { from: 'a', to: 'b', when: () => true, priority: 1 },
-      ],
+      edges: [{ from: 'a', to: 'b', when: () => true, priority: 1 }],
     };
 
     const result = toSerializable(def);

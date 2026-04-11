@@ -53,9 +53,7 @@ export class OrderService {
   constructor(private producer: KafkaProducerService) {}
 
   async createOrder(data: CreateOrderDto) {
-    await this.producer.send('orders', [
-      { key: data.id, value: JSON.stringify(data) },
-    ]);
+    await this.producer.send('orders', [{ key: data.id, value: JSON.stringify(data) }]);
     return data;
   }
 }
@@ -136,7 +134,7 @@ KafkaModule.forRootAsync({
     brokers: (config.get('KAFKA_BROKERS') || 'localhost:9092').toString().split(','),
   }),
   inject: [ConfigService],
-})
+});
 ```
 
 ## API Reference

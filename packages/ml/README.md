@@ -98,10 +98,7 @@ export class MLController {
 
   @Post('predict')
   async predict(@Body() body: { text: string; model?: string }) {
-    const result = await this.predictor.predict(
-      body.model ?? 'sentiment-classifier',
-      body
-    );
+    const result = await this.predictor.predict(body.model ?? 'sentiment-classifier', body);
     return { result };
   }
 }
@@ -115,13 +112,13 @@ The package uses three decorators to declare ML models and their behaviour. The 
 
 Marks a class as an ML model and attaches **registry metadata**. Required so the model can be registered and looked up by name/version.
 
-| Property      | Type     | Required | Description |
-|---------------|----------|----------|-------------|
+| Property      | Type     | Required | Description                                      |
+| ------------- | -------- | -------- | ------------------------------------------------ |
 | `name`        | string   | Yes      | Unique model id (e.g. `'sentiment-classifier'`). |
-| `version`     | string   | Yes      | Semver (e.g. `'1.0.0'`). |
-| `framework`   | string   | Yes      | `'tensorflow'` \| `'onnx'` \| `'custom'`. |
-| `description` | string   | No       | Human-readable description. |
-| `tags`        | string[] | No       | Tags for filtering (default: `[]`). |
+| `version`     | string   | Yes      | Semver (e.g. `'1.0.0'`).                         |
+| `framework`   | string   | Yes      | `'tensorflow'` \| `'onnx'` \| `'custom'`.        |
+| `description` | string   | No       | Human-readable description.                      |
+| `tags`        | string[] | No       | Tags for filtering (default: `[]`).              |
 
 **Example:** One model per class; use `@Injectable()` so the app can construct it.
 
@@ -145,11 +142,11 @@ export class SpamClassifier {
 
 Marks the **single method** that trains this model. `TrainerService.train(modelName, data)` will call it. Optional config is for documentation or pipeline wiring.
 
-| Option      | Type   | Default   | Description |
-|-------------|--------|-----------|-------------|
+| Option      | Type   | Default     | Description                                                             |
+| ----------- | ------ | ----------- | ----------------------------------------------------------------------- |
 | `pipeline`  | string | `'default'` | Name of a registered `PipelineService` pipeline to run before training. |
-| `batchSize` | number | `32`     | Hint for batching (your logic can ignore it). |
-| `epochs`    | number | `10`     | Hint for epochs (your logic can ignore it). |
+| `batchSize` | number | `32`        | Hint for batching (your logic can ignore it).                           |
+| `epochs`    | number | `10`        | Hint for epochs (your logic can ignore it).                             |
 
 **Example:** Exactly one `@Train()` method per model; it receives training data and can return metrics.
 
@@ -167,10 +164,10 @@ async train(data: { samples: Array<{ text: string; label: string }> }): Promise<
 
 Marks the **single method** that runs inference. `PredictorService.predict(modelName, input)` will call it.
 
-| Option    | Type    | Default    | Description |
-|-----------|---------|------------|-------------|
-| `batch`   | boolean | `false`    | Hint that the method supports batch input (semantic only). |
-| `endpoint`| string  | `'/predict'` | Hint for route naming (semantic only). |
+| Option     | Type    | Default      | Description                                                |
+| ---------- | ------- | ------------ | ---------------------------------------------------------- |
+| `batch`    | boolean | `false`      | Hint that the method supports batch input (semantic only). |
+| `endpoint` | string  | `'/predict'` | Hint for route naming (semantic only).                     |
 
 **Example:** Exactly one `@Predict()` method per model; it receives one input and returns a prediction object.
 
@@ -200,12 +197,7 @@ Models are registered when passed to `MLModule.forRoot({ models: [...] })`. The 
 import { registerMLModel, ModelRegistry, TrainerService, PredictorService } from '@hazeljs/ml';
 
 // When injecting ModelRegistry in a custom service:
-registerMLModel(
-  sentimentInstance,
-  modelRegistry,
-  trainerService,
-  predictorService
-);
+registerMLModel(sentimentInstance, modelRegistry, trainerService, predictorService);
 ```
 
 ## Training pipeline
@@ -217,8 +209,17 @@ import { PipelineService } from '@hazeljs/ml';
 
 const pipeline = new PipelineService();
 const steps = [
-  { name: 'normalize', transform: (d: unknown) => ({ ...(d as object), text: (d as { text: string }).text?.toLowerCase() }) },
-  { name: 'filter', transform: (d: unknown) => (d as { text: string }).text?.length > 0 ? d : null },
+  {
+    name: 'normalize',
+    transform: (d: unknown) => ({
+      ...(d as object),
+      text: (d as { text: string }).text?.toLowerCase(),
+    }),
+  },
+  {
+    name: 'filter',
+    transform: (d: unknown) => ((d as { text: string }).text?.length > 0 ? d : null),
+  },
 ];
 // Inline steps (no registration required)
 const processed = await pipeline.run(data, steps);
@@ -259,8 +260,8 @@ class EvaluationService {
     ];
     const evaluation = await this.metricsService.evaluate('sentiment-classifier', testData, {
       metrics: ['accuracy', 'f1', 'precision', 'recall'],
-      labelKey: 'label',           // key in test sample for ground truth
-      predictionKey: 'sentiment',   // key in prediction result (auto-detect: label, sentiment, class)
+      labelKey: 'label', // key in test sample for ground truth
+      predictionKey: 'sentiment', // key in prediction result (auto-detect: label, sentiment, class)
     });
     // evaluation.metrics: { accuracy, precision, recall, f1Score }
     // Result is automatically recorded via recordEvaluation()
@@ -278,14 +279,14 @@ metricsService.recordEvaluation({
 
 ## API summary
 
-| Service | Purpose |
-|---------|---------|
-| `ModelRegistry` | Register and lookup models by name/version |
-| `TrainerService` | Discover and invoke `@Train` methods |
-| `PredictorService` | Discover and invoke `@Predict` methods |
-| `PipelineService` | Data preprocessing pipeline |
-| `BatchService` | Batch prediction with configurable batch size |
-| `MetricsService` | Model evaluation and metrics tracking |
+| Service            | Purpose                                       |
+| ------------------ | --------------------------------------------- |
+| `ModelRegistry`    | Register and lookup models by name/version    |
+| `TrainerService`   | Discover and invoke `@Train` methods          |
+| `PredictorService` | Discover and invoke `@Predict` methods        |
+| `PipelineService`  | Data preprocessing pipeline                   |
+| `BatchService`     | Batch prediction with configurable batch size |
+| `MetricsService`   | Model evaluation and metrics tracking         |
 
 ## Examples
 

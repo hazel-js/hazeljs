@@ -34,10 +34,7 @@ describe('HazelToolAdapter.fromRegistry()', () => {
   });
 
   it('snapshots all tools from the registry', () => {
-    const registry = makeRegistry([
-      makeTool({ name: 'tool_a' }),
-      makeTool({ name: 'tool_b' }),
-    ]);
+    const registry = makeRegistry([makeTool({ name: 'tool_a' }), makeTool({ name: 'tool_b' })]);
     const adapter = HazelToolAdapter.fromRegistry(registry);
     const names = adapter.listTools().map((t) => t.name);
     expect(names).toContain('tool_a');
@@ -60,7 +57,7 @@ describe('HazelToolAdapter.fromRegistry()', () => {
 describe('HazelToolAdapter.listTools()', () => {
   it('emits open schema when tool has no parameters', () => {
     const adapter = HazelToolAdapter.fromRegistry(
-      makeRegistry([makeTool({ name: 'no_params', parameters: undefined })]),
+      makeRegistry([makeTool({ name: 'no_params', parameters: undefined })])
     );
     const [def] = adapter.listTools();
     expect(def.inputSchema).toEqual({ type: 'object', properties: {}, required: [] });
@@ -68,7 +65,7 @@ describe('HazelToolAdapter.listTools()', () => {
 
   it('emits open schema when parameters array is empty', () => {
     const adapter = HazelToolAdapter.fromRegistry(
-      makeRegistry([makeTool({ name: 'empty_params', parameters: [] })]),
+      makeRegistry([makeTool({ name: 'empty_params', parameters: [] })])
     );
     const [def] = adapter.listTools();
     expect(def.inputSchema.properties).toEqual({});
@@ -80,9 +77,11 @@ describe('HazelToolAdapter.listTools()', () => {
       makeRegistry([
         makeTool({
           name: 'with_params',
-          parameters: [{ name: 'email', type: 'string', description: 'User email', required: true }],
+          parameters: [
+            { name: 'email', type: 'string', description: 'User email', required: true },
+          ],
         }),
-      ]),
+      ])
     );
     const [def] = adapter.listTools();
     expect(def.inputSchema.properties['email']).toEqual({
@@ -96,9 +95,11 @@ describe('HazelToolAdapter.listTools()', () => {
     const adapter = HazelToolAdapter.fromRegistry(
       makeRegistry([
         makeTool({
-          parameters: [{ name: 'limit', type: 'number', description: 'Max results', required: false }],
+          parameters: [
+            { name: 'limit', type: 'number', description: 'Max results', required: false },
+          ],
         }),
-      ]),
+      ])
     );
     const [def] = adapter.listTools();
     expect(def.inputSchema.properties['limit']).toBeDefined();
@@ -118,7 +119,7 @@ describe('HazelToolAdapter.listTools()', () => {
             },
           ],
         }),
-      ]),
+      ])
     );
     const [def] = adapter.listTools();
     expect(def.inputSchema.properties['priority'].enum).toEqual(['low', 'normal', 'high']);
@@ -130,7 +131,7 @@ describe('HazelToolAdapter.listTools()', () => {
         makeTool({
           parameters: [{ name: 'query', type: 'string', description: 'Search query' }],
         }),
-      ]),
+      ])
     );
     const [def] = adapter.listTools();
     expect(def.inputSchema.properties['query']).not.toHaveProperty('enum');
@@ -138,7 +139,7 @@ describe('HazelToolAdapter.listTools()', () => {
 
   it('returns name and description from the tool metadata', () => {
     const adapter = HazelToolAdapter.fromRegistry(
-      makeRegistry([makeTool({ name: 'my_tool', description: 'Does something useful' })]),
+      makeRegistry([makeTool({ name: 'my_tool', description: 'Does something useful' })])
     );
     const [def] = adapter.listTools();
     expect(def.name).toBe('my_tool');
@@ -155,7 +156,7 @@ describe('HazelToolAdapter.listTools()', () => {
             { name: 'c', type: 'boolean', description: 'Also required', required: true },
           ],
         }),
-      ]),
+      ])
     );
     const [def] = adapter.listTools();
     expect(def.inputSchema.required).toEqual(['a', 'c']);
@@ -193,7 +194,7 @@ describe('HazelToolAdapter.invoke()', () => {
     const method = jest.fn().mockResolvedValue({ result: 42 });
     const target = { id: 'instance' };
     const adapter = HazelToolAdapter.fromRegistry(
-      makeRegistry([makeTool({ name: 'calc', method, target })]),
+      makeRegistry([makeTool({ name: 'calc', method, target })])
     );
 
     const result = await adapter.invoke('calc', { a: 1, b: 2 });
@@ -208,10 +209,10 @@ describe('HazelToolAdapter.invoke()', () => {
     });
 
     const adapter = HazelToolAdapter.fromRegistry(
-      makeRegistry([makeTool({ name: 'multiply', method, target })]),
+      makeRegistry([makeTool({ name: 'multiply', method, target })])
     );
 
-    const result = await adapter.invoke('multiply', { n: 5 }) as { result: number };
+    const result = (await adapter.invoke('multiply', { n: 5 })) as { result: number };
     expect(result.result).toBe(15);
   });
 
@@ -223,7 +224,7 @@ describe('HazelToolAdapter.invoke()', () => {
   it('propagates exceptions thrown by the tool method', async () => {
     const method = jest.fn().mockRejectedValue(new Error('Tool crashed'));
     const adapter = HazelToolAdapter.fromRegistry(
-      makeRegistry([makeTool({ name: 'crashing_tool', method })]),
+      makeRegistry([makeTool({ name: 'crashing_tool', method })])
     );
     await expect(adapter.invoke('crashing_tool', {})).rejects.toThrow('Tool crashed');
   });
@@ -231,7 +232,7 @@ describe('HazelToolAdapter.invoke()', () => {
   it('passes an empty object when called with no input', async () => {
     const method = jest.fn().mockResolvedValue({});
     const adapter = HazelToolAdapter.fromRegistry(
-      makeRegistry([makeTool({ name: 'no_input', method })]),
+      makeRegistry([makeTool({ name: 'no_input', method })])
     );
     await adapter.invoke('no_input', {});
     expect(method).toHaveBeenCalledWith({});

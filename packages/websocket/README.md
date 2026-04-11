@@ -57,7 +57,7 @@ export class ChatGateway {
   @OnMessage('message')
   handleMessage(client: WebSocketClient, @Data() data: { text: string }) {
     console.log('Received message:', data.text);
-    
+
     // Broadcast to all clients
     client.broadcast('message', {
       from: client.id,
@@ -125,10 +125,10 @@ Handle client connections:
 @OnConnect()
 handleConnection(client: WebSocketClient) {
   console.log('New client:', client.id);
-  
+
   // Send welcome message
   client.emit('welcome', { message: 'Hello!' });
-  
+
   // Store client data
   client.data.username = 'Guest';
 }
@@ -142,7 +142,7 @@ Handle client disconnections:
 @OnDisconnect()
 handleDisconnect(client: WebSocketClient) {
   console.log('Client left:', client.id);
-  
+
   // Notify others
   client.broadcast('user-left', {
     userId: client.id,
@@ -159,7 +159,7 @@ Handle specific messages:
 @OnMessage('chat-message')
 handleChatMessage(client: WebSocketClient, @Data() data: ChatMessage) {
   console.log('Chat message from', client.id, ':', data.text);
-  
+
   // Broadcast to all
   client.broadcast('chat-message', {
     from: client.data.username,
@@ -177,7 +177,7 @@ Subscribe to events:
 @Subscribe('join-room')
 handleJoinRoom(client: WebSocketClient, @Data() data: { room: string }) {
   client.join(data.room);
-  
+
   // Notify room members
   client.to(data.room).emit('user-joined', {
     userId: client.id,
@@ -270,7 +270,7 @@ handlePrivateMessage(
   @Data() data: { to: string; text: string }
 ) {
   const targetClient = this.server.getClient(data.to);
-  
+
   if (targetClient) {
     targetClient.emit('private-message', {
       from: client.id,
@@ -307,7 +307,7 @@ export class ChatGateway {
   @OnConnect()
   async handleConnection(client: WebSocketClient) {
     const token = client.handshake.query.token;
-    
+
     try {
       const user = await this.authService.verifyToken(token);
       client.data.user = user;
@@ -352,7 +352,7 @@ export class ChatGateway {
   @OnConnect()
   handleConnection(client: WebSocketClient) {
     console.log(`Client connected: ${client.id}`);
-    
+
     client.emit('connected', {
       clientId: client.id,
       message: 'Welcome to the chat!',
@@ -362,10 +362,10 @@ export class ChatGateway {
   @OnDisconnect()
   handleDisconnect(client: WebSocketClient) {
     console.log(`Client disconnected: ${client.id}`);
-    
+
     // Notify rooms
     const rooms = client.rooms;
-    rooms.forEach(room => {
+    rooms.forEach((room) => {
       client.to(room).emit('user-left', {
         userId: client.id,
         username: client.data.username,
@@ -377,14 +377,14 @@ export class ChatGateway {
   handleJoinRoom(client: WebSocketClient, @Data() data: JoinRoomData) {
     client.join(data.room);
     client.data.username = data.username;
-    
+
     // Notify room members
     client.to(data.room).emit('user-joined', {
       userId: client.id,
       username: data.username,
       room: data.room,
     });
-    
+
     // Confirm to sender
     client.emit('joined-room', {
       room: data.room,
@@ -395,7 +395,7 @@ export class ChatGateway {
   @Subscribe('leave-room')
   handleLeaveRoom(client: WebSocketClient, @Data() data: { room: string }) {
     client.leave(data.room);
-    
+
     // Notify room
     client.to(data.room).emit('user-left', {
       userId: client.id,
@@ -437,7 +437,7 @@ export class ChatGateway {
 
   private getRoomMembers(room: string): any[] {
     const clients = this.server.getClientsInRoom(room);
-    return clients.map(c => ({
+    return clients.map((c) => ({
       id: c.id,
       username: c.data.username,
     }));

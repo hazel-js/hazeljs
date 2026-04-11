@@ -152,22 +152,22 @@ I18nModule.forRootAsync({
     translationsPath: config.get('TRANSLATIONS_PATH', './translations'),
   }),
   inject: [ConfigService],
-})
+});
 ```
 
 ## API Reference
 
 ### I18nModule.forRoot(options)
 
-| Option             | Type                        | Default                      | Description                                     |
-|--------------------|-----------------------------|------------------------------|-------------------------------------------------|
-| `defaultLocale`    | `string`                    | `'en'`                       | Locale used when none is detected.              |
-| `fallbackLocale`   | `string`                    | same as `defaultLocale`      | Locale used when a key is missing.              |
-| `translationsPath` | `string`                    | `'./translations'`           | Path to the directory of `<locale>.json` files. |
-| `detection`        | `LocaleDetectionStrategy[]` | `['query','cookie','header']`| Ordered locale detection strategies.           |
-| `queryParam`       | `string`                    | `'lang'`                     | Query-string parameter name.                    |
-| `cookieName`       | `string`                    | `'locale'`                   | Cookie name.                                    |
-| `isGlobal`         | `boolean`                   | `true`                       | Register as a global module.                    |
+| Option             | Type                        | Default                       | Description                                     |
+| ------------------ | --------------------------- | ----------------------------- | ----------------------------------------------- |
+| `defaultLocale`    | `string`                    | `'en'`                        | Locale used when none is detected.              |
+| `fallbackLocale`   | `string`                    | same as `defaultLocale`       | Locale used when a key is missing.              |
+| `translationsPath` | `string`                    | `'./translations'`            | Path to the directory of `<locale>.json` files. |
+| `detection`        | `LocaleDetectionStrategy[]` | `['query','cookie','header']` | Ordered locale detection strategies.            |
+| `queryParam`       | `string`                    | `'lang'`                      | Query-string parameter name.                    |
+| `cookieName`       | `string`                    | `'locale'`                    | Cookie name.                                    |
+| `isGlobal`         | `boolean`                   | `true`                        | Register as a global module.                    |
 
 ### I18nService
 
@@ -177,16 +177,16 @@ I18nModule.forRootAsync({
 - `getKeys(locale?)` - Return all flattened dot-notation keys for a locale
 
 ```typescript
-i18n.t('errors.notFound')
+i18n.t('errors.notFound');
 // → "Resource not found."
 
-i18n.t('welcome', { vars: { name: 'Bob' } })
+i18n.t('welcome', { vars: { name: 'Bob' } });
 // → "Welcome, Bob!"
 
-i18n.t('items', { count: 3, vars: { count: '3' } })
+i18n.t('items', { count: 3, vars: { count: '3' } });
 // → "3 items"
 
-i18n.t('welcome', { locale: 'fr', vars: { name: 'Bob' } })
+i18n.t('welcome', { locale: 'fr', vars: { name: 'Bob' } });
 // → "Bienvenue, Bob !"
 ```
 
@@ -198,16 +198,16 @@ i18n.t('welcome', { locale: 'fr', vars: { name: 'Bob' } })
 - `relative(value, unit, locale?, opts?)` - Format a relative time via `Intl.RelativeTimeFormat`
 
 ```typescript
-i18n.format.number(1234567.89, 'de', { maximumFractionDigits: 2 })
+i18n.format.number(1234567.89, 'de', { maximumFractionDigits: 2 });
 // → "1.234.567,89"
 
-i18n.format.date(new Date(), 'fr', { dateStyle: 'long' })
+i18n.format.date(new Date(), 'fr', { dateStyle: 'long' });
 // → "4 mars 2026"
 
-i18n.format.currency(49.99, 'en', 'USD')
+i18n.format.currency(49.99, 'en', 'USD');
 // → "$49.99"
 
-i18n.format.relative(-3, 'day', 'en')
+i18n.format.relative(-3, 'day', 'en');
 // → "3 days ago"
 ```
 

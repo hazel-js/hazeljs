@@ -37,12 +37,10 @@ const gemini = new GeminiProvider('your-api-key-here');
 
 ```typescript
 const response = await gemini.complete({
-  messages: [
-    { role: 'user', content: 'Explain quantum computing in simple terms' }
-  ],
+  messages: [{ role: 'user', content: 'Explain quantum computing in simple terms' }],
   model: 'gemini-pro',
   temperature: 0.7,
-  maxTokens: 1000
+  maxTokens: 1000,
 });
 
 console.log(response.content);
@@ -53,15 +51,13 @@ console.log(response.usage); // Token usage statistics
 
 ```typescript
 const stream = gemini.streamComplete({
-  messages: [
-    { role: 'user', content: 'Write a story about a robot' }
-  ],
-  model: 'gemini-pro'
+  messages: [{ role: 'user', content: 'Write a story about a robot' }],
+  model: 'gemini-pro',
 });
 
 for await (const chunk of stream) {
   process.stdout.write(chunk.delta);
-  
+
   if (chunk.done) {
     console.log('\n\nUsage:', chunk.usage);
   }
@@ -72,11 +68,8 @@ for await (const chunk of stream) {
 
 ```typescript
 const embeddings = await gemini.embed({
-  input: [
-    'Machine learning is a subset of AI',
-    'Deep learning uses neural networks'
-  ],
-  model: 'text-embedding-004'
+  input: ['Machine learning is a subset of AI', 'Deep learning uses neural networks'],
+  model: 'text-embedding-004',
 });
 
 console.log(embeddings.embeddings); // Array of embedding vectors
@@ -93,12 +86,14 @@ console.log('Gemini available:', isAvailable);
 ## Supported Models
 
 ### Text Generation
+
 - **gemini-pro** - Standard text generation model
 - **gemini-pro-vision** - Multimodal model (text + images)
 - **gemini-1.5-pro** - Latest model with 1M token context window
 - **gemini-1.5-flash** - Faster, cost-effective model
 
 ### Embeddings
+
 - **text-embedding-004** - Latest embedding model (768 dimensions)
 
 ## Error Handling
@@ -108,7 +103,7 @@ The provider includes comprehensive error handling:
 ```typescript
 try {
   const response = await gemini.complete({
-    messages: [{ role: 'user', content: 'Hello!' }]
+    messages: [{ role: 'user', content: 'Hello!' }],
   });
 } catch (error) {
   console.error('Gemini API error:', error.message);
@@ -136,11 +131,9 @@ export class AIController {
   @Get('/generate')
   async generate() {
     const response = await this.gemini.complete({
-      messages: [
-        { role: 'user', content: 'Generate a creative product name' }
-      ],
+      messages: [{ role: 'user', content: 'Generate a creative product name' }],
       model: 'gemini-1.5-flash',
-      temperature: 0.9
+      temperature: 0.9,
     });
 
     return { text: response.content };
@@ -190,7 +183,7 @@ Monitor your usage in the [Google Cloud Console](https://console.cloud.google.co
 
 1. **Cache API Key**: Initialize the provider once and reuse it
 2. **Handle Rate Limits**: Implement exponential backoff for retries
-3. **Use Appropriate Models**: 
+3. **Use Appropriate Models**:
    - Use `gemini-1.5-flash` for faster, cheaper responses
    - Use `gemini-1.5-pro` for complex reasoning tasks
 4. **Monitor Token Usage**: Track `response.usage` to optimize costs
@@ -209,14 +202,17 @@ The provider will automatically use the real API instead of mock responses.
 ## Troubleshooting
 
 ### "API key not configured"
+
 - Ensure `GEMINI_API_KEY` is set in your environment
 - Or pass the API key directly to the constructor
 
 ### "Cannot find module '@google/generative-ai'"
+
 - Run `npm install @google/generative-ai` in your project
 - Rebuild with `npm run build`
 
 ### Rate limit errors
+
 - Implement retry logic with exponential backoff
 - Consider upgrading to a paid tier for higher limits
 

@@ -25,11 +25,7 @@ npm install @hazeljs/rag
 ### Basic Memory Usage
 
 ```typescript
-import {
-  MemoryManager,
-  BufferMemory,
-  OpenAIEmbeddings,
-} from '@hazeljs/rag';
+import { MemoryManager, BufferMemory, OpenAIEmbeddings } from '@hazeljs/rag';
 
 // Setup memory store
 const memoryStore = new BufferMemory({ maxSize: 100 });
@@ -43,10 +39,7 @@ const memoryManager = new MemoryManager(memoryStore, {
 await memoryManager.initialize();
 
 // Add conversation messages
-await memoryManager.addMessage(
-  { role: 'user', content: 'My name is John' },
-  'session-123'
-);
+await memoryManager.addMessage({ role: 'user', content: 'My name is John' }, 'session-123');
 
 await memoryManager.addMessage(
   { role: 'assistant', content: 'Nice to meet you, John!' },
@@ -141,6 +134,7 @@ const buffer = new BufferMemory({
 ```
 
 **Best for:**
+
 - Development and testing
 - Recent conversation history
 - Temporary context
@@ -158,6 +152,7 @@ const vectorMemory = new VectorMemory(vectorStore, embeddings, {
 ```
 
 **Best for:**
+
 - Long-term memory storage
 - Semantic search across memories
 - Production deployments
@@ -176,6 +171,7 @@ const hybrid = new HybridMemory(buffer, vectorMemory, {
 ```
 
 **Best for:**
+
 - Production applications
 - Balancing speed and persistence
 - Large-scale deployments
@@ -188,10 +184,7 @@ Track multi-turn conversations:
 
 ```typescript
 // Add messages
-await memoryManager.addMessage(
-  { role: 'user', content: 'What is HazelJS?' },
-  'session-123'
-);
+await memoryManager.addMessage({ role: 'user', content: 'What is HazelJS?' }, 'session-123');
 
 await memoryManager.addMessage(
   { role: 'assistant', content: 'HazelJS is an AI-native framework...' },
@@ -221,9 +214,7 @@ await memoryManager.trackEntity({
     role: 'customer',
     company: 'Acme Inc',
   },
-  relationships: [
-    { type: 'works_at', target: 'Acme Inc' },
-  ],
+  relationships: [{ type: 'works_at', target: 'Acme Inc' }],
   firstSeen: new Date(),
   lastSeen: new Date(),
   mentions: 1,
@@ -247,15 +238,12 @@ Store and recall facts:
 
 ```typescript
 // Store facts
-await memoryManager.storeFact(
-  'User prefers dark mode',
-  { userId: 'user-123', category: 'preference' }
-);
+await memoryManager.storeFact('User prefers dark mode', {
+  userId: 'user-123',
+  category: 'preference',
+});
 
-await memoryManager.storeFact(
-  'HazelJS supports TypeScript decorators',
-  { category: 'feature' }
-);
+await memoryManager.storeFact('HazelJS supports TypeScript decorators', { category: 'feature' });
 
 // Recall facts
 const facts = await memoryManager.recallFacts('user preferences', {
@@ -290,15 +278,12 @@ await memoryManager.clearContext('session-123');
 Search across all memories semantically:
 
 ```typescript
-const relevantMemories = await memoryManager.relevantMemories(
-  'pricing and discounts',
-  {
-    sessionId: 'session-123',
-    types: [MemoryType.CONVERSATION, MemoryType.FACT],
-    topK: 5,
-    minScore: 0.7,
-  }
-);
+const relevantMemories = await memoryManager.relevantMemories('pricing and discounts', {
+  sessionId: 'session-123',
+  types: [MemoryType.CONVERSATION, MemoryType.FACT],
+  topK: 5,
+  minScore: 0.7,
+});
 ```
 
 ### Memory Statistics
@@ -341,13 +326,13 @@ console.log(summary);
 
 ```typescript
 const config = {
-  maxConversationLength: 20,      // Max messages in buffer
-  summarizeAfter: 50,              // Summarize after N messages
-  entityExtraction: true,          // Auto-extract entities
-  importanceScoring: true,         // Calculate importance scores
-  memoryDecay: false,              // Enable time-based decay
-  decayRate: 0.1,                  // Decay rate (if enabled)
-  maxWorkingMemorySize: 10,        // Max working memory items
+  maxConversationLength: 20, // Max messages in buffer
+  summarizeAfter: 50, // Summarize after N messages
+  entityExtraction: true, // Auto-extract entities
+  importanceScoring: true, // Calculate importance scores
+  memoryDecay: false, // Enable time-based decay
+  decayRate: 0.1, // Decay rate (if enabled)
+  maxWorkingMemorySize: 10, // Max working memory items
 };
 ```
 
@@ -355,8 +340,8 @@ const config = {
 
 ```typescript
 const bufferConfig = {
-  maxSize: 100,                    // Max memories in buffer
-  ttl: 3600000,                    // Time to live (ms)
+  maxSize: 100, // Max memories in buffer
+  ttl: 3600000, // Time to live (ms)
 };
 ```
 
@@ -364,9 +349,9 @@ const bufferConfig = {
 
 ```typescript
 const hybridConfig = {
-  bufferSize: 20,                  // Buffer size
-  archiveThreshold: 15,            // Archive after N messages
-  ttl: 3600000,                    // Buffer TTL
+  bufferSize: 20, // Buffer size
+  archiveThreshold: 15, // Archive after N messages
+  ttl: 3600000, // Buffer TTL
 };
 ```
 
@@ -384,17 +369,13 @@ await memoryManager.trackEntity({
 });
 
 // Store support history
-await memoryManager.storeFact(
-  'Customer reported login issues on 2024-01-15',
-  { customerId: 'ACC-123', category: 'support' }
-);
+await memoryManager.storeFact('Customer reported login issues on 2024-01-15', {
+  customerId: 'ACC-123',
+  category: 'support',
+});
 
 // Query with context
-const response = await rag.queryWithMemory(
-  'What was my previous issue?',
-  'session-123',
-  'ACC-123'
-);
+const response = await rag.queryWithMemory('What was my previous issue?', 'session-123', 'ACC-123');
 ```
 
 ### Personal AI Assistant
@@ -408,10 +389,7 @@ await memoryManager.storeFact('User timezone is PST');
 await memoryManager.setContext('active_tasks', ['email', 'meeting'], 'session-123');
 
 // Contextual responses
-const response = await rag.queryWithMemory(
-  'What should I focus on today?',
-  'session-123'
-);
+const response = await rag.queryWithMemory('What should I focus on today?', 'session-123');
 ```
 
 ### Educational Tutor
@@ -429,10 +407,10 @@ await memoryManager.trackEntity({
 });
 
 // Remember misconceptions
-await memoryManager.storeFact(
-  'Student confused about async/await',
-  { studentId: 'Student-123', topic: 'javascript' }
-);
+await memoryManager.storeFact('Student confused about async/await', {
+  studentId: 'Student-123',
+  topic: 'javascript',
+});
 ```
 
 ## Best Practices

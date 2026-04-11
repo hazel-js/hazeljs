@@ -12,11 +12,7 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'lcov', 'clover'],
       include: ['src/**/*.ts'],
-      exclude: [
-        'src/main.ts',
-        'src/flows/demo_fraud_flow.ts',
-        'src/flows/demo_support_flow.ts',
-      ],
+      exclude: ['src/main.ts', 'src/flows/demo_fraud_flow.ts', 'src/flows/demo_support_flow.ts'],
       thresholds: {
         statements: 80,
         branches: 75,

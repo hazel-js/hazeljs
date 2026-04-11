@@ -1,7 +1,12 @@
 import { Command } from 'commander';
 import fs from 'fs';
 import path from 'path';
-import { renderTemplate, GenerateResult, GenerateCLIOptions, printGenerateResult } from '../utils/generator';
+import {
+  renderTemplate,
+  GenerateResult,
+  GenerateCLIOptions,
+  printGenerateResult,
+} from '../utils/generator';
 
 const AUTH_MODULE_TEMPLATE = `import { HazelModule } from '@hazeljs/core';
 import { AuthController } from './auth.controller';

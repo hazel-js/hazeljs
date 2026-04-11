@@ -103,17 +103,18 @@ bootstrap();
 
 ```typescript
 GrpcModule.forRoot({
-  protoPath: join(__dirname, 'hero.proto'),  // or ['a.proto', 'b.proto']
-  package: 'hero',                             // package name from .proto
-  url: '0.0.0.0:50051',                       // bind address (default: 0.0.0.0:50051)
-  loader: {                                    // @grpc/proto-loader options
+  protoPath: join(__dirname, 'hero.proto'), // or ['a.proto', 'b.proto']
+  package: 'hero', // package name from .proto
+  url: '0.0.0.0:50051', // bind address (default: 0.0.0.0:50051)
+  loader: {
+    // @grpc/proto-loader options
     keepCase: true,
     longs: String,
     enums: String,
     defaults: true,
     oneofs: true,
   },
-  isGlobal: true,                              // global module (default)
+  isGlobal: true, // global module (default)
 });
 ```
 

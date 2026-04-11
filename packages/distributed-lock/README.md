@@ -47,10 +47,10 @@ Lock a method for a specific user based on an argument.
 import { DistributedLock } from '@hazeljs/distributed-lock';
 
 class UserProfileService {
-  @DistributedLock({ 
-    key: 'update-profile-{userId}', 
-    ttl: 10000, 
-    wait: true 
+  @DistributedLock({
+    key: 'update-profile-{userId}',
+    ttl: 10000,
+    wait: true,
   })
   async updateProfile(userId: string, data: any) {
     // This code is now thread-safe across all distributed nodes
@@ -112,9 +112,12 @@ import { LockManager } from '@hazeljs/distributed-lock';
 
 const lockManager = LockManager.getInstance();
 
-lockManager.setupRedis({
-  url: 'redis://localhost:6379',
-}, 'redis-prod');
+lockManager.setupRedis(
+  {
+    url: 'redis://localhost:6379',
+  },
+  'redis-prod'
+);
 
 lockManager.setDefaultBackend('redis-prod');
 ```
@@ -123,25 +126,25 @@ lockManager.setDefaultBackend('redis-prod');
 
 ## Backend Comparison
 
-| | In-Memory | Redis | Custom |
-|---|:---:|:---:|:---:|
-| **Distributed** | ❌ (Single node) | ✅ (All nodes) | ✅ (Interface-based) |
-| **Setup** | None | Required | Custom impl |
-| **Best For** | Development / Testing | Production / High Load | Specialized systems |
-| **Performance** | Nano-seconds | Milli-seconds | Backend-dependent |
+|                 |       In-Memory       |         Redis          |        Custom        |
+| --------------- | :-------------------: | :--------------------: | :------------------: |
+| **Distributed** |   ❌ (Single node)    |     ✅ (All nodes)     | ✅ (Interface-based) |
+| **Setup**       |         None          |        Required        |     Custom impl      |
+| **Best For**    | Development / Testing | Production / High Load | Specialized systems  |
+| **Performance** |     Nano-seconds      |     Milli-seconds      |  Backend-dependent   |
 
 ---
 
 ## Configuration Options
 
-| Option | Type | Description |
-| --- | --- | --- |
-| `key` | `string` | The unique lock identifier. Supports `{param}` placeholders from method args. |
-| `ttl` | `number` | Time-To-Live in milliseconds. Default: `5000`. |
-| `wait` | `boolean` | If true, will wait for the lock if held. Default: `false`. |
-| `retryCount`| `number` | Number of retries if `wait` is true. Default: `3`. |
-| `retryDelay`| `number` | Time between retries in milliseconds. Default: `100`. |
-| `backend` | `string` | Override the default backend (e.g., `'memory'`, `'redis'`). |
+| Option       | Type      | Description                                                                   |
+| ------------ | --------- | ----------------------------------------------------------------------------- |
+| `key`        | `string`  | The unique lock identifier. Supports `{param}` placeholders from method args. |
+| `ttl`        | `number`  | Time-To-Live in milliseconds. Default: `5000`.                                |
+| `wait`       | `boolean` | If true, will wait for the lock if held. Default: `false`.                    |
+| `retryCount` | `number`  | Number of retries if `wait` is true. Default: `3`.                            |
+| `retryDelay` | `number`  | Time between retries in milliseconds. Default: `100`.                         |
+| `backend`    | `string`  | Override the default backend (e.g., `'memory'`, `'redis'`).                   |
 
 ---
 

@@ -46,4 +46,4 @@ async function main() {
 main().catch((error) => {
   logger.error('Migration failed:', error);
   process.exit(1);
-}); 
+});

@@ -16,7 +16,12 @@
  *   — that's it; the CLI, --list, --json, and --dry-run support are automatic.
  */
 import { Command } from 'commander';
-import { Generator, GenerateResult, GenerateCLIOptions, printGenerateResult } from '../utils/generator';
+import {
+  Generator,
+  GenerateResult,
+  GenerateCLIOptions,
+  printGenerateResult,
+} from '../utils/generator';
 import {
   CONTROLLER_TEMPLATE,
   SERVICE_TEMPLATE,
@@ -70,29 +75,174 @@ export interface SimpleGeneratorConfig {
 }
 
 export const SIMPLE_GENERATORS: SimpleGeneratorConfig[] = [
-  { type: 'controller', description: 'REST controller', suffix: 'controller', template: CONTROLLER_TEMPLATE, alias: 'c', nameRequired: true },
-  { type: 'service', description: 'Service class', suffix: 'service', template: SERVICE_TEMPLATE, alias: 's', nameRequired: true },
-  { type: 'guard', description: 'Guard (e.g. auth)', suffix: 'guard', template: GUARD_TEMPLATE, alias: 'gu', nameRequired: true },
-  { type: 'interceptor', description: 'Interceptor', suffix: 'interceptor', template: INTERCEPTOR_TEMPLATE, alias: 'i', nameRequired: true },
-  { type: 'middleware', description: 'Middleware', suffix: 'middleware', template: MIDDLEWARE_TEMPLATE, alias: 'mw', defaultPath: 'src/middleware', nameRequired: true, nextSteps: ['Import the middleware in your module or apply it globally.'] },
-  { type: 'pipe', description: 'Validation/transform pipe', suffix: 'pipe', template: PIPE_TEMPLATE, nameRequired: true },
-  { type: 'filter', description: 'Exception filter', suffix: 'filter', template: EXCEPTION_FILTER_TEMPLATE, alias: 'f', nameRequired: true },
-  { type: 'repository', description: 'Prisma repository', suffix: 'repository', template: REPOSITORY_TEMPLATE, alias: 'repo', nameRequired: true },
-  { type: 'gateway', description: 'WebSocket gateway', suffix: 'gateway', template: WEBSOCKET_GATEWAY_TEMPLATE, alias: 'ws', nameRequired: true },
-  { type: 'ai-service', description: 'AI service with decorators', suffix: 'ai-service', template: AI_SERVICE_TEMPLATE, alias: 'ai', nameRequired: true },
-  { type: 'agent', description: 'AI agent with @Agent and @Tool', suffix: 'agent', template: AGENT_TEMPLATE, nameRequired: true, extraData: (name) => ({ description: `A ${name} agent` }) },
-  { type: 'cache', description: 'Cache service with decorators', suffix: 'cache', template: CACHE_SERVICE_TEMPLATE, nameRequired: true, nextSteps: ['npm install @hazeljs/cache', 'Add CacheModule to your module imports', 'Configure the cache strategy (memory, redis, or multi-tier)'] },
-  { type: 'cron', description: 'Cron/scheduled job service', suffix: 'cron', template: CRON_SERVICE_TEMPLATE, alias: 'job', nameRequired: true, nextSteps: ['npm install @hazeljs/cron', 'Add CronModule to your module imports', 'Register this service as a provider'] },
-  { type: 'rag', description: 'RAG (Retrieval-Augmented Generation) service', suffix: 'rag', template: RAG_SERVICE_TEMPLATE, nameRequired: true, nextSteps: ['npm install @hazeljs/rag', 'Register this service as a provider in your module', 'Configure your embedding provider and vector store'] },
-  { type: 'discovery', description: 'Service discovery setup', suffix: 'discovery', template: DISCOVERY_TEMPLATE, nameRequired: true, nextSteps: ['npm install @hazeljs/discovery', 'Register this service as a provider in your module', 'Configure your discovery backend (memory, redis, consul, or kubernetes)'] },
-  { type: 'config', description: 'Config module setup', suffix: 'config', template: CONFIG_TEMPLATE, nameRequired: false, nextSteps: ['npm install @hazeljs/config', 'Add ConfigModule.forRoot({ envFilePath: ".env" }) to your app module imports', 'Create a .env file in your project root'] },
-  { type: 'serverless', description: 'Serverless handler (Lambda or Cloud Function)', suffix: 'handler', template: SERVERLESS_LAMBDA_TEMPLATE, alias: 'sls', nameRequired: true, extraOptions: ['platform'] },
+  {
+    type: 'controller',
+    description: 'REST controller',
+    suffix: 'controller',
+    template: CONTROLLER_TEMPLATE,
+    alias: 'c',
+    nameRequired: true,
+  },
+  {
+    type: 'service',
+    description: 'Service class',
+    suffix: 'service',
+    template: SERVICE_TEMPLATE,
+    alias: 's',
+    nameRequired: true,
+  },
+  {
+    type: 'guard',
+    description: 'Guard (e.g. auth)',
+    suffix: 'guard',
+    template: GUARD_TEMPLATE,
+    alias: 'gu',
+    nameRequired: true,
+  },
+  {
+    type: 'interceptor',
+    description: 'Interceptor',
+    suffix: 'interceptor',
+    template: INTERCEPTOR_TEMPLATE,
+    alias: 'i',
+    nameRequired: true,
+  },
+  {
+    type: 'middleware',
+    description: 'Middleware',
+    suffix: 'middleware',
+    template: MIDDLEWARE_TEMPLATE,
+    alias: 'mw',
+    defaultPath: 'src/middleware',
+    nameRequired: true,
+    nextSteps: ['Import the middleware in your module or apply it globally.'],
+  },
+  {
+    type: 'pipe',
+    description: 'Validation/transform pipe',
+    suffix: 'pipe',
+    template: PIPE_TEMPLATE,
+    nameRequired: true,
+  },
+  {
+    type: 'filter',
+    description: 'Exception filter',
+    suffix: 'filter',
+    template: EXCEPTION_FILTER_TEMPLATE,
+    alias: 'f',
+    nameRequired: true,
+  },
+  {
+    type: 'repository',
+    description: 'Prisma repository',
+    suffix: 'repository',
+    template: REPOSITORY_TEMPLATE,
+    alias: 'repo',
+    nameRequired: true,
+  },
+  {
+    type: 'gateway',
+    description: 'WebSocket gateway',
+    suffix: 'gateway',
+    template: WEBSOCKET_GATEWAY_TEMPLATE,
+    alias: 'ws',
+    nameRequired: true,
+  },
+  {
+    type: 'ai-service',
+    description: 'AI service with decorators',
+    suffix: 'ai-service',
+    template: AI_SERVICE_TEMPLATE,
+    alias: 'ai',
+    nameRequired: true,
+  },
+  {
+    type: 'agent',
+    description: 'AI agent with @Agent and @Tool',
+    suffix: 'agent',
+    template: AGENT_TEMPLATE,
+    nameRequired: true,
+    extraData: (name) => ({ description: `A ${name} agent` }),
+  },
+  {
+    type: 'cache',
+    description: 'Cache service with decorators',
+    suffix: 'cache',
+    template: CACHE_SERVICE_TEMPLATE,
+    nameRequired: true,
+    nextSteps: [
+      'npm install @hazeljs/cache',
+      'Add CacheModule to your module imports',
+      'Configure the cache strategy (memory, redis, or multi-tier)',
+    ],
+  },
+  {
+    type: 'cron',
+    description: 'Cron/scheduled job service',
+    suffix: 'cron',
+    template: CRON_SERVICE_TEMPLATE,
+    alias: 'job',
+    nameRequired: true,
+    nextSteps: [
+      'npm install @hazeljs/cron',
+      'Add CronModule to your module imports',
+      'Register this service as a provider',
+    ],
+  },
+  {
+    type: 'rag',
+    description: 'RAG (Retrieval-Augmented Generation) service',
+    suffix: 'rag',
+    template: RAG_SERVICE_TEMPLATE,
+    nameRequired: true,
+    nextSteps: [
+      'npm install @hazeljs/rag',
+      'Register this service as a provider in your module',
+      'Configure your embedding provider and vector store',
+    ],
+  },
+  {
+    type: 'discovery',
+    description: 'Service discovery setup',
+    suffix: 'discovery',
+    template: DISCOVERY_TEMPLATE,
+    nameRequired: true,
+    nextSteps: [
+      'npm install @hazeljs/discovery',
+      'Register this service as a provider in your module',
+      'Configure your discovery backend (memory, redis, consul, or kubernetes)',
+    ],
+  },
+  {
+    type: 'config',
+    description: 'Config module setup',
+    suffix: 'config',
+    template: CONFIG_TEMPLATE,
+    nameRequired: false,
+    nextSteps: [
+      'npm install @hazeljs/config',
+      'Add ConfigModule.forRoot({ envFilePath: ".env" }) to your app module imports',
+      'Create a .env file in your project root',
+    ],
+  },
+  {
+    type: 'serverless',
+    description: 'Serverless handler (Lambda or Cloud Function)',
+    suffix: 'handler',
+    template: SERVERLESS_LAMBDA_TEMPLATE,
+    alias: 'sls',
+    nameRequired: true,
+    extraOptions: ['platform'],
+  },
 ];
 
 // ── Runner factory ───────────────────────────────────────────────────────────
 
 class SimpleGenerator extends Generator {
-  constructor(private readonly _suffix: string, private readonly _template: string) {
+  constructor(
+    private readonly _suffix: string,
+    private readonly _template: string
+  ) {
     super();
     this.suffix = _suffix;
   }
@@ -122,7 +272,7 @@ export async function runSimpleGenerator(
   }
 
   const generator = new SimpleGenerator(config.suffix, template);
-  const effectiveName = config.nameRequired ? name : (name || 'app');
+  const effectiveName = config.nameRequired ? name : name || 'app';
   const result = await generator.generate({
     name: effectiveName,
     path: options.path || config.defaultPath,
@@ -161,12 +311,14 @@ export function registerSimpleGenerators(generateCommand: Command): void {
       cmd.option('--platform <platform>', 'Platform: lambda or cloud-function', 'lambda');
     }
 
-    cmd.action(async (nameOrOptions: string | GenerateCLIOptions, maybeOptions?: GenerateCLIOptions) => {
-      const name = typeof nameOrOptions === 'string' ? nameOrOptions : '';
-      const opts = typeof nameOrOptions === 'string' ? (maybeOptions || {}) : nameOrOptions;
-      const result = await runSimpleGenerator(config, name, opts as GenerateCLIOptions);
-      printGenerateResult(result, { json: (opts as GenerateCLIOptions).json });
-    });
+    cmd.action(
+      async (nameOrOptions: string | GenerateCLIOptions, maybeOptions?: GenerateCLIOptions) => {
+        const name = typeof nameOrOptions === 'string' ? nameOrOptions : '';
+        const opts = typeof nameOrOptions === 'string' ? maybeOptions || {} : nameOrOptions;
+        const result = await runSimpleGenerator(config, name, opts as GenerateCLIOptions);
+        printGenerateResult(result, { json: (opts as GenerateCLIOptions).json });
+      }
+    );
   }
 }
 

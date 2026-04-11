@@ -14,18 +14,10 @@
       "@hazeljs/memory": ["../memory/src/index.ts"],
       "@hazeljs/memory/prisma": ["../memory/src/prisma.ts"]
     },
-    "types": [
-      "jest",
-      "node"
-    ]
+    "types": ["jest", "node"]
   },
-  "include": [
-    "src/**/*"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist"
-  ],
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"],
   "references": [
     {
       "path": "../core"

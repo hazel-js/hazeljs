@@ -3,6 +3,7 @@
 **Attribute-level (record-level) authorization for HazelJS, powered by [CASL](https://casl.js.org).**
 
 Where `RoleGuard` asks "is your role high enough?", `@hazeljs/casl` asks:
+
 > **Can _this_ user perform _this action_ on _this specific record_?**
 
 [![npm version](https://img.shields.io/npm/v/@hazeljs/casl.svg)](https://www.npmjs.com/package/@hazeljs/casl)
@@ -43,7 +44,7 @@ import { Injectable } from '@hazeljs/core';
 // All @casl/ability symbols are re-exported — no separate @casl/ability dep needed.
 import { AbilityFactory, MongoAbility, AbilityBuilder, createMongoAbility } from '@hazeljs/casl';
 
-type Action  = 'create' | 'read' | 'update' | 'delete' | 'manage';
+type Action = 'create' | 'read' | 'update' | 'delete' | 'manage';
 type Subject = Post | 'Post' | 'all';
 export type AppAbility = MongoAbility<[Action, Subject]>;
 
@@ -53,10 +54,10 @@ export class AppAbilityFactory extends AbilityFactory<AppAbility> {
     const { can, cannot, build } = new AbilityBuilder<AppAbility>(createMongoAbility);
 
     if (user.role === 'admin') {
-      can('manage', 'all');                              // admin: everything
+      can('manage', 'all'); // admin: everything
     } else {
-      can('read',   'Post');
-      can('update', 'Post', { authorId: user.id });     // own posts only
+      can('read', 'Post');
+      can('update', 'Post', { authorId: user.id }); // own posts only
       cannot('delete', 'Post');
     }
 
@@ -75,9 +76,7 @@ import { CaslModule } from '@hazeljs/casl';
 import { AppAbilityFactory } from './casl/app-ability.factory';
 
 @HazelModule({
-  imports: [
-    CaslModule.forRoot({ abilityFactory: AppAbilityFactory }),
-  ],
+  imports: [CaslModule.forRoot({ abilityFactory: AppAbilityFactory })],
 })
 export class AppModule {}
 ```
@@ -114,10 +113,10 @@ export class PostsController {
 
 Errors thrown:
 
-| Condition | Status |
-|---|---|
-| No `req.user` (guard order wrong) | 401 |
-| Any handler returns `false` | 403 |
+| Condition                         | Status |
+| --------------------------------- | ------ |
+| No `req.user` (guard order wrong) | 401    |
+| Any handler returns `false`       | 403    |
 
 ---
 
@@ -216,7 +215,7 @@ Request
 
 ## `@Ability()` — inject the ability directly
 
-`@Ability()` is a **parameter decorator** that resolves `CaslService.createForUser(req.user)` once per request and injects the result straight into your controller method.  Services receive the pre-built ability instead of the raw user, keeping business logic clean.
+`@Ability()` is a **parameter decorator** that resolves `CaslService.createForUser(req.user)` once per request and injects the result straight into your controller method. Services receive the pre-built ability instead of the raw user, keeping business logic clean.
 
 ```typescript
 // posts.controller.ts
@@ -232,18 +231,15 @@ export class PostsController {
 
   @Patch('/:id')
   update(
-    @Ability() ability: AppAbility,   // ← resolved from req.user automatically
+    @Ability() ability: AppAbility, // ← resolved from req.user automatically
     @Param('id') id: string,
-    @Body() dto: UpdatePostDto,
+    @Body() dto: UpdatePostDto
   ) {
     return this.postsService.update(ability, id, dto);
   }
 
   @Delete('/:id')
-  remove(
-    @Ability() ability: AppAbility,
-    @Param('id') id: string,
-  ) {
+  remove(@Ability() ability: AppAbility, @Param('id') id: string) {
     return this.postsService.remove(ability, id);
   }
 }
@@ -254,7 +250,7 @@ The service just receives an `AppAbility` — no `CaslService` injection needed:
 ```typescript
 // posts.service.ts
 import { Injectable } from '@hazeljs/core';
-import { subject } from '@hazeljs/casl';   // re-exported — no @casl/ability dep needed
+import { subject } from '@hazeljs/casl'; // re-exported — no @casl/ability dep needed
 import type { AppAbility } from './casl/app-ability.factory';
 
 @Injectable()
@@ -283,7 +279,7 @@ export class PostsService {
 ```
 
 > **When to use `@Ability()` vs `CaslService`**  
-> Use `@Ability()` when the controller passes the ability to a single service.  Use `CaslService` directly when a service is called from multiple places (background jobs, other services) and the caller may not hold an ability object.
+> Use `@Ability()` when the controller passes the ability to a single service. Use `CaslService` directly when a service is called from multiple places (background jobs, other services) and the caller may not hold an ability object.
 
 ---
 
@@ -300,11 +296,11 @@ import type { AppAbility } from './casl/app-ability.factory';
 export class PostsService {
   constructor(
     private readonly postsRepo: PostsRepository,
-    private readonly casl: CaslService<AppAbility>,
+    private readonly casl: CaslService<AppAbility>
   ) {}
 
   async update(user: Record<string, unknown>, postId: string, dto: UpdatePostDto) {
-    const post    = await this.postsRepo.findById(postId);
+    const post = await this.postsRepo.findById(postId);
     const ability = this.casl.createForUser(user);
 
     if (!ability.can('update', subject('Post', post))) {
@@ -327,9 +323,9 @@ import { CaslService } from '@hazeljs/casl';
 // Inject and call createForUser to get an ability for the current user
 const ability = this.casl.createForUser(user);
 
-ability.can('read',   'Post')                          // true / false
-ability.can('update', subject('Post', post))           // checks conditions
-ability.cannot('delete', 'Post')                       // negation check
+ability.can('read', 'Post'); // true / false
+ability.can('update', subject('Post', post)); // checks conditions
+ability.cannot('delete', 'Post'); // negation check
 ```
 
 ---
@@ -349,9 +345,9 @@ abstract class AbilityFactory<A extends AnyAbility> {
 
 ## `CaslModule.forRoot()` options
 
-| Option | Type | Required | Description |
-|---|---|---|---|
-| `abilityFactory` | `new (...args: any[]) => AbilityFactory<A>` | ✓ | Your factory class (must be `@Injectable()`) |
+| Option           | Type                                        | Required | Description                                  |
+| ---------------- | ------------------------------------------- | -------- | -------------------------------------------- |
+| `abilityFactory` | `new (...args: any[]) => AbilityFactory<A>` | ✓        | Your factory class (must be `@Injectable()`) |
 
 ---
 

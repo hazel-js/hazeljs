@@ -7,11 +7,7 @@
       "conventionalCommits": false,
       "message": "chore(release): publish %s",
       "registry": "https://registry.npmjs.org/",
-      "ignoreChanges": [
-        "**/__tests__/**",
-        "**/*.test.ts",
-        "**/*.md"
-      ]
+      "ignoreChanges": ["**/__tests__/**", "**/*.test.ts", "**/*.md"]
     },
     "version": {
       "allowBranch": ["main", "master"],

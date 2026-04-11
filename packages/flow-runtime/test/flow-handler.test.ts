@@ -2,7 +2,11 @@ import { describe, it, expect, vi } from 'vitest';
 import type { FlowEngine } from '@hazeljs/flow';
 import { createFlowHandler } from '../src/flow-handler.js';
 
-function createMockReq(method: string, url: string, body?: unknown): IncomingMessage & { body?: unknown } {
+function createMockReq(
+  method: string,
+  url: string,
+  body?: unknown
+): IncomingMessage & { body?: unknown } {
   const req = {
     method,
     url,
@@ -13,7 +17,13 @@ function createMockReq(method: string, url: string, body?: unknown): IncomingMes
   return req as unknown as IncomingMessage & { body?: unknown };
 }
 
-function createMockRes(): { statusCode: number; headers: Record<string, string>; body: string; writeHead: ReturnType<typeof vi.fn>; end: ReturnType<typeof vi.fn> } {
+function createMockRes(): {
+  statusCode: number;
+  headers: Record<string, string>;
+  body: string;
+  writeHead: ReturnType<typeof vi.fn>;
+  end: ReturnType<typeof vi.fn>;
+} {
   const chunks: string[] = [];
   const res = {
     statusCode: 0,
@@ -45,7 +55,11 @@ describe('createFlowHandler', () => {
     const req = createMockReq('GET', '/v1/flows');
     const res = createMockRes();
 
-    const handled = await handler(req, res as unknown as import('http').ServerResponse, mockContext);
+    const handled = await handler(
+      req,
+      res as unknown as import('http').ServerResponse,
+      mockContext
+    );
 
     expect(handled).toBe(true);
     expect(res.writeHead).toHaveBeenCalledWith(200, { 'Content-Type': 'application/json' });
@@ -59,7 +73,11 @@ describe('createFlowHandler', () => {
     const req = createMockReq('POST', '/v1/runs/start', { version: '1.0.0' });
     const res = createMockRes();
 
-    const handled = await handler(req, res as unknown as import('http').ServerResponse, mockContext);
+    const handled = await handler(
+      req,
+      res as unknown as import('http').ServerResponse,
+      mockContext
+    );
 
     expect(handled).toBe(true);
     expect(res.statusCode).toBe(400);
@@ -72,7 +90,11 @@ describe('createFlowHandler', () => {
     const req = createMockReq('POST', '/v1/runs/start', { flowId: 'demo-fraud' });
     const res = createMockRes();
 
-    const handled = await handler(req, res as unknown as import('http').ServerResponse, mockContext);
+    const handled = await handler(
+      req,
+      res as unknown as import('http').ServerResponse,
+      mockContext
+    );
 
     expect(handled).toBe(true);
     expect(res.statusCode).toBe(400);
@@ -86,7 +108,11 @@ describe('createFlowHandler', () => {
     const req = createMockReq('POST', '/v1/runs/start', { flowId: 'demo-fraud', version: '1.0.0' });
     const res = createMockRes();
 
-    const handled = await handler(req, res as unknown as import('http').ServerResponse, mockContext);
+    const handled = await handler(
+      req,
+      res as unknown as import('http').ServerResponse,
+      mockContext
+    );
 
     expect(handled).toBe(true);
     expect(res.statusCode).toBe(200);
@@ -95,13 +121,23 @@ describe('createFlowHandler', () => {
 
   it('GET /v1/runs/:runId returns run', async () => {
     const mockEngine = {
-      getRun: async () => ({ runId: 'run-1', status: 'COMPLETED', flowId: 'f', flowVersion: '1', outputsJson: {} }),
+      getRun: async () => ({
+        runId: 'run-1',
+        status: 'COMPLETED',
+        flowId: 'f',
+        flowVersion: '1',
+        outputsJson: {},
+      }),
     } as unknown as FlowEngine;
     const handler = createFlowHandler(mockEngine);
     const req = createMockReq('GET', '/v1/runs/run-1');
     const res = createMockRes();
 
-    const handled = await handler(req, res as unknown as import('http').ServerResponse, mockContext);
+    const handled = await handler(
+      req,
+      res as unknown as import('http').ServerResponse,
+      mockContext
+    );
 
     expect(handled).toBe(true);
     expect(res.statusCode).toBe(200);
@@ -114,7 +150,11 @@ describe('createFlowHandler', () => {
     const req = createMockReq('GET', '/v1/runs/nonexistent');
     const res = createMockRes();
 
-    const handled = await handler(req, res as unknown as import('http').ServerResponse, mockContext);
+    const handled = await handler(
+      req,
+      res as unknown as import('http').ServerResponse,
+      mockContext
+    );
 
     expect(handled).toBe(true);
     expect(res.statusCode).toBe(404);
@@ -123,13 +163,23 @@ describe('createFlowHandler', () => {
 
   it('POST /v1/runs/:runId/resume succeeds', async () => {
     const mockEngine = {
-      resumeRun: async () => ({ runId: 'run-1', status: 'RUNNING', flowId: 'f', flowVersion: '1', outputsJson: {} }),
+      resumeRun: async () => ({
+        runId: 'run-1',
+        status: 'RUNNING',
+        flowId: 'f',
+        flowVersion: '1',
+        outputsJson: {},
+      }),
     } as unknown as FlowEngine;
     const handler = createFlowHandler(mockEngine);
     const req = createMockReq('POST', '/v1/runs/run-1/resume', { payload: { approved: true } });
     const res = createMockRes();
 
-    const handled = await handler(req, res as unknown as import('http').ServerResponse, mockContext);
+    const handled = await handler(
+      req,
+      res as unknown as import('http').ServerResponse,
+      mockContext
+    );
 
     expect(handled).toBe(true);
     expect(res.statusCode).toBe(200);
@@ -141,7 +191,11 @@ describe('createFlowHandler', () => {
     const req = createMockReq('GET', '/v1/runs/run-1/timeline');
     const res = createMockRes();
 
-    const handled = await handler(req, res as unknown as import('http').ServerResponse, mockContext);
+    const handled = await handler(
+      req,
+      res as unknown as import('http').ServerResponse,
+      mockContext
+    );
 
     expect(handled).toBe(true);
     expect(res.statusCode).toBe(200);
@@ -154,7 +208,11 @@ describe('createFlowHandler', () => {
     const req = createMockReq('GET', '/other');
     const res = createMockRes();
 
-    const handled = await handler(req, res as unknown as import('http').ServerResponse, mockContext);
+    const handled = await handler(
+      req,
+      res as unknown as import('http').ServerResponse,
+      mockContext
+    );
 
     expect(handled).toBe(false);
   });

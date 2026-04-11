@@ -50,14 +50,14 @@ Then run your app and open:
 
 ## Configuration
 
-| Option | Default | Description |
-|--------|---------|-------------|
-| `enableInspector` | `true` | Enable the inspector |
-| `inspectorBasePath` | `'/__hazel'` | Base path for all inspector endpoints |
-| `exposeUi` | `true` | Serve the DevTools UI at the base path |
-| `exposeJson` | `true` | Expose JSON endpoints |
-| `developmentOnly` | `true` | Disable in production (NODE_ENV=production) |
-| `maxSnapshotCacheAgeMs` | `5000` | Cache snapshot for 5 seconds |
+| Option                  | Default      | Description                                 |
+| ----------------------- | ------------ | ------------------------------------------- |
+| `enableInspector`       | `true`       | Enable the inspector                        |
+| `inspectorBasePath`     | `'/__hazel'` | Base path for all inspector endpoints       |
+| `exposeUi`              | `true`       | Serve the DevTools UI at the base path      |
+| `exposeJson`            | `true`       | Expose JSON endpoints                       |
+| `developmentOnly`       | `true`       | Disable in production (NODE_ENV=production) |
+| `maxSnapshotCacheAgeMs` | `5000`       | Cache snapshot for 5 seconds                |
 
 ## Security
 
@@ -75,9 +75,7 @@ import { HazelInspectorRegistry, type HazelInspectorPlugin } from '@hazeljs/insp
 const myPlugin: HazelInspectorPlugin = {
   name: 'my-plugin',
   supports: (ctx) => true,
-  inspect: async (ctx) => [
-    { id: 'custom:1', kind: 'route', packageName: '@my/package', /* ... */ },
-  ],
+  inspect: async (ctx) => [{ id: 'custom:1', kind: 'route', packageName: '@my/package' /* ... */ }],
 };
 
 // Register during bootstrap (e.g. in a provider that runs early)

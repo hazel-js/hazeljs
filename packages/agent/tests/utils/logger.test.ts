@@ -66,12 +66,8 @@ describe('Logger', () => {
       const logger = new Logger({ level: LogLevel.INFO });
       logger.info('Message', { agentId: 'test-agent', executionId: 'exec-1' });
 
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Message')
-      );
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('test-agent')
-      );
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Message'));
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('test-agent'));
     });
 
     it('should include error in log entry', () => {
@@ -79,12 +75,8 @@ describe('Logger', () => {
       const error = new Error('Test error');
       logger.error('Error occurred', error);
 
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Error occurred')
-      );
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Test error')
-      );
+      expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('Error occurred'));
+      expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('Test error'));
     });
 
     it('should include error stack in log entry', () => {
@@ -93,9 +85,7 @@ describe('Logger', () => {
       error.stack = 'Error: Test error\n    at test.js:1:1';
       logger.error('Error occurred', error);
 
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Error: Test error')
-      );
+      expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('Error: Test error'));
     });
   });
 
@@ -144,9 +134,7 @@ describe('Logger', () => {
       const logger = new Logger({ level: LogLevel.INFO, enableJson: false });
       logger.info('Test message');
 
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.not.stringMatching(/^{.*"message".*}$/)
-      );
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.not.stringMatching(/^{.*"message".*}$/));
     });
   });
 
@@ -188,12 +176,8 @@ describe('Logger', () => {
       const error = new Error('Fatal error');
       logger.fatal('Fatal occurred', error);
 
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Fatal occurred')
-      );
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Fatal error')
-      );
+      expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('Fatal occurred'));
+      expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('Fatal error'));
     });
   });
 
@@ -211,4 +195,3 @@ describe('Logger', () => {
     });
   });
 });
-

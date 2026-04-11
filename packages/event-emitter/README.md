@@ -88,10 +88,10 @@ EventEmitterModule.registerListenersFromProvider(orderHandler);
 
 ```typescript
 EventEmitterModule.forRoot({
-  wildcard: true,        // Enable 'order.*' style patterns
-  delimiter: '.',       // Namespace delimiter
-  maxListeners: 10,     // Max listeners per event
-  isGlobal: true,       // Global module (default)
+  wildcard: true, // Enable 'order.*' style patterns
+  delimiter: '.', // Namespace delimiter
+  maxListeners: 10, // Max listeners per event
+  isGlobal: true, // Global module (default)
 });
 ```
 

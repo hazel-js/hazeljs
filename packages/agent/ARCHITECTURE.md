@@ -9,11 +9,13 @@ The HazelJS Agent Runtime is a production-grade execution engine for stateful AI
 ### 1. Agents are NOT Request Handlers
 
 Traditional frameworks treat requests as stateless:
+
 ```
 Request → Handler → Response
 ```
 
 Agents are stateful entities with lifecycle:
+
 ```
 Input → [Think → Act → Remember] × N → Output
 ```
@@ -21,6 +23,7 @@ Input → [Think → Act → Remember] × N → Output
 ### 2. Explicit Tool System
 
 Tools are NOT arbitrary function calls. They are:
+
 - **Registered** - Explicitly declared and discoverable
 - **Auditable** - All executions are logged
 - **Controllable** - Can require approval
@@ -29,6 +32,7 @@ Tools are NOT arbitrary function calls. They are:
 ### 3. Deterministic Execution
 
 Every agent execution:
+
 - Has a unique execution ID
 - Follows a state machine
 - Can be paused and resumed
@@ -37,6 +41,7 @@ Every agent execution:
 ### 4. Memory-First Design
 
 Agents integrate with persistent memory:
+
 - Conversation history
 - Entity tracking
 - Fact storage
@@ -86,6 +91,7 @@ Agents integrate with persistent memory:
 **Responsibility**: Lifecycle management and orchestration
 
 **Key Methods**:
+
 - `registerAgent()` - Register agent class
 - `registerAgentInstance()` - Register agent instance
 - `execute()` - Execute agent with input
@@ -99,6 +105,7 @@ Agents integrate with persistent memory:
 **Responsibility**: Core execution loop
 
 **Execution Flow**:
+
 ```typescript
 1. Load agent context
 2. Build context with memory/RAG
@@ -118,6 +125,7 @@ Agents integrate with persistent memory:
 **Responsibility**: Tool execution with approval workflow
 
 **Execution Flow**:
+
 ```typescript
 1. Create execution context
 2. Check if approval required
@@ -135,6 +143,7 @@ Agents integrate with persistent memory:
 **Responsibility**: State persistence and transitions
 
 **State Machine**:
+
 ```
 idle → thinking → using_tool → thinking → completed
           ↓           ↓
@@ -217,16 +226,19 @@ Return ToolExecutionResult
 ### Event Types
 
 **Execution Events**:
+
 - `EXECUTION_STARTED`
 - `EXECUTION_COMPLETED`
 - `EXECUTION_FAILED`
 
 **Step Events**:
+
 - `STEP_STARTED`
 - `STEP_COMPLETED`
 - `STEP_FAILED`
 
 **Tool Events**:
+
 - `TOOL_EXECUTION_STARTED`
 - `TOOL_EXECUTION_COMPLETED`
 - `TOOL_EXECUTION_FAILED`
@@ -235,10 +247,12 @@ Return ToolExecutionResult
 - `TOOL_APPROVAL_DENIED`
 
 **User Interaction Events**:
+
 - `USER_INPUT_REQUESTED`
 - `USER_INPUT_RECEIVED`
 
 **Memory Events**:
+
 - `MEMORY_UPDATED`
 - `RAG_QUERY_EXECUTED`
 
@@ -266,6 +280,7 @@ Application Logic (logging, monitoring, UI updates)
 ### Integration Points
 
 **Before Execution**:
+
 ```typescript
 contextBuilder.buildWithMemory(context)
   → Load conversation history
@@ -274,6 +289,7 @@ contextBuilder.buildWithMemory(context)
 ```
 
 **After Execution**:
+
 ```typescript
 contextBuilder.persistToMemory(context)
   → Save messages
@@ -300,7 +316,7 @@ LLM receives context in system prompt
 ### Usage in Prompt
 
 ```typescript
-systemPrompt = basePrompt + '\n\nRelevant context:\n' + ragContext.join('\n\n')
+systemPrompt = basePrompt + '\n\nRelevant context:\n' + ragContext.join('\n\n');
 ```
 
 ## Human-in-the-Loop
@@ -423,7 +439,7 @@ class RedisStateManager extends AgentStateManager {
   async getContext(executionId: string) {
     return redis.get(`agent:context:${executionId}`);
   }
-  
+
   async updateState(executionId: string, state: AgentState) {
     await redis.hset(`agent:context:${executionId}`, 'state', state);
   }

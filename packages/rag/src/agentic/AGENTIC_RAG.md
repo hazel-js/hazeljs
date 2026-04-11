@@ -5,6 +5,7 @@ Agentic RAG brings autonomous, self-improving capabilities to RAG systems throug
 ## 🎯 Overview
 
 Agentic RAG transforms traditional RAG into an intelligent, self-improving system that:
+
 - **Plans** complex queries automatically
 - **Reflects** on result quality and improves
 - **Adapts** retrieval strategies dynamically
@@ -45,6 +46,7 @@ async retrieve(query: string): Promise<SearchResult[]> {
 ```
 
 **Benefits:**
+
 - Handles complex multi-part questions
 - Parallel execution for speed
 - Better coverage of query aspects
@@ -65,6 +67,7 @@ async retrieve(query: string): Promise<SearchResult[]> {
 ```
 
 **Benefits:**
+
 - Higher quality results
 - Self-correcting errors
 - Confidence scoring
@@ -85,6 +88,7 @@ async retrieve(query: string): Promise<SearchResult[]> {
 ```
 
 **Strategies:**
+
 - **Similarity**: Semantic search
 - **Hybrid**: Keyword + semantic
 - **MMR**: Diverse results
@@ -104,6 +108,7 @@ async deepRetrieve(query: string): Promise<ReasoningChain> {
 ```
 
 **Benefits:**
+
 - Answers complex questions
 - Connects information across documents
 - Provides reasoning chain
@@ -123,6 +128,7 @@ async hydeRetrieve(query: string): Promise<SearchResult[]> {
 ```
 
 **Benefits:**
+
 - Better retrieval for abstract queries
 - Improved semantic matching
 - State-of-the-art technique
@@ -142,6 +148,7 @@ async correctiveRetrieve(query: string): Promise<SearchResult[]> {
 ```
 
 **Benefits:**
+
 - Detects low-quality results
 - Automatic correction
 - Fallback mechanisms
@@ -162,6 +169,7 @@ async conversationalRetrieve(query: string, sessionId: string): Promise<SearchRe
 ```
 
 **Benefits:**
+
 - Conversational memory
 - Entity tracking
 - Topic continuity
@@ -181,6 +189,7 @@ async rewriteQuery(query: string): Promise<SearchResult[]> {
 ```
 
 **Techniques:**
+
 - Expansion: Add context
 - Synonyms: Alternative terms
 - Clarification: More specific
@@ -201,6 +210,7 @@ async verifiedRetrieve(query: string): Promise<VerifiedResponse> {
 ```
 
 **Checks:**
+
 - Source authority
 - Content freshness
 - Relevance scores
@@ -225,6 +235,7 @@ async provideFeedback(resultId: string, rating: number): Promise<void> {
 ```
 
 **Benefits:**
+
 - Continuous improvement
 - Personalization
 - Adaptive ranking
@@ -244,6 +255,7 @@ async retrieve(query: string): Promise<SearchResult[]> {
 ```
 
 **Features:**
+
 - LRU eviction
 - TTL expiration
 - Hit rate tracking
@@ -384,14 +396,14 @@ Create your own agentic decorators:
 export function CustomDecorator(config: CustomConfig) {
   return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
     const originalMethod = descriptor.value;
-    
+
     descriptor.value = async function (...args: any[]) {
       // Pre-processing
       const result = await originalMethod.apply(this, args);
       // Post-processing
       return result;
     };
-    
+
     return descriptor;
   };
 }

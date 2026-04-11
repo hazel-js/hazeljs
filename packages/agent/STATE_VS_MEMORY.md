@@ -27,6 +27,7 @@ There are **two separate persistence layers** in the agent system that serve dif
 **Purpose**: Track the **execution flow** and **state machine** of agent runs
 
 **What it stores**:
+
 - ✅ Execution ID and context
 - ✅ Current state (IDLE, THINKING, WAITING_FOR_APPROVAL, etc.)
 - ✅ Execution steps (what the agent did)
@@ -34,11 +35,13 @@ There are **two separate persistence layers** in the agent system that serve dif
 - ✅ Execution metadata
 - ✅ **Temporary** conversation history (during execution)
 
-**Lifetime**: 
+**Lifetime**:
+
 - **Short-lived** - typically minutes to hours
 - Ephemeral - deleted after execution completes (or TTL expires)
 
 **Use cases**:
+
 - Resume paused executions
 - Track execution progress
 - Debug failed executions
@@ -46,11 +49,13 @@ There are **two separate persistence layers** in the agent system that serve dif
 - State machine transitions
 
 **Backends**:
+
 - In-Memory (default)
 - Redis (production)
 - Database/Prisma (audit)
 
 **Example**:
+
 ```typescript
 // Agent State tracks: "Agent executed step 1, 2, 3, now waiting for approval"
 {
@@ -69,6 +74,7 @@ There are **two separate persistence layers** in the agent system that serve dif
 **Purpose**: Store **long-term knowledge** and **context** across sessions
 
 **What it stores**:
+
 - ✅ Conversation history (across all sessions)
 - ✅ Entities (people, places, things mentioned)
 - ✅ Facts (learned information)
@@ -76,11 +82,13 @@ There are **two separate persistence layers** in the agent system that serve dif
 - ✅ Events (important occurrences)
 
 **Lifetime**:
+
 - **Long-lived** - days, weeks, months
 - Persistent - survives agent restarts
 - Cross-session - shared across multiple agent runs
 
 **Use cases**:
+
 - Build context for new conversations
 - Remember entities across sessions
 - Store learned facts
@@ -88,11 +96,13 @@ There are **two separate persistence layers** in the agent system that serve dif
 - Semantic search of past conversations
 
 **Backends**:
+
 - BufferMemory (in-memory)
 - VectorMemory (Pinecone, Weaviate, Qdrant, ChromaDB)
 - HybridMemory (combination)
 
 **Example**:
+
 ```typescript
 // Memory stores: "User's name is John, likes coffee, mentioned Paris last week"
 {
@@ -107,15 +117,15 @@ There are **two separate persistence layers** in the agent system that serve dif
 
 ## Key Differences
 
-| Aspect | Agent State | Memory (RAG) |
-|--------|-------------|--------------|
-| **Purpose** | Execution flow tracking | Long-term knowledge |
-| **Lifetime** | Minutes to hours | Days to months |
-| **Scope** | Single execution | Cross-session |
-| **Data** | Steps, state, metadata | Conversations, entities, facts |
-| **Query** | By executionId | Semantic search, by sessionId |
-| **Backend** | Redis/DB | Vector stores (Pinecone, etc.) |
-| **When used** | During execution | Before/after execution |
+| Aspect        | Agent State             | Memory (RAG)                   |
+| ------------- | ----------------------- | ------------------------------ |
+| **Purpose**   | Execution flow tracking | Long-term knowledge            |
+| **Lifetime**  | Minutes to hours        | Days to months                 |
+| **Scope**     | Single execution        | Cross-session                  |
+| **Data**      | Steps, state, metadata  | Conversations, entities, facts |
+| **Query**     | By executionId          | Semantic search, by sessionId  |
+| **Backend**   | Redis/DB                | Vector stores (Pinecone, etc.) |
+| **When used** | During execution        | Before/after execution         |
 
 ## How They Work Together
 
@@ -179,12 +189,14 @@ await contextBuilder.persistToMemory(context);
 **Both** store conversation history, but for different reasons:
 
 ### Agent State Conversation History
+
 - **Purpose**: Track messages **during** execution
 - **Scope**: Single execution only
 - **Lifetime**: Until execution completes
 - **Use**: Resume paused executions, debug current run
 
 ### Memory Conversation History
+
 - **Purpose**: Build context for **future** conversations
 - **Scope**: All sessions for a user/session
 - **Lifetime**: Long-term (weeks/months)
@@ -193,6 +205,7 @@ await contextBuilder.persistToMemory(context);
 ## When to Use Which
 
 ### Use Agent State Persistence when:
+
 - ✅ You need to resume paused executions
 - ✅ You want to track execution progress
 - ✅ You need to debug failed runs
@@ -200,6 +213,7 @@ await contextBuilder.persistToMemory(context);
 - ✅ You need execution audit trails
 
 ### Use Memory Persistence when:
+
 - ✅ You want agents to remember past conversations
 - ✅ You need entity tracking across sessions
 - ✅ You want to store learned facts
@@ -209,6 +223,7 @@ await contextBuilder.persistToMemory(context);
 ## Recommended Setup
 
 ### Development
+
 ```typescript
 // In-memory for both (default)
 const runtime = new AgentRuntime({
@@ -218,6 +233,7 @@ const runtime = new AgentRuntime({
 ```
 
 ### Production
+
 ```typescript
 // Redis for agent state (fast, distributed)
 // Vector store (Pinecone) for memory (semantic search)
@@ -226,8 +242,8 @@ const memoryStore = new VectorMemory(pineconeStore, embeddings);
 const memoryManager = new MemoryManager(memoryStore);
 
 const runtime = new AgentRuntime({
-  stateManager,      // ← Agent execution state
-  memoryManager,     // ← Long-term memory
+  stateManager, // ← Agent execution state
+  memoryManager, // ← Long-term memory
 });
 ```
 
@@ -237,6 +253,7 @@ const runtime = new AgentRuntime({
 - **Memory** = "What does the agent know from past conversations?"
 
 They complement each other:
+
 - **State** enables resumable, trackable executions
 - **Memory** enables context-aware, continuous conversations
 

@@ -4,7 +4,11 @@ import { runDto } from '../commands/generate-dto';
 import { runCrud } from '../commands/generate-crud';
 import { runAuth } from '../commands/generate-auth';
 import { runApp } from '../commands/generate-app';
-import { SIMPLE_GENERATORS, runSimpleGenerator, findSimpleGenerator } from '../commands/generate-simple';
+import {
+  SIMPLE_GENERATORS,
+  runSimpleGenerator,
+  findSimpleGenerator,
+} from '../commands/generate-simple';
 
 export interface GeneratorMeta {
   type: string;
@@ -15,11 +19,25 @@ export interface GeneratorMeta {
 
 /** Complex generators that need their own files (multi-file output or custom logic) */
 const COMPLEX_GENERATORS: GeneratorMeta[] = [
-  { type: 'app', description: 'Skeleton HazelJS application (minimal template)', nameRequired: true, options: ['path'] },
+  {
+    type: 'app',
+    description: 'Skeleton HazelJS application (minimal template)',
+    nameRequired: true,
+    options: ['path'],
+  },
   { type: 'module', description: 'Module with controller, service, DTOs', nameRequired: true },
   { type: 'dto', description: 'Create and update DTOs', nameRequired: true },
-  { type: 'crud', description: 'Full CRUD resource (controller, service, module, DTOs)', nameRequired: true, options: ['route'] },
-  { type: 'auth', description: 'Auth module (JWT guard, service, controller, DTOs)', nameRequired: false },
+  {
+    type: 'crud',
+    description: 'Full CRUD resource (controller, service, module, DTOs)',
+    nameRequired: true,
+    options: ['route'],
+  },
+  {
+    type: 'auth',
+    description: 'Auth module (JWT guard, service, controller, DTOs)',
+    nameRequired: false,
+  },
 ];
 
 /** All available generator types and their metadata (for --list). */

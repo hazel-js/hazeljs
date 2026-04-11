@@ -89,9 +89,7 @@ export class AuthController {
   @Get('callback')
   async callback(@Query() q: { code: string; state: string }, @Req() req: Request) {
     const { codeVerifier } = getFromCookies(req);
-    const result = await this.oauth.handleCallback(
-      'google', q.code, q.state, codeVerifier
-    );
+    const result = await this.oauth.handleCallback('google', q.code, q.state, codeVerifier);
     // result: { accessToken, refreshToken?, expiresAt?, user }
     return result;
   }
@@ -100,13 +98,13 @@ export class AuthController {
 
 ## Supported Providers
 
-| Provider | PKCE | Default Scopes |
-|----------|------|----------------|
-| Google | Yes | openid, profile, email |
-| Microsoft | Yes | openid, profile, email |
-| GitHub | No | user:email |
-| Facebook | No | email, public_profile |
-| Twitter | Yes | users.read, tweet.read |
+| Provider  | PKCE | Default Scopes         |
+| --------- | ---- | ---------------------- |
+| Google    | Yes  | openid, profile, email |
+| Microsoft | Yes  | openid, profile, email |
+| GitHub    | No   | user:email             |
+| Facebook  | No   | email, public_profile  |
+| Twitter   | Yes  | users.read, tweet.read |
 
 ## SAML Configuration (Multi-IdP)
 

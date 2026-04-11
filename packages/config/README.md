@@ -88,7 +88,7 @@ export class DatabaseService {
   connect() {
     const dbUrl = this.configService.get('DATABASE_URL');
     const port = this.configService.get('PORT');
-    
+
     console.log(`Connecting to database: ${dbUrl}`);
     console.log(`Server will run on port: ${port}`);
   }
@@ -102,18 +102,15 @@ export class DatabaseService {
 ```typescript
 ConfigModule.forRoot({
   schema: AppConfig,
-  envFilePath: [
-    '.env',
-    `.env.${process.env.NODE_ENV}`,
-    '.env.local',
-  ],
+  envFilePath: ['.env', `.env.${process.env.NODE_ENV}`, '.env.local'],
   validate: true,
-})
+});
 ```
 
 ### File Priority
 
 Files are loaded in order, with later files overriding earlier ones:
+
 1. `.env` - Base configuration
 2. `.env.${NODE_ENV}` - Environment-specific
 3. `.env.local` - Local overrides (gitignored)
@@ -171,7 +168,7 @@ export class AppConfig {
   @MinLength(32, { message: 'JWT_SECRET must be at least 32 characters' })
   JWT_SECRET: string;
 
-  @ValidateIf(o => o.NODE_ENV === 'production')
+  @ValidateIf((o) => o.NODE_ENV === 'production')
   @IsString()
   SSL_CERT_PATH: string;
 }
@@ -329,10 +326,13 @@ ConfigModule.forRoot({
     async () => {
       // Load from database
       const settings = await database.settings.findMany();
-      return settings.reduce((acc, s) => ({
-        ...acc,
-        [s.key]: s.value,
-      }), {});
+      return settings.reduce(
+        (acc, s) => ({
+          ...acc,
+          [s.key]: s.value,
+        }),
+        {}
+      );
     },
     async () => {
       // Load from API
@@ -340,7 +340,7 @@ ConfigModule.forRoot({
       return await response.json();
     },
   ],
-})
+});
 ```
 
 ## Configuration Service API
@@ -393,7 +393,7 @@ ConfigModule.forRoot({
     allowUnknown: false,
     abortEarly: false,
   },
-})
+});
 ```
 
 ### 4. Use Type-Safe Access
@@ -411,7 +411,7 @@ const port = process.env.PORT; // string | undefined
 ```typescript
 /**
  * Application Configuration
- * 
+ *
  * Required Environment Variables:
  * - NODE_ENV: Application environment (development|production|test)
  * - PORT: Server port number

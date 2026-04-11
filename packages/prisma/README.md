@@ -21,11 +21,11 @@ Repository pattern, `@Repository` decorator, DI integration. Full CRUD from your
 
 ## Decorator Convention
 
-| Class type | Correct decorator |
-|------------|------------------|
+| Class type                            | Correct decorator                                         |
+| ------------------------------------- | --------------------------------------------------------- |
 | Repository (`extends BaseRepository`) | `@Repository({ model: '...' })` — implies `@Injectable()` |
-| Service (business logic) | `@Service()` |
-| Controller | `@Controller(...)` |
+| Service (business logic)              | `@Service()`                                              |
+| Controller                            | `@Controller(...)`                                        |
 
 ## Installation
 
@@ -136,9 +136,7 @@ import { InjectRepository } from '@hazeljs/prisma';
 
 @Service()
 export class UserService {
-  constructor(
-    @InjectRepository() private readonly userRepository: UserRepository,
-  ) {}
+  constructor(@InjectRepository() private readonly userRepository: UserRepository) {}
 
   async create(data: { email: string; name: string }) {
     return this.userRepository.create(data);
@@ -227,7 +225,7 @@ export class OrderService {
   constructor(
     private readonly orderRepository: OrderRepository,
     private readonly inventoryRepository: InventoryRepository,
-    private readonly prisma: PrismaService,
+    private readonly prisma: PrismaService
   ) {}
 
   async createOrder(userId: string, items: OrderItem[]) {
@@ -308,19 +306,24 @@ export class ProductRepository extends BaseRepository<Product> {
     super(prisma, 'product');
   }
 
-  async search(query: string, filters: {
-    category?: string;
-    minPrice?: number;
-    maxPrice?: number;
-    inStock?: boolean;
-  }) {
+  async search(
+    query: string,
+    filters: {
+      category?: string;
+      minPrice?: number;
+      maxPrice?: number;
+      inStock?: boolean;
+    }
+  ) {
     return this.prisma.product.findMany({
       where: {
         AND: [
-          { OR: [
-            { name: { contains: query, mode: 'insensitive' } },
-            { description: { contains: query, mode: 'insensitive' } },
-          ]},
+          {
+            OR: [
+              { name: { contains: query, mode: 'insensitive' } },
+              { description: { contains: query, mode: 'insensitive' } },
+            ],
+          },
           filters.category ? { category: filters.category } : {},
           filters.minPrice ? { price: { gte: filters.minPrice } } : {},
           filters.maxPrice ? { price: { lte: filters.maxPrice } } : {},
@@ -417,7 +420,10 @@ async function main() {
 }
 
 main()
-  .catch((e) => { console.error(e); process.exit(1); })
+  .catch((e) => {
+    console.error(e);
+    process.exit(1);
+  })
   .finally(() => prisma.$disconnect());
 ```
 

@@ -9,16 +9,19 @@ The `@hazeljs/agent` package supports multiple persistence backends for agent ex
 ## Available Backends
 
 ### 1. In-Memory (Default)
+
 - **Best for**: Development, testing, single-instance deployments
 - **Pros**: Fast, no setup required
 - **Cons**: Data lost on restart, not suitable for distributed systems
 
 ### 2. Redis
+
 - **Best for**: Production, distributed systems, high-performance scenarios
 - **Pros**: Fast, distributed, TTL support, pub/sub capabilities
 - **Cons**: Requires Redis infrastructure
 
 ### 3. Database (Prisma)
+
 - **Best for**: Long-term persistence, audit trails, analytics
 - **Pros**: Durable, queryable, full audit trail
 - **Cons**: Slower than Redis, requires database setup
@@ -40,6 +43,7 @@ const runtime = new AgentRuntime({
 ### Redis Backend
 
 1. Install Redis client:
+
 ```bash
 npm install redis
 ```
@@ -75,6 +79,7 @@ const runtime = new AgentRuntime({
 ### Database Backend (Prisma)
 
 1. Install Prisma:
+
 ```bash
 npm install @prisma/client
 ```
@@ -84,6 +89,7 @@ npm install @prisma/client
    - See [PRISMA_INTEGRATION.md](./PRISMA_INTEGRATION.md) for detailed instructions
 
 3. Run migrations:
+
 ```bash
 npx prisma migrate dev --name add_agent_state_models
 npx prisma generate

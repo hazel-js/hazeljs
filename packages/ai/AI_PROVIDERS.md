@@ -4,12 +4,12 @@ All AI providers in HazelJS are now **production-ready** with full SDK integrati
 
 ## Available Providers
 
-| Provider | Status | SDK | Best For |
-|----------|--------|-----|----------|
-| **OpenAI** | ✅ Production | `openai` | GPT-4, GPT-3.5, DALL-E, Whisper |
-| **Gemini** | ✅ Production | `@google/generative-ai` | Google's latest models, long context |
-| **Cohere** | ✅ Production | `cohere-ai` | RAG, reranking, multilingual |
-| **Anthropic** | ✅ Production | `@anthropic-ai/sdk` | Claude models, reasoning, safety |
+| Provider      | Status        | SDK                     | Best For                             |
+| ------------- | ------------- | ----------------------- | ------------------------------------ |
+| **OpenAI**    | ✅ Production | `openai`                | GPT-4, GPT-3.5, DALL-E, Whisper      |
+| **Gemini**    | ✅ Production | `@google/generative-ai` | Google's latest models, long context |
+| **Cohere**    | ✅ Production | `cohere-ai`             | RAG, reranking, multilingual         |
+| **Anthropic** | ✅ Production | `@anthropic-ai/sdk`     | Claude models, reasoning, safety     |
 
 ## Quick Start
 
@@ -46,16 +46,18 @@ const cohere = new CohereProvider();
 const response = await openai.complete({
   messages: [{ role: 'user', content: 'Hello!' }],
   model: 'gpt-4',
-  temperature: 0.7
+  temperature: 0.7,
 });
 ```
 
 ## Provider Comparison
 
 ### OpenAI
+
 **Best for**: General-purpose AI, most mature ecosystem
 
 **Strengths**:
+
 - Industry-leading GPT-4 and GPT-3.5 models
 - Excellent function calling support
 - DALL-E for image generation
@@ -63,6 +65,7 @@ const response = await openai.complete({
 - Large community and extensive documentation
 
 **Models**:
+
 - `gpt-4-turbo-preview` - Most capable
 - `gpt-4` - Balanced performance
 - `gpt-3.5-turbo` - Fast and cost-effective
@@ -76,9 +79,11 @@ const response = await openai.complete({
 ---
 
 ### Gemini (Google)
+
 **Best for**: Long context windows, multimodal tasks
 
 **Strengths**:
+
 - 1M+ token context window (gemini-1.5-pro)
 - Native multimodal support (text + images)
 - Competitive pricing
@@ -86,6 +91,7 @@ const response = await openai.complete({
 - Free tier available
 
 **Models**:
+
 - `gemini-1.5-pro` - Extended context, most capable
 - `gemini-1.5-flash` - Fast and cost-effective
 - `gemini-pro` - Standard model
@@ -99,9 +105,11 @@ const response = await openai.complete({
 ---
 
 ### Cohere
+
 **Best for**: RAG applications, reranking, multilingual
 
 **Strengths**:
+
 - **Industry-leading reranking** for RAG
 - Excellent multilingual support
 - Purpose-built for enterprise search
@@ -109,6 +117,7 @@ const response = await openai.complete({
 - Strong embedding models
 
 **Models**:
+
 - `command-r-plus` - Most powerful
 - `command-r` - Balanced (recommended)
 - `command-light` - Fast and cheap
@@ -117,6 +126,7 @@ const response = await openai.complete({
 - `rerank-english-v3.0` - Document reranking
 
 **Unique Features**:
+
 - Document reranking (perfect for RAG)
 - Fine-tuning support
 - Enterprise features
@@ -128,9 +138,11 @@ const response = await openai.complete({
 ---
 
 ### Anthropic
+
 **Best for**: Claude models, complex reasoning, safety-focused AI
 
 **Strengths**:
+
 - Claude 3.5 Sonnet - Latest and most intelligent
 - 200K token context window
 - Excellent reasoning and analysis
@@ -139,6 +151,7 @@ const response = await openai.complete({
 - No embeddings (use OpenAI/Cohere instead)
 
 **Models**:
+
 - `claude-3-5-sonnet-20241022` - Latest (recommended)
 - `claude-3-opus-20240229` - Most powerful
 - `claude-3-sonnet-20240229` - Balanced
@@ -153,34 +166,41 @@ const response = await openai.complete({
 ## Use Case Recommendations
 
 ### General Chat & Completion
+
 - **Best**: Claude 3.5 Sonnet or OpenAI GPT-4
 - **Alternative**: Gemini 1.5-pro
 - **Budget**: Gemini 1.5-flash or Claude 3 Haiku
 
 ### RAG (Retrieval-Augmented Generation)
+
 - **Best**: Cohere (with reranking)
 - **Alternative**: OpenAI with embeddings
 - **Why Cohere**: Built-in reranking significantly improves retrieval quality
 
 ### Long Context (100K+ tokens)
+
 - **Best**: Gemini 1.5-pro (1M tokens)
 - **Alternative**: Claude 3.5 Sonnet (200K tokens)
 - **Also Good**: GPT-4-turbo (128K tokens)
 
 ### Multilingual
+
 - **Best**: Cohere (purpose-built)
 - **Alternative**: Gemini
 
 ### Cost-Effective
+
 - **Best**: Claude 3 Haiku
 - **Alternative**: Gemini 1.5-flash
 - **Also Good**: Cohere command-light
 
 ### Function Calling
+
 - **Best**: OpenAI GPT-4
 - **Alternative**: Gemini
 
 ### Embeddings
+
 - **Best Quality**: OpenAI text-embedding-3-large (3072 dims)
 - **Best Speed**: Cohere embed-english-light-v3.0
 - **Multilingual**: Cohere embed-multilingual-v3.0
@@ -193,16 +213,16 @@ All providers implement the same interface, making it easy to switch:
 interface IAIProvider {
   // Text completion
   complete(request: AICompletionRequest): Promise<AICompletionResponse>;
-  
+
   // Streaming completion
   streamComplete(request: AICompletionRequest): AsyncGenerator<AIStreamChunk>;
-  
+
   // Generate embeddings
   embed(request: AIEmbeddingRequest): Promise<AIEmbeddingResponse>;
-  
+
   // Check availability
   isAvailable(): Promise<boolean>;
-  
+
   // Get supported models
   getSupportedModels(): string[];
 }
@@ -231,14 +251,14 @@ class AIService {
 
     return await ai.complete({
       messages: [{ role: 'user', content: prompt }],
-      temperature: 0.7
+      temperature: 0.7,
     });
   }
 
   // Fallback to another provider if one fails
   async completeWithFallback(prompt: string) {
     const providers = ['anthropic', 'openai', 'gemini', 'cohere'];
-    
+
     for (const provider of providers) {
       try {
         return await this.complete(provider, prompt);
@@ -246,7 +266,7 @@ class AIService {
         console.warn(`${provider} failed, trying next...`);
       }
     }
-    
+
     throw new Error('All providers failed');
   }
 }
@@ -264,28 +284,28 @@ async function smartSearch(query: string) {
 
   // 1. Initial retrieval (cast wide net)
   const candidates = await rag.search(query, { topK: 20 });
-  
+
   // 2. Rerank with Cohere (improve relevance)
   const reranked = await cohere.rerank(
     query,
-    candidates.map(c => c.content),
+    candidates.map((c) => c.content),
     5
   );
 
   // 3. Generate answer with best results
-  const context = reranked.map(r => r.document).join('\n\n');
-  
+  const context = reranked.map((r) => r.document).join('\n\n');
+
   const response = await cohere.complete({
     messages: [
       { role: 'system', content: 'Answer based on context.' },
-      { role: 'user', content: `Context:\n${context}\n\nQ: ${query}` }
+      { role: 'user', content: `Context:\n${context}\n\nQ: ${query}` },
     ],
-    model: 'command-r-plus'
+    model: 'command-r-plus',
   });
 
   return {
     answer: response.content,
-    sources: reranked
+    sources: reranked,
   };
 }
 ```
@@ -293,23 +313,26 @@ async function smartSearch(query: string) {
 ## Example: Streaming with Multiple Providers
 
 ```typescript
-async function streamResponse(provider: 'openai' | 'gemini' | 'cohere' | 'anthropic', prompt: string) {
+async function streamResponse(
+  provider: 'openai' | 'gemini' | 'cohere' | 'anthropic',
+  prompt: string
+) {
   const providers = {
     openai: new OpenAIProvider(),
     gemini: new GeminiProvider(),
     cohere: new CohereProvider(),
-    anthropic: new AnthropicProvider()
+    anthropic: new AnthropicProvider(),
   };
 
   const ai = providers[provider];
   const stream = ai.streamComplete({
     messages: [{ role: 'user', content: prompt }],
-    temperature: 0.7
+    temperature: 0.7,
   });
 
   for await (const chunk of stream) {
     process.stdout.write(chunk.delta);
-    
+
     if (chunk.done && chunk.usage) {
       console.log('\n\nTokens used:', chunk.usage.totalTokens);
     }
@@ -339,10 +362,7 @@ async function streamResponse(provider: 'openai' | 'gemini' | 'cohere' | 'anthro
 import { OpenAIProvider, GeminiProvider } from '@hazeljs/ai';
 
 async function robustCompletion(prompt: string) {
-  const providers = [
-    new OpenAIProvider(),
-    new GeminiProvider()
-  ];
+  const providers = [new OpenAIProvider(), new GeminiProvider()];
 
   let lastError: Error | null = null;
 
@@ -355,14 +375,14 @@ async function robustCompletion(prompt: string) {
 
       return await provider.complete({
         messages: [{ role: 'user', content: prompt }],
-        temperature: 0.7
+        temperature: 0.7,
       });
     } catch (error) {
       lastError = error as Error;
       console.warn(`Provider failed: ${error.message}`);
-      
+
       // Wait before trying next provider
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
     }
   }
 
@@ -380,11 +400,11 @@ import { OpenAIProvider } from '@hazeljs/ai';
 describe('AI Provider', () => {
   it('should generate completion', async () => {
     const provider = new OpenAIProvider();
-    
+
     const response = await provider.complete({
       messages: [{ role: 'user', content: 'Hello' }],
       model: 'gpt-3.5-turbo',
-      maxTokens: 50
+      maxTokens: 50,
     });
 
     expect(response.content).toBeDefined();
@@ -398,7 +418,7 @@ describe('AI Provider', () => {
 1. **Choose Your Providers**: Based on your use case
 2. **Install SDKs**: Run `npm install` for needed packages
 3. **Set API Keys**: Configure environment variables
-4. **Read Setup Guides**: 
+4. **Read Setup Guides**:
    - [Anthropic Setup](./ANTHROPIC_SETUP.md)
    - [Gemini Setup](./GEMINI_SETUP.md)
    - [Cohere Setup](./COHERE_SETUP.md)

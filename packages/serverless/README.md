@@ -46,12 +46,12 @@ import { AppModule } from './app.module';
 export const handler = createLambdaHandler(AppModule, {
   // Enable binary response
   binaryMimeTypes: ['image/*', 'application/pdf'],
-  
+
   // Custom initialization
   onInit: async (app) => {
     console.log('Lambda initialized');
   },
-  
+
   // Custom error handling
   onError: (error) => {
     console.error('Lambda error:', error);
@@ -159,7 +159,7 @@ export const hazelApp = createCloudFunctionHandler(AppModule, {
   onInit: async (app) => {
     console.log('Cloud Function initialized');
   },
-  
+
   // Custom error handling
   onError: (error) => {
     console.error('Cloud Function error:', error);
@@ -311,7 +311,7 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 @Get('/lambda-info')
 getLambdaInfo(@Req() req: any) {
   const event: APIGatewayProxyEvent = req.apiGateway.event;
-  
+
   return {
     requestId: event.requestContext.requestId,
     sourceIp: event.requestContext.identity.sourceIp,
@@ -395,14 +395,18 @@ import { CloudWatch } from 'aws-sdk';
 const cloudwatch = new CloudWatch();
 
 async function recordMetric(name: string, value: number) {
-  await cloudwatch.putMetricData({
-    Namespace: 'HazelJS',
-    MetricData: [{
-      MetricName: name,
-      Value: value,
-      Unit: 'Count',
-    }],
-  }).promise();
+  await cloudwatch
+    .putMetricData({
+      Namespace: 'HazelJS',
+      MetricData: [
+        {
+          MetricName: name,
+          Value: value,
+          Unit: 'Count',
+        },
+      ],
+    })
+    .promise();
 }
 ```
 
@@ -422,15 +426,19 @@ const monitoring = new Monitoring.MetricServiceClient();
 async function recordMetric(name: string, value: number) {
   const request = {
     name: monitoring.projectPath(projectId),
-    timeSeries: [{
-      metric: { type: `custom.googleapis.com/${name}` },
-      points: [{
-        interval: { endTime: { seconds: Date.now() / 1000 } },
-        value: { doubleValue: value },
-      }],
-    }],
+    timeSeries: [
+      {
+        metric: { type: `custom.googleapis.com/${name}` },
+        points: [
+          {
+            interval: { endTime: { seconds: Date.now() / 1000 } },
+            value: { doubleValue: value },
+          },
+        ],
+      },
+    ],
   };
-  
+
   await monitoring.createTimeSeries(request);
 }
 ```

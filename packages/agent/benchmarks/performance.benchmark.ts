@@ -57,11 +57,7 @@ class PerformanceBenchmark {
    * Format benchmark results
    */
   formatResults(results: BenchmarkResult[]): string {
-    const lines: string[] = [
-      'Performance Benchmark Results',
-      '============================',
-      '',
-    ];
+    const lines: string[] = ['Performance Benchmark Results', '============================', ''];
 
     for (const result of results) {
       lines.push(`${result.name}:`);

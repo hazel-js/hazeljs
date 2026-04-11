@@ -3,7 +3,7 @@
 A complete AI-native backend application with HazelJS, featuring:
 
 - 🤖 **AI Chat Service** - OpenAI-powered chat endpoints
-- 🧠 **AI Agents** - Agents with tools and capabilities  
+- 🧠 **AI Agents** - Agents with tools and capabilities
 - 📚 **RAG System** - Document ingestion and semantic search
 - 🏥 **Health Checks** - Application monitoring
 - 📊 **Inspector** - Development tools and debugging
@@ -13,29 +13,33 @@ A complete AI-native backend application with HazelJS, featuring:
 ## Quick Start
 
 1. **Install dependencies**
+
    ```bash
    npm install
    ```
 
 2. **Configure environment**
+
    ```bash
    cp .env.example .env
    # Add your OpenAI API key to .env
    ```
 
 3. **Start development server**
+
    ```bash
    npm run dev
    ```
 
 4. **Visit the application**
    - App: http://localhost:3000
-   - Inspector: http://localhost:3000/__hazel
+   - Inspector: http://localhost:3000/\_\_hazel
    - Health: http://localhost:3000/health
 
 ## Available Endpoints
 
 ### AI Chat
+
 ```bash
 curl -X POST http://localhost:3000/chat \
   -H "Content-Type: application/json" \
@@ -43,6 +47,7 @@ curl -X POST http://localhost:3000/chat \
 ```
 
 ### AI Agent (with tools)
+
 ```bash
 curl -X POST http://localhost:3000/agent \
   -H "Content-Type: application/json" \
@@ -50,6 +55,7 @@ curl -X POST http://localhost:3000/agent \
 ```
 
 ### RAG Document Ingestion
+
 ```bash
 curl -X POST http://localhost:3000/rag/ingest \
   -H "Content-Type: application/json" \
@@ -57,6 +63,7 @@ curl -X POST http://localhost:3000/rag/ingest \
 ```
 
 ### RAG Search
+
 ```bash
 curl -X POST http://localhost:3000/rag/search \
   -H "Content-Type: application/json" \
@@ -68,17 +75,20 @@ curl -X POST http://localhost:3000/rag/search \
 ### Using Docker Compose (Recommended)
 
 1. **Configure environment**
+
    ```bash
    cp .env.example .env
    # Add your OpenAI API key
    ```
 
 2. **Start all services**
+
    ```bash
    docker-compose up -d
    ```
 
 3. **View logs**
+
    ```bash
    docker-compose logs -f hazeljs-ai-app
    ```
@@ -91,6 +101,7 @@ curl -X POST http://localhost:3000/rag/search \
 ### Using Docker (Standalone)
 
 1. **Build the image**
+
    ```bash
    docker build -t hazeljs-ai-app .
    ```
@@ -105,12 +116,13 @@ curl -X POST http://localhost:3000/rag/search \
 The `docker-compose.yml` includes:
 
 - **hazeljs-ai-app** - Main application (port 3000)
-- **redis** - Caching and queues (port 6379) 
+- **redis** - Caching and queues (port 6379)
 - **postgres** - Database with pgvector extension (port 5432)
 
 ## API Testing with Postman
 
 1. **Import the collection**
+
    ```bash
    # Import HazelJS-AI-Native.postman_collection.json into Postman
    ```
@@ -178,7 +190,7 @@ npm run db:seed
 The template uses the `pgvector/pgvector` Docker image which includes the vector extension. Prisma automatically handles the vector indexes when you run `db:push`. The schema includes:
 
 - **Vector embeddings** stored as `Float[]` for RAG search
-- **Full-text search index** on the `content` field  
+- **Full-text search index** on the `content` field
 - **JSONB index** on the `metadata` field
 
 No manual SQL required - Prisma handles everything!
@@ -201,7 +213,7 @@ npm run db:generate
 The template includes:
 
 - **Documents** - RAG document storage with vector embeddings
-- **AgentConversations** - AI agent interaction history  
+- **AgentConversations** - AI agent interaction history
 - **ChatHistory** - AI chat session logs
 
 ### Using Docker with Database
@@ -254,6 +266,7 @@ npm run format
 ### Environment Setup
 
 1. **Set production variables**
+
    ```bash
    export NODE_ENV=production
    export OPENAI_API_KEY=your_production_key
@@ -261,6 +274,7 @@ npm run format
    ```
 
 2. **Deploy with Docker**
+
    ```bash
    docker-compose -f docker-compose.yml up -d
    ```

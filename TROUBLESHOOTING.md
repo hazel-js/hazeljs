@@ -23,6 +23,7 @@ Common issues and solutions when working with HazelJS.
 **Solutions**:
 
 1. Clear npm cache:
+
    ```bash
    npm cache clean --force
    rm -rf node_modules package-lock.json
@@ -30,6 +31,7 @@ Common issues and solutions when working with HazelJS.
    ```
 
 2. Use correct Node.js version (18+):
+
    ```bash
    node --version  # Should be 18.x or higher
    nvm use 18      # If using nvm
@@ -45,6 +47,7 @@ Common issues and solutions when working with HazelJS.
 **Problem**: TypeScript compilation errors
 
 **Solution**: Ensure TypeScript is installed:
+
 ```bash
 npm install -D typescript@latest
 npm run build
@@ -61,15 +64,17 @@ npm run build
 **Solutions**:
 
 1. Ensure package is installed:
+
    ```bash
    npm install @hazeljs/core
    ```
 
 2. Check import path:
+
    ```typescript
    // Correct
    import { HazelApp } from '@hazeljs/core';
-   
+
    // Wrong
    import { HazelApp } from '@hazeljs/core';
    ```
@@ -79,6 +84,7 @@ npm run build
 **Problem**: This error should no longer occur as `@hazeljs/core` now imports `reflect-metadata` automatically.
 
 **If you still see this error**:
+
 - Make sure you're using the latest version of `@hazeljs/core`
 - Ensure `reflect-metadata` is installed: `npm install reflect-metadata`
 - The core package handles the import automatically, so you don't need to import it manually
@@ -90,6 +96,7 @@ npm run build
 **Solutions**:
 
 1. Use forwardRef:
+
    ```typescript
    @Injectable()
    export class ServiceA {
@@ -110,6 +117,7 @@ npm run build
 **Problem**: Service not registered in module
 
 **Solution**: Add to module providers:
+
 ```typescript
 @HazelModule({
   providers: [UserService, AuthService], // Add here
@@ -127,6 +135,7 @@ export class UserModule {}
 **Problem**: Memory grows over time with request-scoped providers
 
 **Solution**: Ensure proper cleanup:
+
 ```typescript
 @Injectable({ scope: Scope.REQUEST })
 export class RequestService implements OnModuleDestroy {
@@ -143,6 +152,7 @@ export class RequestService implements OnModuleDestroy {
 **Solutions**:
 
 1. Check provider is in module:
+
    ```typescript
    @HazelModule({
      providers: [MyService], // Must be here
@@ -150,6 +160,7 @@ export class RequestService implements OnModuleDestroy {
    ```
 
 2. Check decorator is applied:
+
    ```typescript
    @Injectable() // Must have this
    export class MyService {}
@@ -171,6 +182,7 @@ export class RequestService implements OnModuleDestroy {
 **Problem**: "Cannot find module '@prisma/client'"
 
 **Solution**: Generate Prisma client:
+
 ```bash
 npm run prisma:generate
 # or
@@ -184,11 +196,13 @@ npx prisma generate
 **Solutions**:
 
 1. Check DATABASE_URL in .env:
+
    ```env
    DATABASE_URL="postgresql://user:password@localhost:5432/dbname"
    ```
 
 2. Ensure database is running:
+
    ```bash
    npm run db:up
    # or check if PostgreSQL is running
@@ -206,11 +220,13 @@ npx prisma generate
 **Solutions**:
 
 1. Reset database (development only):
+
    ```bash
    npm run prisma:reset
    ```
 
 2. Create new migration:
+
    ```bash
    npx prisma migrate dev --name fix_schema
    ```
@@ -248,6 +264,7 @@ npx prisma generate
 **Solutions**:
 
 1. Check for memory leaks:
+
    ```bash
    node --inspect src/index.js
    # Use Chrome DevTools to profile
@@ -264,6 +281,7 @@ npx prisma generate
 **Solutions**:
 
 1. Add caching:
+
    ```typescript
    @Cache({ ttl: 3600 })
    @Get('/users')
@@ -273,10 +291,11 @@ npx prisma generate
    ```
 
 2. Optimize database queries:
+
    ```typescript
    // Include relations in one query
    const users = await prisma.user.findMany({
-     include: { posts: true }
+     include: { posts: true },
    });
    ```
 
@@ -300,6 +319,7 @@ npx prisma generate
 **Problem**: Decorators don't work
 
 **Solution**: Enable in tsconfig.json:
+
 ```json
 {
   "compilerOptions": {
@@ -314,6 +334,7 @@ npx prisma generate
 **Problem**: TypeScript errors with parameter decorators
 
 **Solution**: Ensure correct order:
+
 ```typescript
 // Correct order
 @Get(':id')
@@ -339,6 +360,7 @@ async getUser(
 **Problem**: DI doesn't work in tests
 
 **Solution**: Use TestingModule:
+
 ```typescript
 import { Test } from '@hazeljs/core';
 
@@ -354,13 +376,14 @@ const service = module.get(UserService);
 **Problem**: Real services used instead of mocks
 
 **Solution**: Override providers:
+
 ```typescript
 const module = await Test.createTestingModule({
   providers: [UserService],
 })
-.overrideProvider(UserService)
-.useValue(mockUserService)
-.compile();
+  .overrideProvider(UserService)
+  .useValue(mockUserService)
+  .compile();
 ```
 
 ### Tests timeout
@@ -370,6 +393,7 @@ const module = await Test.createTestingModule({
 **Solutions**:
 
 1. Close connections after tests:
+
    ```typescript
    afterAll(async () => {
      await app.close();
@@ -389,6 +413,7 @@ const module = await Test.createTestingModule({
 ### "Port already in use"
 
 **Solution**:
+
 ```bash
 # Find process using port
 lsof -i :3000
@@ -403,6 +428,7 @@ await app.listen(3001);
 ### "ECONNREFUSED"
 
 **Solution**: Database not running
+
 ```bash
 npm run db:up
 ```
@@ -452,6 +478,7 @@ DEBUG=hazeljs:*
 ---
 
 Still stuck? Open an issue on GitHub with:
+
 - Error message
 - Code example (minimal reproducible)
 - Environment (Node version, OS, etc.)

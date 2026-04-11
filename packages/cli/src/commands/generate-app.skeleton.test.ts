@@ -36,7 +36,11 @@ describe('runApp (skeleton app)', () => {
     // destPath doesn't exist; templatePath also doesn't exist -> fallback basic structure
     mockFs.existsSync.mockImplementation((p: any) => {
       const s = String(p);
-      if (s.endsWith(path.join('.', 'my-app')) || s.endsWith(path.join(process.cwd(), '.', 'my-app'))) return false;
+      if (
+        s.endsWith(path.join('.', 'my-app')) ||
+        s.endsWith(path.join(process.cwd(), '.', 'my-app'))
+      )
+        return false;
       if (s.includes('@template')) return false;
       return false;
     });
@@ -49,4 +53,3 @@ describe('runApp (skeleton app)', () => {
     expect(result.nextSteps).toEqual(['cd my-app', 'npm install', 'npm run dev']);
   });
 });
-

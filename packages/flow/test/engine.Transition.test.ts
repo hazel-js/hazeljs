@@ -23,9 +23,7 @@ describe('selectNextNode', () => {
   });
 
   it('returns null when no edges match when()', () => {
-    const edges: EdgeDefinition[] = [
-      { from: 'a', to: 'b', when: () => false, priority: 0 },
-    ];
+    const edges: EdgeDefinition[] = [{ from: 'a', to: 'b', when: () => false, priority: 0 }];
     expect(selectNextNode('a', edges, makeCtx())).toBeNull();
   });
 
@@ -37,7 +35,12 @@ describe('selectNextNode', () => {
   it('filters by when() - only matching edges considered', () => {
     const edges: EdgeDefinition[] = [
       { from: 'a', to: 'no', when: () => false, priority: 0 },
-      { from: 'a', to: 'yes', when: (ctx) => (ctx.state as { ok?: boolean }).ok === true, priority: 0 },
+      {
+        from: 'a',
+        to: 'yes',
+        when: (ctx) => (ctx.state as { ok?: boolean }).ok === true,
+        priority: 0,
+      },
     ];
     expect(selectNextNode('a', edges, makeCtx({ state: { ok: false } }))).toBeNull();
     expect(selectNextNode('a', edges, makeCtx({ state: { ok: true } }))).toBe('yes');

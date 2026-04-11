@@ -144,10 +144,12 @@ Protect your API from abuse with flexible rate limiting.
 import { RateLimitMiddleware } from '@hazeljs/core';
 
 @Controller('/api')
-@UseMiddleware(new RateLimitMiddleware({
-  max: 100,        // 100 requests
-  windowMs: 60000, // per minute
-}))
+@UseMiddleware(
+  new RateLimitMiddleware({
+    max: 100, // 100 requests
+    windowMs: 60000, // per minute
+  })
+)
 export class ApiController {
   // All routes in this controller are rate-limited
 }
@@ -159,20 +161,24 @@ export class ApiController {
 @Controller('/api')
 export class ApiController {
   @Post('/login')
-  @UseMiddleware(new RateLimitMiddleware({
-    max: 5,          // 5 attempts
-    windowMs: 900000, // per 15 minutes
-    message: 'Too many login attempts, please try again later',
-  }))
+  @UseMiddleware(
+    new RateLimitMiddleware({
+      max: 5, // 5 attempts
+      windowMs: 900000, // per 15 minutes
+      message: 'Too many login attempts, please try again later',
+    })
+  )
   async login(@Body() credentials: LoginDto) {
     return await this.authService.login(credentials);
   }
 
   @Get('/users')
-  @UseMiddleware(new RateLimitMiddleware({
-    max: 1000,       // 1000 requests
-    windowMs: 60000, // per minute
-  }))
+  @UseMiddleware(
+    new RateLimitMiddleware({
+      max: 1000, // 1000 requests
+      windowMs: 60000, // per minute
+    })
+  )
   async getUsers() {
     return await this.userService.findAll();
   }
@@ -190,7 +196,7 @@ new RateLimitMiddleware({
     const user = req.user; // Assuming auth middleware sets this
     return user?.id || 'anonymous';
   },
-})
+});
 ```
 
 ### Custom Store (Redis)
@@ -233,7 +239,7 @@ new RateLimitMiddleware({
   max: 100,
   windowMs: 60000,
   store: new RedisStore(),
-})
+});
 ```
 
 ### Rate Limit Headers
@@ -254,14 +260,14 @@ X-RateLimit-Reset: 2025-12-09T01:00:00.000Z
 
 ```typescript
 interface RateLimitOptions {
-  max: number;                    // Maximum requests
-  windowMs: number;               // Time window in milliseconds
+  max: number; // Maximum requests
+  windowMs: number; // Time window in milliseconds
   keyGenerator?: (req) => string; // Custom key function
-  store?: RateLimitStore;         // Custom storage
-  message?: string;               // Error message
-  statusCode?: number;            // Error status (default: 429)
-  standardHeaders?: boolean;      // RateLimit-* headers
-  legacyHeaders?: boolean;        // X-RateLimit-* headers
+  store?: RateLimitStore; // Custom storage
+  message?: string; // Error message
+  statusCode?: number; // Error status (default: 429)
+  standardHeaders?: boolean; // RateLimit-* headers
+  legacyHeaders?: boolean; // X-RateLimit-* headers
   skipSuccessfulRequests?: boolean;
   skipFailedRequests?: boolean;
 }
@@ -286,11 +292,7 @@ interface RateLimitOptions {
 You can combine multiple middleware for comprehensive protection:
 
 ```typescript
-import { 
-  HazelApp, 
-  TimeoutMiddleware, 
-  RateLimitMiddleware 
-} from '@hazeljs/core';
+import { HazelApp, TimeoutMiddleware, RateLimitMiddleware } from '@hazeljs/core';
 
 const app = await HazelApp.create(AppModule);
 
@@ -304,17 +306,21 @@ app.setRequestTimeout(30000);
 
 // Per-controller configuration
 @Controller('/api')
-@UseMiddleware(new RateLimitMiddleware({
-  max: 100,
-  windowMs: 60000,
-}))
+@UseMiddleware(
+  new RateLimitMiddleware({
+    max: 100,
+    windowMs: 60000,
+  })
+)
 export class ApiController {
   @Post('/upload')
   @UseMiddleware(TimeoutMiddleware.create({ timeout: 120000 })) // 2 minutes for uploads
-  @UseMiddleware(new RateLimitMiddleware({
-    max: 10,        // Stricter limit for uploads
-    windowMs: 60000,
-  }))
+  @UseMiddleware(
+    new RateLimitMiddleware({
+      max: 10, // Stricter limit for uploads
+      windowMs: 60000,
+    })
+  )
   async uploadFile(@UploadedFile() file: Express.Multer.File) {
     return await this.fileService.upload(file);
   }
@@ -361,14 +367,14 @@ new RateLimitMiddleware({
   max: 100,
   windowMs: 60000,
   // Uses in-memory store by default
-})
+});
 
 // ✅ Good - Redis store works across instances
 new RateLimitMiddleware({
   max: 100,
   windowMs: 60000,
   store: new RedisStore(),
-})
+});
 ```
 
 ### 4. Different Limits for Different Endpoints
@@ -401,11 +407,11 @@ new RateLimitMiddleware({
       url: req.url,
       userAgent: req.headers['user-agent'],
     });
-    
+
     // Send to monitoring service
     monitoring.trackRateLimitHit(key);
   },
-})
+});
 ```
 
 ---
@@ -438,7 +444,7 @@ new RateLimitMiddleware({
   max: 100,
   windowMs: 60000,
   store: new RedisStore(), // Shared across instances
-})
+});
 ```
 
 ---
@@ -452,6 +458,7 @@ HazelJS provides production-ready middleware for:
 - 🛡️ **Rate Limiting** - Protect against abuse
 
 All middleware is:
+
 - ✅ Easy to configure
 - ✅ Flexible and extensible
 - ✅ Production-tested

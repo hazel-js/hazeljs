@@ -248,7 +248,7 @@ export class UsersController {
       return this.users.filter(
         (user) =>
           user.name.toLowerCase().includes(search.toLowerCase()) ||
-          user.email.toLowerCase().includes(search.toLowerCase()),
+          user.email.toLowerCase().includes(search.toLowerCase())
       );
     }
     return this.users;

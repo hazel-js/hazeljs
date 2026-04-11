@@ -71,24 +71,24 @@ describe('ToolExecutor', () => {
       };
 
       const executePromise = executor.execute(tool, {}, 'agent-1', 'session-1');
-      
+
       // Wait a bit for approval request to be created
       await Promise.resolve();
       jest.advanceTimersByTime(100);
       await Promise.resolve();
-      
+
       // Check that approval was requested
       const approvals = executor.getPendingApprovals();
       expect(approvals.length).toBeGreaterThan(0);
       expect(approvals[0].toolName).toBe('approvalTool');
-      
+
       // Approve the request - this will cause the promise to resolve
       executor.approveExecution(approvals[0].requestId, 'user-1');
-      
+
       // Advance timers to trigger the approval check
       jest.advanceTimersByTime(2000);
       await jest.runAllTimersAsync();
-      
+
       // The promise should resolve (though it may be rejected if approval wasn't processed correctly)
       try {
         const result = await executePromise;
@@ -115,11 +115,11 @@ describe('ToolExecutor', () => {
       };
 
       const promise = executor.execute(tool, {}, 'agent-1', 'session-1');
-      
+
       // Wait a bit for approval request to be created
       jest.advanceTimersByTime(100);
       await Promise.resolve();
-      
+
       // Reject the request
       const approvals = executor.getPendingApprovals();
       expect(approvals.length).toBeGreaterThan(0);
@@ -164,10 +164,7 @@ describe('ToolExecutor', () => {
         description: 'Retry tool',
         parameters: [],
         retries: 1,
-        method: jest
-          .fn()
-          .mockRejectedValueOnce(new Error('Fail 1'))
-          .mockResolvedValue('success'),
+        method: jest.fn().mockRejectedValueOnce(new Error('Fail 1')).mockResolvedValue('success'),
         target: {},
         propertyKey: 'retryTool',
         agentClass: class {},
@@ -233,9 +230,7 @@ describe('ToolExecutor', () => {
       await guardedExecutor.execute(tool, input, 'agent-1', 'session-1');
 
       // Object.assign merges modified into input, so input gets input: 'redacted'
-      expect(tool.method).toHaveBeenCalledWith(
-        expect.objectContaining({ input: 'redacted' })
-      );
+      expect(tool.method).toHaveBeenCalledWith(expect.objectContaining({ input: 'redacted' }));
     });
 
     it('should block output when guardrails reject', async () => {
@@ -296,9 +291,11 @@ describe('ToolExecutor', () => {
         description: 'Timeout tool',
         parameters: [],
         timeout: 100,
-        method: jest.fn().mockImplementation(
-          () => new Promise((resolve) => setTimeout(() => resolve('result'), 200))
-        ),
+        method: jest
+          .fn()
+          .mockImplementation(
+            () => new Promise((resolve) => setTimeout(() => resolve('result'), 200))
+          ),
         target: {},
         propertyKey: 'timeoutTool',
         agentClass: class {},
@@ -331,11 +328,11 @@ describe('ToolExecutor', () => {
       expect(approvals.length).toBeGreaterThan(0);
 
       executor.approveExecution(approvals[0].requestId, 'user-1');
-      
+
       // Advance timers to let the polling loop process the approval
       jest.advanceTimersByTime(1000);
       await promise;
-      
+
       expect(executor.getPendingApprovals().length).toBeLessThan(approvals.length);
     });
   });
@@ -358,11 +355,11 @@ describe('ToolExecutor', () => {
       expect(approvals.length).toBeGreaterThan(0);
 
       executor.rejectExecution(approvals[0].requestId);
-      
+
       // Advance timers to let the polling loop process the rejection
       jest.advanceTimersByTime(1000);
       await promise;
-      
+
       expect(executor.getPendingApprovals().length).toBeLessThan(approvals.length);
     });
   });
@@ -392,4 +389,3 @@ describe('ToolExecutor', () => {
     });
   });
 });
-

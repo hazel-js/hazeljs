@@ -218,26 +218,26 @@ export class DynamicJobService {
 CronModule.forRoot({
   // Enable/disable all cron jobs
   enabled: true,
-  
+
   // Default timezone for all jobs
   timezone: 'UTC',
-  
+
   // Prevent overlapping executions
   preventOverlap: true,
-  
+
   // Retry failed jobs
   retry: {
     attempts: 3,
     delay: 1000,
   },
-  
+
   // Logging
   logging: {
     enabled: true,
     logSuccess: true,
     logErrors: true,
   },
-})
+});
 ```
 
 ### Job-Level Configuration
@@ -289,11 +289,11 @@ export class DatabaseCleanupService {
   async cleanupOldRecords() {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    
+
     await this.db.logs.deleteMany({
       where: { createdAt: { lt: thirtyDaysAgo } },
     });
-    
+
     console.log('Old records cleaned up');
   }
 }
@@ -326,7 +326,7 @@ export class CacheService {
     const popularProducts = await this.db.products.findMany({
       where: { popular: true },
     });
-    
+
     for (const product of popularProducts) {
       await this.cache.set(`product:${product.id}`, product, 3600);
     }
@@ -342,7 +342,7 @@ export class HealthMonitor {
   @Interval(30000) // Every 30 seconds
   async checkServices() {
     const services = ['database', 'redis', 'api'];
-    
+
     for (const service of services) {
       const isHealthy = await this.checkServiceHealth(service);
       if (!isHealthy) {
@@ -362,7 +362,7 @@ export class SyncService {
   async syncData() {
     const localData = await this.getLocalData();
     const remoteData = await this.getRemoteData();
-    
+
     const diff = this.calculateDiff(localData, remoteData);
     await this.applyChanges(diff);
   }

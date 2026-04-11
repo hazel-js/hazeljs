@@ -111,7 +111,7 @@ CacheModule.forRoot({
   ttl: 3600,
   max: 1000,
   updateAgeOnGet: true,
-})
+});
 ```
 
 **Best for:** Development, testing, single-instance applications
@@ -133,7 +133,7 @@ CacheModule.forRoot({
   redis: redis,
   ttl: 3600,
   keyPrefix: 'myapp:',
-})
+});
 ```
 
 **Best for:** Production, distributed systems, shared cache
@@ -152,7 +152,7 @@ CacheModule.forRoot({
     ttl: 3600, // 1 hour in Redis
     keyPrefix: 'myapp:',
   },
-})
+});
 ```
 
 **Best for:** High-performance applications, frequently accessed data
@@ -363,7 +363,7 @@ CacheModule.forRoot({
   keyGenerator: (target, methodName, args) => {
     return `${target.constructor.name}:${methodName}:${JSON.stringify(args)}`;
   },
-})
+});
 ```
 
 ### Conditional Caching
@@ -391,7 +391,7 @@ CacheModule.forRoot({
     enabled: true,
     threshold: 1024, // Compress if > 1KB
   },
-})
+});
 ```
 
 ## API Reference
@@ -447,7 +447,7 @@ export class ProductService {
     key: 'product-{id}',
     ttl: 30000, // 30 seconds
     retryDelay: 1000,
-    maxRetries: 3
+    maxRetries: 3,
   })
   async expensiveOperation(id: string) {
     // Only one instance will execute at a time
@@ -468,7 +468,7 @@ export class UserService {
   @CacheAside({
     key: 'user-{id}',
     ttl: 3600,
-    fallback: () => this.db.user.findDefault()
+    fallback: () => this.db.user.findDefault(),
   })
   async getUser(id: string) {
     return await this.db.user.findUnique({ where: { id } });
@@ -477,7 +477,7 @@ export class UserService {
   @CacheAsideWithFallback({
     key: 'user-{id}',
     ttl: 1800,
-    fallbackValue: { id: 'unknown', name: 'Guest User' }
+    fallbackValue: { id: 'unknown', name: 'Guest User' },
   })
   async getUserWithFallback(id: string) {
     return await this.db.user.findUnique({ where: { id } });
@@ -496,7 +496,7 @@ import { WriteThrough, WriteBehind } from '@hazeljs/cache';
 export class ProductService {
   @WriteThrough({
     key: 'product-{id}',
-    ttl: 3600
+    ttl: 3600,
   })
   async updateProduct(id: string, data: any) {
     // Cache updated immediately
@@ -506,7 +506,7 @@ export class ProductService {
   @WriteBehind({
     key: 'product-{id}',
     ttl: 3600,
-    async: true
+    async: true,
   })
   async updateProductAsync(id: string, data: any) {
     // Cache update queued for better performance
@@ -535,7 +535,7 @@ export class CacheService {
     ttl: 7200, // 2 hours
     parallel: true,
     schedule: '0 */6 * * *', // Every 6 hours
-    condition: 'low-traffic' // Only warm during low traffic hours
+    condition: 'low-traffic', // Only warm during low traffic hours
   })
   async warmCache() {
     // This method will be executed on schedule
@@ -582,10 +582,7 @@ export class ApiController {
     ttl: 300,
     tags: ['api', 'products'],
   })
-  async getProducts(
-    @Query('page') page: number,
-    @Query('limit') limit: number
-  ) {
+  async getProducts(@Query('page') page: number, @Query('limit') limit: number) {
     return await this.productService.findAll(page, limit);
   }
 }

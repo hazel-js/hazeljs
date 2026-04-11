@@ -9,7 +9,11 @@ import { SupervisorAgent } from '../../src/supervisor/supervisor';
 import { AgentRuntime } from '../../src/runtime/agent.runtime';
 import { Agent } from '../../src/decorators/agent.decorator';
 import { Tool } from '../../src/decorators/tool.decorator';
-import { Delegate, getDelegatedMethods, getDelegateMetadata } from '../../src/decorators/delegate.decorator';
+import {
+  Delegate,
+  getDelegatedMethods,
+  getDelegateMetadata,
+} from '../../src/decorators/delegate.decorator';
 import { AgentExecutionResult, AgentState } from '../../src/types/agent.types';
 import { LLMProvider, LLMChatRequest, LLMChatResponse } from '../../src/types/llm.types';
 
@@ -86,9 +90,7 @@ describe('AgentGraph (builder)', () => {
   it('should throw when adding a node with the reserved END id', () => {
     const runtime = makeRuntime();
     const graph = new AgentGraph('reserved-end', runtime);
-    expect(() => graph.addNode(END, { type: 'function', fn: async (s) => s })).toThrow(
-      'reserved'
-    );
+    expect(() => graph.addNode(END, { type: 'function', fn: async (s) => s })).toThrow('reserved');
   });
 
   it('should throw when registering a duplicate node id', () => {
@@ -131,7 +133,11 @@ describe('CompiledGraph — sequential execution', () => {
     expect(result.response).toBe('LLMs are transformer-based models.');
     expect(result.steps).toHaveLength(1);
     expect(result.steps[0].nodeId).toBe('researcher');
-    expect(runtime.execute).toHaveBeenCalledWith('ResearchAgent', 'Explain LLMs', expect.any(Object));
+    expect(runtime.execute).toHaveBeenCalledWith(
+      'ResearchAgent',
+      'Explain LLMs',
+      expect.any(Object)
+    );
   });
 
   it('should chain two agent nodes sequentially', async () => {
@@ -255,13 +261,21 @@ describe('CompiledGraph — conditional routing', () => {
 
     const codeResult = await compiled.execute('Write some code for me');
     expect(codeResult.response).toBe('Here is some code');
-    expect(runtime.execute).toHaveBeenCalledWith('CoderAgent', expect.any(String), expect.any(Object));
+    expect(runtime.execute).toHaveBeenCalledWith(
+      'CoderAgent',
+      expect.any(String),
+      expect.any(Object)
+    );
 
     jest.clearAllMocks();
 
     const writeResult = await compiled.execute('Write an essay about AI');
     expect(writeResult.response).toBe('Here is some prose');
-    expect(runtime.execute).toHaveBeenCalledWith('WriterAgent', expect.any(String), expect.any(Object));
+    expect(runtime.execute).toHaveBeenCalledWith(
+      'WriterAgent',
+      expect.any(String),
+      expect.any(Object)
+    );
   });
 
   it('should route to END directly from a conditional edge', async () => {
@@ -296,11 +310,10 @@ describe('CompiledGraph — conditional routing', () => {
       .addNode('node-x', { type: 'agent', agentName: 'AgentX' })
       .addNode('node-y', { type: 'agent', agentName: 'AgentY' })
       .setEntryPoint('router-fn')
-      .addConditionalEdge(
-        'router-fn',
-        (state) => state.data.route as string,
-        { x: 'node-x', y: 'node-y' }
-      )
+      .addConditionalEdge('router-fn', (state) => state.data.route as string, {
+        x: 'node-x',
+        y: 'node-y',
+      })
       .addEdge('node-x', END)
       .addEdge('node-y', END)
       .compile()
@@ -466,7 +479,11 @@ describe('SupervisorAgent', () => {
     expect(result.rounds[0].decision.action).toBe('delegate');
     expect(result.rounds[0].decision.worker).toBe('ResearchAgent');
     expect(result.rounds[1].decision.action).toBe('finish');
-    expect(runtime.execute).toHaveBeenCalledWith('ResearchAgent', 'Explain LLMs', expect.any(Object));
+    expect(runtime.execute).toHaveBeenCalledWith(
+      'ResearchAgent',
+      'Explain LLMs',
+      expect.any(Object)
+    );
   });
 
   it('should handle a direct finish in round 1 without delegating', async () => {
@@ -585,10 +602,14 @@ describe('@Delegate decorator', () => {
     @Agent({ name: 'list-agent', description: 'List' })
     class ListAgent {
       @Delegate({ agent: 'AgentA', description: 'A' })
-      async doA(_input: string): Promise<string> { return ''; }
+      async doA(_input: string): Promise<string> {
+        return '';
+      }
 
       @Delegate({ agent: 'AgentB', description: 'B' })
-      async doB(_input: string): Promise<string> { return ''; }
+      async doB(_input: string): Promise<string> {
+        return '';
+      }
     }
 
     const methods = getDelegatedMethods(ListAgent);
@@ -628,9 +649,7 @@ describe('@Delegate decorator', () => {
     const workerInstance = new WorkerAgent();
 
     // Spy on runtime.execute so we can intercept the delegate call
-    jest
-      .spyOn(runtime, 'execute')
-      .mockResolvedValue(workerResult);
+    jest.spyOn(runtime, 'execute').mockResolvedValue(workerResult);
 
     runtime.registerAgentInstance('orchestrator-patch', orchestratorInstance);
     runtime.registerAgentInstance('WorkerAgent', workerInstance);
@@ -659,9 +678,9 @@ describe('AgentRuntime factory methods', () => {
   it('createSupervisor() should throw if no LLM provider is configured', () => {
     const runtime = new AgentRuntime(); // no llmProvider
 
-    expect(() =>
-      runtime.createSupervisor({ name: 'sup', workers: ['AgentA'] })
-    ).toThrow('LLM provider');
+    expect(() => runtime.createSupervisor({ name: 'sup', workers: ['AgentA'] })).toThrow(
+      'LLM provider'
+    );
   });
 
   it('createSupervisor() should return a SupervisorAgent when LLM is configured', () => {

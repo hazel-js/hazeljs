@@ -88,10 +88,9 @@ describe('Generator class', () => {
         template: 'test template',
       });
 
-      expect(mockFs.mkdirSync).toHaveBeenCalledWith(
-        path.join(process.cwd(), 'src/test'),
-        { recursive: true }
-      );
+      expect(mockFs.mkdirSync).toHaveBeenCalledWith(path.join(process.cwd(), 'src/test'), {
+        recursive: true,
+      });
     });
 
     it('should write file with rendered template', async () => {
@@ -104,7 +103,7 @@ describe('Generator class', () => {
 
       expect(mockFs.writeFileSync).toHaveBeenCalledWith(
         expect.stringContaining('test.ts'),
-        'Hello World!',
+        'Hello World!'
       );
     });
 
@@ -117,7 +116,7 @@ describe('Generator class', () => {
 
       expect(mockFs.writeFileSync).toHaveBeenCalledWith(
         expect.any(String),
-        'MyWidget my-widget myWidget',
+        'MyWidget my-widget myWidget'
       );
     });
 

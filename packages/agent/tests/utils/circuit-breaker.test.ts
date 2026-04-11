@@ -46,9 +46,9 @@ describe('CircuitBreaker', () => {
 
       expect(breaker.getState()).toBe(CircuitState.OPEN);
 
-      await expect(
-        breaker.execute(async () => 'success')
-      ).rejects.toThrow('Circuit breaker is OPEN');
+      await expect(breaker.execute(async () => 'success')).rejects.toThrow(
+        'Circuit breaker is OPEN'
+      );
     });
 
     it('should transition to HALF_OPEN after reset timeout', async () => {
@@ -75,9 +75,7 @@ describe('CircuitBreaker', () => {
         // May fail if still OPEN
       }
 
-      expect([CircuitState.HALF_OPEN, CircuitState.CLOSED]).toContain(
-        breaker.getState()
-      );
+      expect([CircuitState.HALF_OPEN, CircuitState.CLOSED]).toContain(breaker.getState());
     });
 
     it('should transition to CLOSED after success threshold in HALF_OPEN', async () => {

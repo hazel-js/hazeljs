@@ -83,10 +83,9 @@ export class EmbeddingsController {
 
   @Get('/embed')
   async embed() {
-    const { result, durationMs } = await this.workerExecutor.execute(
-      'generate-embeddings',
-      { text: ['hello world'] }
-    );
+    const { result, durationMs } = await this.workerExecutor.execute('generate-embeddings', {
+      text: ['hello world'],
+    });
     return { embeddings: result, durationMs };
   }
 }
@@ -104,7 +103,7 @@ WorkerModule.forRoot({
     'generate-embeddings': path.join(__dirname, 'dist/tasks/generate-embeddings.task.js'),
     'parse-document': path.join(__dirname, 'dist/tasks/parse-document.task.js'),
   },
-})
+});
 ```
 
 ### Option B: Convention (taskDirectory)
@@ -112,9 +111,9 @@ WorkerModule.forRoot({
 ```typescript
 WorkerModule.forRoot({
   taskDirectory: path.join(__dirname, 'dist/worker-tasks'),
-  taskFileExtension: '.js',  // optional; default '.js'. Use '.task.js' for generate-embeddings.task.js
+  taskFileExtension: '.js', // optional; default '.js'. Use '.task.js' for generate-embeddings.task.js
   // Task name 'generate-embeddings' → dist/worker-tasks/generate-embeddings.js
-})
+});
 ```
 
 Paths are resolved as `taskDirectory + taskName + taskFileExtension`. Add your `@WorkerTask` classes as **providers** so discovery can find them. Discovery merges with `taskRegistry` or builds paths from `taskDirectory` + discovered names.
@@ -123,13 +122,13 @@ Paths are resolved as `taskDirectory + taskName + taskFileExtension`. Add your `
 
 ```typescript
 interface WorkerModuleOptions {
-  poolSize?: number;                    // Default: os.cpus().length - 1
+  poolSize?: number; // Default: os.cpus().length - 1
   taskRegistry?: Record<string, string>;
   taskDirectory?: string;
-  taskFileExtension?: string;           // Default: '.js' (e.g. '.task.js' for name.task.js)
-  timeout?: number;                     // Default: 30000
-  isGlobal?: boolean;                   // Default: true
-  gracefulShutdownTimeout?: number;    // Default: 10000
+  taskFileExtension?: string; // Default: '.js' (e.g. '.task.js' for name.task.js)
+  timeout?: number; // Default: 30000
+  isGlobal?: boolean; // Default: true
+  gracefulShutdownTimeout?: number; // Default: 10000
 }
 ```
 

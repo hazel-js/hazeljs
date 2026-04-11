@@ -194,7 +194,7 @@ import { RequestContext } from '@hazeljs/core';
 export class ParseDatePipe implements PipeTransform<string, Date> {
   transform(value: string, context: RequestContext): Date {
     const date = new Date(value);
-    
+
     if (isNaN(date.getTime())) {
       throw new ValidationError('Invalid date format', [
         {
@@ -204,7 +204,7 @@ export class ParseDatePipe implements PipeTransform<string, Date> {
         },
       ]);
     }
-    
+
     return date;
   }
 }
@@ -243,8 +243,8 @@ export class ParseArrayPipe implements PipeTransform<string, number[]> {
         throw new ValidationError('Invalid array format', [
           {
             property: 'ids',
-            constraints: { 
-              isArray: 'all values must be valid integers' 
+            constraints: {
+              isArray: 'all values must be valid integers',
             },
             value,
           },
@@ -316,7 +316,7 @@ Usage:
 ```typescript
 @Post()
 create(
-  @Body('name', new TrimPipe({ maxLength: 50, toLowerCase: true })) 
+  @Body('name', new TrimPipe({ maxLength: 50, toLowerCase: true }))
   name: string
 ) {
   return { name };
@@ -346,15 +346,7 @@ Here's a complete example combining DTOs, validation, and custom pipes:
 <div class="filename">create-product.dto.ts</div>
 
 ```typescript
-import { 
-  IsString, 
-  IsNumber, 
-  Min, 
-  Max, 
-  IsEnum,
-  IsOptional,
-  Length 
-} from 'class-validator';
+import { IsString, IsNumber, Min, Max, IsEnum, IsOptional, Length } from 'class-validator';
 
 enum ProductCategory {
   ELECTRONICS = 'electronics',
@@ -388,12 +380,12 @@ export class CreateProductDto {
 <div class="filename">products.controller.ts</div>
 
 ```typescript
-import { 
-  Controller, 
-  Get, 
-  Post, 
-  Body, 
-  Param, 
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
   Query,
   ParseIntPipe,
   ValidationPipe,
@@ -409,7 +401,7 @@ export class ProductsController {
   @Get()
   findAll(
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
-    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number
   ) {
     return this.productsService.findAll(page, limit);
   }

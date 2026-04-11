@@ -7,7 +7,8 @@ import { Agent, Tool, Delegate, AgentService } from '@hazeljs/agent';
 @Agent({
   name: 'FactsAgent',
   description: 'Provides fun facts, cultural highlights, and travel tips about cities',
-  systemPrompt: 'You are a knowledgeable travel guide. Use your tools to provide interesting facts and tips about cities.',
+  systemPrompt:
+    'You are a knowledgeable travel guide. Use your tools to provide interesting facts and tips about cities.',
 })
 @Service()
 export class FactsAgent {
@@ -25,10 +26,26 @@ export class FactsAgent {
   async getCityFacts(input: { city: string }) {
     // In real app, call a travel/facts API or use a knowledge base
     const facts: Record<string, { fact: string; tip: string; bestTime: string }> = {
-      paris:   { fact: 'Paris has more than 470 parks and gardens.', tip: 'Buy a Paris Museum Pass to skip long queues.', bestTime: 'April–June or September–November' },
-      tokyo:   { fact: 'Tokyo has the world\'s busiest pedestrian crossing at Shibuya.', tip: 'Get a Suica card for seamless transit across the city.', bestTime: 'March–May (cherry blossom) or October–November' },
-      london:  { fact: 'London has over 170 museums, most of which are free.', tip: 'The Oyster card gives the cheapest fares on public transport.', bestTime: 'May–September for mild weather' },
-      newyork: { fact: 'New York City has 468 subway stations — the most in the world.', tip: 'Walk the High Line for great views and free art installations.', bestTime: 'April–June or September–November' },
+      paris: {
+        fact: 'Paris has more than 470 parks and gardens.',
+        tip: 'Buy a Paris Museum Pass to skip long queues.',
+        bestTime: 'April–June or September–November',
+      },
+      tokyo: {
+        fact: "Tokyo has the world's busiest pedestrian crossing at Shibuya.",
+        tip: 'Get a Suica card for seamless transit across the city.',
+        bestTime: 'March–May (cherry blossom) or October–November',
+      },
+      london: {
+        fact: 'London has over 170 museums, most of which are free.',
+        tip: 'The Oyster card gives the cheapest fares on public transport.',
+        bestTime: 'May–September for mild weather',
+      },
+      newyork: {
+        fact: 'New York City has 468 subway stations — the most in the world.',
+        tip: 'Walk the High Line for great views and free art installations.',
+        bestTime: 'April–June or September–November',
+      },
     };
 
     const key = input.city.toLowerCase().replace(/\s+/g, '');
@@ -49,7 +66,8 @@ export class FactsAgent {
 @Agent({
   name: 'TravelAgent',
   description: 'Travel planning assistant that checks weather and provides itinerary advice',
-  systemPrompt: 'You are a travel planner. Use your tools to check weather and forecasts for cities, then provide helpful travel advice based on the conditions.',
+  systemPrompt:
+    'You are a travel planner. Use your tools to check weather and forecasts for cities, then provide helpful travel advice based on the conditions.',
 })
 @Service()
 export class TravelAgent {
@@ -59,7 +77,8 @@ export class TravelAgent {
   // The LLM sees it as a regular tool — agent-to-agent is completely transparent.
   @Delegate({
     agent: 'WeatherAgent',
-    description: 'Check weather conditions and forecasts for a city to inform travel recommendations',
+    description:
+      'Check weather conditions and forecasts for a city to inform travel recommendations',
     inputField: 'input',
   })
   async checkWeather(input: string): Promise<string> {
@@ -87,7 +106,7 @@ export class TravelAgent {
 export class TravelController {
   constructor(
     private readonly travelAgent: TravelAgent,
-    private readonly agentService: AgentService,
+    private readonly agentService: AgentService
   ) {}
 
   // Feature: Agent Delegation — TravelAgent delegates to WeatherAgent via @Delegate
@@ -107,7 +126,8 @@ export class TravelController {
     const supervisor = runtime.createSupervisor({
       name: 'travel-supervisor',
       workers: ['WeatherAgent', 'FactsAgent'],
-      systemPrompt: 'You are a travel planning supervisor. Route requests to WeatherAgent for weather/forecast questions and to FactsAgent for city facts, tips, and general travel advice. Combine results when both are relevant.',
+      systemPrompt:
+        'You are a travel planning supervisor. Route requests to WeatherAgent for weather/forecast questions and to FactsAgent for city facts, tips, and general travel advice. Combine results when both are relevant.',
       maxRounds: 6,
     });
 

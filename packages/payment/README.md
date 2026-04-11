@@ -100,7 +100,11 @@ The controller exposes **POST /payment/webhook/:provider** (e.g. `POST /payment/
 Handle events in your app:
 
 ```typescript
-const event = paymentService.parseWebhookEvent('stripe', req.rawBody, req.headers['stripe-signature']);
+const event = paymentService.parseWebhookEvent(
+  'stripe',
+  req.rawBody,
+  req.headers['stripe-signature']
+);
 if (event && typeof event === 'object' && 'type' in event) {
   switch ((event as { type: string }).type) {
     case 'checkout.session.completed':
@@ -176,7 +180,9 @@ import type {
 export class MyPaymentProvider implements PaymentProvider {
   readonly name = 'mygateway';
 
-  async createCheckoutSession(options: CreateCheckoutSessionOptions): Promise<CreateCheckoutSessionResult> {
+  async createCheckoutSession(
+    options: CreateCheckoutSessionOptions
+  ): Promise<CreateCheckoutSessionResult> {
     // Call your gateway API, return { sessionId, url }.
   }
 
@@ -208,16 +214,16 @@ export class MyPaymentProvider implements PaymentProvider {
 
 ## API summary
 
-| Method | Description |
-|--------|-------------|
-| `createCheckoutSession(options, provider?)` | Create checkout session; returns `{ sessionId, url }` |
-| `createCustomer(options, provider?)` | Create a customer |
-| `getCustomer(customerId, provider?)` | Retrieve a customer |
-| `listSubscriptions(customerId, status?, provider?)` | List subscriptions |
-| `getCheckoutSession(sessionId, provider?)` | Retrieve session (e.g. after redirect) |
-| `parseWebhookEvent(providerName, payload, signature)` | Verify and parse webhook event |
-| `getProvider(name)` | Get provider instance (e.g. for Stripe client) |
-| `getProviderNames()` | List registered provider names |
+| Method                                                | Description                                           |
+| ----------------------------------------------------- | ----------------------------------------------------- |
+| `createCheckoutSession(options, provider?)`           | Create checkout session; returns `{ sessionId, url }` |
+| `createCustomer(options, provider?)`                  | Create a customer                                     |
+| `getCustomer(customerId, provider?)`                  | Retrieve a customer                                   |
+| `listSubscriptions(customerId, status?, provider?)`   | List subscriptions                                    |
+| `getCheckoutSession(sessionId, provider?)`            | Retrieve session (e.g. after redirect)                |
+| `parseWebhookEvent(providerName, payload, signature)` | Verify and parse webhook event                        |
+| `getProvider(name)`                                   | Get provider instance (e.g. for Stripe client)        |
+| `getProviderNames()`                                  | List registered provider names                        |
 
 ## License
 

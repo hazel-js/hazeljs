@@ -41,25 +41,25 @@ describe('RetryHandler', () => {
     it('should throw RetryError after max retries', async () => {
       // Use real timers for this test to avoid async/timer interaction issues
       jest.useRealTimers();
-      
+
       const handler = new RetryHandler({ maxRetries: 2, initialDelayMs: 10 });
       const error = new Error('ECONNRESET');
       const fn = jest.fn().mockRejectedValue(error);
 
       // Start execution and immediately catch the rejection
       const promise = handler.execute(fn);
-      
+
       // Add error handler to prevent unhandled rejection
       promise.catch(() => {
         // Expected rejection, ignore
       });
-      
+
       // Wait for all retries to complete (initial + 2 retries with delays)
       await new Promise((resolve) => setTimeout(resolve, 200));
-      
+
       // Verify the function was called the expected number of times (initial + 2 retries = 3)
       expect(fn).toHaveBeenCalledTimes(3);
-      
+
       // Properly await the rejection and verify it
       let caughtError: unknown;
       try {
@@ -67,14 +67,14 @@ describe('RetryHandler', () => {
       } catch (err) {
         caughtError = err;
       }
-      
+
       expect(caughtError).toBeDefined();
       expect(caughtError).toBeInstanceOf(RetryError);
       if (caughtError instanceof RetryError) {
         expect(caughtError.message).toContain('Failed after 3 attempts');
         expect(caughtError.attempts).toBe(3);
       }
-      
+
       // Restore fake timers
       jest.useFakeTimers();
     }, 10000);
@@ -113,10 +113,7 @@ describe('RetryHandler', () => {
         retryableErrors: ['CUSTOM_ERROR'],
       });
       const error = new Error('CUSTOM_ERROR');
-      const fn = jest
-        .fn()
-        .mockRejectedValueOnce(error)
-        .mockResolvedValue('success');
+      const fn = jest.fn().mockRejectedValueOnce(error).mockResolvedValue('success');
 
       const promise = handler.execute(fn);
       jest.advanceTimersByTime(2000);
@@ -130,10 +127,7 @@ describe('RetryHandler', () => {
     it('should check error code for retryability', async () => {
       const handler = new RetryHandler();
       const error = Object.assign(new Error('Connection reset'), { code: 'ECONNRESET' });
-      const fn = jest
-        .fn()
-        .mockRejectedValueOnce(error)
-        .mockResolvedValue('success');
+      const fn = jest.fn().mockRejectedValueOnce(error).mockResolvedValue('success');
 
       const promise = handler.execute(fn);
       jest.advanceTimersByTime(2000);
@@ -146,10 +140,7 @@ describe('RetryHandler', () => {
     it('should check error message for retryability', async () => {
       const handler = new RetryHandler();
       const error = new Error('Connection timeout: ETIMEDOUT occurred');
-      const fn = jest
-        .fn()
-        .mockRejectedValueOnce(error)
-        .mockResolvedValue('success');
+      const fn = jest.fn().mockRejectedValueOnce(error).mockResolvedValue('success');
 
       const promise = handler.execute(fn);
       jest.advanceTimersByTime(2000);
@@ -255,4 +246,3 @@ describe('RetryHandler', () => {
     }, 10000);
   });
 });
-

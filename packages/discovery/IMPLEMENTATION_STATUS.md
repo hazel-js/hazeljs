@@ -3,6 +3,7 @@
 ## Completed
 
 ### Core Components
+
 - **Types & Interfaces** - Complete type definitions for service instances, configs, and filters
 - **Service Registry** - Automatic registration with health checks, heartbeat, and config validation
 - **Discovery Client** - Service discovery with caching, filtering, auto-refresh, and graceful shutdown
@@ -17,11 +18,13 @@
   - Zone Aware
 
 ### Registry Backends
+
 - **Redis backend** - Production-ready distributed registry with TTL, SCAN-based enumeration, MGET batch lookups, and connection error handling
 - **Consul integration** - HashiCorp Consul with TTL health checks and proper typed client interface
 - **Kubernetes Service Discovery** - Native K8s Endpoints integration (read-only discovery)
 
 ### Features Implemented
+
 - Service registration and deregistration
 - Automatic health checks
 - Heartbeat mechanism
@@ -37,6 +40,7 @@
 - **Redis connection resilience** - Tracks connection state via event handlers, throws clear errors when disconnected
 
 ### Testing
+
 - Unit tests for ServiceRegistry
 - Unit tests for DiscoveryClient
 - Unit tests for ServiceClient
@@ -50,6 +54,7 @@
 - **Coverage thresholds: 85%+ lines/statements, 70%+ branches, 80%+ functions**
 
 ### Documentation
+
 - README with full API reference and usage examples
 - Package structure
 - TypeScript definitions
@@ -61,10 +66,12 @@ None currently
 ## TODO
 
 ### Future Enhancements
+
 - etcd integration (alternative to Consul)
 - Apache ZooKeeper support
 
 ### Advanced Features
+
 - Server-side discovery
 - Service mesh integration
 - Advanced health check strategies
@@ -74,6 +81,7 @@ None currently
 - Blue-green deployment support
 
 ### Testing & Documentation
+
 - Integration tests with real backends
 - E2E tests with real services
 - Performance benchmarks

@@ -27,16 +27,18 @@ import { AppModule } from './app.module';
 const app = new HazelApp(AppModule);
 
 // Add security headers middleware
-app.use(new SecurityHeadersMiddleware({
-  noSniff: true,
-  frameOptions: 'DENY',
-  xssProtection: true,
-  hsts: {
-    maxAge: 31536000, // 1 year
-    includeSubDomains: true,
-  },
-  hidePoweredBy: true,
-}));
+app.use(
+  new SecurityHeadersMiddleware({
+    noSniff: true,
+    frameOptions: 'DENY',
+    xssProtection: true,
+    hsts: {
+      maxAge: 31536000, // 1 year
+      includeSubDomains: true,
+    },
+    hidePoweredBy: true,
+  })
+);
 
 await app.listen(3000);
 ```
@@ -46,29 +48,31 @@ await app.listen(3000);
 ```typescript
 import { SecurityHeadersMiddleware } from '@hazeljs/core';
 
-app.use(new SecurityHeadersMiddleware({
-  // Content Security Policy
-  contentSecurityPolicy: {
-    defaultSrc: ["'self'"],
-    scriptSrc: ["'self'", "'unsafe-inline'"],
-    styleSrc: ["'self'", "'unsafe-inline'"],
-    imgSrc: ["'self'", 'data:', 'https:'],
-    connectSrc: ["'self'"],
-    fontSrc: ["'self'"],
-    objectSrc: ["'none'"],
-    mediaSrc: ["'self'"],
-    frameSrc: ["'none'"],
-    upgradeInsecureRequests: true,
-  },
-  // Referrer Policy
-  referrerPolicy: 'strict-origin-when-cross-origin',
-  // Permissions Policy
-  permissionsPolicy: {
-    geolocation: ['()'],
-    camera: ['()'],
-    microphone: ['()'],
-  },
-}));
+app.use(
+  new SecurityHeadersMiddleware({
+    // Content Security Policy
+    contentSecurityPolicy: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", 'data:', 'https:'],
+      connectSrc: ["'self'"],
+      fontSrc: ["'self'"],
+      objectSrc: ["'none'"],
+      mediaSrc: ["'self'"],
+      frameSrc: ["'none'"],
+      upgradeInsecureRequests: true,
+    },
+    // Referrer Policy
+    referrerPolicy: 'strict-origin-when-cross-origin',
+    // Permissions Policy
+    permissionsPolicy: {
+      geolocation: ['()'],
+      camera: ['()'],
+      microphone: ['()'],
+    },
+  })
+);
 ```
 
 ## Rate Limiting
@@ -81,10 +85,12 @@ Rate limiting prevents abuse by limiting the number of requests from a single IP
 import { RateLimitMiddleware } from '@hazeljs/core';
 
 // Limit to 100 requests per 15 minutes
-app.use(new RateLimitMiddleware({
-  max: 100,
-  windowMs: 15 * 60 * 1000, // 15 minutes
-}));
+app.use(
+  new RateLimitMiddleware({
+    max: 100,
+    windowMs: 15 * 60 * 1000, // 15 minutes
+  })
+);
 ```
 
 ### Advanced Configuration
@@ -92,21 +98,23 @@ app.use(new RateLimitMiddleware({
 ```typescript
 import { RateLimitMiddleware } from '@hazeljs/core';
 
-app.use(new RateLimitMiddleware({
-  max: 10,
-  windowMs: 60 * 1000, // 1 minute
-  keyGenerator: (req) => {
-    // Custom key generation (e.g., by user ID)
-    const userId = req.headers['x-user-id'];
-    return userId || req.socket?.remoteAddress || 'unknown';
-  },
-  message: 'Too many requests, please try again later.',
-  statusCode: 429,
-  standardHeaders: true,
-  legacyHeaders: true,
-  skipSuccessfulRequests: false,
-  skipFailedRequests: false,
-}));
+app.use(
+  new RateLimitMiddleware({
+    max: 10,
+    windowMs: 60 * 1000, // 1 minute
+    keyGenerator: (req) => {
+      // Custom key generation (e.g., by user ID)
+      const userId = req.headers['x-user-id'];
+      return userId || req.socket?.remoteAddress || 'unknown';
+    },
+    message: 'Too many requests, please try again later.',
+    statusCode: 429,
+    standardHeaders: true,
+    legacyHeaders: true,
+    skipSuccessfulRequests: false,
+    skipFailedRequests: false,
+  })
+);
 ```
 
 ### Route-Specific Rate Limiting
@@ -136,11 +144,13 @@ CSRF (Cross-Site Request Forgery) protection prevents unauthorized actions on be
 ```typescript
 import { CsrfMiddleware } from '@hazeljs/core';
 
-app.use(new CsrfMiddleware({
-  cookieName: '_csrf',
-  headerName: 'x-csrf-token',
-  methods: ['POST', 'PUT', 'PATCH', 'DELETE'],
-}));
+app.use(
+  new CsrfMiddleware({
+    cookieName: '_csrf',
+    headerName: 'x-csrf-token',
+    methods: ['POST', 'PUT', 'PATCH', 'DELETE'],
+  })
+);
 ```
 
 ### Frontend Integration
@@ -149,7 +159,7 @@ app.use(new CsrfMiddleware({
 <!-- Get CSRF token from response header -->
 <script>
   const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
-  
+
   // Include in requests
   fetch('/api/users', {
     method: 'POST',
@@ -165,9 +175,11 @@ app.use(new CsrfMiddleware({
 ### Exclude Specific Paths
 
 ```typescript
-app.use(new CsrfMiddleware({
-  excludePaths: ['/webhook', '/api/public'],
-}));
+app.use(
+  new CsrfMiddleware({
+    excludePaths: ['/webhook', '/api/public'],
+  })
+);
 ```
 
 ## Input Sanitization
@@ -202,7 +214,7 @@ async createUser(@Body() userData: CreateUserDto) {
     sanitizeHtml: false,
     allowedKeys: ['name', 'email', 'bio'],
   });
-  
+
   return this.userService.create(sanitized);
 }
 ```
@@ -317,13 +329,15 @@ const safeText = escapeHtml(userInput);
 ### 2. Use Content Security Policy
 
 ```typescript
-app.use(new SecurityHeadersMiddleware({
-  contentSecurityPolicy: {
-    defaultSrc: ["'self'"],
-    scriptSrc: ["'self'"], // No 'unsafe-inline' or 'unsafe-eval'
-    styleSrc: ["'self'", "'unsafe-inline'"],
-  },
-}));
+app.use(
+  new SecurityHeadersMiddleware({
+    contentSecurityPolicy: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'"], // No 'unsafe-inline' or 'unsafe-eval'
+      styleSrc: ["'self'", "'unsafe-inline'"],
+    },
+  })
+);
 ```
 
 ### 3. Set Proper Content Types
@@ -393,12 +407,12 @@ if (useHttps) {
   // Configure HTTPS
   const https = require('https');
   const fs = require('fs');
-  
+
   const options = {
     key: fs.readFileSync('path/to/key.pem'),
     cert: fs.readFileSync('path/to/cert.pem'),
   };
-  
+
   https.createServer(options, app).listen(443);
 }
 ```
@@ -426,12 +440,10 @@ export class GlobalExceptionFilter implements ExceptionFilter<HttpError> {
   catch(exception: HttpError, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse();
-    
+
     // Don't expose internal errors
-    const message = exception.statusCode >= 500
-      ? 'Internal server error'
-      : exception.message;
-    
+    const message = exception.statusCode >= 500 ? 'Internal server error' : exception.message;
+
     response.status(exception.statusCode).json({
       statusCode: exception.statusCode,
       message,
@@ -463,4 +475,3 @@ export class GlobalExceptionFilter implements ExceptionFilter<HttpError> {
 - [OWASP Top 10](https://owasp.org/www-project-top-ten/)
 - [Node.js Security Best Practices](https://nodejs.org/en/docs/guides/security/)
 - [HazelJS Security Policy](../SECURITY.md)
-

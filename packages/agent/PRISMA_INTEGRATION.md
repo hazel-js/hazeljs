@@ -296,11 +296,11 @@ npx prisma migrate dev
 model AgentContext {
   // Use your own ID format
   id          String   @id @default(cuid()) // or @default(uuid())
-  
+
   // Add custom fields
   priority    Int      @default(0)
   tags        String[]
-  
+
   // Customize JSON fields
   metadata    Json     @default("{}")
 }
@@ -325,11 +325,11 @@ model AgentContext {
 ```prisma
 model AgentContext {
   // ... fields ...
-  
+
   // Add composite indexes
   @@index([agentId, state])
   @@index([sessionId, createdAt])
-  
+
   // Add full-text search (PostgreSQL)
   @@index([input(ops: Raw("gin_trgm_ops"))])
 }
@@ -362,7 +362,7 @@ export class AppModule {
     const stateManager = new DatabaseStateManager({
       client: this.prisma,
     });
-    
+
     // Use with AgentRuntime
     // (configure in your agent service)
   }
@@ -374,6 +374,7 @@ export class AppModule {
 ### Error: "Model AgentContext not found"
 
 **Solution**: Make sure you've:
+
 1. Added the model to your schema
 2. Run `npx prisma generate`
 3. Restarted your application
@@ -381,6 +382,7 @@ export class AppModule {
 ### Error: "Column does not exist"
 
 **Solution**: Run migrations:
+
 ```bash
 npx prisma migrate dev
 ```
@@ -394,6 +396,7 @@ npx prisma migrate dev
 ### Performance Issues
 
 1. **Add indexes** on frequently queried fields:
+
    ```prisma
    @@index([sessionId])
    @@index([userId])
@@ -401,6 +404,7 @@ npx prisma migrate dev
    ```
 
 2. **Use soft deletes** to avoid expensive DELETE operations:
+
    ```prisma
    deletedAt DateTime?
    @@index([deletedAt])
@@ -494,6 +498,7 @@ export class AppModule {}
 5. ✅ Test with your agents
 
 For more details, see:
+
 - [PERSISTENCE.md](./PERSISTENCE.md) - Configuration guide
 - [STATE_VS_MEMORY.md](./STATE_VS_MEMORY.md) - Understanding State vs Memory
 - [prisma-schema.example.prisma](./prisma-schema.example.prisma) - Full schema example

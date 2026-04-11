@@ -1,5 +1,11 @@
 import { Command } from 'commander';
-import { Generator, GeneratorOptions, GenerateResult, GenerateCLIOptions, printGenerateResult } from '../utils/generator';
+import {
+  Generator,
+  GeneratorOptions,
+  GenerateResult,
+  GenerateCLIOptions,
+  printGenerateResult,
+} from '../utils/generator';
 
 const CREATE_DTO_TEMPLATE = `import { IsString, IsOptional } from 'class-validator';
 

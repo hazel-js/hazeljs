@@ -23,7 +23,7 @@ import { CanActivate, ExecutionContext, Injectable } from '@hazeljs/core';
 export class AuthGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean | Promise<boolean> {
     const request = context.switchToHttp().getRequest();
-    
+
     // Validate request
     return this.validateRequest(request);
   }
@@ -36,6 +36,7 @@ export class AuthGuard implements CanActivate {
 ```
 
 The `canActivate()` method should return:
+
 - `true` - Allow the request to proceed
 - `false` - Deny the request (returns 403 Forbidden)
 - `Promise<boolean>` - For async validation
@@ -92,12 +93,7 @@ await app.listen(3000);
 Here's a complete authentication guard using JWT:
 
 ```typescript
-import { 
-  CanActivate, 
-  ExecutionContext, 
-  Injectable,
-  UnauthorizedError,
-} from '@hazeljs/core';
+import { CanActivate, ExecutionContext, Injectable, UnauthorizedError } from '@hazeljs/core';
 import * as jwt from 'jsonwebtoken';
 
 @Injectable()
@@ -114,10 +110,10 @@ export class JwtAuthGuard implements CanActivate {
 
     try {
       const payload = jwt.verify(token, process.env.JWT_SECRET || 'secret');
-      
+
       // Attach user to request for use in handlers
       request.user = payload;
-      
+
       return true;
     } catch (error) {
       throw new UnauthorizedError('Invalid or expired token');
@@ -145,12 +141,7 @@ export class UsersController {
 Check if the user has the required role:
 
 ```typescript
-import { 
-  CanActivate, 
-  ExecutionContext, 
-  Injectable,
-  ForbiddenError,
-} from '@hazeljs/core';
+import { CanActivate, ExecutionContext, Injectable, ForbiddenError } from '@hazeljs/core';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
@@ -164,14 +155,10 @@ export class RolesGuard implements CanActivate {
       throw new ForbiddenError('User not authenticated');
     }
 
-    const hasRole = this.requiredRoles.some(role => 
-      user.roles?.includes(role)
-    );
+    const hasRole = this.requiredRoles.some((role) => user.roles?.includes(role));
 
     if (!hasRole) {
-      throw new ForbiddenError(
-        `Required roles: ${this.requiredRoles.join(', ')}`
-      );
+      throw new ForbiddenError(`Required roles: ${this.requiredRoles.join(', ')}`);
     }
 
     return true;
@@ -192,40 +179,31 @@ export const Roles = (...roles: string[]) => SetMetadata('roles', roles);
 Enhanced RolesGuard that reads from metadata:
 
 ```typescript
-import { 
-  CanActivate, 
-  ExecutionContext, 
-  Injectable,
-  ForbiddenError,
-} from '@hazeljs/core';
+import { CanActivate, ExecutionContext, Injectable, ForbiddenError } from '@hazeljs/core';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest();
     const handler = context.getHandler();
-    
+
     // Get required roles from metadata
     const requiredRoles = Reflect.getMetadata('roles', handler) || [];
-    
+
     if (requiredRoles.length === 0) {
       return true; // No roles required
     }
 
     const user = request.user;
-    
+
     if (!user) {
       throw new ForbiddenError('User not authenticated');
     }
 
-    const hasRole = requiredRoles.some(role => 
-      user.roles?.includes(role)
-    );
+    const hasRole = requiredRoles.some((role) => user.roles?.includes(role));
 
     if (!hasRole) {
-      throw new ForbiddenError(
-        `Required roles: ${requiredRoles.join(', ')}`
-      );
+      throw new ForbiddenError(`Required roles: ${requiredRoles.join(', ')}`);
     }
 
     return true;
@@ -259,14 +237,9 @@ export class AdminController {
 Check specific permissions instead of roles:
 
 ```typescript
-import { 
-  CanActivate, 
-  ExecutionContext, 
-  Injectable,
-  ForbiddenError,
-} from '@hazeljs/core';
+import { CanActivate, ExecutionContext, Injectable, ForbiddenError } from '@hazeljs/core';
 
-export const RequirePermissions = (...permissions: string[]) => 
+export const RequirePermissions = (...permissions: string[]) =>
   SetMetadata('permissions', permissions);
 
 @Injectable()
@@ -274,28 +247,26 @@ export class PermissionsGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
     const handler = context.getHandler();
-    
+
     const requiredPermissions = Reflect.getMetadata('permissions', handler) || [];
-    
+
     if (requiredPermissions.length === 0) {
       return true;
     }
 
     const user = request.user;
-    
+
     if (!user) {
       throw new ForbiddenError('User not authenticated');
     }
 
     // Check if user has all required permissions
-    const hasAllPermissions = requiredPermissions.every(permission =>
+    const hasAllPermissions = requiredPermissions.every((permission) =>
       user.permissions?.includes(permission)
     );
 
     if (!hasAllPermissions) {
-      throw new ForbiddenError(
-        `Missing required permissions: ${requiredPermissions.join(', ')}`
-      );
+      throw new ForbiddenError(`Missing required permissions: ${requiredPermissions.join(', ')}`);
     }
 
     return true;
@@ -329,12 +300,7 @@ export class PostsController {
 Validate API keys for external integrations:
 
 ```typescript
-import { 
-  CanActivate, 
-  ExecutionContext, 
-  Injectable,
-  UnauthorizedError,
-} from '@hazeljs/core';
+import { CanActivate, ExecutionContext, Injectable, UnauthorizedError } from '@hazeljs/core';
 
 @Injectable()
 export class ApiKeyGuard implements CanActivate {
@@ -368,11 +334,7 @@ export class ApiKeyGuard implements CanActivate {
 Limit the number of requests from a client:
 
 ```typescript
-import { 
-  CanActivate, 
-  ExecutionContext, 
-  Injectable,
-} from '@hazeljs/core';
+import { CanActivate, ExecutionContext, Injectable } from '@hazeljs/core';
 import { TooManyRequestsError } from '../exceptions/http.exception';
 
 interface RateLimitOptions {
@@ -384,24 +346,26 @@ interface RateLimitOptions {
 export class RateLimitGuard implements CanActivate {
   private requests = new Map<string, number[]>();
 
-  constructor(private options: RateLimitOptions = {
-    windowMs: 60000, // 1 minute
-    maxRequests: 100,
-  }) {}
+  constructor(
+    private options: RateLimitOptions = {
+      windowMs: 60000, // 1 minute
+      maxRequests: 100,
+    }
+  ) {}
 
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest();
     const clientId = this.getClientId(request);
-    
+
     const now = Date.now();
     const windowStart = now - this.options.windowMs;
 
     // Get existing requests for this client
     let clientRequests = this.requests.get(clientId) || [];
-    
+
     // Filter out old requests outside the window
-    clientRequests = clientRequests.filter(time => time > windowStart);
-    
+    clientRequests = clientRequests.filter((time) => time > windowStart);
+
     // Check if limit exceeded
     if (clientRequests.length >= this.options.maxRequests) {
       throw new TooManyRequestsError(
@@ -457,11 +421,7 @@ If any guard returns `false` or throws an exception, the request is denied and s
 Create guards that apply conditionally:
 
 ```typescript
-import { 
-  CanActivate, 
-  ExecutionContext, 
-  Injectable,
-} from '@hazeljs/core';
+import { CanActivate, ExecutionContext, Injectable } from '@hazeljs/core';
 
 @Injectable()
 export class FeatureFlagGuard implements CanActivate {
@@ -469,7 +429,7 @@ export class FeatureFlagGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const isEnabled = await this.checkFeatureFlag(this.featureName);
-    
+
     if (!isEnabled) {
       throw new ForbiddenError(`Feature '${this.featureName}' is not enabled`);
     }
@@ -504,12 +464,7 @@ Here's a comprehensive example with authentication and authorization:
 <div class="filename">guards/jwt-auth.guard.ts</div>
 
 ```typescript
-import { 
-  CanActivate, 
-  ExecutionContext, 
-  Injectable,
-  UnauthorizedError,
-} from '@hazeljs/core';
+import { CanActivate, ExecutionContext, Injectable, UnauthorizedError } from '@hazeljs/core';
 import { JwtService } from '../services/jwt.service';
 
 @Injectable()
@@ -536,7 +491,7 @@ export class JwtAuthGuard implements CanActivate {
   private extractToken(request: any): string | null {
     const authHeader = request.headers.authorization;
     if (!authHeader) return null;
-    
+
     const [type, token] = authHeader.split(' ');
     return type === 'Bearer' ? token : null;
   }
@@ -546,32 +501,27 @@ export class JwtAuthGuard implements CanActivate {
 <div class="filename">guards/roles.guard.ts</div>
 
 ```typescript
-import { 
-  CanActivate, 
-  ExecutionContext, 
-  Injectable,
-  ForbiddenError,
-} from '@hazeljs/core';
+import { CanActivate, ExecutionContext, Injectable, ForbiddenError } from '@hazeljs/core';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest();
     const handler = context.getHandler();
-    
+
     const requiredRoles = Reflect.getMetadata('roles', handler);
-    
+
     if (!requiredRoles) {
       return true;
     }
 
     const user = request.user;
-    
+
     if (!user) {
       throw new ForbiddenError('User not found');
     }
 
-    const hasRole = requiredRoles.some(role => user.roles?.includes(role));
+    const hasRole = requiredRoles.some((role) => user.roles?.includes(role));
 
     if (!hasRole) {
       throw new ForbiddenError('Insufficient permissions');
@@ -597,9 +547,9 @@ export const Roles = (...roles: string[]) => {
 <div class="filename">users.controller.ts</div>
 
 ```typescript
-import { 
-  Controller, 
-  Get, 
+import {
+  Controller,
+  Get,
   Post,
   Put,
   Delete,
@@ -632,10 +582,7 @@ export class UsersController {
   @Put(':id')
   @UseGuards(RolesGuard)
   @Roles('admin', 'moderator')
-  update(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() updateUserDto: UpdateUserDto,
-  ) {
+  update(@Param('id', ParseIntPipe) id: number, @Body() updateUserDto: UpdateUserDto) {
     return this.usersService.update(id, updateUserDto);
   }
 

@@ -77,12 +77,12 @@ import { TaskService } from './task.service';
 
 async function bootstrap() {
   const app = new HazelApp(AppModule);
-  
+
   // Get the TaskService instance and register its cron jobs
   const container = Container.getInstance();
   const taskService = container.resolve(TaskService);
   CronModule.registerJobsFromProvider(taskService);
-  
+
   await app.listen(3000);
 }
 
@@ -112,29 +112,29 @@ HazelJS provides predefined expressions for common patterns:
 import { CronExpression } from '@hazeljs/cron';
 
 // Time-based
-CronExpression.EVERY_SECOND        // * * * * * *
-CronExpression.EVERY_5_SECONDS     // */5 * * * * *
-CronExpression.EVERY_10_SECONDS    // */10 * * * * *
-CronExpression.EVERY_30_SECONDS    // */30 * * * * *
-CronExpression.EVERY_MINUTE        // 0 * * * * *
-CronExpression.EVERY_5_MINUTES     // 0 */5 * * * *
-CronExpression.EVERY_10_MINUTES    // 0 */10 * * * *
-CronExpression.EVERY_30_MINUTES    // 0 */30 * * * *
-CronExpression.EVERY_HOUR          // 0 0 * * * *
+CronExpression.EVERY_SECOND; // * * * * * *
+CronExpression.EVERY_5_SECONDS; // */5 * * * * *
+CronExpression.EVERY_10_SECONDS; // */10 * * * * *
+CronExpression.EVERY_30_SECONDS; // */30 * * * * *
+CronExpression.EVERY_MINUTE; // 0 * * * * *
+CronExpression.EVERY_5_MINUTES; // 0 */5 * * * *
+CronExpression.EVERY_10_MINUTES; // 0 */10 * * * *
+CronExpression.EVERY_30_MINUTES; // 0 */30 * * * *
+CronExpression.EVERY_HOUR; // 0 0 * * * *
 
 // Daily
-CronExpression.EVERY_DAY_AT_MIDNIGHT  // 0 0 0 * * *
-CronExpression.EVERY_DAY_AT_NOON      // 0 0 12 * * *
+CronExpression.EVERY_DAY_AT_MIDNIGHT; // 0 0 0 * * *
+CronExpression.EVERY_DAY_AT_NOON; // 0 0 12 * * *
 
 // Weekly
-CronExpression.EVERY_WEEK          // 0 0 0 * * 0
-CronExpression.EVERY_WEEKDAY       // 0 0 0 * * 1-5
-CronExpression.EVERY_WEEKEND       // 0 0 0 * * 0,6
+CronExpression.EVERY_WEEK; // 0 0 0 * * 0
+CronExpression.EVERY_WEEKDAY; // 0 0 0 * * 1-5
+CronExpression.EVERY_WEEKEND; // 0 0 0 * * 0,6
 
 // Monthly/Yearly
-CronExpression.EVERY_MONTH         // 0 0 0 1 * *
-CronExpression.EVERY_QUARTER       // 0 0 0 1 */3 *
-CronExpression.EVERY_YEAR          // 0 0 0 1 1 *
+CronExpression.EVERY_MONTH; // 0 0 0 1 * *
+CronExpression.EVERY_QUARTER; // 0 0 0 1 */3 *
+CronExpression.EVERY_YEAR; // 0 0 0 1 1 *
 ```
 
 ### Custom Expressions
@@ -159,25 +159,25 @@ The `@Cron` decorator accepts the following options:
 interface CronOptions {
   // Job name for identification (required)
   name?: string;
-  
+
   // Cron expression (required)
   cronTime: string;
-  
+
   // Timezone for the cron job
   timeZone?: string;
-  
+
   // Run immediately when the job is registered
   runOnInit?: boolean;
-  
+
   // Whether the job is enabled
   enabled?: boolean;
-  
+
   // Maximum number of times the job can run
   maxRuns?: number;
-  
+
   // Error handler
   onError?: (error: Error) => void;
-  
+
   // Completion callback
   onComplete?: () => void;
 }
@@ -308,12 +308,12 @@ The job status includes:
 
 ```typescript
 interface CronJobStatus {
-  name: string;              // Job name
-  isRunning: boolean;        // Whether currently executing
-  lastExecution?: Date;      // Last execution time
-  nextExecution?: Date;      // Next scheduled execution
-  runCount: number;          // Number of times executed
-  enabled: boolean;          // Whether the job is enabled
+  name: string; // Job name
+  isRunning: boolean; // Whether currently executing
+  lastExecution?: Date; // Last execution time
+  nextExecution?: Date; // Next scheduled execution
+  runCount: number; // Number of times executed
+  enabled: boolean; // Whether the job is enabled
 }
 ```
 
@@ -397,7 +397,7 @@ export class DynamicJobService {
   onError: async (error) => {
     // Log to monitoring service
     await logger.error('Critical task failed', { error });
-    
+
     // Send alert
     await alertService.send('Critical task failed');
   },
@@ -475,7 +475,7 @@ describe('TaskService', () => {
   it('should execute daily cleanup', async () => {
     // Test the method directly
     await service.handleDailyCleanup();
-    
+
     // Assert expected behavior
     expect(/* ... */).toBe(/* ... */);
   });
@@ -494,7 +494,7 @@ describe('TaskService', () => {
 })
 async sendDailyDigest(): Promise<void> {
   const users = await this.userService.getActiveUsers();
-  
+
   for (const user of users) {
     const digest = await this.digestService.generate(user);
     await this.emailService.send(user.email, digest);
@@ -515,7 +515,7 @@ async sendDailyDigest(): Promise<void> {
 async cleanupOldRecords(): Promise<void> {
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-  
+
   await this.prisma.log.deleteMany({
     where: {
       createdAt: {
@@ -536,7 +536,7 @@ async cleanupOldRecords(): Promise<void> {
 })
 async warmCache(): Promise<void> {
   const popularItems = await this.itemService.getPopular();
-  
+
   for (const item of popularItems) {
     await this.cacheService.set(
       `item:${item.id}`,
@@ -556,12 +556,12 @@ async warmCache(): Promise<void> {
 })
 async generateWeeklyReport(): Promise<void> {
   const report = await this.reportService.generateWeekly();
-  
+
   await this.storageService.save(
     `reports/weekly-${Date.now()}.pdf`,
     report
   );
-  
+
   await this.notificationService.notify(
     'admins',
     'Weekly report generated'

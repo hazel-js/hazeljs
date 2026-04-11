@@ -13,10 +13,7 @@ const ai = HazelAI.create({
 });
 
 // Sequential chain
-const result = await ai.hazel
-  .prompt('Analyze: {topic}')
-  .rag('knowledge-base')
-  .execute('climate');
+const result = await ai.hazel.prompt('Analyze: {topic}').rag('knowledge-base').execute('climate');
 
 // Streaming: only supported when the **last** operation is `prompt`.
 // Earlier ops run to completion, then the final prompt streams token deltas.
@@ -95,7 +92,7 @@ await ai.hazel
   .parallel(
     ai.hazel.prompt('A'),
     ai.hazel.prompt('B'),
-    { strategy: 'all' }, // or 'any' | 'race' — matches ParallelOperationConfig
+    { strategy: 'all' } // or 'any' | 'race' — matches ParallelOperationConfig
   )
   .execute();
 ```
@@ -109,7 +106,7 @@ await ai.hazel
 const chain = ai.hazel.ifElse(
   (x: string) => x.length > 10,
   ai.hazel.prompt('long'),
-  ai.hazel.prompt('short'),
+  ai.hazel.prompt('short')
 );
 await chain.execute('hello world');
 ```

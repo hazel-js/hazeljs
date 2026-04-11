@@ -6,15 +6,18 @@ import { MemoryItem } from '../../types/memory-item.types';
 import { MemoryQuery, MemoryStats, PruneOptions } from '../../types/store.types';
 import { MemoryStore } from '../memory-store.interface';
 export interface PostgresStoreOptions {
-    /** A pool-like client with query(sql, params?) returning rows and optional rowCount. */
-    pool: {
-        query: (sql: string, params?: unknown[]) => Promise<{
-            rows: unknown[];
-            rowCount?: number;
-        }>;
-    };
-    /** Table name. Default: memory_items. */
-    tableName?: string;
+  /** A pool-like client with query(sql, params?) returning rows and optional rowCount. */
+  pool: {
+    query: (
+      sql: string,
+      params?: unknown[]
+    ) => Promise<{
+      rows: unknown[];
+      rowCount?: number;
+    }>;
+  };
+  /** Table name. Default: memory_items. */
+  tableName?: string;
 }
 /**
  * PostgreSQL-backed memory store. Create table with:
@@ -37,19 +40,19 @@ export interface PostgresStoreOptions {
  * CREATE INDEX idx_memory_items_expires ON memory_items(expires_at) WHERE expires_at IS NOT NULL;
  */
 export declare class PostgresStore implements MemoryStore {
-    private readonly pool;
-    private readonly table;
-    private initialized;
-    constructor(options: PostgresStoreOptions);
-    initialize(): Promise<void>;
-    save(item: MemoryItem): Promise<string>;
-    saveBatch(items: MemoryItem[]): Promise<string[]>;
-    get(id: string): Promise<MemoryItem | null>;
-    update(id: string, updates: Partial<MemoryItem>): Promise<void>;
-    delete(id: string): Promise<void>;
-    deleteBatch(ids: string[]): Promise<void>;
-    query(options: MemoryQuery): Promise<MemoryItem[]>;
-    getStats(userId?: string): Promise<MemoryStats>;
-    prune(options?: PruneOptions): Promise<number>;
+  private readonly pool;
+  private readonly table;
+  private initialized;
+  constructor(options: PostgresStoreOptions);
+  initialize(): Promise<void>;
+  save(item: MemoryItem): Promise<string>;
+  saveBatch(items: MemoryItem[]): Promise<string[]>;
+  get(id: string): Promise<MemoryItem | null>;
+  update(id: string, updates: Partial<MemoryItem>): Promise<void>;
+  delete(id: string): Promise<void>;
+  deleteBatch(ids: string[]): Promise<void>;
+  query(options: MemoryQuery): Promise<MemoryItem[]>;
+  getStats(userId?: string): Promise<MemoryStats>;
+  prune(options?: PruneOptions): Promise<number>;
 }
 //# sourceMappingURL=postgres.store.d.ts.map

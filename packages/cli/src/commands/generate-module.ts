@@ -1,7 +1,14 @@
 import fs from 'fs';
 import path from 'path';
 import { Command } from 'commander';
-import { toPascalCase, toKebabCase, renderTemplate, GenerateResult, GenerateCLIOptions, printGenerateResult } from '../utils/generator';
+import {
+  toPascalCase,
+  toKebabCase,
+  renderTemplate,
+  GenerateResult,
+  GenerateCLIOptions,
+  printGenerateResult,
+} from '../utils/generator';
 
 const MODULE_TEMPLATE = `import { HazelModule } from '@hazeljs/core';
 import { {{className}}Controller } from './{{fileName}}.controller';
@@ -71,7 +78,10 @@ const UPDATE_DTO_TEMPLATE = `export class Update{{className}}Dto {
  * @param options - Standard CLI options (--path, --dry-run, --json)
  * @returns GenerateResult with paths of all created files
  */
-export async function runModule(name: string, options: GenerateCLIOptions): Promise<GenerateResult> {
+export async function runModule(
+  name: string,
+  options: GenerateCLIOptions
+): Promise<GenerateResult> {
   const className = toPascalCase(name);
   const fileName = toKebabCase(name);
   const camelName = fileName.replace(/-([a-z])/g, (_, c: string) => c.toUpperCase());

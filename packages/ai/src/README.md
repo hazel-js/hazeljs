@@ -114,13 +114,16 @@ if (!check.allowed) {
 }
 
 // Track usage after API call
-tracker.track({
-  userId: 'user123',
-  promptTokens: 100,
-  completionTokens: 200,
-  totalTokens: 300,
-  timestamp: Date.now(),
-}, 'gpt-4-turbo-preview');
+tracker.track(
+  {
+    userId: 'user123',
+    promptTokens: 100,
+    completionTokens: 200,
+    totalTokens: 300,
+    timestamp: Date.now(),
+  },
+  'gpt-4-turbo-preview'
+);
 
 // Get statistics
 const stats = tracker.getUserStats('user123', 30); // Last 30 days
@@ -145,6 +148,7 @@ const provider = new OpenAIProvider(process.env.OPENAI_API_KEY);
 ```
 
 **Models:**
+
 - `gpt-4-turbo-preview`
 - `gpt-4`
 - `gpt-3.5-turbo`
@@ -160,6 +164,7 @@ const provider = new AnthropicProvider(process.env.ANTHROPIC_API_KEY);
 ```
 
 **Models:**
+
 - `claude-3-opus-20240229`
 - `claude-3-sonnet-20240229`
 - `claude-3-haiku-20240307`
@@ -173,6 +178,7 @@ const provider = new GeminiProvider(process.env.GEMINI_API_KEY);
 ```
 
 **Models:**
+
 - `gemini-pro`
 - `gemini-pro-vision`
 
@@ -185,6 +191,7 @@ const provider = new CohereProvider(process.env.COHERE_API_KEY);
 ```
 
 **Models:**
+
 - `command`
 - `command-light`
 - `embed-english-v3.0`
@@ -277,17 +284,17 @@ const response = await ai.complete(request, {
 
 ```typescript
 // Use GPT-3.5 for simple tasks
-model: 'gpt-3.5-turbo'  // $0.0005 per 1K tokens
+model: 'gpt-3.5-turbo'; // $0.0005 per 1K tokens
 
 // Use GPT-4 for complex tasks
-model: 'gpt-4-turbo-preview'  // $0.01 per 1K tokens
+model: 'gpt-4-turbo-preview'; // $0.01 per 1K tokens
 ```
 
 ### 3. Implement Rate Limiting
 
 ```typescript
 const tracker = new TokenTracker({
-  maxTokensPerDay: 50000,  // Limit daily usage
+  maxTokensPerDay: 50000, // Limit daily usage
   maxTokensPerMonth: 500000,
 });
 ```
@@ -296,10 +303,10 @@ const tracker = new TokenTracker({
 
 ```typescript
 // Bad: Verbose prompt
-"Please analyze the following text and provide a detailed summary..."
+'Please analyze the following text and provide a detailed summary...';
 
 // Good: Concise prompt
-"Summarize: {{text}}"
+'Summarize: {{text}}';
 ```
 
 ## Production Best Practices

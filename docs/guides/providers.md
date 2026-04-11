@@ -194,10 +194,7 @@ The `useClass` syntax allows you to dynamically determine a class:
 ```typescript
 const loggerProvider = {
   provide: LoggerService,
-  useClass:
-    process.env.NODE_ENV === 'development'
-      ? DevLoggerService
-      : ProdLoggerService,
+  useClass: process.env.NODE_ENV === 'development' ? DevLoggerService : ProdLoggerService,
 };
 ```
 
@@ -262,7 +259,7 @@ export class BaseService {
 @Injectable()
 export class UsersService extends BaseService {
   // logger is automatically injected from parent
-  
+
   findAll() {
     this.logger.log('Finding all users');
     return [];

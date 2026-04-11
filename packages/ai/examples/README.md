@@ -30,12 +30,14 @@ node dist/examples/unified-platform-example.js
 ### 1. Simple Demo (`simple-demo.ts`)
 
 A basic demonstration that works without requiring API keys:
+
 - Shows platform initialization
 - Demonstrates workflow functionality
 - Shows assistant creation
 - Lists all available methods
 
 **Run:**
+
 ```bash
 node dist/examples/simple-demo.js
 ```
@@ -43,6 +45,7 @@ node dist/examples/simple-demo.js
 ### 2. Unified Platform Demo (`unified-platform-example.ts`)
 
 A comprehensive demo showing all features:
+
 - Chat and streaming
 - Classification and sentiment analysis
 - Scoring
@@ -51,11 +54,13 @@ A comprehensive demo showing all features:
 - Metrics tracking
 
 **Requirements:**
+
 - Set `OPENAI_API_KEY` environment variable for OpenAI
 - Or set `ANTHROPIC_API_KEY` for Claude
 - Or install and run Ollama for local models
 
 **Run:**
+
 ```bash
 export OPENAI_API_KEY=your-key-here
 node dist/examples/unified-platform-example.js
@@ -82,6 +87,7 @@ export GOOGLE_API_KEY=your-gemini-key
 ## Features Demonstrated
 
 ### Core AI Operations
+
 - **Chat**: Simple conversation with AI
 - **Stream**: Real-time streaming responses
 - **Classification**: Categorize text into labels
@@ -89,12 +95,14 @@ export GOOGLE_API_KEY=your-gemini-key
 - **Scoring**: Rate items against criteria
 
 ### Advanced Features
+
 - **Workflow**: Chain multiple steps together
 - **Assistant**: Memory-enabled conversations
 - **RAG**: Document Q&A (requires @hazeljs/rag)
 - **Agent**: Execute specialized agents (requires @hazeljs/agent)
 
 ### Platform Features
+
 - **Metrics**: Track usage and performance
 - **Multi-provider**: Switch between AI providers
 - **Type Safety**: Full TypeScript support
@@ -103,19 +111,25 @@ export GOOGLE_API_KEY=your-gemini-key
 ## Troubleshooting
 
 ### TypeScript Compilation Errors
+
 Make sure you're compiling from the `packages/ai` directory:
+
 ```bash
 cd packages/ai
 npx tsc examples/simple-demo.ts --outDir dist --target es2020 --module commonjs --esModuleInterop true
 ```
 
 ### Provider Not Available
+
 If you get "Provider X is not registered or available":
+
 1. Check that the required environment variables are set
 2. For Ollama, make sure it's installed and running: `ollama serve`
 
 ### Missing Dependencies
+
 If you get module not found errors:
+
 ```bash
 cd packages/ai
 npm install

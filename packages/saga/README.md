@@ -47,7 +47,6 @@ import { Saga, SagaStep } from '@hazeljs/saga';
 
 @Saga({ name: 'order-saga' })
 export class OrderSaga {
-  
   @SagaStep({ order: 1, compensate: 'cancelOrder' })
   async createOrder(data: any) {
     console.log('Order created for:', data.productId);
@@ -85,12 +84,12 @@ console.log(`Saga Status: ${context.status}`); // COMPLETED or ABORTED
 
 ## Orchestration vs. Choreography
 
-| Feature | Orchestration | Choreography |
-|---|---|---|
-| **Control** | Centralized in one class | Decentralized across handlers |
-| **Coupling** | High (Orchestrator knows all steps) | Low (Each service reacts to events) |
-| **Complexity** | Simple for small/medium flows | Better for very large, loosely coupled systems |
-| **Visibility** | Single point of truth | Distributed across the system |
+| Feature        | Orchestration                       | Choreography                                   |
+| -------------- | ----------------------------------- | ---------------------------------------------- |
+| **Control**    | Centralized in one class            | Decentralized across handlers                  |
+| **Coupling**   | High (Orchestrator knows all steps) | Low (Each service reacts to events)            |
+| **Complexity** | Simple for small/medium flows       | Better for very large, loosely coupled systems |
+| **Visibility** | Single point of truth               | Distributed across the system                  |
 
 ---
 
@@ -103,7 +102,6 @@ import { SagaChoreography, OnEvent } from '@hazeljs/saga';
 
 @SagaChoreography()
 export class ShippingChoreography {
-  
   @OnEvent('inventory.reserved')
   async handleInventoryReserved(order: any) {
     console.log('Shipping label generated for:', order.id);
@@ -124,13 +122,13 @@ export class ShippingChoreography {
 
 The `SagaContext` tracks the status of the transaction as it progresses:
 
-| Status | Description |
-|--------|-------------|
-| `STARTED` | Execution has begun. |
-| `COMPLETED` | All steps finished successfully. |
-| `FAILED` | A step encountered an error; compensation is pending. |
-| `COMPENSATING` | Reversing previously completed steps. |
-| `ABORTED` | Compensation finished; the transaction is rolled back. |
+| Status         | Description                                            |
+| -------------- | ------------------------------------------------------ |
+| `STARTED`      | Execution has begun.                                   |
+| `COMPLETED`    | All steps finished successfully.                       |
+| `FAILED`       | A step encountered an error; compensation is pending.  |
+| `COMPENSATING` | Reversing previously completed steps.                  |
+| `ABORTED`      | Compensation finished; the transaction is rolled back. |
 
 ---
 

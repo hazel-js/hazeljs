@@ -5,12 +5,14 @@ Documentation structure - practical, example-driven guides.
 ## Documentation Structure
 
 ### 1. Introduction
+
 - [ ] What is HazelJS?
 - [ ] Why HazelJS?
 - [ ] Philosophy
 - [ ] First Steps
 
 ### 2. Overview
+
 - [ ] Controllers
 - [ ] Providers
 - [ ] Modules
@@ -23,6 +25,7 @@ Documentation structure - practical, example-driven guides.
 ### 3. Fundamentals
 
 #### Controllers
+
 - [ ] Routing
 - [ ] Request object
 - [ ] Response handling
@@ -34,6 +37,7 @@ Documentation structure - practical, example-driven guides.
 - [ ] Async/await
 
 #### Providers
+
 - [ ] Services
 - [ ] Dependency injection
 - [ ] Scopes (Singleton, Transient, Request)
@@ -42,6 +46,7 @@ Documentation structure - practical, example-driven guides.
 - [ ] Property-based injection
 
 #### Modules
+
 - [ ] Feature modules
 - [ ] Shared modules
 - [ ] Module re-exporting
@@ -50,6 +55,7 @@ Documentation structure - practical, example-driven guides.
 - [ ] Dynamic modules
 
 #### Middleware
+
 - [ ] Applying middleware
 - [ ] Functional middleware
 - [ ] Class middleware
@@ -58,6 +64,7 @@ Documentation structure - practical, example-driven guides.
 - [ ] Route middleware
 
 #### Exception Filters
+
 - [ ] Built-in HTTP exceptions
 - [ ] Custom exceptions
 - [ ] Exception filters
@@ -65,6 +72,7 @@ Documentation structure - practical, example-driven guides.
 - [ ] Inheritance
 
 #### Pipes
+
 - [ ] Built-in pipes
 - [ ] Custom pipes
 - [ ] Validation pipe
@@ -72,12 +80,14 @@ Documentation structure - practical, example-driven guides.
 - [ ] Providing defaults
 
 #### Guards
+
 - [ ] Authorization guard
 - [ ] Role-based access control
 - [ ] Reflection and metadata
 - [ ] Execution context
 
 #### Interceptors
+
 - [ ] Basics
 - [ ] Binding interceptors
 - [ ] Response mapping
@@ -88,6 +98,7 @@ Documentation structure - practical, example-driven guides.
 ### 4. Techniques
 
 #### Database (Prisma)
+
 - [ ] Getting started with Prisma
 - [ ] Repository pattern
 - [ ] Migrations
@@ -97,6 +108,7 @@ Documentation structure - practical, example-driven guides.
 - [ ] Raw queries
 
 #### Configuration
+
 - [ ] Configuration module
 - [ ] Environment variables
 - [ ] Configuration validation
@@ -104,6 +116,7 @@ Documentation structure - practical, example-driven guides.
 - [ ] Partial registration
 
 #### Validation
+
 - [ ] Auto-validation
 - [ ] Stripping properties
 - [ ] Transform payload
@@ -111,6 +124,7 @@ Documentation structure - practical, example-driven guides.
 - [ ] Custom validators
 
 #### Caching
+
 - [ ] In-memory cache
 - [ ] Redis cache
 - [ ] Multi-tier caching
@@ -118,12 +132,14 @@ Documentation structure - practical, example-driven guides.
 - [ ] Custom cache store
 
 #### Distributed Systems
+
 - [x] Distributed Locking ([guide](guides/distributed-locking.md))
 - [x] Saga Patterns (Distributed Transactions) ([guide](guides/saga.md))
 - [ ] Redis-backed synchronization
 - [ ] Task Orchestration
 
 #### Authentication
+
 - [ ] JWT strategy
 - [ ] Passport integration
 - [ ] Guards
@@ -131,24 +147,28 @@ Documentation structure - practical, example-driven guides.
 - [ ] Protected routes
 
 #### Authorization
+
 - [ ] Role-based access control
 - [ ] Claims-based authorization
 - [ ] Policies
 - [ ] Custom decorators
 
 #### File Upload
+
 - [ ] Single file
 - [ ] Multiple files
 - [ ] File validation
 - [ ] Storage options
 
 #### Logging
+
 - [ ] Built-in logger
 - [ ] Custom logger
 - [ ] Log levels
 - [ ] Context
 
 #### Testing
+
 - [ ] Unit testing
 - [ ] Integration testing
 - [ ] E2E testing
@@ -158,12 +178,14 @@ Documentation structure - practical, example-driven guides.
 ### 5. AI Integration (Unique to HazelJS)
 
 #### Getting Started
+
 - [ ] AI module overview
 - [ ] Supported providers (OpenAI, Ollama, Anthropic, Gemini, Cohere)
 - [ ] Basic setup
 - [ ] Configuration
 
 #### OpenAI Integration
+
 - [ ] Chat completions
 - [ ] Streaming responses
 - [ ] Function calling
@@ -171,22 +193,26 @@ Documentation structure - practical, example-driven guides.
 - [ ] Image generation
 
 #### Ollama Integration
+
 - [ ] Local LLMs
 - [ ] Model management
 - [ ] Chat completions
 - [ ] Embeddings
 
 #### AI Context Management
+
 - [ ] Conversation history
 - [ ] Context windows
 - [ ] Memory management
 
 #### Token Tracking
+
 - [ ] Usage monitoring
 - [ ] Cost calculation
 - [ ] Rate limiting
 
 #### Vector Search
+
 - [ ] Embeddings
 - [ ] Similarity search
 - [ ] Similarity search
@@ -195,11 +221,13 @@ Documentation structure - practical, example-driven guides.
 - [ ] GraphRAG
 
 #### AI Decorators
+
 - [ ] @AITask decorator
 - [ ] @AIValidate decorator
 - [ ] @AIPrompt decorator
 
 #### Practical Examples
+
 - [ ] Chatbot
 - [ ] Content generation
 - [ ] Semantic search
@@ -207,6 +235,7 @@ Documentation structure - practical, example-driven guides.
 - [ ] Data extraction
 
 #### Advanced ML & Monitoring
+
 - [ ] Feature Store (TypeScript-Native)
 - [ ] Experiment Tracking
 - [ ] Drift Detection (PSC, KS, JSD)
@@ -215,6 +244,7 @@ Documentation structure - practical, example-driven guides.
 - [ ] Data Contracts & Pipelines
 
 #### Agent Ecosystem
+
 - [ ] MCP Protocol Support
 - [ ] A2A Compliance (Interoperability)
 - [ ] Persistent Long-term Memory
@@ -224,26 +254,31 @@ Documentation structure - practical, example-driven guides.
 ### 6. WebSockets
 
 #### Gateways
+
 - [ ] Basic gateway
 - [ ] Lifecycle hooks
 - [ ] Server
 - [ ] Multiple namespaces
 
 #### Events
+
 - [ ] Emit events
 - [ ] Listen to events
 - [ ] Acknowledgements
 
 #### Rooms
+
 - [ ] Joining rooms
 - [ ] Broadcasting
 - [ ] Private messages
 
 #### Adapters
+
 - [ ] Redis adapter
 - [ ] Custom adapter
 
 #### Server-Sent Events (SSE)
+
 - [ ] Basic SSE
 - [ ] Streaming data
 - [ ] Client reconnection
@@ -251,6 +286,7 @@ Documentation structure - practical, example-driven guides.
 ### 7. Serverless
 
 #### AWS Lambda
+
 - [ ] Setup
 - [ ] Deployment
 - [ ] Environment variables
@@ -258,17 +294,20 @@ Documentation structure - practical, example-driven guides.
 - [ ] API Gateway integration
 
 #### Vercel
+
 - [ ] Setup
 - [ ] Deployment
 - [ ] Environment variables
 - [ ] Edge functions
 
 #### Netlify Functions
+
 - [ ] Setup
 - [ ] Deployment
 - [ ] Background functions
 
 #### Railway
+
 - [ ] Setup
 - [ ] Deployment
 - [ ] Databases
@@ -276,6 +315,7 @@ Documentation structure - practical, example-driven guides.
 ### 8. OpenAPI (Swagger)
 
 #### Introduction
+
 - [ ] Setup
 - [ ] Decorators
 - [ ] Types and parameters
@@ -283,6 +323,7 @@ Documentation structure - practical, example-driven guides.
 - [ ] Security
 
 #### Advanced
+
 - [ ] Multiple specifications
 - [ ] Tags
 - [ ] Responses
@@ -292,11 +333,13 @@ Documentation structure - practical, example-driven guides.
 ### 9. Recipes
 
 #### CRUD Application
+
 - [ ] Complete CRUD example
 - [ ] Validation
 - [ ] Error handling
 
 #### REST API
+
 - [ ] Best practices
 - [ ] Versioning
 - [ ] Pagination
@@ -304,18 +347,21 @@ Documentation structure - practical, example-driven guides.
 - [ ] Sorting
 
 #### GraphQL API
+
 - [ ] Setup
 - [ ] Resolvers
 - [ ] Mutations
 - [ ] Subscriptions
 
 #### Microservices
+
 - [ ] Message patterns
 - [ ] Request-response
 - [ ] Event-based
 - [ ] gRPC
 
 #### AI-Powered Application
+
 - [ ] Chatbot with memory
 - [ ] Content generator
 - [ ] Semantic search engine
@@ -324,12 +370,14 @@ Documentation structure - practical, example-driven guides.
 ### 10. CLI
 
 #### Overview
+
 - [ ] Installation
 - [ ] Usage
 - [ ] Workspaces
 - [ ] Libraries
 
 #### Generators
+
 - [ ] Generate module
 - [ ] Generate controller
 - [ ] Generate service
@@ -352,6 +400,7 @@ Documentation structure - practical, example-driven guides.
 ## Documentation Style Guide
 
 ### Structure
+
 - Start with a brief introduction
 - Show a practical example immediately
 - Explain concepts after the example
@@ -359,6 +408,7 @@ Documentation structure - practical, example-driven guides.
 - Include "Try it yourself" sections
 
 ### Code Examples
+
 - Always show complete, runnable code
 - Include imports
 - Show both TypeScript and JavaScript when relevant
@@ -366,6 +416,7 @@ Documentation structure - practical, example-driven guides.
 - Show expected output
 
 ### Best Practices
+
 - Use real-world scenarios
 - Avoid jargon
 - Link to related topics

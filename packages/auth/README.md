@@ -40,10 +40,10 @@ import { JwtModule } from '@hazeljs/auth';
 @HazelModule({
   imports: [
     JwtModule.forRoot({
-      secret: process.env.JWT_SECRET,   // or set JWT_SECRET env var
-      expiresIn: '1h',                  // or set JWT_EXPIRES_IN env var
-      issuer: 'my-app',                 // optional
-      audience: 'my-users',             // optional
+      secret: process.env.JWT_SECRET, // or set JWT_SECRET env var
+      expiresIn: '1h', // or set JWT_EXPIRES_IN env var
+      issuer: 'my-app', // optional
+      audience: 'my-users', // optional
     }),
   ],
 })
@@ -69,7 +69,7 @@ export class AuthLoginService {
     const token = this.jwt.sign({
       sub: userId,
       role,
-      tenantId,           // include for TenantGuard
+      tenantId, // include for TenantGuard
     });
 
     return { accessToken: token };
@@ -92,7 +92,7 @@ import { Controller, Get } from '@hazeljs/core';
 import { UseGuards } from '@hazeljs/core';
 import { JwtAuthGuard, CurrentUser, AuthUser } from '@hazeljs/auth';
 
-@UseGuards(JwtAuthGuard)          // protects every route in this controller
+@UseGuards(JwtAuthGuard) // protects every route in this controller
 @Controller('/profile')
 export class ProfileController {
   @Get('/')
@@ -104,11 +104,11 @@ export class ProfileController {
 
 Errors thrown:
 
-| Condition | Status |
-|---|---|
-| No `Authorization` header | 400 |
-| Header not in `Bearer <token>` format | 400 |
-| Token invalid or expired | 401 |
+| Condition                             | Status |
+| ------------------------------------- | ------ |
+| No `Authorization` header             | 400    |
+| Header not in `Bearer <token>` format | 400    |
+| Token invalid or expired              | 401    |
 
 ---
 
@@ -120,7 +120,7 @@ Checks the authenticated user's `role` against a list of allowed roles. Uses the
 import { UseGuards } from '@hazeljs/core';
 import { JwtAuthGuard, RoleGuard } from '@hazeljs/auth';
 
-@UseGuards(JwtAuthGuard, RoleGuard('manager'))   // manager, admin, superadmin can access
+@UseGuards(JwtAuthGuard, RoleGuard('manager')) // manager, admin, superadmin can access
 @Controller('/reports')
 export class ReportsController {}
 ```
@@ -173,10 +173,10 @@ const hierarchy = new RoleHierarchy({
 
 Errors thrown:
 
-| Condition | Status |
-|---|---|
-| No `req.user` (guard order wrong) | 401 |
-| User role not in allowed set | 403 |
+| Condition                         | Status |
+| --------------------------------- | ------ |
+| No `req.user` (guard order wrong) | 401    |
+| User role not in allowed set      | 403    |
 
 ---
 
@@ -220,10 +220,7 @@ export class InvoicesController {}
 Superadmins often need to manage any tenant. Use `bypassRoles` to skip the check for them:
 
 ```typescript
-@UseGuards(
-  JwtAuthGuard,
-  TenantGuard({ bypassRoles: ['superadmin'] })
-)
+@UseGuards(JwtAuthGuard, TenantGuard({ bypassRoles: ['superadmin'] }))
 @Controller('/orgs/:tenantId/settings')
 export class OrgSettingsController {}
 ```
@@ -237,21 +234,21 @@ export class OrgSettingsController {}
 
 All options:
 
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `source` | `'param' \| 'header' \| 'query'` | `'param'` | Where to read the tenant ID from the request |
-| `key` | `string` | `'tenantId'` | Param name / header name / query key |
-| `userField` | `string` | `'tenantId'` | Field on `req.user` holding the user's tenant |
-| `bypassRoles` | `string[]` | `[]` | Roles that skip the check entirely |
+| Option        | Type                             | Default      | Description                                   |
+| ------------- | -------------------------------- | ------------ | --------------------------------------------- |
+| `source`      | `'param' \| 'header' \| 'query'` | `'param'`    | Where to read the tenant ID from the request  |
+| `key`         | `string`                         | `'tenantId'` | Param name / header name / query key          |
+| `userField`   | `string`                         | `'tenantId'` | Field on `req.user` holding the user's tenant |
+| `bypassRoles` | `string[]`                       | `[]`         | Roles that skip the check entirely            |
 
 Errors thrown:
 
-| Condition | Status |
-|---|---|
-| No `req.user` | 401 |
-| `req.user` has no tenant field | 403 |
-| Tenant ID absent from request | 400 |
-| Tenant IDs do not match | 403 |
+| Condition                      | Status |
+| ------------------------------ | ------ |
+| No `req.user`                  | 401    |
+| `req.user` has no tenant field | 403    |
+| Tenant ID absent from request  | 400    |
+| Tenant IDs do not match        | 403    |
 
 ---
 
@@ -279,10 +276,7 @@ export class OrdersRepository {
   findById(id: string) {
     const tenantId = this.tenantCtx.requireId();
     // Even direct ID lookup is tenant-scoped — prevents IDOR attacks
-    return db.query(
-      'SELECT * FROM orders WHERE id = $1 AND tenant_id = $2',
-      [id, tenantId]
-    );
+    return db.query('SELECT * FROM orders WHERE id = $1 AND tenant_id = $2', [id, tenantId]);
   }
 }
 ```
@@ -305,10 +299,10 @@ export class OrdersController {
 
 The two layers together:
 
-| Layer | What it does | What it catches |
-|---|---|---|
-| `TenantGuard` | Rejects requests where `req.user.tenantId !== :tenantId` | Unauthenticated cross-tenant requests |
-| `TenantContext` | Scopes every DB query via AsyncLocalStorage | Bugs, missing guard on a route, IDOR attempts |
+| Layer           | What it does                                             | What it catches                               |
+| --------------- | -------------------------------------------------------- | --------------------------------------------- |
+| `TenantGuard`   | Rejects requests where `req.user.tenantId !== :tenantId` | Unauthenticated cross-tenant requests         |
+| `TenantContext` | Scopes every DB query via AsyncLocalStorage              | Bugs, missing guard on a route, IDOR attempts |
 
 For background jobs or tests, you can run code in a specific tenant context explicitly:
 
@@ -331,7 +325,6 @@ Guards run left-to-right. Always put `JwtAuthGuard` first.
 @UseGuards(JwtAuthGuard, RoleGuard('manager'), TenantGuard())
 @Controller('/orgs/:tenantId/orders')
 export class OrdersController {
-
   @Get('/')
   listOrders(@CurrentUser() user: AuthUser) {
     return this.ordersService.findAll(user.tenantId!);
@@ -408,13 +401,13 @@ const token = jwtService.sign({ sub: userId, role: 'admin', tenantId: 'acme' });
 const token = jwtService.sign({ sub: userId }, { expiresIn: '15m' }); // custom expiry
 
 // Verify and decode
-const payload = jwtService.verify(token);   // throws on invalid/expired
-payload.sub       // string
-payload.role      // string
-payload.tenantId  // string | undefined
+const payload = jwtService.verify(token); // throws on invalid/expired
+payload.sub; // string
+payload.role; // string
+payload.tenantId; // string | undefined
 
 // Decode without verification (e.g. to read exp before refreshing)
-const payload = jwtService.decode(token);   // returns null on malformed
+const payload = jwtService.decode(token); // returns null on malformed
 ```
 
 ---
@@ -428,7 +421,7 @@ interface AuthUser {
   id: string;
   username?: string;
   role: string;
-  [key: string]: unknown;   // all other JWT claims pass through
+  [key: string]: unknown; // all other JWT claims pass through
 }
 
 const user = await authService.verifyToken(token);
@@ -460,9 +453,9 @@ import { RoleHierarchy, DEFAULT_ROLE_HIERARCHY } from '@hazeljs/auth';
 
 const h = new RoleHierarchy(DEFAULT_ROLE_HIERARCHY);
 
-h.satisfies('superadmin', 'user')  // true  — full chain
-h.satisfies('manager', 'admin')    // false — no upward inheritance
-h.resolve('admin')                 // Set { 'admin', 'manager', 'user' }
+h.satisfies('superadmin', 'user'); // true  — full chain
+h.satisfies('manager', 'admin'); // false — no upward inheritance
+h.resolve('admin'); // Set { 'admin', 'manager', 'user' }
 ```
 
 ---
@@ -498,12 +491,12 @@ canActivate(context: ExecutionContext): boolean {
 
 ## Environment variables
 
-| Variable | Default | Description |
-|---|---|---|
-| `JWT_SECRET` | *(required)* | Secret used to sign and verify tokens |
-| `JWT_EXPIRES_IN` | `1h` | Default token lifetime |
-| `JWT_ISSUER` | — | Optional `iss` claim |
-| `JWT_AUDIENCE` | — | Optional `aud` claim |
+| Variable         | Default      | Description                           |
+| ---------------- | ------------ | ------------------------------------- |
+| `JWT_SECRET`     | _(required)_ | Secret used to sign and verify tokens |
+| `JWT_EXPIRES_IN` | `1h`         | Default token lifetime                |
+| `JWT_ISSUER`     | —            | Optional `iss` claim                  |
+| `JWT_AUDIENCE`   | —            | Optional `aud` claim                  |
 
 ---
 

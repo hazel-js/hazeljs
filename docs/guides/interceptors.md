@@ -22,14 +22,11 @@ import { Interceptor, RequestContext, Injectable } from '@hazeljs/core';
 
 @Injectable()
 export class LoggingInterceptor implements Interceptor {
-  async intercept(
-    context: RequestContext,
-    next: () => Promise<unknown>
-  ): Promise<unknown> {
+  async intercept(context: RequestContext, next: () => Promise<unknown>): Promise<unknown> {
     console.log('Before handler execution...');
-    
+
     const result = await next();
-    
+
     console.log('After handler execution...');
     return result;
   }
@@ -147,12 +144,9 @@ interface Response<T> {
 
 @Injectable()
 export class TransformInterceptor<T> implements Interceptor {
-  async intercept(
-    context: RequestContext,
-    next: () => Promise<T>
-  ): Promise<Response<T>> {
+  async intercept(context: RequestContext, next: () => Promise<T>): Promise<Response<T>> {
     const data = await next();
-    
+
     return {
       data,
       timestamp: new Date().toISOString(),
@@ -179,9 +173,7 @@ Response:
 
 ```json
 {
-  "data": [
-    { "id": 1, "name": "John" }
-  ],
+  "data": [{ "id": 1, "name": "John" }],
   "timestamp": "2024-01-15T10:30:00.000Z",
   "success": true
 }
@@ -196,16 +188,13 @@ import { Interceptor, RequestContext, Injectable } from '@hazeljs/core';
 
 @Injectable()
 export class TimingInterceptor implements Interceptor {
-  async intercept(
-    context: RequestContext,
-    next: () => Promise<unknown>
-  ): Promise<unknown> {
+  async intercept(context: RequestContext, next: () => Promise<unknown>): Promise<unknown> {
     const start = Date.now();
     const method = context.method;
     const url = context.url;
-    
+
     console.log(`→ [${method}] ${url}`);
-    
+
     try {
       const result = await next();
       const duration = Date.now() - start;
@@ -231,10 +220,7 @@ import { Interceptor, RequestContext, Injectable } from '@hazeljs/core';
 export class TimeoutInterceptor implements Interceptor {
   constructor(private readonly timeout: number = 5000) {}
 
-  async intercept(
-    context: RequestContext,
-    next: () => Promise<unknown>
-  ): Promise<unknown> {
+  async intercept(context: RequestContext, next: () => Promise<unknown>): Promise<unknown> {
     return Promise.race([
       next(),
       new Promise((_, reject) =>
@@ -265,21 +251,18 @@ import { InternalServerError } from '@hazeljs/core';
 
 @Injectable()
 export class ErrorHandlingInterceptor implements Interceptor {
-  async intercept(
-    context: RequestContext,
-    next: () => Promise<unknown>
-  ): Promise<unknown> {
+  async intercept(context: RequestContext, next: () => Promise<unknown>): Promise<unknown> {
     try {
       return await next();
     } catch (error) {
       // Log error
       console.error('Interceptor caught error:', error);
-      
+
       // Transform error
       if (error.name === 'DatabaseError') {
         throw new InternalServerError('A database error occurred');
       }
-      
+
       // Re-throw original error
       throw error;
     }
@@ -324,10 +307,7 @@ export class AdvancedCacheInterceptor implements Interceptor {
     return `${context.method}:${context.url}:${query}`;
   }
 
-  async intercept(
-    context: RequestContext,
-    next: () => Promise<unknown>
-  ): Promise<unknown> {
+  async intercept(context: RequestContext, next: () => Promise<unknown>): Promise<unknown> {
     // Only cache GET requests
     if (context.method !== 'GET') {
       return next();
@@ -345,7 +325,7 @@ export class AdvancedCacheInterceptor implements Interceptor {
 
     // Execute handler and cache result
     const result = await next();
-    
+
     // Evict oldest entry if cache is full
     if (this.cache.size >= this.maxSize) {
       const oldestKey = this.cache.keys().next().value;
@@ -385,24 +365,21 @@ import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class RequestIdInterceptor implements Interceptor {
-  async intercept(
-    context: RequestContext,
-    next: () => Promise<unknown>
-  ): Promise<unknown> {
+  async intercept(context: RequestContext, next: () => Promise<unknown>): Promise<unknown> {
     const requestId = uuidv4();
-    
+
     // Add to context for use in handlers
     context.requestId = requestId;
-    
+
     console.log(`[${requestId}] ${context.method} ${context.url}`);
-    
+
     const result = await next();
-    
+
     // Add to response headers
     if (context.response) {
       context.response.setHeader('X-Request-ID', requestId);
     }
-    
+
     return result;
   }
 }
@@ -416,11 +393,7 @@ You can apply multiple interceptors to a single handler:
 @Controller('products')
 export class ProductsController {
   @Get()
-  @UseInterceptors(
-    LoggingInterceptor,
-    new CacheInterceptor({ ttl: 30000 }),
-    TransformInterceptor,
-  )
+  @UseInterceptors(LoggingInterceptor, new CacheInterceptor({ ttl: 30000 }), TransformInterceptor)
   findAll() {
     return this.service.findAll();
   }
@@ -428,6 +401,7 @@ export class ProductsController {
 ```
 
 Interceptors are executed in the order they are listed:
+
 1. LoggingInterceptor (before)
 2. CacheInterceptor (before)
 3. TransformInterceptor (before)
@@ -457,17 +431,14 @@ interface ApiResponse<T> {
 
 @Injectable()
 export class ApiResponseInterceptor<T> implements Interceptor {
-  async intercept(
-    context: RequestContext,
-    next: () => Promise<T>
-  ): Promise<ApiResponse<T>> {
+  async intercept(context: RequestContext, next: () => Promise<T>): Promise<ApiResponse<T>> {
     const start = Date.now();
     const requestId = context.requestId || 'unknown';
-    
+
     try {
       const data = await next();
       const duration = Date.now() - start;
-      
+
       return {
         success: true,
         data,
@@ -479,10 +450,10 @@ export class ApiResponseInterceptor<T> implements Interceptor {
       };
     } catch (error) {
       const duration = Date.now() - start;
-      
+
       // Log error with context
       console.error(`Request ${requestId} failed after ${duration}ms:`, error);
-      
+
       throw error;
     }
   }
@@ -492,19 +463,8 @@ export class ApiResponseInterceptor<T> implements Interceptor {
 <div class="filename">products.controller.ts</div>
 
 ```typescript
-import { 
-  Controller, 
-  Get, 
-  Post,
-  Body,
-  Param,
-  UseInterceptors,
-  ParseIntPipe,
-} from '@hazeljs/core';
-import { 
-  LoggingInterceptor,
-  CacheInterceptor,
-} from '@hazeljs/core';
+import { Controller, Get, Post, Body, Param, UseInterceptors, ParseIntPipe } from '@hazeljs/core';
+import { LoggingInterceptor, CacheInterceptor } from '@hazeljs/core';
 import { ApiResponseInterceptor } from './interceptors/api-response.interceptor';
 import { RequestIdInterceptor } from './interceptors/request-id.interceptor';
 
@@ -514,10 +474,7 @@ export class ProductsController {
   constructor(private productsService: ProductsService) {}
 
   @Get()
-  @UseInterceptors(
-    new CacheInterceptor({ ttl: 60000 }),
-    ApiResponseInterceptor,
-  )
+  @UseInterceptors(new CacheInterceptor({ ttl: 60000 }), ApiResponseInterceptor)
   findAll() {
     return this.productsService.findAll();
   }

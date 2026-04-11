@@ -22,7 +22,7 @@ describe('generateDto', () => {
 
   it('should register the dto command with alias', () => {
     generateDto(program);
-    const cmd = program.commands.find(c => c.name() === 'dto');
+    const cmd = program.commands.find((c) => c.name() === 'dto');
     expect(cmd).toBeDefined();
     expect(cmd?.alias()).toBe('d');
   });
@@ -32,9 +32,9 @@ describe('generateDto', () => {
     await program.parseAsync(['node', 'test', 'dto', 'user']);
 
     expect(mockFs.writeFileSync).toHaveBeenCalledTimes(2);
-    const writtenFiles = mockFs.writeFileSync.mock.calls.map(call => call[0] as string);
-    expect(writtenFiles.some(f => f.includes('user.dto.ts'))).toBe(true);
-    expect(writtenFiles.some(f => f.includes('update-user.dto.ts'))).toBe(true);
+    const writtenFiles = mockFs.writeFileSync.mock.calls.map((call) => call[0] as string);
+    expect(writtenFiles.some((f) => f.includes('user.dto.ts'))).toBe(true);
+    expect(writtenFiles.some((f) => f.includes('update-user.dto.ts'))).toBe(true);
   });
 
   it('should include class-validator decorators', async () => {

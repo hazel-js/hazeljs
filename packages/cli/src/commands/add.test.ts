@@ -22,7 +22,7 @@ describe('addCommand', () => {
 
   it('should register the add command', () => {
     addCommand(program);
-    const cmd = program.commands.find(c => c.name() === 'add');
+    const cmd = program.commands.find((c) => c.name() === 'add');
     expect(cmd).toBeDefined();
   });
 
@@ -32,7 +32,7 @@ describe('addCommand', () => {
 
     expect(mockExecSync).toHaveBeenCalledWith(
       expect.stringContaining('@hazeljs/auth'),
-      expect.objectContaining({ stdio: 'inherit' }),
+      expect.objectContaining({ stdio: 'inherit' })
     );
   });
 
@@ -51,8 +51,21 @@ describe('addCommand', () => {
 
     // Test that all documented packages are available
     const expectedPackages = [
-      'ai', 'agent', 'auth', 'cache', 'config', 'cron',
-      'discovery', 'mcp', 'prompts', 'prisma', 'typeorm', 'rag', 'serverless', 'swagger', 'websocket'
+      'ai',
+      'agent',
+      'auth',
+      'cache',
+      'config',
+      'cron',
+      'discovery',
+      'mcp',
+      'prompts',
+      'prisma',
+      'typeorm',
+      'rag',
+      'serverless',
+      'swagger',
+      'websocket',
     ];
 
     for (const pkg of expectedPackages) {
@@ -60,7 +73,7 @@ describe('addCommand', () => {
       await program.parseAsync(['node', 'test', 'add', pkg]);
       expect(mockExecSync).toHaveBeenCalledWith(
         expect.stringContaining(`@hazeljs/${pkg}`),
-        expect.any(Object),
+        expect.any(Object)
       );
     }
   });

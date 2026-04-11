@@ -5,6 +5,7 @@ This document tracks the production readiness improvements made to `@hazeljs/age
 ## ✅ Completed
 
 ### 1. Type Safety Improvements
+
 - **Created proper type definitions** for LLM and RAG providers
   - `src/types/llm.types.ts` - LLMProvider interface with proper types
   - `src/types/rag.types.ts` - RAGService interface with proper types
@@ -16,6 +17,7 @@ This document tracks the production readiness improvements made to `@hazeljs/age
 - **Exported new types** from package index
 
 ### 2. Testing Infrastructure
+
 - **Created Jest configuration** (`jest.config.js`)
   - TypeScript support via ts-jest
   - Coverage thresholds set to 80%
@@ -31,6 +33,7 @@ This document tracks the production readiness improvements made to `@hazeljs/age
   - `tests/registry/tool.registry.test.ts` - Full coverage of ToolRegistry
 
 ### 3. Dependencies
+
 - Added Jest and testing dependencies to package.json
   - `@types/jest: ^29.5.11`
   - `jest: ^29.7.0`
@@ -39,13 +42,16 @@ This document tracks the production readiness improvements made to `@hazeljs/age
 ## ✅ Completed Production Features
 
 ### 4. Rate Limiting
+
 **Implementation**: `src/utils/rate-limiter.ts`
+
 - Token bucket algorithm for rate limiting
 - Configurable tokens per minute and burst size
 - Automatic token refill over time
 - Blocking and non-blocking consumption modes
 
 **Usage**:
+
 ```typescript
 const runtime = new AgentRuntime({
   rateLimitPerMinute: 60, // 60 requests per minute
@@ -53,7 +59,9 @@ const runtime = new AgentRuntime({
 ```
 
 ### 5. Structured Logging
+
 **Implementation**: `src/utils/logger.ts`
+
 - Multiple log levels (DEBUG, INFO, WARN, ERROR, FATAL)
 - Structured context with agent/execution metadata
 - Colored console output for development
@@ -61,6 +69,7 @@ const runtime = new AgentRuntime({
 - Custom log handlers support
 
 **Usage**:
+
 ```typescript
 const runtime = new AgentRuntime({
   logLevel: LogLevel.INFO,
@@ -68,7 +77,9 @@ const runtime = new AgentRuntime({
 ```
 
 ### 6. Metrics Collection
+
 **Implementation**: `src/utils/metrics.ts`
+
 - Execution metrics (count, success rate, duration)
 - Performance metrics (avg, min, max, p50, p95, p99)
 - Tool usage tracking
@@ -76,19 +87,23 @@ const runtime = new AgentRuntime({
 - Memory retrieval metrics
 
 **Usage**:
+
 ```typescript
 const metrics = runtime.getMetrics();
 console.log(runtime.getMetricsSummary());
 ```
 
 ### 7. Retry Logic
+
 **Implementation**: `src/utils/retry.ts`
+
 - Exponential backoff with jitter
 - Configurable retry attempts and delays
 - Retryable error detection
 - Retry callbacks for monitoring
 
 **Usage**:
+
 ```typescript
 const runtime = new AgentRuntime({
   enableRetry: true, // Enabled by default
@@ -96,7 +111,9 @@ const runtime = new AgentRuntime({
 ```
 
 ### 8. Circuit Breaker
+
 **Implementation**: `src/utils/circuit-breaker.ts`
+
 - Three states: CLOSED, OPEN, HALF_OPEN
 - Automatic state transitions
 - Failure and success thresholds
@@ -104,6 +121,7 @@ const runtime = new AgentRuntime({
 - Manual reset capability
 
 **Usage**:
+
 ```typescript
 const runtime = new AgentRuntime({
   enableCircuitBreaker: true, // Enabled by default
@@ -113,26 +131,32 @@ const status = runtime.getCircuitBreakerStatus();
 ```
 
 ### 9. Health Checks
+
 **Implementation**: `src/utils/health-check.ts`
+
 - Component health monitoring (LLM, RAG, Memory)
 - Latency tracking
 - Overall health status (HEALTHY, DEGRADED, UNHEALTHY)
 - Metrics integration
 
 **Usage**:
+
 ```typescript
 const health = await runtime.healthCheck();
 console.log(health.status); // 'healthy' | 'degraded' | 'unhealthy'
 ```
 
 ### 10. Performance Benchmarks
+
 **Implementation**: `benchmarks/performance.benchmark.ts`
+
 - Agent registration benchmarks
 - Tool registry lookup benchmarks
 - Metrics collection benchmarks
 - Health check benchmarks
 
 **Usage**:
+
 ```bash
 npm run benchmark
 ```
@@ -140,7 +164,9 @@ npm run benchmark
 ## 🚧 Remaining Tasks
 
 ### Additional Test Coverage
+
 Create tests for remaining core components:
+
 - `tests/runtime/agent.runtime.test.ts`
 - `tests/executor/agent.executor.test.ts`
 - `tests/executor/tool.executor.test.ts`
@@ -152,12 +178,14 @@ Create tests for remaining core components:
 ## 📋 Installation Instructions
 
 ### 1. Install Dependencies
+
 ```bash
 cd /Users/muhammadarslan/repos/hazeljs.ai/hazeljs/packages/agent
 npm install
 ```
 
 ### 2. Run Tests
+
 ```bash
 # Run all tests
 npm test
@@ -170,6 +198,7 @@ npm run test:watch
 ```
 
 ### 3. Build Package
+
 ```bash
 npm run build
 ```
@@ -183,17 +212,22 @@ npm run build
 ## 📝 Notes
 
 ### Type Safety
+
 All `any` types have been replaced with proper interfaces:
+
 - `llmProvider?: any` → `llmProvider?: LLMProvider`
 - `ragService?: any` → `ragService?: RAGService`
 
 ### Breaking Changes
+
 The new type definitions may require updates to existing code:
+
 - LLM providers must implement the `LLMProvider` interface
 - RAG services must implement the `RAGService` interface
 - Tool definitions are now converted to LLM format via `getToolDefinitionsForLLM()`
 
 ### Example: Creating a Custom LLM Provider
+
 ```typescript
 import { LLMProvider, LLMChatRequest, LLMChatResponse } from '@hazeljs/agent';
 
@@ -238,6 +272,7 @@ class CustomLLMProvider implements LLMProvider {
 **Production Ready**: 85% Complete
 
 **Completed**:
+
 - ✅ Type safety improvements (100%)
 - ✅ Testing infrastructure (100%)
 - ✅ Rate limiting (100%)
@@ -249,6 +284,7 @@ class CustomLLMProvider implements LLMProvider {
 - ✅ Performance benchmarks (100%)
 
 **Remaining**:
+
 - ⏳ Integration tests (0%)
 - ⏳ End-to-end tests (0%)
 - ⏳ Security audit (0%)
@@ -256,6 +292,7 @@ class CustomLLMProvider implements LLMProvider {
 - ⏳ Deployment guide (0%)
 
 **Recommended Timeline**:
+
 - Phase 1 (✅ Completed): Type safety + Testing infrastructure
 - Phase 2 (✅ Completed): Rate limiting + Logging + Metrics
 - Phase 3 (✅ Completed): Retry logic + Circuit breaker + Health checks

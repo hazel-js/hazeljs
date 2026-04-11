@@ -7,7 +7,13 @@
  */
 
 import { createMcpServer } from '../src/server/createMcpServer';
-import type { IToolRegistry, HazelTool, McpRequest, McpResponse, McpErrorResponse } from '../src/server/types';
+import type {
+  IToolRegistry,
+  HazelTool,
+  McpRequest,
+  McpResponse,
+  McpErrorResponse,
+} from '../src/server/types';
 import { ErrorCode } from '../src/server/errors';
 
 // ---------------------------------------------------------------------------
@@ -17,9 +23,11 @@ import { ErrorCode } from '../src/server/errors';
 let capturedHandler: ((req: McpRequest) => Promise<McpResponse | McpErrorResponse>) | undefined;
 
 jest.mock('../src/server/stdioTransport', () => ({
-  createStdioTransport: jest.fn((handler: (req: McpRequest) => Promise<McpResponse | McpErrorResponse>) => {
-    capturedHandler = handler;
-  }),
+  createStdioTransport: jest.fn(
+    (handler: (req: McpRequest) => Promise<McpResponse | McpErrorResponse>) => {
+      capturedHandler = handler;
+    }
+  ),
 }));
 
 // ---------------------------------------------------------------------------
@@ -61,8 +69,12 @@ async function call(server: ReturnType<typeof createMcpServer>, request: McpRequ
 
 describe('createMcpServer — initialize', () => {
   it('returns protocol version, serverInfo, and capabilities', async () => {
-    const server = createMcpServer({ name: 'test-server', version: '1.2.3', toolRegistry: makeRegistry() });
-    const res = await call(server, req('initialize')) as McpResponse;
+    const server = createMcpServer({
+      name: 'test-server',
+      version: '1.2.3',
+      toolRegistry: makeRegistry(),
+    });
+    const res = (await call(server, req('initialize'))) as McpResponse;
 
     expect(res.jsonrpc).toBe('2.0');
     expect(res.id).toBe(1);
@@ -73,8 +85,12 @@ describe('createMcpServer — initialize', () => {
   });
 
   it('reflects the name and version from options', async () => {
-    const server = createMcpServer({ name: 'my-agent', version: '0.9.0', toolRegistry: makeRegistry() });
-    const res = await call(server, req('initialize')) as McpResponse;
+    const server = createMcpServer({
+      name: 'my-agent',
+      version: '0.9.0',
+      toolRegistry: makeRegistry(),
+    });
+    const res = (await call(server, req('initialize'))) as McpResponse;
     const result = res.result as Record<string, unknown>;
     const serverInfo = result['serverInfo'] as Record<string, unknown>;
     expect(serverInfo['name']).toBe('my-agent');
@@ -95,7 +111,7 @@ describe('createMcpServer — initialize', () => {
 describe('createMcpServer — initialized', () => {
   it('returns an empty result ack', async () => {
     const server = createMcpServer({ name: 's', version: '1', toolRegistry: makeRegistry() });
-    const res = await call(server, req('initialized')) as McpResponse;
+    const res = (await call(server, req('initialized'))) as McpResponse;
     expect(res.result).toEqual({});
   });
 });
@@ -107,7 +123,7 @@ describe('createMcpServer — initialized', () => {
 describe('createMcpServer — ping', () => {
   it('returns empty result', async () => {
     const server = createMcpServer({ name: 's', version: '1', toolRegistry: makeRegistry() });
-    const res = await call(server, req('ping')) as McpResponse;
+    const res = (await call(server, req('ping'))) as McpResponse;
     expect(res.result).toEqual({});
   });
 
@@ -125,7 +141,7 @@ describe('createMcpServer — ping', () => {
 describe('createMcpServer — tools/list', () => {
   it('returns an empty tools array when no tools registered', async () => {
     const server = createMcpServer({ name: 's', version: '1', toolRegistry: makeRegistry() });
-    const res = await call(server, req('tools/list')) as McpResponse;
+    const res = (await call(server, req('tools/list'))) as McpResponse;
     const result = res.result as Record<string, unknown>;
     expect(result['tools']).toEqual([]);
   });
@@ -133,7 +149,7 @@ describe('createMcpServer — tools/list', () => {
   it('returns MCP tool definitions for registered tools', async () => {
     const tool = makeTool({ name: 'add', description: 'Add numbers' });
     const server = createMcpServer({ name: 's', version: '1', toolRegistry: makeRegistry([tool]) });
-    const res = await call(server, req('tools/list')) as McpResponse;
+    const res = (await call(server, req('tools/list'))) as McpResponse;
     const result = res.result as Record<string, unknown>;
     const tools = result['tools'] as Array<Record<string, unknown>>;
     expect(tools).toHaveLength(1);
@@ -152,7 +168,10 @@ describe('createMcpServer — tools/call', () => {
     const tool = makeTool({ name: 'add', method });
     const server = createMcpServer({ name: 's', version: '1', toolRegistry: makeRegistry([tool]) });
 
-    const res = await call(server, req('tools/call', { name: 'add', arguments: { a: 3, b: 7 } })) as McpResponse;
+    const res = (await call(
+      server,
+      req('tools/call', { name: 'add', arguments: { a: 3, b: 7 } })
+    )) as McpResponse;
     const result = res.result as Record<string, unknown>;
 
     expect(result['isError']).toBe(false);
@@ -173,7 +192,7 @@ describe('createMcpServer — tools/call', () => {
 
   it('returns -32602 when params.name is missing', async () => {
     const server = createMcpServer({ name: 's', version: '1', toolRegistry: makeRegistry() });
-    const res = await call(server, req('tools/call', {})) as McpErrorResponse;
+    const res = (await call(server, req('tools/call', {}))) as McpErrorResponse;
 
     expect(res.error.code).toBe(ErrorCode.INVALID_PARAMS);
     expect(res.error.message).toContain('Missing required field: name');
@@ -181,14 +200,14 @@ describe('createMcpServer — tools/call', () => {
 
   it('returns -32602 when params is absent entirely', async () => {
     const server = createMcpServer({ name: 's', version: '1', toolRegistry: makeRegistry() });
-    const res = await call(server, req('tools/call', undefined)) as McpErrorResponse;
+    const res = (await call(server, req('tools/call', undefined))) as McpErrorResponse;
 
     expect(res.error.code).toBe(ErrorCode.INVALID_PARAMS);
   });
 
   it('returns -32001 when the tool name is not registered', async () => {
     const server = createMcpServer({ name: 's', version: '1', toolRegistry: makeRegistry() });
-    const res = await call(server, req('tools/call', { name: 'ghost_tool' })) as McpErrorResponse;
+    const res = (await call(server, req('tools/call', { name: 'ghost_tool' }))) as McpErrorResponse;
 
     expect(res.error.code).toBe(ErrorCode.TOOL_NOT_FOUND);
     expect(res.error.message).toContain('ghost_tool');
@@ -199,7 +218,10 @@ describe('createMcpServer — tools/call', () => {
     const tool = makeTool({ name: 'failing_tool', method });
     const server = createMcpServer({ name: 's', version: '1', toolRegistry: makeRegistry([tool]) });
 
-    const res = await call(server, req('tools/call', { name: 'failing_tool', arguments: {} })) as McpErrorResponse;
+    const res = (await call(
+      server,
+      req('tools/call', { name: 'failing_tool', arguments: {} })
+    )) as McpErrorResponse;
 
     expect(res.error.code).toBe(ErrorCode.INTERNAL_ERROR);
     expect(res.error.data).toEqual({ message: 'DB connection lost' });
@@ -219,7 +241,7 @@ describe('createMcpServer — tools/call', () => {
 describe('createMcpServer — unknown method', () => {
   it('returns -32601 METHOD_NOT_FOUND', async () => {
     const server = createMcpServer({ name: 's', version: '1', toolRegistry: makeRegistry() });
-    const res = await call(server, req('nonexistent/method')) as McpErrorResponse;
+    const res = (await call(server, req('nonexistent/method'))) as McpErrorResponse;
 
     expect(res.error.code).toBe(ErrorCode.METHOD_NOT_FOUND);
     expect(res.error.message).toContain('nonexistent/method');

@@ -14,21 +14,9 @@
       "@hazeljs/ai": ["../ai/src"],
       "@hazeljs/rag": ["../rag/src"]
     },
-    "types": [
-      "jest",
-      "node"
-    ]
+    "types": ["jest", "node"]
   },
-  "include": [
-    "src/**/*.ts"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist"
-  ],
-  "references": [
-    { "path": "../core" },
-    { "path": "../ai" },
-    { "path": "../rag" }
-  ]
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist"],
+  "references": [{ "path": "../core" }, { "path": "../ai" }, { "path": "../rag" }]
 }

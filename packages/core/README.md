@@ -15,8 +15,9 @@ Part of the HazelJS AI-Native Backend Framework. Stop wiring boilerplate. Build 
 Built as the foundation for **AI-native applications** - not just another framework. When you combine @hazeljs/core with our AI packages (@hazeljs/ai, @hazeljs/agent, @hazeljs/rag), you get a complete stack for intelligent backends without glue code.
 
 **Perfect for:**
+
 - AI startups building production agents
-- Teams replacing NestJS/Express with AI-native backends  
+- Teams replacing NestJS/Express with AI-native backends
 - Developers who want TypeScript-first architecture
 - Projects needing dependency injection without complexity
 
@@ -80,7 +81,7 @@ export class UserService {
   }
 
   findOne(id: string) {
-    return this.users.find(user => user.id === id);
+    return this.users.find((user) => user.id === id);
   }
 
   create(data: any) {
@@ -205,18 +206,12 @@ import { Controller, Get, Post, Param, Query, Body, Headers, Req, Res } from '@h
 @Controller('/users')
 export class UserController {
   @Get('/:id')
-  findOne(
-    @Param('id') id: string,
-    @Query('include') include?: string
-  ) {
+  findOne(@Param('id') id: string, @Query('include') include?: string) {
     return { id, include };
   }
 
   @Post()
-  create(
-    @Body() createUserDto: CreateUserDto,
-    @Headers('authorization') auth: string
-  ) {
+  create(@Body() createUserDto: CreateUserDto, @Headers('authorization') auth: string) {
     return { data: createUserDto, auth };
   }
 
@@ -411,9 +406,9 @@ app.registerHealthCheck({
       await database.ping();
       return { status: 'healthy' };
     } catch (error) {
-      return { 
+      return {
         status: 'unhealthy',
-        message: error.message 
+        message: error.message,
       };
     }
   },
@@ -468,7 +463,7 @@ import { ExceptionFilter, ExceptionContext } from '@hazeljs/core';
 export class HttpExceptionFilter implements ExceptionFilter {
   catch(error: Error, context: ExceptionContext) {
     const response = context.response;
-    
+
     response.status(500).json({
       statusCode: 500,
       message: error.message,
@@ -527,11 +522,11 @@ describe('UserController', () => {
 
 HTTP requests are logged in following format: `METHOD path status duration` (e.g. `GET /api/health 200 3ms`).
 
-| Env var | Default | Description |
-|---------|---------|-------------|
-| `LOG_LEVEL` | `info` | Log level (error, warn, info, debug) |
-| `LOG_HTTP` | `true` | Set to `false` to disable HTTP request logs |
-| `LOG_ENABLED` | `true` | Set to `false` to disable all logging |
+| Env var       | Default | Description                                 |
+| ------------- | ------- | ------------------------------------------- |
+| `LOG_LEVEL`   | `info`  | Log level (error, warn, info, debug)        |
+| `LOG_HTTP`    | `true`  | Set to `false` to disable HTTP request logs |
+| `LOG_ENABLED` | `true`  | Set to `false` to disable all logging       |
 
 Startup and registration logs (controllers, routes, providers) are at `debug` level. Use `LOG_LEVEL=debug` for troubleshooting.
 

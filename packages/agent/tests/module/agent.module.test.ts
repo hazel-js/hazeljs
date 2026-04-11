@@ -74,44 +74,54 @@ describe('AgentModule', () => {
       const provider = AgentModule.createLLMProviderFromAI(mockAIService);
       const result = await provider.chat({
         messages: [{ role: 'user', content: 'Use tool' }],
-        tools: [{
-          type: 'function',
-          function: { name: 'testTool', description: 'Test tool', parameters: {} },
-        }],
+        tools: [
+          {
+            type: 'function',
+            function: { name: 'testTool', description: 'Test tool', parameters: {} },
+          },
+        ],
       });
 
       expect(result.content).toBe('Tool result');
-      expect(result.tool_calls).toEqual([{
-        id: expect.stringMatching(/^call_\d+$/),
-        type: 'function',
-        function: { name: 'testTool', arguments: '{"input": "test"}' },
-      }]);
+      expect(result.tool_calls).toEqual([
+        {
+          id: expect.stringMatching(/^call_\d+$/),
+          type: 'function',
+          function: { name: 'testTool', arguments: '{"input": "test"}' },
+        },
+      ]);
     });
 
     it('should handle chat with new toolCalls format', async () => {
       mockAIService.complete.mockResolvedValue({
         content: 'Tool result',
-        toolCalls: [{
-          id: 'call_123',
-          type: 'function',
-          function: { name: 'newTool', arguments: '{"input": "new"}' },
-        }],
+        toolCalls: [
+          {
+            id: 'call_123',
+            type: 'function',
+            function: { name: 'newTool', arguments: '{"input": "new"}' },
+          },
+        ],
       });
 
       const provider = AgentModule.createLLMProviderFromAI(mockAIService);
       const result = await provider.chat({
         messages: [{ role: 'user', content: 'Use new tool' }],
-        tools: [{
-          type: 'function',
-          function: { name: 'newTool', description: 'New tool', parameters: {} },
-        }],
+        tools: [
+          {
+            type: 'function',
+            function: { name: 'newTool', description: 'New tool', parameters: {} },
+          },
+        ],
       });
 
-      expect(result.tool_calls).toEqual([{
-        id: 'call_123',
-        type: 'function',
-        function: { name: 'newTool', arguments: '{"input": "new"}' },
-      }]);
+      expect(result.tool_calls).toEqual([
+        {
+          id: 'call_123',
+          type: 'function',
+          function: { name: 'newTool', arguments: '{"input": "new"}' },
+        },
+      ]);
     });
 
     it('should not pass tools when tool results exist in history', async () => {
@@ -126,10 +136,12 @@ describe('AgentModule', () => {
           { role: 'assistant', content: '[Tool: testTool] Tool result' },
           { role: 'user', content: 'Continue' },
         ],
-        tools: [{
-          type: 'function',
-          function: { name: 'testTool', description: 'Test tool', parameters: {} },
-        }],
+        tools: [
+          {
+            type: 'function',
+            function: { name: 'testTool', description: 'Test tool', parameters: {} },
+          },
+        ],
       });
 
       // When tools are filtered out, functions and functionCall should not be present
@@ -143,11 +155,7 @@ describe('AgentModule', () => {
     });
 
     it('should handle streaming chat', async () => {
-      const mockChunks = [
-        { content: 'Hello' },
-        { content: ' world' },
-        { done: true },
-      ];
+      const mockChunks = [{ content: 'Hello' }, { content: ' world' }, { done: true }];
       const mockStream = jest.fn().mockImplementation(async function* () {
         for (const chunk of mockChunks) {
           yield chunk;
@@ -190,9 +198,11 @@ describe('AgentModule', () => {
       const provider = AgentModule.createLLMProviderFromAI(mockAIService);
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
 
-      await expect(provider.chat({
-        messages: [{ role: 'user', content: 'Error test' }],
-      })).rejects.toThrow('AI service error');
+      await expect(
+        provider.chat({
+          messages: [{ role: 'user', content: 'Error test' }],
+        })
+      ).rejects.toThrow('AI service error');
 
       consoleSpy.mockRestore();
     });
@@ -216,9 +226,7 @@ describe('AgentService', () => {
   describe('execute', () => {
     it('should execute agent', async () => {
       // This will fail if agent is not registered, which is expected
-      await expect(
-        service.execute('non-existent', 'input', {})
-      ).rejects.toThrow();
+      await expect(service.execute('non-existent', 'input', {})).rejects.toThrow();
     });
   });
 
@@ -270,4 +278,3 @@ describe('AgentService', () => {
     });
   });
 });
-

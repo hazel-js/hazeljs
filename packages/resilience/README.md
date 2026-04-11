@@ -27,7 +27,13 @@ npm install @hazeljs/resilience
 
 ```typescript
 import { Injectable } from '@hazeljs/core';
-import { WithCircuitBreaker, WithRetry, WithTimeout, WithBulkhead, Fallback } from '@hazeljs/resilience';
+import {
+  WithCircuitBreaker,
+  WithRetry,
+  WithTimeout,
+  WithBulkhead,
+  Fallback,
+} from '@hazeljs/resilience';
 
 @Injectable()
 class PaymentService {

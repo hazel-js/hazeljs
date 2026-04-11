@@ -24,12 +24,7 @@ npm install @hazeljs/ops-agent @hazeljs/ai @hazeljs/agent @hazeljs/rag
 
 ```ts
 import { AIEnhancedService } from '@hazeljs/ai';
-import {
-  createOpsRuntime,
-  runOpsAgent,
-  createJiraTool,
-  createSlackTool,
-} from '@hazeljs/ops-agent';
+import { createOpsRuntime, runOpsAgent, createJiraTool, createSlackTool } from '@hazeljs/ops-agent';
 
 // Configure tools (uses env vars when omitted)
 const jiraTool = createJiraTool(); // JIRA_HOST, JIRA_EMAIL, JIRA_API_TOKEN
@@ -45,7 +40,8 @@ const runtime = createOpsRuntime({
 });
 
 const result = await runOpsAgent(runtime, {
-  input: 'Create a Jira ticket in PROJ for "Payment API timeout in prod" and post a summary to #incidents',
+  input:
+    'Create a Jira ticket in PROJ for "Payment API timeout in prod" and post a summary to #incidents',
   sessionId: 'incident-2024-01',
 });
 
@@ -54,23 +50,23 @@ console.log(result.response);
 
 ## Environment Variables
 
-| Variable | Description |
-|----------|-------------|
-| `JIRA_HOST` | Jira host (e.g. https://your-domain.atlassian.net) |
-| `JIRA_EMAIL` | Email for Basic auth |
-| `JIRA_API_TOKEN` | API token from [Atlassian](https://id.atlassian.com/manage-profile/security/api-tokens) |
-| `SLACK_BOT_TOKEN` | Slack bot token (xoxb-...) from app OAuth |
+| Variable          | Description                                                                             |
+| ----------------- | --------------------------------------------------------------------------------------- |
+| `JIRA_HOST`       | Jira host (e.g. https://your-domain.atlassian.net)                                      |
+| `JIRA_EMAIL`      | Email for Basic auth                                                                    |
+| `JIRA_API_TOKEN`  | API token from [Atlassian](https://id.atlassian.com/manage-profile/security/api-tokens) |
+| `SLACK_BOT_TOKEN` | Slack bot token (xoxb-...) from app OAuth                                               |
 
 When not configured, tools return placeholder responses so you can develop without credentials.
 
 ## Tools
 
-| Tool | Description | Approval |
-|------|-------------|----------|
-| `create_jira_ticket` | Create Jira issue (project, summary, description, type) | Yes |
-| `add_jira_comment` | Add comment to existing issue | No |
-| `get_jira_ticket` | Get issue details by key | No |
-| `post_to_slack` | Post message to channel (optionally in thread) | Yes |
+| Tool                 | Description                                             | Approval |
+| -------------------- | ------------------------------------------------------- | -------- |
+| `create_jira_ticket` | Create Jira issue (project, summary, description, type) | Yes      |
+| `add_jira_comment`   | Add comment to existing issue                           | No       |
+| `get_jira_ticket`    | Get issue details by key                                | No       |
+| `post_to_slack`      | Post message to channel (optionally in thread)          | Yes      |
 
 ## Memory
 

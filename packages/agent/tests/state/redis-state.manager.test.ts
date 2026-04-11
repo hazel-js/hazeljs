@@ -396,7 +396,9 @@ describe('RedisStateManager', () => {
 
       mockRedisClient.get.mockResolvedValue(JSON.stringify(mockContext));
 
-      await expect(manager.updateLastStep('exec-1', { state: AgentState.COMPLETED })).rejects.toThrow('No steps to update');
+      await expect(
+        manager.updateLastStep('exec-1', { state: AgentState.COMPLETED })
+      ).rejects.toThrow('No steps to update');
     });
   });
 
@@ -430,4 +432,3 @@ describe('RedisStateManager', () => {
     });
   });
 });
-

@@ -23,7 +23,8 @@ HazelJS is a modern, TypeScript-first Node.js framework with AI built in. This l
 - [npm Packages](https://www.npmjs.com/search?q=%40hazeljs)
 
 ### Open Source Projects
-*Official Open-source starter projects built with HazelJS*
+
+_Official Open-source starter projects built with HazelJS_
 
 - [hazeljs-rest-starter](https://github.com/hazel-js/hazeljs-rest-starter) - REST API starter
 - [hazeljs-worker-tasks-starter](https://github.com/hazel-js/hazeljs-worker-tasks-starter) - Worker tasks starter
@@ -43,19 +44,21 @@ HazelJS is a modern, TypeScript-first Node.js framework with AI built in. This l
 - [hazeljs-builder](https://github.com/hazel-js/hazeljs-builder) - Builder
 - [hazeljs-csr-agent](https://github.com/hazel-js/hazeljs-csr-agent) - CSR agent
 
-
 ## Tutorials & Guides
 
 ### Getting Started
+
 - [Official Quick Start](https://github.com/hazel-js/hazeljs/blob/main/QUICKSTART.md) - Get running in 5 minutes
 - [HazelJS Starter Example](https://github.com/hazel-js/hazeljs-starter-example) - HazelJS Starter Example
 
 ### Advanced Topics
+
 - [Building AI Agents](https://github.com/hazel-js/hazeljs/tree/main/packages/agent) - Agent documentation
 - [RAG Implementation](https://github.com/hazel-js/hazeljs/tree/main/packages/rag) - RAG guide
 - [Workflow Engine](https://github.com/hazel-js/hazeljs/tree/main/packages/flow) - Flow documentation
 
 ### Blogs and Tutorials
+
 - [CLI Generation Upgrade](https://dev.to/arslan_mecom/hazeljs-cli-generation-upgrade-faster-scaffolding-fewer-commands-4po2) - CLI documentation
 - [Why we built HazelJS/Worker](https://dev.to/arslan_mecom/why-we-built-hazeljsworker-offloading-cpu-heavy-work-in-hazeljs-d77) - Worker documentation
 - [Stop grepping, start knowing: Meet HazelJS Inspector](https://dev.to/arslan_mecom/stop-grepping-start-knowing-meet-hazeljs-inspector-3m95) - Inspector documentation
@@ -93,9 +96,10 @@ HazelJS is a modern, TypeScript-first Node.js framework with AI built in. This l
 - [Building a Production-Ready AI Customer Service Agent with HazelJS](https://dev.to/arslan_mecom/building-a-production-ready-ai-customer-service-agent-with-hazeljs-1no7) - Customer service agent documentation
 - [HazelJS Beta: Why We Built It, Design, Purpose, Benefits](https://dev.to/arslan_mecom/hazeljs-beta-why-we-built-it-design-purpose-benefits-3kg9) - Beta documentation
 
-
 ### Migration Guides
-*Coming soon*
+
+_Coming soon_
+
 - Migrating from NestJS
 - Migrating from Express
 - Migrating from Fastify
@@ -105,10 +109,12 @@ HazelJS is a modern, TypeScript-first Node.js framework with AI built in. This l
 ### Official Packages
 
 #### Core
+
 - [@hazeljs/core](https://www.npmjs.com/package/@hazeljs/core) - Framework core
 - [@hazeljs/cli](https://www.npmjs.com/package/@hazeljs/cli) - CLI tools
 
 #### AI Stack
+
 - [@hazeljs/ai](https://www.npmjs.com/package/@hazeljs/ai) - AI integration
 - [@hazeljs/agent](https://www.npmjs.com/package/@hazeljs/agent) - AI agents
 - [@hazeljs/rag](https://www.npmjs.com/package/@hazeljs/rag) - RAG pipeline
@@ -116,6 +122,7 @@ HazelJS is a modern, TypeScript-first Node.js framework with AI built in. This l
 - [@hazeljs/prompts](https://www.npmjs.com/package/@hazeljs/prompts) - Prompt management
 
 #### Infrastructure
+
 - [@hazeljs/auth](https://www.npmjs.com/package/@hazeljs/auth) - Authentication
 - [@hazeljs/prisma](https://www.npmjs.com/package/@hazeljs/prisma) - Prisma ORM
 - [@hazeljs/swagger](https://www.npmjs.com/package/@hazeljs/swagger) - API docs
@@ -124,28 +131,33 @@ HazelJS is a modern, TypeScript-first Node.js framework with AI built in. This l
 - [@hazeljs/serverless](https://www.npmjs.com/package/@hazeljs/serverless) - Serverless
 
 ### Community Packages
-*Third-party packages for HazelJS*
 
+_Third-party packages for HazelJS_
 
 ## Tools
 
 ### Development Tools
+
 - [HazelJS CLI](https://www.npmjs.com/package/@hazeljs/cli) - Official CLI
 - Your tool here! - Share your development tool
 
 ### Testing Tools
+
 - Built-in testing utilities - Part of @hazeljs/core
 
 ### Deployment Tools
+
 - [Serverless Deployment Guide](https://github.com/hazel-js/hazeljs/blob/main/docs/SERVERLESS_DEPLOYMENT_GUIDE.md)
 
 ## Examples
 
 ### Code Examples
+
 - [Official Examples](https://github.com/hazel-js/hazeljs/tree/main/example) - Full example app
 - [HazelJS Starter Example](https://github.com/hazel-js/hazeljs-starter-example) - HazelJS Starter Example
 
 ### Use Cases
+
 - AI Chatbots
 - RAG Applications
 - Microservices
@@ -155,14 +167,17 @@ HazelJS is a modern, TypeScript-first Node.js framework with AI built in. This l
 ## Community
 
 ### Discussion Forums
+
 - [GitHub Discussions](https://github.com/hazel-js/hazeljs/discussions) - Official discussions
 - [Discord](https://discord.gg/PxNBPzvQk7) - Real-time chat
 
 ### Social Media
+
 - Follow [@hazeljs](https://twitter.com/hazeljs) on Twitter
 - Join our [Discord](https://discord.gg/PxNBPzvQk7)
 
 ### Contributing
+
 - [Contributing Guide](https://github.com/hazel-js/hazeljs/blob/main/CONTRIBUTING.md)
 - [Code of Conduct](https://github.com/hazel-js/hazeljs/blob/main/CODE_OF_CONDUCT.md)
 

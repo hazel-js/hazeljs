@@ -117,7 +117,10 @@ bootstrap();
       exclude: ['node_modules', 'dist'],
     };
     fs.writeFileSync(path.join(destPath, 'tsconfig.json'), JSON.stringify(tsConfig, null, 2));
-    fs.writeFileSync(path.join(destPath, '.gitignore'), 'node_modules/\ndist/\n.env\n.DS_Store\ncoverage/\n*.log\n');
+    fs.writeFileSync(
+      path.join(destPath, '.gitignore'),
+      'node_modules/\ndist/\n.env\n.DS_Store\ncoverage/\n*.log\n'
+    );
   }
 }
 
@@ -149,9 +152,8 @@ function scaffoldPackageBoilerplate(destPath: string, packages: string[]) {
   }
 
   // Generate the enhanced app.module.ts
-  const importsSection = moduleImports.length > 0
-    ? `\n  imports: [\n    ${moduleImports.join(',\n    ')},\n  ],`
-    : '';
+  const importsSection =
+    moduleImports.length > 0 ? `\n  imports: [\n    ${moduleImports.join(',\n    ')},\n  ],` : '';
 
   const appModule = `${imports.join('\n')}
 
@@ -202,152 +204,169 @@ export function generateApp(program: Command) {
     .option('--skip-git', 'Skip git initialization')
     .option('-i, --interactive', 'Interactive setup')
     .option('-t, --template <template>', 'Project template (basic, ai-native)', 'basic')
-    .action(async (appName: string, options: { dest?: string; skipInstall?: boolean; skipGit?: boolean; interactive?: boolean; template?: string }) => {
-      try {
-        let projectConfig = {
-          name: appName,
-          description: `A HazelJS application`,
-          author: '',
-          license: 'Apache-2.0',
-          packages: [] as string[],
-        };
-
-        // Interactive setup
-        if (options.interactive) {
-          console.log(chalk.blue('\n🚀 Welcome to HazelJS project setup!\n'));
-          
-          const answers = await inquirer.prompt([
-            {
-              type: 'input',
-              name: 'description',
-              message: 'Project description:',
-              default: projectConfig.description,
-            },
-            {
-              type: 'input',
-              name: 'author',
-              message: 'Author:',
-            },
-            {
-              type: 'list',
-              name: 'license',
-              message: 'License:',
-              choices: ['MIT', 'Apache-2.0', 'GPL-3.0', 'BSD-3-Clause', 'ISC'],
-              default: 'Apache-2.0',
-            },
-            {
-              type: 'checkbox',
-              name: 'packages',
-              message: 'Select additional HazelJS packages to install:',
-              choices: HAZEL_PACKAGES.map(
-                (p: { label: string; npm: string }) => ({ name: p.label, value: p.npm })
-              ),
-            },
-          ]);
-
-          projectConfig = { ...projectConfig, ...answers };
+    .action(
+      async (
+        appName: string,
+        options: {
+          dest?: string;
+          skipInstall?: boolean;
+          skipGit?: boolean;
+          interactive?: boolean;
+          template?: string;
         }
+      ) => {
+        try {
+          let projectConfig = {
+            name: appName,
+            description: `A HazelJS application`,
+            author: '',
+            license: 'Apache-2.0',
+            packages: [] as string[],
+          };
 
-        const destPath = path.join(process.cwd(), options.dest || '.', appName);
-        
-        console.log(chalk.blue('\n📦 Creating new HazelJS project...\n'));
-        console.log(chalk.gray(`Project: ${projectConfig.name}`));
-        console.log(chalk.gray(`Location: ${destPath}\n`));
+          // Interactive setup
+          if (options.interactive) {
+            console.log(chalk.blue('\n🚀 Welcome to HazelJS project setup!\n'));
 
-        // Check if destination exists
-        if (fs.existsSync(destPath)) {
-          console.error(chalk.red(`✗ Destination already exists: ${destPath}`));
-          process.exit(1);
-        }
+            const answers = await inquirer.prompt([
+              {
+                type: 'input',
+                name: 'description',
+                message: 'Project description:',
+                default: projectConfig.description,
+              },
+              {
+                type: 'input',
+                name: 'author',
+                message: 'Author:',
+              },
+              {
+                type: 'list',
+                name: 'license',
+                message: 'License:',
+                choices: ['MIT', 'Apache-2.0', 'GPL-3.0', 'BSD-3-Clause', 'ISC'],
+                default: 'Apache-2.0',
+              },
+              {
+                type: 'checkbox',
+                name: 'packages',
+                message: 'Select additional HazelJS packages to install:',
+                choices: HAZEL_PACKAGES.map((p: { label: string; npm: string }) => ({
+                  name: p.label,
+                  value: p.npm,
+                })),
+              },
+            ]);
 
-        // Use template based on option
-        const templateDir = options.template === 'ai-native' ? '@template-ai-native' : '@template';
-        const templatePath = path.join(__dirname, '../../', templateDir);
-        
-        if (fs.existsSync(templatePath)) {
-          console.log(chalk.blue(`📋 Copying ${options.template} template files...`));
-          copyRecursiveSync(templatePath, destPath);
-          
-          // Update package.json
-          updatePackageJson(destPath, projectConfig.name, projectConfig.description);
-          
-          console.log(chalk.green(`✓ ${options.template} template files copied`));
-        } else {
-          console.log(chalk.yellow(`⚠ ${options.template} template not found, creating basic structure...`));
-          createSkeletonAtDest(destPath, projectConfig.name, projectConfig.description);
-          console.log(chalk.green('✓ Basic structure created'));
-        }
+            projectConfig = { ...projectConfig, ...answers };
+          }
 
-        // Initialize git
-        if (!options.skipGit) {
-          try {
-            console.log(chalk.blue('\n📝 Initializing git repository...'));
-            execSync('git init', { cwd: destPath, stdio: 'ignore' });
-            
-            // Create .gitignore
-            const gitignore = `node_modules/
+          const destPath = path.join(process.cwd(), options.dest || '.', appName);
+
+          console.log(chalk.blue('\n📦 Creating new HazelJS project...\n'));
+          console.log(chalk.gray(`Project: ${projectConfig.name}`));
+          console.log(chalk.gray(`Location: ${destPath}\n`));
+
+          // Check if destination exists
+          if (fs.existsSync(destPath)) {
+            console.error(chalk.red(`✗ Destination already exists: ${destPath}`));
+            process.exit(1);
+          }
+
+          // Use template based on option
+          const templateDir =
+            options.template === 'ai-native' ? '@template-ai-native' : '@template';
+          const templatePath = path.join(__dirname, '../../', templateDir);
+
+          if (fs.existsSync(templatePath)) {
+            console.log(chalk.blue(`📋 Copying ${options.template} template files...`));
+            copyRecursiveSync(templatePath, destPath);
+
+            // Update package.json
+            updatePackageJson(destPath, projectConfig.name, projectConfig.description);
+
+            console.log(chalk.green(`✓ ${options.template} template files copied`));
+          } else {
+            console.log(
+              chalk.yellow(`⚠ ${options.template} template not found, creating basic structure...`)
+            );
+            createSkeletonAtDest(destPath, projectConfig.name, projectConfig.description);
+            console.log(chalk.green('✓ Basic structure created'));
+          }
+
+          // Initialize git
+          if (!options.skipGit) {
+            try {
+              console.log(chalk.blue('\n📝 Initializing git repository...'));
+              execSync('git init', { cwd: destPath, stdio: 'ignore' });
+
+              // Create .gitignore
+              const gitignore = `node_modules/
 dist/
 .env
 .DS_Store
 coverage/
 *.log
 `;
-            fs.writeFileSync(path.join(destPath, '.gitignore'), gitignore);
-            console.log(chalk.green('✓ Git initialized'));
-          } catch {
-            console.log(chalk.yellow('⚠ Git initialization skipped'));
-          }
-        }
-
-        // Install dependencies
-        if (!options.skipInstall) {
-          console.log(chalk.blue('\n📦 Installing dependencies...\n'));
-          
-          try {
-            execSync('npm install', { cwd: destPath, stdio: 'inherit' });
-            
-            // Install additional packages
-            if (projectConfig.packages.length > 0) {
-              console.log(chalk.blue('\n📦 Installing additional packages...\n'));
-              execSync(`npm install ${projectConfig.packages.join(' ')}`, {
-                cwd: destPath,
-                stdio: 'inherit',
-              });
+              fs.writeFileSync(path.join(destPath, '.gitignore'), gitignore);
+              console.log(chalk.green('✓ Git initialized'));
+            } catch {
+              console.log(chalk.yellow('⚠ Git initialization skipped'));
             }
-            
-            console.log(chalk.green('\n✓ Dependencies installed'));
-          } catch {
-            console.log(chalk.yellow('\n⚠ Dependency installation failed'));
-            console.log(chalk.gray('You can install them manually with: npm install'));
           }
-        }
 
-        // Scaffold boilerplate for selected packages
-        if (projectConfig.packages.length > 0) {
-          console.log(chalk.blue('\n📝 Scaffolding boilerplate for selected packages...\n'));
-          scaffoldPackageBoilerplate(destPath, projectConfig.packages);
-        }
+          // Install dependencies
+          if (!options.skipInstall) {
+            console.log(chalk.blue('\n📦 Installing dependencies...\n'));
 
-        // Success message
-        console.log(chalk.green.bold('\n✨ Project created successfully!\n'));
-        console.log(chalk.gray('Next steps:'));
-        console.log(chalk.gray(`  cd ${appName}`));
-        if (options.skipInstall) {
-          console.log(chalk.gray('  npm install'));
+            try {
+              execSync('npm install', { cwd: destPath, stdio: 'inherit' });
+
+              // Install additional packages
+              if (projectConfig.packages.length > 0) {
+                console.log(chalk.blue('\n📦 Installing additional packages...\n'));
+                execSync(`npm install ${projectConfig.packages.join(' ')}`, {
+                  cwd: destPath,
+                  stdio: 'inherit',
+                });
+              }
+
+              console.log(chalk.green('\n✓ Dependencies installed'));
+            } catch {
+              console.log(chalk.yellow('\n⚠ Dependency installation failed'));
+              console.log(chalk.gray('You can install them manually with: npm install'));
+            }
+          }
+
+          // Scaffold boilerplate for selected packages
+          if (projectConfig.packages.length > 0) {
+            console.log(chalk.blue('\n📝 Scaffolding boilerplate for selected packages...\n'));
+            scaffoldPackageBoilerplate(destPath, projectConfig.packages);
+          }
+
+          // Success message
+          console.log(chalk.green.bold('\n✨ Project created successfully!\n'));
+          console.log(chalk.gray('Next steps:'));
+          console.log(chalk.gray(`  cd ${appName}`));
+          if (options.skipInstall) {
+            console.log(chalk.gray('  npm install'));
+          }
+          console.log(chalk.gray('  npm run dev'));
+          console.log(chalk.gray('\nDocumentation: https://hazeljs.ai/docs'));
+          console.log(chalk.gray('Discord: https://discord.gg/PxNBPzvQk7\n'));
+        } catch (error) {
+          console.error(chalk.red('\n✗ Failed to create project:'), error);
+          process.exit(1);
         }
-        console.log(chalk.gray('  npm run dev'));
-        console.log(chalk.gray('\nDocumentation: https://hazeljs.ai/docs'));
-        console.log(chalk.gray('Discord: https://discord.gg/PxNBPzvQk7\n'));
-        
-      } catch (error) {
-        console.error(chalk.red('\n✗ Failed to create project:'), error);
-        process.exit(1);
       }
-    });
+    );
 }
 
 /** Run the skeleton app generator (used by `hazel g app <name>`). Creates a minimal app, no install/git. */
-export async function runApp(name: string, options: GenerateCLIOptions & { path?: string; template?: string }): Promise<GenerateResult> {
+export async function runApp(
+  name: string,
+  options: GenerateCLIOptions & { path?: string; template?: string }
+): Promise<GenerateResult> {
   const parentDir = options.path || '.';
   const destPath = path.join(process.cwd(), parentDir, name);
 
@@ -372,14 +391,14 @@ export async function runApp(name: string, options: GenerateCLIOptions & { path?
     // Use template based on option
     const templateDir = options.template === 'ai-native' ? '@template-ai-native' : '@template';
     const templatePath = path.join(__dirname, '../../', templateDir);
-    
+
     if (fs.existsSync(templatePath)) {
       copyRecursiveSync(templatePath, destPath);
       updatePackageJson(destPath, name, 'A HazelJS application');
     } else {
       createSkeletonAtDest(destPath, name, 'A HazelJS application');
     }
-    
+
     return {
       ok: true,
       created: [destPath],
@@ -403,9 +422,11 @@ export function registerGenerateApp(generateCommand: Command) {
     .option('-t, --template <template>', 'Project template (basic, ai-native)', 'basic')
     .option('--dry-run', 'Preview without writing files')
     .option('--json', 'Output result as JSON')
-    .action(async (name: string, options: GenerateCLIOptions & { path?: string; template?: string }) => {
-      const result = await runApp(name, options);
-      printGenerateResult(result, { json: options.json });
-      if (!result.ok) process.exit(1);
-    });
-} 
+    .action(
+      async (name: string, options: GenerateCLIOptions & { path?: string; template?: string }) => {
+        const result = await runApp(name, options);
+        printGenerateResult(result, { json: options.json });
+        if (!result.ok) process.exit(1);
+      }
+    );
+}

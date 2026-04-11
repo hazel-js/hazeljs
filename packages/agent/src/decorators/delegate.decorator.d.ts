@@ -54,11 +54,16 @@ export declare function Delegate(config: DelegateConfig): MethodDecorator;
 /**
  * Retrieve the `@Delegate` config from a method.
  */
-export declare function getDelegateMetadata(target: object, propertyKey: string): DelegateConfig | undefined;
+export declare function getDelegateMetadata(
+  target: object,
+  propertyKey: string
+): DelegateConfig | undefined;
 /**
  * Get the names of all `@Delegate`-decorated methods on a class.
  */
-export declare function getDelegatedMethods(agentClass: new (...args: unknown[]) => unknown): string[];
+export declare function getDelegatedMethods(
+  agentClass: new (...args: unknown[]) => unknown
+): string[];
 /**
  * Check if a method has the `@Delegate` decorator.
  */

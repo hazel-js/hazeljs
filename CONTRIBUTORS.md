@@ -25,6 +25,7 @@ We welcome contributions from everyone! Here's how you can help:
 ### Recognition
 
 All contributors will be:
+
 - Listed in this file
 - Mentioned in release notes
 - Featured on our website (with permission)
@@ -33,16 +34,21 @@ All contributors will be:
 ### Contribution Levels
 
 #### 🌟 Gold Contributors (10+ merged PRs)
-*Coming soon - be the first!*
+
+_Coming soon - be the first!_
 
 #### 🥈 Silver Contributors (5+ merged PRs)
-*Coming soon - be the first!*
+
+_Coming soon - be the first!_
 
 #### 🥉 Bronze Contributors (1+ merged PRs)
-*Coming soon - be the first!*
+
+_Coming soon - be the first!_
 
 #### 💡 Community Contributors
+
 Everyone who has:
+
 - Reported bugs
 - Suggested features
 - Helped in discussions
@@ -51,6 +57,7 @@ Everyone who has:
 ## Special Thanks
 
 Special thanks to:
+
 - Everyone who starred the repository ⭐
 - All the developers who provided feedback
 - The open-source community for inspiration
@@ -63,4 +70,4 @@ Want to see your name here? Check out our [Contributing Guide](./CONTRIBUTING.md
 
 **Built with ❤️ by the HazelJS community**
 
-*Last updated: March 2026*
+_Last updated: March 2026_

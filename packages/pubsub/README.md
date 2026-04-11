@@ -63,11 +63,7 @@ export class OrderService {
 
 ```typescript
 import { Injectable } from '@hazeljs/core';
-import {
-  PubSubConsumer,
-  PubSubSubscribe,
-  PubSubSubscriptionHandlerPayload,
-} from '@hazeljs/pubsub';
+import { PubSubConsumer, PubSubSubscribe, PubSubSubscriptionHandlerPayload } from '@hazeljs/pubsub';
 
 @PubSubConsumer({ ackOnSuccess: true, nackOnError: true, parseJson: true })
 @Injectable()

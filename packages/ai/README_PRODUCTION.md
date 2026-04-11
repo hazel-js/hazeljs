@@ -37,12 +37,7 @@ export ANTHROPIC_API_KEY="your-anthropic-key"
 ## 🚀 Quick Start
 
 ```typescript
-import { 
-  OpenAIProvider, 
-  GeminiProvider, 
-  CohereProvider, 
-  AnthropicProvider 
-} from '@hazeljs/ai';
+import { OpenAIProvider, GeminiProvider, CohereProvider, AnthropicProvider } from '@hazeljs/ai';
 
 // Initialize providers
 const openai = new OpenAIProvider();
@@ -53,7 +48,7 @@ const anthropic = new AnthropicProvider();
 // All providers share the same interface!
 const response = await anthropic.complete({
   messages: [{ role: 'user', content: 'Hello!' }],
-  temperature: 0.7
+  temperature: 0.7,
 });
 ```
 
@@ -78,85 +73,93 @@ Comprehensive setup guides for each provider:
 
 ### Provider-Specific Features
 
-| Feature | OpenAI | Gemini | Cohere | Anthropic |
-|---------|--------|--------|--------|-----------|
-| Text Generation | ✅ | ✅ | ✅ | ✅ |
-| Streaming | ✅ | ✅ | ✅ | ✅ |
-| Embeddings | ✅ | ✅ | ✅ | ❌ |
-| Function Calling | ✅ | ✅ | ❌ | ❌ |
-| Image Generation | ✅ | ❌ | ❌ | ❌ |
-| Document Reranking | ❌ | ❌ | ✅ | ❌ |
-| Context Window | 128K | 1M | 200K | 200K |
+| Feature            | OpenAI | Gemini | Cohere | Anthropic |
+| ------------------ | ------ | ------ | ------ | --------- |
+| Text Generation    | ✅     | ✅     | ✅     | ✅        |
+| Streaming          | ✅     | ✅     | ✅     | ✅        |
+| Embeddings         | ✅     | ✅     | ✅     | ❌        |
+| Function Calling   | ✅     | ✅     | ❌     | ❌        |
+| Image Generation   | ✅     | ❌     | ❌     | ❌        |
+| Document Reranking | ❌     | ❌     | ✅     | ❌        |
+| Context Window     | 128K   | 1M     | 200K   | 200K      |
 
 ## 🎯 Use Case Guide
 
 ### For General Chat
+
 **Recommended**: Claude 3.5 Sonnet or GPT-4
+
 ```typescript
 const anthropic = new AnthropicProvider();
 const response = await anthropic.complete({
   messages: [{ role: 'user', content: 'Explain quantum computing' }],
-  model: 'claude-3-5-sonnet-20241022'
+  model: 'claude-3-5-sonnet-20241022',
 });
 ```
 
 ### For RAG Applications
+
 **Recommended**: Cohere (with reranking)
+
 ```typescript
 const cohere = new CohereProvider();
 
 // 1. Get embeddings
 const embeddings = await cohere.embed({
   input: ['document 1', 'document 2'],
-  model: 'embed-english-v3.0'
+  model: 'embed-english-v3.0',
 });
 
 // 2. Rerank results
-const reranked = await cohere.rerank(
-  'user query',
-  candidateDocuments,
-  5
-);
+const reranked = await cohere.rerank('user query', candidateDocuments, 5);
 ```
 
 ### For Long Context
+
 **Recommended**: Gemini 1.5 Pro (1M tokens)
+
 ```typescript
 const gemini = new GeminiProvider();
 const response = await gemini.complete({
   messages: [{ role: 'user', content: longDocument }],
-  model: 'gemini-1.5-pro'
+  model: 'gemini-1.5-pro',
 });
 ```
 
 ### For Cost-Effective
+
 **Recommended**: Claude 3 Haiku
+
 ```typescript
 const anthropic = new AnthropicProvider();
 const response = await anthropic.complete({
   messages: [{ role: 'user', content: 'Simple task' }],
-  model: 'claude-3-haiku-20240307'
+  model: 'claude-3-haiku-20240307',
 });
 ```
 
 ## 🔄 Provider Comparison
 
 ### OpenAI
+
 - **Best for**: General-purpose AI, mature ecosystem
 - **Strengths**: GPT-4, function calling, DALL-E, Whisper
 - **Pricing**: $$ (moderate to high)
 
 ### Gemini
+
 - **Best for**: Long context, multimodal tasks
 - **Strengths**: 1M token context, free tier, competitive pricing
 - **Pricing**: $ (cost-effective)
 
 ### Cohere
+
 - **Best for**: RAG, reranking, multilingual
 - **Strengths**: Document reranking, enterprise search
 - **Pricing**: $ (cost-effective)
 
 ### Anthropic
+
 - **Best for**: Complex reasoning, safety-focused AI
 - **Strengths**: Claude 3.5, 200K context, clear responses
 - **Pricing**: $$ (moderate)
@@ -167,17 +170,13 @@ const response = await anthropic.complete({
 
 ```typescript
 class RobustAI {
-  private providers = [
-    new AnthropicProvider(),
-    new OpenAIProvider(),
-    new GeminiProvider(),
-  ];
+  private providers = [new AnthropicProvider(), new OpenAIProvider(), new GeminiProvider()];
 
   async complete(prompt: string) {
     for (const provider of this.providers) {
       try {
         return await provider.complete({
-          messages: [{ role: 'user', content: prompt }]
+          messages: [{ role: 'user', content: prompt }],
         });
       } catch (error) {
         console.warn(`${provider.name} failed, trying next...`);
@@ -201,18 +200,18 @@ async function smartRAG(query: string, documents: string[]) {
   const reranked = await cohere.rerank(query, candidates, 5);
 
   // 3. Generate answer with best results
-  const context = reranked.map(r => r.document).join('\n\n');
+  const context = reranked.map((r) => r.document).join('\n\n');
   const response = await cohere.complete({
     messages: [
       { role: 'system', content: 'Answer based on context.' },
-      { role: 'user', content: `Context:\n${context}\n\nQ: ${query}` }
+      { role: 'user', content: `Context:\n${context}\n\nQ: ${query}` },
     ],
-    model: 'command-r-plus'
+    model: 'command-r-plus',
   });
 
   return {
     answer: response.content,
-    sources: reranked
+    sources: reranked,
   };
 }
 ```
@@ -223,7 +222,7 @@ async function smartRAG(query: string, documents: string[]) {
 async function streamWithProgress(prompt: string) {
   const anthropic = new AnthropicProvider();
   const stream = anthropic.streamComplete({
-    messages: [{ role: 'user', content: prompt }]
+    messages: [{ role: 'user', content: prompt }],
   });
 
   let tokenCount = 0;
@@ -246,18 +245,21 @@ async function streamWithProgress(prompt: string) {
 No code changes needed! The API interface remains identical.
 
 **Before** (mock):
+
 ```typescript
 const provider = new GeminiProvider();
 const response = await provider.complete({...}); // Returns mock data
 ```
 
 **After** (production):
+
 ```typescript
 const provider = new GeminiProvider();
 const response = await provider.complete({...}); // Returns real API data
 ```
 
 Just:
+
 1. Install the SDK
 2. Set your API key
 3. Rebuild your project
@@ -265,12 +267,14 @@ Just:
 ## 🔧 Troubleshooting
 
 ### "Cannot find module" errors
+
 ```bash
 # Install missing SDKs
 npm install @google/generative-ai cohere-ai @anthropic-ai/sdk
 ```
 
 ### "API key not configured"
+
 ```bash
 # Set environment variables
 export GEMINI_API_KEY="your-key"
@@ -279,6 +283,7 @@ export ANTHROPIC_API_KEY="your-key"
 ```
 
 ### Rate limit errors
+
 - Implement exponential backoff
 - Use cheaper models for non-critical requests
 - Consider upgrading your API tier
@@ -290,6 +295,7 @@ export ANTHROPIC_API_KEY="your-key"
    - Production: Balance cost vs quality
 
 2. **Set token limits**:
+
    ```typescript
    const response = await provider.complete({
      messages: [...],

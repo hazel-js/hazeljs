@@ -22,9 +22,7 @@ describe('AgentRegistry', () => {
     it('should throw error if class is not decorated with @Agent', () => {
       class NotAnAgent {}
 
-      expect(() => registry.register(NotAnAgent as any)).toThrow(
-        'is not decorated with @Agent'
-      );
+      expect(() => registry.register(NotAnAgent as any)).toThrow('is not decorated with @Agent');
     });
 
     it('should throw error if agent is already registered', () => {
@@ -41,20 +39,16 @@ describe('AgentRegistry', () => {
     it('should throw error if metadata is missing', () => {
       // Create a mock class that passes isAgent but fails getAgentMetadata
       const MockAgent = class MockAgentClass {};
-      
-      // Mock the decorator functions
-      const isAgentSpy = jest.spyOn(
-        require('../../src/decorators/agent.decorator'),
-        'isAgent'
-      ).mockReturnValue(true);
-      const getMetadataSpy = jest.spyOn(
-        require('../../src/decorators/agent.decorator'),
-        'getAgentMetadata'
-      ).mockReturnValue(undefined);
 
-      expect(() => registry.register(MockAgent as any)).toThrow(
-        'Failed to get metadata'
-      );
+      // Mock the decorator functions
+      const isAgentSpy = jest
+        .spyOn(require('../../src/decorators/agent.decorator'), 'isAgent')
+        .mockReturnValue(true);
+      const getMetadataSpy = jest
+        .spyOn(require('../../src/decorators/agent.decorator'), 'getAgentMetadata')
+        .mockReturnValue(undefined);
+
+      expect(() => registry.register(MockAgent as any)).toThrow('Failed to get metadata');
 
       isAgentSpy.mockRestore();
       getMetadataSpy.mockRestore();
@@ -231,4 +225,3 @@ describe('AgentRegistry', () => {
     });
   });
 });
-

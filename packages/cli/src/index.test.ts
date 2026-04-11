@@ -16,7 +16,13 @@ jest.mock('./commands/generate-auth');
 jest.mock('./commands/generate-simple', () => ({
   registerSimpleGenerators: jest.fn(),
   SIMPLE_GENERATORS: [
-    { type: 'controller', description: 'REST controller', suffix: 'controller', template: '', nameRequired: true },
+    {
+      type: 'controller',
+      description: 'REST controller',
+      suffix: 'controller',
+      template: '',
+      nameRequired: true,
+    },
   ],
   findSimpleGenerator: jest.fn(),
   runSimpleGenerator: jest.fn(),

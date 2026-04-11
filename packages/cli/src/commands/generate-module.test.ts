@@ -23,7 +23,7 @@ describe('generateModule', () => {
 
   it('should register the module command with alias', () => {
     generateModule(program);
-    const cmd = program.commands.find(c => c.name() === 'module');
+    const cmd = program.commands.find((c) => c.name() === 'module');
     expect(cmd).toBeDefined();
     expect(cmd?.alias()).toBe('m');
   });
@@ -32,23 +32,23 @@ describe('generateModule', () => {
     generateModule(program);
     await program.parseAsync(['node', 'test', 'module', 'user']);
 
-    const writtenFiles = mockFs.writeFileSync.mock.calls.map(call => call[0] as string);
-    expect(writtenFiles.some(f => f.includes('user.module.ts'))).toBe(true);
-    expect(writtenFiles.some(f => f.includes('user.controller.ts'))).toBe(true);
-    expect(writtenFiles.some(f => f.includes('user.service.ts'))).toBe(true);
-    expect(writtenFiles.some(f => f.includes('create-user.dto.ts'))).toBe(true);
-    expect(writtenFiles.some(f => f.includes('update-user.dto.ts'))).toBe(true);
+    const writtenFiles = mockFs.writeFileSync.mock.calls.map((call) => call[0] as string);
+    expect(writtenFiles.some((f) => f.includes('user.module.ts'))).toBe(true);
+    expect(writtenFiles.some((f) => f.includes('user.controller.ts'))).toBe(true);
+    expect(writtenFiles.some((f) => f.includes('user.service.ts'))).toBe(true);
+    expect(writtenFiles.some((f) => f.includes('create-user.dto.ts'))).toBe(true);
+    expect(writtenFiles.some((f) => f.includes('update-user.dto.ts'))).toBe(true);
   });
 
   it('should use @hazeljs/core imports in all generated files', async () => {
     generateModule(program);
     await program.parseAsync(['node', 'test', 'module', 'user']);
 
-    const writtenContents = mockFs.writeFileSync.mock.calls.map(call => call[1] as string);
-    const moduleContent = writtenContents.find(c => c.includes('HazelModule'));
+    const writtenContents = mockFs.writeFileSync.mock.calls.map((call) => call[1] as string);
+    const moduleContent = writtenContents.find((c) => c.includes('HazelModule'));
     expect(moduleContent).toContain("from '@hazeljs/core'");
-    
-    const controllerContent = writtenContents.find(c => c.includes('Controller'));
+
+    const controllerContent = writtenContents.find((c) => c.includes('Controller'));
     expect(controllerContent).toContain("from '@hazeljs/core'");
   });
 

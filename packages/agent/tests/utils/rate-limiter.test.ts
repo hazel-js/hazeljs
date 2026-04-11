@@ -42,10 +42,10 @@ describe('RateLimiter', () => {
 
       limiter.tryConsume();
       const waitPromise = limiter.waitForToken(200);
-      
+
       // Advance timers to allow token refill
       await jest.runAllTimersAsync();
-      
+
       const result = await waitPromise;
 
       expect(result).toBe(true);
@@ -56,10 +56,10 @@ describe('RateLimiter', () => {
 
       limiter.tryConsume();
       const waitPromise = limiter.waitForToken(50);
-      
+
       // Advance timers to trigger timeout
       await jest.runAllTimersAsync();
-      
+
       const result = await waitPromise;
 
       expect(result).toBe(false);

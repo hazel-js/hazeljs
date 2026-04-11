@@ -93,14 +93,15 @@ class AIService {
 The observability package follows the A2A (Agent-to-Agent) and OTel specifications to ensure your traces are compatible with the broader ecosystem.
 
 <MermaidDiagram chart={`graph TD
-    A["@Trace() Decorator"] --> B["Observability Service"]
-    B --> C["OpenTelemetry Provider"]
-    C --> D["OTLP Exporter"]
-    D --> E["Observability Platform<br/>(Jaeger, Honeycomb, Datadog)"]
-    
+A["@Trace() Decorator"] --> B["Observability Service"]
+B --> C["OpenTelemetry Provider"]
+C --> D["OTLP Exporter"]
+D --> E["Observability Platform<br/>(Jaeger, Honeycomb, Datadog)"]
+
     style A fill:#3b82f6,color:#fff
     style B fill:#6366f1,color:#fff
     style C fill:#10b981,color:#fff
+
 `} />
 
 ## API Reference
@@ -109,11 +110,7 @@ The observability package follows the A2A (Agent-to-Agent) and OTel specificatio
 
 ```typescript
 class OpenTelemetryProvider {
-  constructor(config: {
-    serviceName: string;
-    endpoint?: string;
-    headers?: Record<string, string>;
-  });
+  constructor(config: { serviceName: string; endpoint?: string; headers?: Record<string, string> });
   initialize(): void;
   shutdown(): Promise<void>;
 }
@@ -126,6 +123,7 @@ class OpenTelemetryProvider {
 ```
 
 **TraceOptions:**
+
 - `attributes`: Static attributes to add to the span.
 - `captureArgs`: Whether to capture method arguments (default: `false`).
 - `captureResult`: Whether to capture method return value (default: `false`).

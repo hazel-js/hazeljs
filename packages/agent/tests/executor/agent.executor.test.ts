@@ -348,7 +348,9 @@ describe('AgentExecutor', () => {
       );
 
       const context = stateManager.createContext('agent-1', 'session-1', 'Hello');
-      await expect((executorWithLLM as any).decideNextAction(context)).rejects.toThrow(AgentErrorClass);
+      await expect((executorWithLLM as any).decideNextAction(context)).rejects.toThrow(
+        AgentErrorClass
+      );
     });
   });
 
@@ -548,7 +550,7 @@ describe('AgentExecutor', () => {
   describe('executeStream', () => {
     it('should stream execution chunks', async () => {
       const context = stateManager.createContext('agent-1', 'session-1', 'Hello');
-      
+
       const mockLLMProvider: LLMProvider = {
         chat: jest.fn(),
         streamChat: jest.fn(async function* () {
@@ -581,7 +583,7 @@ describe('AgentExecutor', () => {
 
     it('should handle streaming without streamChat provider', async () => {
       const context = stateManager.createContext('agent-1', 'session-1', 'Hello');
-      
+
       const mockLLMProvider: LLMProvider = {
         chat: jest.fn().mockResolvedValue({ content: 'Response' }),
       };
@@ -613,7 +615,7 @@ describe('AgentExecutor', () => {
   describe('executeStepStream', () => {
     it('should stream step execution', async () => {
       const context = stateManager.createContext('agent-1', 'session-1', 'Hello');
-      
+
       const mockLLMProvider: LLMProvider = {
         chat: jest.fn(),
         streamChat: jest.fn(async function* () {
@@ -642,13 +644,13 @@ describe('AgentExecutor', () => {
       }
 
       expect(chunks.length).toBeGreaterThan(0);
-      const tokenChunks = chunks.filter(c => c.type === 'token');
+      const tokenChunks = chunks.filter((c) => c.type === 'token');
       expect(tokenChunks.length).toBeGreaterThan(0);
     });
 
     it('should handle execution without streamChat support', async () => {
       const context = stateManager.createContext('agent-1', 'session-1', 'Hello');
-      
+
       const mockLLMProvider: LLMProvider = {
         chat: jest.fn().mockResolvedValue({
           content: 'Response without streaming',
@@ -680,7 +682,7 @@ describe('AgentExecutor', () => {
 
     it('should handle empty stream chunks', async () => {
       const context = stateManager.createContext('agent-1', 'session-1', 'Hello');
-      
+
       const mockLLMProvider: LLMProvider = {
         chat: jest.fn(),
         streamChat: jest.fn(async function* () {
@@ -712,7 +714,7 @@ describe('AgentExecutor', () => {
 
     it('should handle streaming errors gracefully', async () => {
       const context = stateManager.createContext('agent-1', 'session-1', 'Hello');
-      
+
       const mockLLMProvider: LLMProvider = {
         chat: jest.fn(),
         streamChat: jest.fn(async function* () {
@@ -744,4 +746,3 @@ describe('AgentExecutor', () => {
     });
   });
 });
-

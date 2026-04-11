@@ -91,16 +91,26 @@ export class WeatherAgent {
     let celsius: number;
 
     switch (fromUnit.toLowerCase()) {
-      case 'fahrenheit': celsius = (value - 32) * (5 / 9); break;
-      case 'kelvin':     celsius = value - 273.15; break;
-      default:           celsius = value;
+      case 'fahrenheit':
+        celsius = (value - 32) * (5 / 9);
+        break;
+      case 'kelvin':
+        celsius = value - 273.15;
+        break;
+      default:
+        celsius = value;
     }
 
     let result: number;
     switch (toUnit.toLowerCase()) {
-      case 'fahrenheit': result = celsius * (9 / 5) + 32; break;
-      case 'kelvin':     result = celsius + 273.15; break;
-      default:           result = celsius;
+      case 'fahrenheit':
+        result = celsius * (9 / 5) + 32;
+        break;
+      case 'kelvin':
+        result = celsius + 273.15;
+        break;
+      default:
+        result = celsius;
     }
 
     return {
@@ -134,7 +144,7 @@ export class WeatherAgent {
 export class AgentController {
   constructor(
     private readonly agent: WeatherAgent,
-    private readonly agentService: AgentService,
+    private readonly agentService: AgentService
   ) {}
 
   @Post()
@@ -160,7 +170,9 @@ export class AgentController {
       if (chunk.type === 'token') {
         res.write(`data: ${JSON.stringify({ type: 'token', content: chunk.content })}\n\n`);
       } else if (chunk.type === 'step') {
-        res.write(`data: ${JSON.stringify({ type: 'step', state: chunk.step.state, tool: chunk.step.action?.toolName ?? null })}\n\n`);
+        res.write(
+          `data: ${JSON.stringify({ type: 'step', state: chunk.step.state, tool: chunk.step.action?.toolName ?? null })}\n\n`
+        );
       } else if (chunk.type === 'done') {
         res.write(`data: ${JSON.stringify({ type: 'done', response: chunk.result.response })}\n\n`);
       }

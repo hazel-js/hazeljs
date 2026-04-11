@@ -39,7 +39,11 @@ describe('flow DSL', () => {
       .build();
 
     expect(def.nodes.a?.name).toBe('NodeA');
-    expect(def.nodes.a?.retry).toEqual({ maxAttempts: 3, backoff: 'exponential', baseDelayMs: 100 });
+    expect(def.nodes.a?.retry).toEqual({
+      maxAttempts: 3,
+      backoff: 'exponential',
+      baseDelayMs: 100,
+    });
     expect(def.nodes.a?.timeoutMs).toBe(5000);
     expect(def.nodes.a?.idempotencyKey).toBe(idempotencyKey);
   });

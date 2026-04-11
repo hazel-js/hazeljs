@@ -55,9 +55,7 @@ import { infoCommand } from './commands/info';
 import { addCommand } from './commands/add';
 
 // Read version from package.json to ensure consistency
-const packageJson = JSON.parse(
-  readFileSync(join(__dirname, '../package.json'), 'utf8')
-);
+const packageJson = JSON.parse(readFileSync(join(__dirname, '../package.json'), 'utf8'));
 
 const program = new Command();
 
@@ -76,7 +74,9 @@ addCommand(program);
 // Generate command group (unified: hazel g <type> <name> [--path] [--dry-run] [--json], or hazel g --list)
 const generateCommand = program
   .command('generate')
-  .description('Generate HazelJS components. Use: hazel g <type> <name> (e.g. hazel g controller users). Use --list to see all types.')
+  .description(
+    'Generate HazelJS components. Use: hazel g <type> <name> (e.g. hazel g controller users). Use --list to see all types.'
+  )
   .alias('g')
   .option('--list', 'List available generator types')
   .option('--list-json', 'With --list: output list as JSON')
