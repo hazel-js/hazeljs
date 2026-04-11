@@ -48,7 +48,10 @@
           "name": "template",
           "short": "t",
           "type": "string",
-          "enum": ["basic", "ai-native"],
+          "enum": [
+            "basic",
+            "ai-native"
+          ],
           "default": "basic",
           "description": "Project template"
         }
@@ -89,7 +92,10 @@
               "name": "template",
               "short": "t",
               "type": "string",
-              "enum": ["basic", "ai-native"],
+              "enum": [
+                "basic",
+                "ai-native"
+              ],
               "default": "basic",
               "description": "Project template"
             },
@@ -646,7 +652,10 @@
             {
               "name": "platform",
               "type": "string",
-              "enum": ["lambda", "cloud-function"],
+              "enum": [
+                "lambda",
+                "cloud-function"
+              ],
               "default": "lambda",
               "description": "Platform: lambda or cloud-function"
             },
@@ -884,7 +893,10 @@
   "outputFormats": {
     "json": {
       "description": "Machine-readable JSON output for automation and LLM tool-use",
-      "supported": ["generate", "add"],
+      "supported": [
+        "generate",
+        "add"
+      ],
       "schema": {
         "type": "object",
         "properties": {
@@ -919,7 +931,9 @@
     },
     "dryRun": {
       "description": "Preview mode that shows what would be created without writing files",
-      "supported": ["generate"],
+      "supported": [
+        "generate"
+      ],
       "behavior": "Prefixes output with [dry-run] and sets dryRun: true in JSON"
     }
   }

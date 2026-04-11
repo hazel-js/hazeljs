@@ -11,9 +11,9 @@
     "build": "tsc",
     "test": "jest --coverage --passWithNoTests",
     "test:ci": "jest --coverage --coverageReporters=text --coverageReporters=lcov --no-coverage-threshold",
-    "lint": "eslint \"src/**/*.ts\"",
-    "lint:fix": "eslint \"src/**/*.ts\" --fix",
-    "clean": "rm -rf dist"
+    "lint": "eslint \"src/**/*.ts\" --ignore-pattern \"**/*.d.ts\"",
+    "lint:fix": "eslint \"src/**/*.ts\" --ignore-pattern \"**/*.d.ts\" --fix",
+    "clean": "rm -rf dist && find src -type f \\( -name '*.js' -o -name '*.d.ts' -o -name '*.d.ts.map' \\) -delete 2>/dev/null || true"
   },
   "dependencies": {
     "zod": "^3.25.76"

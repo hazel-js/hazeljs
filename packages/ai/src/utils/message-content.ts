@@ -1,4 +1,4 @@
-import type { AIMessage, AIMessageContentPart } from '../ai-enhanced.types';
+import type { AIMessageContentPart } from '../ai-enhanced.types';
 
 /** Flatten message content to plain text (for token estimates and legacy providers). */
 export function messageContentToText(content: string | AIMessageContentPart[]): string {

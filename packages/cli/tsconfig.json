@@ -12,11 +12,13 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "types": ["jest", "node"],
+    "composite": true,
     "baseUrl": ".",
     "paths": {
-      "@hazeljs/eval": ["src/types/hazeljs-eval.d.ts"]
+      "@hazeljs/eval": ["../eval/dist/index.d.ts"]
     }
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
+  "exclude": ["node_modules", "dist"],
+  "references": [{ "path": "../eval" }]
 }

@@ -52,7 +52,7 @@ export class HazelAI {
 
   constructor(private config: HazelAIConfig = {}) {
     this.aiService = new AIEnhancedService(undefined, undefined, {
-      onCompletion: (evt) => {
+      onCompletion: (evt): void => {
         this.config.usageHooks?.onCompletion?.({
           provider: evt.provider,
           model: evt.model,

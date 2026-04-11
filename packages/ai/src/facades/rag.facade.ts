@@ -9,6 +9,39 @@ import type {
 } from '../platform/hazel-ai.types';
 
 /**
+ * Subset of @hazeljs/rag loaded via dynamic import (keeps @hazeljs/ai buildable without full RAG types).
+ */
+interface HazelRagDynamicModule {
+  RAGPipeline: new (
+    config: unknown,
+    llm: (prompt: string) => Promise<string>
+  ) => {
+    initialize: () => Promise<void>;
+    config: { vectorStore: unknown; embeddingProvider: unknown; textSplitter: unknown };
+  };
+  RAGService: new (opts: {
+    vectorStore: unknown;
+    embeddingProvider: unknown;
+    textSplitter: unknown;
+    llmFunction: (prompt: string) => Promise<string>;
+  }) => {
+    initialize: () => Promise<void>;
+    ingest: (path: string) => Promise<string[]>;
+    index: (data: unknown) => Promise<string[]>;
+    ask: (query: string, options?: unknown) => Promise<RAGResult>;
+    search: (query: string, options?: unknown) => Promise<RAGSource[]>;
+  };
+  CohereEmbeddings: new (opts: { apiKey: string }) => unknown;
+  OpenAIEmbeddings: new (opts: { apiKey: string }) => unknown;
+  RecursiveTextSplitter: new (opts: { chunkSize: number; chunkOverlap: number }) => unknown;
+  MemoryVectorStore: new (embeddingProvider: unknown) => unknown;
+  PineconeVectorStore: new (embeddingProvider: unknown, opts: Record<string, unknown>) => unknown;
+  QdrantVectorStore: new (embeddingProvider: unknown, opts: Record<string, unknown>) => unknown;
+  WeaviateVectorStore: new (embeddingProvider: unknown, opts: Record<string, unknown>) => unknown;
+  ChromaVectorStore: new (embeddingProvider: unknown, opts: Record<string, unknown>) => unknown;
+}
+
+/**
  * RAG Facade — Provides high-level RAG (Retrieval-Augmented Generation) APIs.
  *
  * This facade lazily loads @hazeljs/rag and provides simple methods
@@ -79,8 +112,7 @@ export class RAGFacade implements RAGFacadeInterface {
     if (this.initialized) return;
 
     try {
-      // Dynamic import — use `any` so @hazeljs/ai builds without pulling full RAG sources into this project.
-      const rag = (await import('@hazeljs/rag')) as any;
+      const rag = (await import('@hazeljs/rag')) as unknown as HazelRagDynamicModule;
       const RAGPipeline = rag.RAGPipeline;
       const RAGService = rag.RAGService;
 
@@ -115,7 +147,7 @@ export class RAGFacade implements RAGFacadeInterface {
 
       const vectorStore = this.buildVectorStore(embeddingProvider, rag);
 
-      const llm = async (prompt: string) => {
+      const llm = async (prompt: string): Promise<string> => {
         const response = await this.aiService.complete({
           messages: [{ role: 'user', content: prompt }],
         });

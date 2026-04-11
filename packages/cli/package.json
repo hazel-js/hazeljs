@@ -14,8 +14,9 @@
     "hazel": "./dist/index.js"
   },
   "scripts": {
-    "build": "tsc && node scripts/generate-manifest.js",
-    "build:types": "tsc",
+    "build": "tsc -b && node scripts/generate-manifest.js",
+    "build:types": "tsc -b",
+    "typecheck": "tsc -b --noEmit",
     "test": "jest",
     "lint": "eslint src --ext .ts",
     "format": "prettier --write \"src/**/*.ts\"",
