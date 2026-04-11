@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import { ChatBuilder, ChatBuilderHost } from './chat-builder';
 import type {
   AIProvider,
@@ -334,6 +335,61 @@ describe('ChatBuilder', () => {
         functions: functions,
         functionCall: 'auto',
       });
+    });
+
+    it('merges multimodal parts into the last user message', () => {
+      const builder = new ChatBuilder(mockHost, 'hi')
+        .imageUrl('http://img')
+        .imageBase64('abc', 'image/jpeg')
+        .audioBase64('snd', 'audio/mp3');
+      const req = (builder as unknown as { buildRequest(): AICompletionRequest }).buildRequest();
+      expect(req.messages[0].content).toEqual([
+        { type: 'text', text: 'hi' },
+        { type: 'image_url', imageUrl: 'http://img' },
+        { type: 'image_base64', base64: 'abc', mimeType: 'image/jpeg' },
+        { type: 'input_audio', base64: 'snd', mimeType: 'audio/mp3' },
+      ]);
+    });
+  });
+
+  describe('structured output', () => {
+    it('text uses generateObject when objectSchema is set', async () => {
+      const schema = z.object({ a: z.string() });
+      mockHost.generateObject = jest.fn().mockResolvedValue({ a: 'x' });
+      const builder = new ChatBuilder(mockHost, 'q').objectSchema(schema);
+      const t = await builder.text();
+      expect(mockHost.generateObject).toHaveBeenCalled();
+      expect(t).toBe('{"a":"x"}');
+    });
+
+    it('text returns string result from generateObject without JSON.stringify', async () => {
+      const schema = z.object({ a: z.string() });
+      mockHost.generateObject = jest.fn().mockResolvedValue('plain');
+      const builder = new ChatBuilder(mockHost, 'q').objectSchema(schema);
+      const t = await builder.text();
+      expect(t).toBe('plain');
+    });
+
+    it('object uses host.generateObject when available', async () => {
+      const schema = z.object({ n: z.number() });
+      mockHost.generateObject = jest.fn().mockResolvedValue({ n: 1 });
+      const builder = new ChatBuilder(mockHost, 'q');
+      const o = await builder.object(schema);
+      expect(o).toEqual({ n: 1 });
+    });
+
+    it('object parses JSON from complete when generateObject is absent', async () => {
+      mockHost.generateObject = undefined;
+      mockHost.complete.mockResolvedValue({
+        id: '1',
+        content: '{"k":true}',
+        role: 'assistant',
+        model: 'm',
+      });
+      const schema = z.object({ k: z.boolean() });
+      const builder = new ChatBuilder(mockHost, 'q');
+      const o = await builder.object(schema);
+      expect(o).toEqual({ k: true });
     });
   });
 });

@@ -1,26 +1,27 @@
-import { RAGFacade } from '../rag.facade';
-import { AIEnhancedService } from '../../ai-enhanced.service';
-import type { HazelAIConfig, RAGSource } from '../../platform/hazel-ai.types';
-
-// Error variable for testing - must be declared before jest.mock
+// Error variable for testing — read by the hoisted jest.mock factory below
 let mockRagError: Error | null = null;
 
-// Mock the @hazeljs/rag package with error control
 jest.mock('@hazeljs/rag', () => {
   if (mockRagError) {
     throw mockRagError;
   }
   return {
-    RAGPipeline: {
-      from: jest.fn().mockReturnValue({
-        initialize: jest.fn().mockResolvedValue(undefined),
-        config: {
-          vectorStore: 'mock-vector-store',
-          embeddingProvider: 'mock-embedding-provider',
-          textSplitter: 'mock-text-splitter',
-        },
-      }),
-    },
+    OpenAIEmbeddings: jest.fn().mockImplementation(() => ({})),
+    CohereEmbeddings: jest.fn().mockImplementation(() => ({})),
+    RecursiveTextSplitter: jest.fn().mockImplementation(() => ({})),
+    MemoryVectorStore: jest.fn().mockImplementation(() => ({})),
+    PineconeVectorStore: jest.fn(),
+    QdrantVectorStore: jest.fn(),
+    WeaviateVectorStore: jest.fn(),
+    ChromaVectorStore: jest.fn(),
+    RAGPipeline: jest.fn().mockImplementation((config: unknown) => ({
+      initialize: jest.fn().mockResolvedValue(undefined),
+      config: {
+        vectorStore: (config as { vectorStore?: unknown }).vectorStore,
+        embeddingProvider: (config as { embeddingProvider?: unknown }).embeddingProvider,
+        textSplitter: (config as { textSplitter?: unknown }).textSplitter,
+      },
+    })),
     RAGService: jest.fn().mockImplementation(() => ({
       index: jest.fn(),
       ingest: jest.fn(),
@@ -31,10 +32,24 @@ jest.mock('@hazeljs/rag', () => {
   };
 });
 
+import { RAGFacade } from '../rag.facade';
+import { AIEnhancedService } from '../../ai-enhanced.service';
+import type { HazelAIConfig, RAGSource } from '../../platform/hazel-ai.types';
+
 describe('RAGFacade', () => {
   let facade: RAGFacade;
   let mockAIService: jest.Mocked<AIEnhancedService>;
   let mockConfig: HazelAIConfig;
+  let savedOpenAiKey: string | undefined;
+
+  beforeAll(() => {
+    savedOpenAiKey = process.env.OPENAI_API_KEY;
+    process.env.OPENAI_API_KEY = savedOpenAiKey || 'sk-test-jest-placeholder';
+  });
+
+  afterAll(() => {
+    process.env.OPENAI_API_KEY = savedOpenAiKey;
+  });
 
   afterEach(() => {
     mockRagError = null;
@@ -81,7 +96,7 @@ describe('RAGFacade', () => {
       await (facade as any).ensureRAG();
       await (facade as any).ensureRAG();
 
-      expect(RAGPipeline.from).toHaveBeenCalledTimes(1);
+      expect(RAGPipeline).toHaveBeenCalledTimes(1);
     });
 
     it('should throw helpful error when @hazeljs/rag is not installed', async () => {
@@ -112,9 +127,14 @@ describe('RAGFacade', () => {
       await (facade as any).ensureRAG();
 
       const { RAGPipeline } = await import('@hazeljs/rag');
-      expect(RAGPipeline.from).toHaveBeenCalledWith(
+      expect(RAGPipeline).toHaveBeenCalled();
+      const [pipelineConfig] = (RAGPipeline as jest.Mock).mock.calls[0];
+      expect(pipelineConfig).toEqual(
         expect.objectContaining({
-          provider: 'openai',
+          vectorStore: expect.anything(),
+          embeddingProvider: expect.anything(),
+          textSplitter: expect.anything(),
+          topK: 5,
         })
       );
     });
@@ -305,14 +325,12 @@ describe('RAGFacade', () => {
     it('should not load RAG service until first method call', async () => {
       expect((facade as any).initialized).toBe(false);
 
-      // Don't call ensureRAG, just call a public method
       const { RAGPipeline } = await import('@hazeljs/rag');
 
       await facade.ask('test');
 
-      // Should have loaded after the first call
       expect((facade as any).initialized).toBe(true);
-      expect(RAGPipeline.from).toHaveBeenCalledTimes(1);
+      expect(RAGPipeline).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -325,7 +343,6 @@ describe('RAGFacade', () => {
 
       await expect(newFacade.ingest('test')).rejects.toThrow(/@hazeljs\/rag is required/);
 
-      // Create another fresh facade since the previous one's initialized flag may be set
       const newFacade2 = new RAGFacade(mockAIService, mockConfig);
       await expect(newFacade2.ask('test')).rejects.toThrow(/@hazeljs\/rag is required/);
 
@@ -338,9 +355,106 @@ describe('RAGFacade', () => {
       await (facade as unknown as { ensureRAG: () => Promise<void> }).ensureRAG();
 
       const { RAGPipeline } = await import('@hazeljs/rag');
-      const config = (RAGPipeline.from as jest.Mock).mock.calls[0][0];
+      const llm = (RAGPipeline as jest.Mock).mock.calls[0][1] as (p: string) => Promise<string>;
 
-      await expect(config.llm('test')).rejects.toThrow('AI service error');
+      await expect(llm('test')).rejects.toThrow('AI service error');
+    });
+  });
+
+  describe('embedding provider and vector store branches', () => {
+    it('uses CohereEmbeddings when defaultProvider is cohere', async () => {
+      const prev = process.env.COHERE_API_KEY;
+      process.env.COHERE_API_KEY = 'cohere-test-key';
+      mockConfig = { defaultProvider: 'cohere' };
+      facade = new RAGFacade(mockAIService, mockConfig);
+      jest.clearAllMocks();
+      await (facade as any).ensureRAG();
+      const { CohereEmbeddings } = await import('@hazeljs/rag');
+      expect(CohereEmbeddings).toHaveBeenCalled();
+      process.env.COHERE_API_KEY = prev;
+    });
+
+    it('throws when cohere is selected but COHERE_API_KEY is missing', async () => {
+      const prev = process.env.COHERE_API_KEY;
+      delete process.env.COHERE_API_KEY;
+      mockConfig = { defaultProvider: 'cohere' };
+      facade = new RAGFacade(mockAIService, mockConfig);
+      await expect((facade as any).ensureRAG()).rejects.toThrow('COHERE_API_KEY');
+      process.env.COHERE_API_KEY = prev;
+    });
+
+    it('uses PineconeVectorStore when persistence requests pinecone', async () => {
+      mockConfig = {
+        defaultProvider: 'openai',
+        persistence: {
+          rag: {
+            vectorStore: 'pinecone',
+            apiKey: 'pk',
+            environment: 'env',
+            indexName: 'idx',
+            options: { namespace: 'ns' },
+          },
+        },
+      };
+      facade = new RAGFacade(mockAIService, mockConfig);
+      await (facade as any).ensureRAG();
+      const { PineconeVectorStore } = await import('@hazeljs/rag');
+      expect(PineconeVectorStore).toHaveBeenCalled();
+    });
+
+    it('uses QdrantVectorStore when persistence requests qdrant', async () => {
+      mockConfig = {
+        defaultProvider: 'openai',
+        persistence: {
+          rag: {
+            vectorStore: 'qdrant',
+            connectionString: 'http://localhost:6333',
+            indexName: 'col',
+            options: { vectorSize: 384 },
+          },
+        },
+      };
+      facade = new RAGFacade(mockAIService, mockConfig);
+      await (facade as any).ensureRAG();
+      const { QdrantVectorStore } = await import('@hazeljs/rag');
+      expect(QdrantVectorStore).toHaveBeenCalled();
+    });
+
+    it('uses WeaviateVectorStore when persistence requests weaviate', async () => {
+      mockConfig = {
+        defaultProvider: 'openai',
+        persistence: {
+          rag: {
+            vectorStore: 'weaviate',
+            connectionString: 'example.com',
+            apiKey: 'wkey',
+            indexName: 'Doc',
+            options: { scheme: 'http' as const },
+          },
+        },
+      };
+      facade = new RAGFacade(mockAIService, mockConfig);
+      await (facade as any).ensureRAG();
+      const { WeaviateVectorStore } = await import('@hazeljs/rag');
+      expect(WeaviateVectorStore).toHaveBeenCalled();
+    });
+
+    it('uses ChromaVectorStore when persistence requests chroma', async () => {
+      mockConfig = {
+        defaultProvider: 'openai',
+        persistence: {
+          rag: {
+            vectorStore: 'chroma',
+            connectionString: 'http://chroma:8000',
+            indexName: 'hazel',
+            options: { auth: { provider: 'token', credentials: 't' } },
+          },
+        },
+      };
+      facade = new RAGFacade(mockAIService, mockConfig);
+      await (facade as any).ensureRAG();
+      const { ChromaVectorStore } = await import('@hazeljs/rag');
+      expect(ChromaVectorStore).toHaveBeenCalled();
     });
   });
 });

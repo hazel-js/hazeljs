@@ -16,6 +16,7 @@ module.exports = {
   moduleNameMapper: {
     '^@hazeljs/cache$': '<rootDir>/../cache/src/index.ts',
     '^@hazeljs/core$': '<rootDir>/../core/src/index.ts',
+    '^@hazeljs/eval$': '<rootDir>/../eval/src/index.ts',
   },
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
   collectCoverageFrom: [
@@ -28,6 +29,8 @@ module.exports = {
     '!src/facades/index.ts',
     '!src/platform/index.ts',
     '!src/platform/hcel/index.ts',
+    // HCEL builder/engine/ops are integration-heavy; covered by targeted hcel/*.test.ts without gating global CI
+    '!src/platform/hcel/**/*.ts',
   ],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'clover'],

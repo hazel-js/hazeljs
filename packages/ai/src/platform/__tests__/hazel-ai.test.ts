@@ -29,10 +29,19 @@ describe('HazelAI', () => {
       maxTokens: 1000,
     };
 
+    const emptyMetrics = {
+      totalRequests: 0,
+      totalTokens: 0,
+      averageLatencyMs: 0,
+      errorRate: 0,
+      costEstimate: 0,
+      byProvider: {},
+    };
     mockAIService = {
       complete: jest.fn(),
       streamComplete: jest.fn(),
       registerProvider: jest.fn(),
+      getAIMetrics: jest.fn().mockReturnValue(emptyMetrics),
     } as any;
 
     MockedAIEnhancedService.mockImplementation(() => mockAIService as any);
@@ -284,9 +293,10 @@ describe('HazelAI', () => {
   });
 
   describe('getMetrics', () => {
-    it('should return empty metrics for now', () => {
+    it('should return metrics from the AI service', () => {
       const metrics = hazelAI.getMetrics();
 
+      expect(mockAIService.getAIMetrics).toHaveBeenCalled();
       expect(metrics).toEqual({
         totalRequests: 0,
         totalTokens: 0,
