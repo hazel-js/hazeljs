@@ -258,6 +258,15 @@ describe('getAsync()', () => {
     expect(result).toBe(tpl);
   });
 
+  it('returns a specific version from in-memory version index', async () => {
+    const v1 = new PromptTemplate('one', { name: 'T', version: '1.0.0' });
+    const v2 = new PromptTemplate('two', { name: 'T', version: '2.0.0' });
+    PromptRegistry.register('async:ver', v1);
+    PromptRegistry.override('async:ver', v2);
+    const got = await PromptRegistry.getAsync('async:ver', '1.0.0');
+    expect(got.template).toBe('one');
+  });
+
   it('falls back to store when not in cache', async () => {
     const store = new MemoryStore();
     PromptRegistry.configure([store]);

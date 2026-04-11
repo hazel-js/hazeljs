@@ -80,6 +80,34 @@ describe('PromptTemplate', () => {
       }).toThrow('Missing required template variable');
     });
 
+    it('uses plural "variables" when multiple keys are missing', () => {
+      const tpl = new PromptTemplate<Record<string, unknown>>('a {x} b {y}', {
+        name: 'Multi',
+        version: '1.0.0',
+      });
+      expect(() => tpl.render({} as any, { strict: true })).toThrow(
+        /Missing required template variables:/
+      );
+    });
+
+    it('uses singular "variable" when one key is missing', () => {
+      const tpl = new PromptTemplate<{ only: string }>('x {only}', {
+        name: 'One',
+        version: '1.0.0',
+      });
+      expect(() => tpl.render({} as any, { strict: true })).toThrow(
+        /Missing required template variable: /
+      );
+      expect(() => tpl.render({} as any, { strict: true })).not.toThrow(
+        /Missing required template variables:/
+      );
+    });
+
+    it('mentions vlatest when metadata.version is omitted', () => {
+      const tpl = new PromptTemplate<{ name: string }>('Hello {name}', { name: 'NoVer' });
+      expect(() => tpl.render({} as any, { strict: true })).toThrow('vlatest');
+    });
+
     it('should not throw in non-strict mode', () => {
       const tpl = new PromptTemplate<{ name: string }>('Hello {name}!', { name: 'Test' });
 
@@ -128,6 +156,25 @@ describe('PromptTemplate', () => {
       expect(tpl.render({ a: false, b: true })).toBe('B');
       expect(tpl.render({ a: true, b: true })).toBe('AB');
     });
+
+    it('treats non-empty array as truthy', () => {
+      const tpl = new PromptTemplate<{ tags: string[] }>('{#if tags}has tags{/if}', {
+        name: 'Arr',
+      });
+      expect(tpl.render({ tags: ['a'] })).toBe('has tags');
+    });
+
+    it('treats empty array as falsy', () => {
+      const tpl = new PromptTemplate<{ tags: string[] }>('{#if tags}has tags{/if}', {
+        name: 'Arr',
+      });
+      expect(tpl.render({ tags: [] })).toBe('');
+    });
+
+    it('treats undefined key as falsy', () => {
+      const tpl = new PromptTemplate<Record<string, unknown>>('{#if maybe}yes{/if}', { name: 'U' });
+      expect(tpl.render({})).toBe('');
+    });
   });
 
   describe('loops {#each}', () => {
@@ -162,6 +209,13 @@ describe('PromptTemplate', () => {
 
       expect(tpl.render({ nums: [1, 2, 3] })).toBe('1,2,3,');
     });
+
+    it('returns empty string when variable is not an array', () => {
+      const tpl = new PromptTemplate<{ items: unknown }>('{#each items}{.}{/each}', {
+        name: 'Bad',
+      });
+      expect(tpl.render({ items: 'not-array' as unknown as string[] })).toBe('');
+    });
   });
 
   describe('partials {@include}', () => {
@@ -186,6 +240,14 @@ describe('PromptTemplate', () => {
       });
 
       expect(tpl.render({})).toBe('{@include missing}');
+    });
+
+    it('resolves namespaced include keys', () => {
+      const tpl = new PromptTemplate<Record<string, unknown>>('{@include rag:graph:foo}', {
+        name: 'NS',
+      });
+      const includeResolver = (key: string) => (key === 'rag:graph:foo' ? 'RESOLVED' : undefined);
+      expect(tpl.render({}, { includeResolver })).toBe('RESOLVED');
     });
 
     it('should pass variables to partials', () => {
