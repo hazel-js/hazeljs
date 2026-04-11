@@ -433,8 +433,7 @@ export class OpenAIProvider implements IAIProvider {
       // Default to assistant
       return {
         role: 'assistant',
-        content:
-          typeof msg.content === 'string' ? msg.content : messageContentToText(msg.content),
+        content: typeof msg.content === 'string' ? msg.content : messageContentToText(msg.content),
       };
     });
   }

@@ -8,14 +8,15 @@ import * as path from 'path';
 export function registerEvalCommand(program: Command): void {
   program
     .command('eval')
-    .description('Run a golden dataset JSON through @hazeljs/eval (smoke check; supply your runner in code)')
+    .description(
+      'Run a golden dataset JSON through @hazeljs/eval (smoke check; supply your runner in code)'
+    )
     .argument('<dataset>', 'Path to golden dataset JSON')
     .option('--ci', 'Set exit code 1 when eval fails thresholds')
     .action(async (dataset: string, opts: { ci?: boolean }) => {
       try {
-        const { loadGoldenDatasetFromJson, runGoldenDataset, reportEvalForCi } = await import(
-          '@hazeljs/eval'
-        );
+        const { loadGoldenDatasetFromJson, runGoldenDataset, reportEvalForCi } =
+          await import('@hazeljs/eval');
         const ds = loadGoldenDatasetFromJson(path.resolve(process.cwd(), dataset));
         const result = await runGoldenDataset(
           ds,

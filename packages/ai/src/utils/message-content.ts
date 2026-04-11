@@ -24,6 +24,8 @@ export function messageContentToText(content: string | AIMessageContentPart[]): 
     .join(' ');
 }
 
-export function isMultipartContent(content: string | AIMessageContentPart[]): content is AIMessageContentPart[] {
+export function isMultipartContent(
+  content: string | AIMessageContentPart[]
+): content is AIMessageContentPart[] {
   return Array.isArray(content);
 }

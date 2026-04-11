@@ -25,10 +25,7 @@ export class ChatFacade {
   async chat(message: string, options?: ChatOptions): Promise<string> {
     if (options?.outputSchema) {
       const out = await this.aiService.generateObject(
-        [
-          ...(options?.systemPrompt ? `${options.systemPrompt}\n\n` : ''),
-          message,
-        ].join(''),
+        [...(options?.systemPrompt ? `${options.systemPrompt}\n\n` : ''), message].join(''),
         options.outputSchema,
         {
           provider: options?.provider || this.config.defaultProvider,

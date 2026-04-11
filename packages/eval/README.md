@@ -32,11 +32,7 @@ npm install @hazeljs/core
 ### Load a dataset and run evals
 
 ```typescript
-import {
-  loadGoldenDatasetFromJson,
-  runGoldenDataset,
-  reportEvalForCi,
-} from '@hazeljs/eval';
+import { loadGoldenDatasetFromJson, runGoldenDataset, reportEvalForCi } from '@hazeljs/eval';
 
 const dataset = loadGoldenDatasetFromJson('./eval/golden.json');
 
@@ -118,11 +114,7 @@ You ship a **customer support** app backed by **HazelAI** and **@hazeljs/rag**. 
 ```typescript
 import * as path from 'path';
 import { HazelAI } from '@hazeljs/ai';
-import {
-  loadGoldenDatasetFromJson,
-  runGoldenDataset,
-  reportEvalForCi,
-} from '@hazeljs/eval';
+import { loadGoldenDatasetFromJson, runGoldenDataset, reportEvalForCi } from '@hazeljs/eval';
 
 async function main() {
   const datasetPath = path.join(process.cwd(), 'eval/golden.support.json');
@@ -176,11 +168,11 @@ If any case scores below `minAverageScore` or the run errors, `reportEvalForCi` 
 
 ## Scripts
 
-| Command        | Description                    |
-|----------------|--------------------------------|
-| `npm run build` | Compile TypeScript to `dist/` |
-| `npm test`      | Jest with coverage thresholds (85%+ statements/lines/functions/branches on implementation files; `src/index.ts` is excluded as a pure re-export barrel) |
-| `npm run test:ci` | Jest with coverage reports; thresholds can be relaxed via `--no-coverage-threshold` when needed |
+| Command           | Description                                                                                                                                             |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run build`   | Compile TypeScript to `dist/`                                                                                                                           |
+| `npm test`        | Jest with coverage thresholds (85%+ statements/lines/functions/branches on implementation files; `src/index.ts` is excluded as a pure re-export barrel) |
+| `npm run test:ci` | Jest with coverage reports; thresholds can be relaxed via `--no-coverage-threshold` when needed                                                         |
 
 ## License
 

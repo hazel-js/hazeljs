@@ -71,8 +71,7 @@ export class AnthropicProvider implements IAIProvider {
         system: systemPrompt || undefined,
         messages: conversationMessages.map((m) => ({
           role: m.role as 'user' | 'assistant',
-          content:
-            typeof m.content === 'string' ? m.content : messageContentToText(m.content),
+          content: typeof m.content === 'string' ? m.content : messageContentToText(m.content),
         })),
       });
 
@@ -126,8 +125,7 @@ export class AnthropicProvider implements IAIProvider {
         system: systemPrompt || undefined,
         messages: conversationMessages.map((m) => ({
           role: m.role as 'user' | 'assistant',
-          content:
-            typeof m.content === 'string' ? m.content : messageContentToText(m.content),
+          content: typeof m.content === 'string' ? m.content : messageContentToText(m.content),
         })),
       });
 

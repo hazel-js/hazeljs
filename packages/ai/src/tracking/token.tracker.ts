@@ -322,8 +322,7 @@ export class TokenTracker {
     }
     for (const k of Object.keys(byProvider)) {
       const b = byProvider[k];
-      b.averageLatencyMs =
-        b.latencySamples > 0 ? b.totalLatencyMs / b.latencySamples : 0;
+      b.averageLatencyMs = b.latencySamples > 0 ? b.totalLatencyMs / b.latencySamples : 0;
     }
     const totalLatencyMs = recent.reduce(
       (s, u) => s + (typeof u.latencyMs === 'number' ? u.latencyMs : 0),

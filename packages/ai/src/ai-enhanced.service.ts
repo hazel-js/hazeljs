@@ -268,7 +268,11 @@ export class AIEnhancedService {
       // Optional OpenTelemetry: enrich active span when @hazeljs/observability is used
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { trace } = require('@opentelemetry/api') as {
-        trace: { getActiveSpan: () => { setAttribute: (k: string, v: string | number) => void } | undefined };
+        trace: {
+          getActiveSpan: () =>
+            | { setAttribute: (k: string, v: string | number) => void }
+            | undefined;
+        };
       };
       const span = trace.getActiveSpan();
       if (span && response.usage) {
@@ -413,8 +417,7 @@ export class AIEnhancedService {
     const snap = this.tokenTracker.getSnapshotForMetrics();
     const totalReq = this.requestSuccessCount + this.requestErrorCount;
     const errorRate = totalReq > 0 ? this.requestErrorCount / totalReq : 0;
-    const avgLatency =
-      snap.latencySamples > 0 ? snap.totalLatencyMs / snap.latencySamples : 0;
+    const avgLatency = snap.latencySamples > 0 ? snap.totalLatencyMs / snap.latencySamples : 0;
     const byProvider: AIMetrics['byProvider'] = {};
     for (const [name, v] of Object.entries(snap.byProvider)) {
       byProvider[name] = {
@@ -538,9 +541,7 @@ export class AIEnhancedService {
    */
   private estimateRequestTokens(request: AICompletionRequest): number {
     const text = request.messages
-      .map((m) =>
-        typeof m.content === 'string' ? m.content : messageContentToText(m.content)
-      )
+      .map((m) => (typeof m.content === 'string' ? m.content : messageContentToText(m.content)))
       .join('\n');
     const tik = this.tryTiktokenCount(text);
     let promptTokens = tik ?? 0;

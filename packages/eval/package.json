@@ -4,7 +4,9 @@
   "description": "Evaluation toolkit for HazelJS AI apps — golden datasets, RAG metrics, agent trajectories, LLM-as-judge, CI reports",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc",
     "test": "jest --coverage --passWithNoTests",
@@ -33,13 +35,22 @@
     "ts-jest": "^29.4.9",
     "typescript": "^5.9.3"
   },
-  "publishConfig": { "access": "public" },
+  "publishConfig": {
+    "access": "public"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/hazel-js/hazeljs.git",
     "directory": "packages/eval"
   },
-  "keywords": ["hazeljs", "eval", "llm", "rag", "agent", "metrics"],
+  "keywords": [
+    "hazeljs",
+    "eval",
+    "llm",
+    "rag",
+    "agent",
+    "metrics"
+  ],
   "author": "Muhammad Arslan <muhammad.arslan@hazeljs.ai>",
   "license": "Apache-2.0"
 }

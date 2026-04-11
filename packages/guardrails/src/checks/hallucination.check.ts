@@ -14,7 +14,10 @@ const HEDGE_WORDS = ['might', 'maybe', 'possibly', 'could be', 'i think', "i'm n
 /**
  * Returns true when answer appears supported by context (token overlap + hedge detection).
  */
-export function checkHallucinationHeuristic(answer: string, context: string): HallucinationCheckResult {
+export function checkHallucinationHeuristic(
+  answer: string,
+  context: string
+): HallucinationCheckResult {
   const a = tokenize(answer);
   const c = new Set(tokenize(context));
   if (a.length === 0) {

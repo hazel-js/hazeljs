@@ -31,7 +31,11 @@ export class MLFacade {
   async classify(text: string, options: ClassifyOptions): Promise<ClassifyResult> {
     const mlPredict = this.config.ml?.predict;
     if (options.mlModel && mlPredict) {
-      const raw = await mlPredict(options.mlModel, { text, labels: options.labels }, options.mlVersion);
+      const raw = await mlPredict(
+        options.mlModel,
+        { text, labels: options.labels },
+        options.mlVersion
+      );
       const r = raw as {
         label?: string;
         confidence?: number;

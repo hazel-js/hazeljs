@@ -3,7 +3,12 @@
  */
 
 import type { ZodType } from 'zod';
-import type { AIProvider, IAIProvider, AIMessage, AIMessageContentPart } from '../ai-enhanced.types';
+import type {
+  AIProvider,
+  IAIProvider,
+  AIMessage,
+  AIMessageContentPart,
+} from '../ai-enhanced.types';
 
 // ── Configuration ────────────────────────────────────────────
 
