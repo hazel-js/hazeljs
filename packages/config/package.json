@@ -1,10 +1,6 @@
 {
   "name": "@hazeljs/config",
-<<<<<<< HEAD
   "version": "0.8.1",
-=======
-  "version": "0.8.2",
->>>>>>> b6a63b7 (updated peer dependencies and added bump version automatically script)
   "description": "Configuration module for HazelJS framework",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

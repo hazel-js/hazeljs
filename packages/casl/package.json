@@ -1,10 +1,6 @@
 {
   "name": "@hazeljs/casl",
-<<<<<<< HEAD
   "version": "0.8.1",
-=======
-  "version": "0.8.2",
->>>>>>> b6a63b7 (updated peer dependencies and added bump version automatically script)
   "description": "Attribute-level (resource-level) authorization for HazelJS via CASL",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

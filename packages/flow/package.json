@@ -1,10 +1,6 @@
 {
   "name": "@hazeljs/flow",
-<<<<<<< HEAD
   "version": "0.8.1",
-=======
-  "version": "0.8.2",
->>>>>>> b6a63b7 (updated peer dependencies and added bump version automatically script)
   "description": "Durable execution graph engine - in-memory by default, optional Prisma persistence",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
