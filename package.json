@@ -1,6 +1,10 @@
 {
   "name": "hazeljs",
+<<<<<<< HEAD
   "version": "0.8.1",
+=======
+  "version": "0.8.2",
+>>>>>>> b6a63b7 (updated peer dependencies and added bump version automatically script)
   "private": true,
   "description": "HazelJS monorepo - A modern, TypeScript-first Node.js framework",
   "workspaces": [
@@ -21,6 +25,7 @@
     "lerna:version": "lerna version --no-push --no-git-tag-version",
     "lerna:publish": "lerna publish from-package --dist-tag beta",
     "lerna:publish:latest": "lerna publish from-package",
+    "version:bump": "node scripts/bump-version.js",
     "version:patch": "lerna version patch --no-push",
     "version:minor": "lerna version minor --no-push",
     "version:major": "lerna version major --no-push",

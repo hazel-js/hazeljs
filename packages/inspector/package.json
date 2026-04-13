@@ -22,22 +22,22 @@
     "reflect-metadata": "^0.2.2"
   },
   "peerDependencies": {
-    "@hazeljs/core": ">=0.2.0-beta.0",
-    "@hazeljs/cron": ">=0.2.0-beta.0",
-    "@hazeljs/queue": ">=0.2.0-beta.0",
-    "@hazeljs/websocket": ">=0.2.0-beta.0",
-    "@hazeljs/agent": ">=0.2.0-beta.0",
-    "@hazeljs/ai": ">=0.2.0-beta.0",
-    "@hazeljs/rag": ">=0.2.0-beta.0",
-    "@hazeljs/prompts": ">=0.2.0-beta.0",
-    "@hazeljs/event-emitter": ">=0.2.0-beta.0",
-    "@hazeljs/graphql": ">=0.2.0-beta.0",
-    "@hazeljs/grpc": ">=0.2.0-beta.0",
-    "@hazeljs/kafka": ">=0.2.0-beta.0",
-    "@hazeljs/flow": ">=0.2.0-beta.0",
-    "@hazeljs/data": ">=0.2.0-beta.0",
-    "@hazeljs/serverless": ">=0.2.0-beta.0",
-    "@hazeljs/ml": ">=0.2.0-beta.0"
+    "@hazeljs/core": "^0.8.1",
+    "@hazeljs/cron": "^0.8.1",
+    "@hazeljs/queue": "^0.8.1",
+    "@hazeljs/websocket": "^0.8.1",
+    "@hazeljs/agent": "^0.8.1",
+    "@hazeljs/ai": "^0.8.1",
+    "@hazeljs/rag": "^0.8.1",
+    "@hazeljs/prompts": "^0.8.1",
+    "@hazeljs/event-emitter": "^0.8.1",
+    "@hazeljs/graphql": "^0.8.1",
+    "@hazeljs/grpc": "^0.8.1",
+    "@hazeljs/kafka": "^0.8.1",
+    "@hazeljs/flow": "^0.8.1",
+    "@hazeljs/data": "^0.8.1",
+    "@hazeljs/serverless": "^0.8.1",
+    "@hazeljs/ml": "^0.8.1"
   },
   "peerDependenciesMeta": {
     "@hazeljs/cron": {

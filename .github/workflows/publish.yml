@@ -60,14 +60,8 @@ jobs:
           
           echo "Updating all package.json files to version: $VERSION"
           
-          # Update root package.json
-          node -e "const fs=require('fs');const pkg=JSON.parse(fs.readFileSync('package.json'));pkg.version='$VERSION';fs.writeFileSync('package.json',JSON.stringify(pkg,null,2)+'\n')"
-          
-          # Update all package.json files in packages directory (skip @template — it's a user-facing scaffold, not a publishable package)
-          find packages -name "package.json" -not -path "*/node_modules/*" -not -path "*/@template/*" -type f | while read -r file; do
-            echo "Updating $file"
-            node -e "const fs=require('fs');const pkg=JSON.parse(fs.readFileSync('$file'));pkg.version='$VERSION';fs.writeFileSync('$file',JSON.stringify(pkg,null,2)+'\n')"
-          done
+          # bump-version.js updates all package versions AND @hazeljs/* peer dep ranges
+          node scripts/bump-version.js "$VERSION"
           
           echo "Version update complete. Updated files:"
           git diff --name-only

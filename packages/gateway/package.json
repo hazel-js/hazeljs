@@ -18,13 +18,13 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@hazeljs/core": "file:../core",
-    "@hazeljs/discovery": "file:../discovery",
-    "@hazeljs/resilience": "file:../resilience",
     "reflect-metadata": "^0.2.2",
     "axios": "^1.14.0"
   },
   "devDependencies": {
+    "@hazeljs/core": "file:../core",
+    "@hazeljs/discovery": "file:../discovery",
+    "@hazeljs/resilience": "file:../resilience",
     "@types/jest": "^29.5.14",
     "@types/node": "^20.19.39",
     "@typescript-eslint/eslint-plugin": "^8.58.0",
@@ -38,10 +38,10 @@
     "typescript": "^5.9.3"
   },
   "peerDependencies": {
-    "@hazeljs/core": ">=0.2.0-beta.0",
-    "@hazeljs/discovery": ">=0.2.0-beta.0",
-    "@hazeljs/resilience": ">=0.2.0-beta.0",
-    "@hazeljs/config": "*"
+    "@hazeljs/core": "^0.8.1",
+    "@hazeljs/discovery": "^0.8.1",
+    "@hazeljs/resilience": "^0.8.1",
+    "@hazeljs/config": "^0.8.1"
   },
   "peerDependenciesMeta": {
     "@hazeljs/config": {

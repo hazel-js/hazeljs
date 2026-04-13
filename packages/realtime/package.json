@@ -14,13 +14,12 @@
     "lint:fix": "eslint \"src/**/*.ts\" --fix",
     "clean": "rm -rf dist"
   },
-  "dependencies": {
-    "@hazeljs/websocket": "file:../websocket"
-  },
   "peerDependencies": {
-    "@hazeljs/core": ">=0.2.0-beta.0"
+    "@hazeljs/core": "^0.8.1",
+    "@hazeljs/websocket": "^0.8.1"
   },
   "devDependencies": {
+    "@hazeljs/websocket": "file:../websocket",
     "@types/node": "^20.19.39",
     "@types/ws": "^8.18.1",
     "@typescript-eslint/eslint-plugin": "^8.58.0",

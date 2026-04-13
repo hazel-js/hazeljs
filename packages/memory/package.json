@@ -1,6 +1,10 @@
 {
   "name": "@hazeljs/memory",
+<<<<<<< HEAD
   "version": "0.8.1",
+=======
+  "version": "0.8.2",
+>>>>>>> b6a63b7 (updated peer dependencies and added bump version automatically script)
   "description": "Pluggable user memory for HazelJS - profile, preferences, behavioral patterns, emotional state, episodic and semantic memory with multi-store support",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

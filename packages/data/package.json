@@ -1,6 +1,10 @@
 {
   "name": "@hazeljs/data",
+<<<<<<< HEAD
   "version": "0.8.1",
+=======
+  "version": "0.8.2",
+>>>>>>> b6a63b7 (updated peer dependencies and added bump version automatically script)
   "description": "Data Processing & ETL for HazelJS framework",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -25,7 +29,7 @@
     "typescript": "^5.9.3"
   },
   "peerDependencies": {
-    "@hazeljs/core": ">=0.2.0-beta.0"
+    "@hazeljs/core": "^0.8.1"
   },
   "publishConfig": {
     "access": "public"

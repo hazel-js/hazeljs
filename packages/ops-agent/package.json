@@ -1,6 +1,10 @@
 {
   "name": "@hazeljs/ops-agent",
+<<<<<<< HEAD
   "version": "0.8.1",
+=======
+  "version": "0.8.2",
+>>>>>>> b6a63b7 (updated peer dependencies and added bump version automatically script)
   "description": "Ops agent for Jira, Slack, and DevOps workflows - AI-powered incident triage and team coordination",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -35,10 +39,10 @@
     "reflect-metadata": "^0.2.2"
   },
   "peerDependencies": {
-    "@hazeljs/agent": ">=0.2.0-beta.0",
-    "@hazeljs/ai": ">=0.2.0-beta.0",
-    "@hazeljs/rag": ">=0.1.0",
-    "@hazeljs/core": ">=0.2.0-beta.0"
+    "@hazeljs/agent": "^0.8.1",
+    "@hazeljs/ai": "^0.8.1",
+    "@hazeljs/rag": "^0.8.1",
+    "@hazeljs/core": "^0.8.1"
   },
   "devDependencies": {
     "@hazeljs/agent": "file:../agent",

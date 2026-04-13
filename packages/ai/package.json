@@ -1,6 +1,10 @@
 {
   "name": "@hazeljs/ai",
+<<<<<<< HEAD
   "version": "0.8.1",
+=======
+  "version": "0.8.2",
+>>>>>>> b6a63b7 (updated peer dependencies and added bump version automatically script)
   "description": "AI integration module for HazelJS framework",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -64,14 +68,14 @@
   "homepage": "https://hazeljs.ai",
   "peerDependencies": {
     "tiktoken": "^1.0.22",
-    "@hazeljs/agent": ">=0.2.0-beta.0",
-    "@hazeljs/cache": ">=0.2.0-beta.0",
-    "@hazeljs/core": ">=0.2.0-beta.0",
-    "@hazeljs/guardrails": ">=0.2.0-beta.0",
-    "@hazeljs/memory": ">=0.2.0-beta.0",
-    "@hazeljs/ml": ">=0.2.0-beta.0",
-    "@hazeljs/prompts": ">=0.2.0-beta.0",
-    "@hazeljs/rag": ">=0.2.0-beta.0"
+    "@hazeljs/agent": "^0.8.1",
+    "@hazeljs/cache": "^0.8.1",
+    "@hazeljs/core": "^0.8.1",
+    "@hazeljs/guardrails": "^0.8.1",
+    "@hazeljs/memory": "^0.8.1",
+    "@hazeljs/ml": "^0.8.1",
+    "@hazeljs/prompts": "^0.8.1",
+    "@hazeljs/rag": "^0.8.1"
   },
   "peerDependenciesMeta": {
     "tiktoken": {

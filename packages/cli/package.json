@@ -1,6 +1,10 @@
 {
   "name": "@hazeljs/cli",
+<<<<<<< HEAD
   "version": "0.8.1",
+=======
+  "version": "0.8.2",
+>>>>>>> b6a63b7 (updated peer dependencies and added bump version automatically script)
   "description": "Command-line interface for scaffolding and generating HazelJS applications and components",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -26,13 +30,21 @@
   },
   "optionalDependencies": {},
   "dependencies": {
-    "@hazeljs/eval": "file:../eval",
     "chalk": "^4.1.2",
     "commander": "^11.1.0",
     "inquirer": "^8.2.7",
     "mustache": "^4.2.0"
   },
+  "peerDependencies": {
+    "@hazeljs/eval": "^0.8.1"
+  },
+  "peerDependenciesMeta": {
+    "@hazeljs/eval": {
+      "optional": true
+    }
+  },
   "devDependencies": {
+    "@hazeljs/eval": "file:../eval",
     "@types/inquirer": "^8.2.12",
     "@types/jest": "^29.5.14",
     "@types/mustache": "^4.2.6",
