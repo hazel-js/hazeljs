@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/ai",
-  "version": "0.8.1",
+  "version": "0.8.2",
   "description": "AI integration module for HazelJS framework",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -64,14 +64,14 @@
   "homepage": "https://hazeljs.ai",
   "peerDependencies": {
     "tiktoken": "^1.0.22",
-    "@hazeljs/agent": "^0.8.1",
-    "@hazeljs/cache": "^0.8.1",
-    "@hazeljs/core": "^0.8.1",
-    "@hazeljs/guardrails": "^0.8.1",
-    "@hazeljs/memory": "^0.8.1",
-    "@hazeljs/ml": "^0.8.1",
-    "@hazeljs/prompts": "^0.8.1",
-    "@hazeljs/rag": "^0.8.1"
+    "@hazeljs/agent": "^0.8.2",
+    "@hazeljs/cache": "^0.8.2",
+    "@hazeljs/core": "^0.8.2",
+    "@hazeljs/guardrails": "^0.8.2",
+    "@hazeljs/memory": "^0.8.2",
+    "@hazeljs/ml": "^0.8.2",
+    "@hazeljs/prompts": "^0.8.2",
+    "@hazeljs/rag": "^0.8.2"
   },
   "peerDependenciesMeta": {
     "tiktoken": {

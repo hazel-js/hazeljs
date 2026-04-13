@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/guardrails",
-  "version": "0.8.1",
+  "version": "0.8.2",
   "description": "Content safety, PII handling, and output validation for HazelJS AI applications",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -51,6 +51,6 @@
   },
   "homepage": "https://hazeljs.ai",
   "peerDependencies": {
-    "@hazeljs/core": "^0.8.1"
+    "@hazeljs/core": "^0.8.2"
   }
 }
