@@ -22,22 +22,22 @@
     "reflect-metadata": "^0.2.2"
   },
   "peerDependencies": {
-    "@hazeljs/core": "^0.8.5",
-    "@hazeljs/cron": "^0.8.5",
-    "@hazeljs/queue": "^0.8.5",
-    "@hazeljs/websocket": "^0.8.5",
     "@hazeljs/agent": "^0.8.5",
     "@hazeljs/ai": "^0.8.5",
-    "@hazeljs/rag": "^0.8.5",
-    "@hazeljs/prompts": "^0.8.5",
+    "@hazeljs/core": "^0.8.5",
+    "@hazeljs/cron": "^0.8.5",
+    "@hazeljs/data": "^0.8.5",
     "@hazeljs/event-emitter": "^0.8.5",
+    "@hazeljs/flow": "^0.8.5",
     "@hazeljs/graphql": "^0.8.5",
     "@hazeljs/grpc": "^0.8.5",
     "@hazeljs/kafka": "^0.8.5",
-    "@hazeljs/flow": "^0.8.5",
-    "@hazeljs/data": "^0.8.5",
+    "@hazeljs/ml": "^0.8.5",
+    "@hazeljs/prompts": "^0.8.5",
+    "@hazeljs/queue": "^0.8.5",
+    "@hazeljs/rag": "^0.8.5",
     "@hazeljs/serverless": "^0.8.5",
-    "@hazeljs/ml": "^0.8.5"
+    "@hazeljs/websocket": "^0.8.5"
   },
   "peerDependenciesMeta": {
     "@hazeljs/cron": {
@@ -87,7 +87,7 @@
     }
   },
   "devDependencies": {
-    "@hazeljs/core": "file:../core",
+    "@hazeljs/core": "^0.8.5",
     "@types/jest": "^29.5.14",
     "@types/node": "^20.19.39",
     "@typescript-eslint/eslint-plugin": "^8.58.0",
@@ -119,5 +119,6 @@
   "bugs": {
     "url": "https://github.com/hazeljs/hazel-js/issues"
   },
-  "homepage": "https://hazeljs.ai"
+  "homepage": "https://hazeljs.ai",
+  "gitHead": "083b94562940a86c8e0a8cd81988d04b541608ac"
 }

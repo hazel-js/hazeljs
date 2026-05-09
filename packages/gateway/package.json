@@ -18,13 +18,13 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "reflect-metadata": "^0.2.2",
-    "axios": "^1.14.0"
+    "axios": "^1.14.0",
+    "reflect-metadata": "^0.2.2"
   },
   "devDependencies": {
-    "@hazeljs/core": "file:../core",
-    "@hazeljs/discovery": "file:../discovery",
-    "@hazeljs/resilience": "file:../resilience",
+    "@hazeljs/core": "^0.8.5",
+    "@hazeljs/discovery": "^0.8.5",
+    "@hazeljs/resilience": "^0.8.5",
     "@types/jest": "^29.5.14",
     "@types/node": "^20.19.39",
     "@typescript-eslint/eslint-plugin": "^8.58.0",
@@ -38,10 +38,10 @@
     "typescript": "^5.9.3"
   },
   "peerDependencies": {
+    "@hazeljs/config": "^0.8.5",
     "@hazeljs/core": "^0.8.5",
     "@hazeljs/discovery": "^0.8.5",
-    "@hazeljs/resilience": "^0.8.5",
-    "@hazeljs/config": "^0.8.5"
+    "@hazeljs/resilience": "^0.8.5"
   },
   "peerDependenciesMeta": {
     "@hazeljs/config": {
@@ -72,5 +72,6 @@
   "bugs": {
     "url": "https://github.com/hazeljs/hazel-js/issues"
   },
-  "homepage": "https://hazeljs.ai"
+  "homepage": "https://hazeljs.ai",
+  "gitHead": "083b94562940a86c8e0a8cd81988d04b541608ac"
 }

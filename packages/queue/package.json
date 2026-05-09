@@ -57,5 +57,6 @@
       "optional": false,
       "description": "Required for Redis connection. BullMQ uses ioredis for Redis connectivity."
     }
-  }
+  },
+  "gitHead": "083b94562940a86c8e0a8cd81988d04b541608ac"
 }

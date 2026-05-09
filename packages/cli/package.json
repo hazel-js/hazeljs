@@ -24,7 +24,6 @@
     "format:check": "prettier --check \"src/**/*.ts\"",
     "prepublishOnly": "npm run build"
   },
-  "optionalDependencies": {},
   "dependencies": {
     "chalk": "^4.1.2",
     "commander": "^11.1.0",
@@ -40,7 +39,7 @@
     }
   },
   "devDependencies": {
-    "@hazeljs/eval": "file:../eval",
+    "@hazeljs/eval": "^0.8.5",
     "@types/inquirer": "^8.2.12",
     "@types/jest": "^29.5.14",
     "@types/mustache": "^4.2.6",
@@ -82,5 +81,6 @@
   "funding": {
     "type": "opencollective",
     "url": "https://opencollective.com/hazeljs"
-  }
+  },
+  "gitHead": "083b94562940a86c8e0a8cd81988d04b541608ac"
 }

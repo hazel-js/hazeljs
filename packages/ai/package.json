@@ -29,8 +29,8 @@
     "zod-to-json-schema": "^3.25.0"
   },
   "devDependencies": {
-    "@hazeljs/rag": "file:../rag",
-    "@hazeljs/prompts": "file:../prompts",
+    "@hazeljs/prompts": "^0.8.5",
+    "@hazeljs/rag": "^0.8.5",
     "@types/node": "^20.19.39",
     "@typescript-eslint/eslint-plugin": "^8.58.0",
     "@typescript-eslint/parser": "^8.58.0",
@@ -63,7 +63,6 @@
   },
   "homepage": "https://hazeljs.ai",
   "peerDependencies": {
-    "tiktoken": "^1.0.22",
     "@hazeljs/agent": "^0.8.5",
     "@hazeljs/cache": "^0.8.5",
     "@hazeljs/core": "^0.8.5",
@@ -71,7 +70,8 @@
     "@hazeljs/memory": "^0.8.5",
     "@hazeljs/ml": "^0.8.5",
     "@hazeljs/prompts": "^0.8.5",
-    "@hazeljs/rag": "^0.8.5"
+    "@hazeljs/rag": "^0.8.5",
+    "tiktoken": "^1.0.22"
   },
   "peerDependenciesMeta": {
     "tiktoken": {
@@ -95,5 +95,6 @@
     "@hazeljs/guardrails": {
       "optional": true
     }
-  }
+  },
+  "gitHead": "083b94562940a86c8e0a8cd81988d04b541608ac"
 }

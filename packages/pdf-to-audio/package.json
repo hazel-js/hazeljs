@@ -34,13 +34,13 @@
     "reflect-metadata": "^0.2.2"
   },
   "peerDependencies": {
-    "@hazeljs/core": "^0.8.5",
     "@hazeljs/ai": "^0.8.5",
+    "@hazeljs/core": "^0.8.5",
     "@hazeljs/queue": "^0.8.5",
     "@hazeljs/rag": "^0.8.5"
   },
   "devDependencies": {
-    "@hazeljs/queue": "file:../queue",
+    "@hazeljs/queue": "^0.8.5",
     "@types/jest": "^29.5.14",
     "@types/node": "^20.19.39",
     "@types/pdf-parse": "^1.1.5",
@@ -55,5 +55,6 @@
     "type": "git",
     "url": "https://github.com/hazel-js/hazeljs.git",
     "directory": "packages/pdf-to-audio"
-  }
+  },
+  "gitHead": "083b94562940a86c8e0a8cd81988d04b541608ac"
 }

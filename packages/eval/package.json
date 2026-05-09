@@ -22,7 +22,7 @@
     "@hazeljs/core": "^0.8.5"
   },
   "devDependencies": {
-    "@hazeljs/core": "file:../core",
+    "@hazeljs/core": "^0.8.5",
     "@types/jest": "^29.5.14",
     "@types/node": "^20.19.39",
     "@typescript-eslint/eslint-plugin": "^8.58.0",
@@ -52,5 +52,6 @@
     "metrics"
   ],
   "author": "Muhammad Arslan <muhammad.arslan@hazeljs.ai>",
-  "license": "Apache-2.0"
+  "license": "Apache-2.0",
+  "gitHead": "083b94562940a86c8e0a8cd81988d04b541608ac"
 }

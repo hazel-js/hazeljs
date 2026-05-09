@@ -16,10 +16,10 @@
   },
   "dependencies": {
     "@opentelemetry/api": "^1.9.1",
-    "@opentelemetry/sdk-trace-base": "^2.6.1",
-    "@opentelemetry/sdk-trace-node": "^2.6.1",
     "@opentelemetry/exporter-trace-otlp-http": "^0.214.0",
     "@opentelemetry/resources": "^2.6.1",
+    "@opentelemetry/sdk-trace-base": "^2.6.1",
+    "@opentelemetry/sdk-trace-node": "^2.6.1",
     "@opentelemetry/semantic-conventions": "^1.40.0"
   },
   "devDependencies": {
@@ -47,5 +47,6 @@
   "bugs": {
     "url": "https://github.com/hazeljs/hazel-js/issues"
   },
-  "homepage": "https://hazeljs.ai"
+  "homepage": "https://hazeljs.ai",
+  "gitHead": "083b94562940a86c8e0a8cd81988d04b541608ac"
 }

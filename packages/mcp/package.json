@@ -38,7 +38,6 @@
     "url": "https://github.com/hazeljs/hazel-js/issues"
   },
   "homepage": "https://hazeljs.ai",
-  "dependencies": {},
   "devDependencies": {
     "@types/jest": "^29.5.14",
     "@types/node": "^20.19.39",
@@ -54,5 +53,6 @@
       "optional": true,
       "description": "Required when using @hazeljs/agent ToolRegistry. Not needed for custom IToolRegistry implementations."
     }
-  }
+  },
+  "gitHead": "083b94562940a86c8e0a8cd81988d04b541608ac"
 }

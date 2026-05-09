@@ -38,11 +38,11 @@
     "zod-to-json-schema": "^3.25.2"
   },
   "devDependencies": {
-    "@hazeljs/core": "file:../core",
-    "@hazeljs/eval": "file:../eval",
-    "@hazeljs/prompts": "file:../prompts",
-    "@hazeljs/rag": "file:../rag",
-    "@hazeljs/resilience": "file:../resilience",
+    "@hazeljs/core": "^0.8.5",
+    "@hazeljs/eval": "^0.8.5",
+    "@hazeljs/prompts": "^0.8.5",
+    "@hazeljs/rag": "^0.8.5",
+    "@hazeljs/resilience": "^0.8.5",
     "@types/jest": "^29.5.14",
     "@types/node": "^20.19.39",
     "jest": "^29.7.0",
@@ -52,10 +52,10 @@
   "peerDependencies": {
     "@hazeljs/core": "^0.8.5",
     "@hazeljs/eval": "^0.8.5",
+    "@hazeljs/guardrails": "^0.8.5",
     "@hazeljs/prompts": "^0.8.5",
     "@hazeljs/rag": "^0.8.5",
     "@hazeljs/resilience": "^0.8.5",
-    "@hazeljs/guardrails": "^0.8.5",
     "redis": ">=4.0.0"
   },
   "peerDependenciesMeta": {
@@ -79,5 +79,6 @@
   "bugs": {
     "url": "https://github.com/hazeljs/hazel-js/issues"
   },
-  "homepage": "https://hazeljs.ai"
+  "homepage": "https://hazeljs.ai",
+  "gitHead": "083b94562940a86c8e0a8cd81988d04b541608ac"
 }

@@ -83,5 +83,6 @@
     "type": "git",
     "url": "https://github.com/hazel-js/hazeljs.git",
     "directory": "packages/messaging"
-  }
+  },
+  "gitHead": "083b94562940a86c8e0a8cd81988d04b541608ac"
 }

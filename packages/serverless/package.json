@@ -14,7 +14,6 @@
     "lint:fix": "eslint \"src/**/*.ts\" --fix",
     "clean": "rm -rf dist"
   },
-  "dependencies": {},
   "devDependencies": {
     "@types/aws-lambda": "^8.10.161",
     "@types/node": "^20.19.39",
@@ -48,5 +47,6 @@
   "homepage": "https://hazeljs.ai",
   "peerDependencies": {
     "@hazeljs/core": "^0.8.5"
-  }
+  },
+  "gitHead": "083b94562940a86c8e0a8cd81988d04b541608ac"
 }

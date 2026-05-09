@@ -14,7 +14,6 @@
     "lint:fix": "eslint \"src/**/*.ts\" --fix",
     "clean": "rm -rf dist"
   },
-  "dependencies": {},
   "devDependencies": {
     "@types/node": "^20.19.39",
     "@typescript-eslint/eslint-plugin": "^8.58.0",
@@ -49,5 +48,6 @@
   "bugs": {
     "url": "https://github.com/hazeljs/hazel-js/issues"
   },
-  "homepage": "https://hazeljs.ai"
+  "homepage": "https://hazeljs.ai",
+  "gitHead": "083b94562940a86c8e0a8cd81988d04b541608ac"
 }

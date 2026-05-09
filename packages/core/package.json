@@ -25,7 +25,6 @@
     "reflect-metadata": "^0.2.2",
     "winston": "^3.19.0"
   },
-  "peerDependencies": {},
   "devDependencies": {
     "@types/jest": "^29.5.14",
     "@types/node": "^20.19.39",
@@ -63,5 +62,6 @@
   "bugs": {
     "url": "https://github.com/hazeljs/hazel-js/issues"
   },
-  "homepage": "https://hazeljs.ai"
+  "homepage": "https://hazeljs.ai",
+  "gitHead": "083b94562940a86c8e0a8cd81988d04b541608ac"
 }

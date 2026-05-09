@@ -17,9 +17,9 @@
     "demo:simple": "ts-node examples/advanced-features-simple.ts"
   },
   "dependencies": {
+    "eventemitter3": "^5.0.4",
     "ioredis": "^5.10.1",
-    "node-cron": "^3.0.3",
-    "eventemitter3": "^5.0.4"
+    "node-cron": "^3.0.3"
   },
   "devDependencies": {
     "@types/node": "^20.19.39",
@@ -54,5 +54,6 @@
   "homepage": "https://hazeljs.ai",
   "peerDependencies": {
     "@hazeljs/core": "^0.8.5"
-  }
+  },
+  "gitHead": "083b94562940a86c8e0a8cd81988d04b541608ac"
 }
