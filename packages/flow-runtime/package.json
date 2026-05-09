@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/flow-runtime",
-  "version": "0.8.2",
+  "version": "0.8.3",
   "description": "Standalone deployable flow runtime service (HazelJS)",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -18,8 +18,8 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "@hazeljs/core": "^0.8.2",
-    "@hazeljs/flow": "^0.8.2",
+    "@hazeljs/core": "^0.8.3",
+    "@hazeljs/flow": "^0.8.3",
     "p-limit": "^6.2.0",
     "reflect-metadata": "^0.2.2"
   },
