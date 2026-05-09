@@ -4,7 +4,7 @@
   "description": "Machine-readable manifest of all CLI commands and options for LLM agent tool-use",
   "cli": {
     "name": "hazel",
-    "version": "0.8.5",
+    "version": "0.8.6",
     "description": "CLI for generating HazelJS components and applications"
   },
   "commands": [
