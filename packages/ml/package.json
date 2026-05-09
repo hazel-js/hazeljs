@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/ml",
-  "version": "0.8.3",
+  "version": "0.8.4",
   "description": "Machine Learning & Model Management for HazelJS framework",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -25,7 +25,7 @@
     "typescript": "^5.9.3"
   },
   "peerDependencies": {
-    "@hazeljs/core": "^0.8.3"
+    "@hazeljs/core": "^0.8.4"
   },
   "publishConfig": {
     "access": "public"

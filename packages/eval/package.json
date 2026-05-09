@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/eval",
-  "version": "0.8.3",
+  "version": "0.8.4",
   "description": "Evaluation toolkit for HazelJS AI apps — golden datasets, RAG metrics, agent trajectories, LLM-as-judge, CI reports",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -19,7 +19,7 @@
     "zod": "^3.25.76"
   },
   "peerDependencies": {
-    "@hazeljs/core": "^0.8.3"
+    "@hazeljs/core": "^0.8.4"
   },
   "devDependencies": {
     "@hazeljs/core": "file:../core",

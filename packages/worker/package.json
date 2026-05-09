@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/worker",
-  "version": "0.8.3",
+  "version": "0.8.4",
   "description": "Worker thread module for CPU-intensive task offloading in HazelJS",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -46,6 +46,6 @@
   },
   "homepage": "https://hazeljs.ai",
   "peerDependencies": {
-    "@hazeljs/core": "^0.8.3"
+    "@hazeljs/core": "^0.8.4"
   }
 }

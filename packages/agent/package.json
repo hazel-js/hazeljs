@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/agent",
-  "version": "0.8.3",
+  "version": "0.8.4",
   "description": "AI-native Agent Runtime for HazelJS - stateful, long-running agents with tools, memory, and human-in-the-loop",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -50,12 +50,12 @@
     "typescript": "^5.9.3"
   },
   "peerDependencies": {
-    "@hazeljs/core": "^0.8.3",
-    "@hazeljs/eval": "^0.8.3",
-    "@hazeljs/prompts": "^0.8.3",
-    "@hazeljs/rag": "^0.8.3",
-    "@hazeljs/resilience": "^0.8.3",
-    "@hazeljs/guardrails": "^0.8.3",
+    "@hazeljs/core": "^0.8.4",
+    "@hazeljs/eval": "^0.8.4",
+    "@hazeljs/prompts": "^0.8.4",
+    "@hazeljs/rag": "^0.8.4",
+    "@hazeljs/resilience": "^0.8.4",
+    "@hazeljs/guardrails": "^0.8.4",
     "redis": ">=4.0.0"
   },
   "peerDependenciesMeta": {
