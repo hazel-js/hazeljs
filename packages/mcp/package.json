@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/mcp",
-  "version": "0.8.5",
+  "version": "0.8.6",
   "description": "Expose HazelJS tools as MCP (Model Context Protocol) tools over STDIO",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -46,7 +46,7 @@
     "typescript": "^5.9.3"
   },
   "peerDependencies": {
-    "@hazeljs/agent": "^0.8.5"
+    "@hazeljs/agent": "^0.8.6"
   },
   "peerDependenciesMeta": {
     "@hazeljs/agent": {

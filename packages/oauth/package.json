@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/oauth",
-  "version": "0.8.5",
+  "version": "0.8.6",
   "description": "OAuth 2.0 and SAML SSO module for HazelJS - Google, Microsoft, GitHub, and enterprise IdPs",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -52,7 +52,7 @@
   },
   "homepage": "https://hazeljs.ai",
   "peerDependencies": {
-    "@hazeljs/core": "^0.8.5"
+    "@hazeljs/core": "^0.8.6"
   },
   "gitHead": "083b94562940a86c8e0a8cd81988d04b541608ac"
 }

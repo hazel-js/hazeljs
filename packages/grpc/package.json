@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/grpc",
-  "version": "0.8.5",
+  "version": "0.8.6",
   "description": "gRPC module for HazelJS framework - RPC server and client support with decorators",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -29,7 +29,7 @@
     "typescript": "^5.9.3"
   },
   "peerDependencies": {
-    "@hazeljs/core": "^0.8.5"
+    "@hazeljs/core": "^0.8.6"
   },
   "publishConfig": {
     "access": "public"
