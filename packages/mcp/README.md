@@ -24,7 +24,16 @@ Any method decorated with `@Tool()` becomes an MCP tool callable by Cursor, Clau
 
 ```bash
 npm install @hazeljs/mcp
+# Optional: only if you want @Tool() decorators
+npm install @hazeljs/agent
 ```
+
+### Requirements
+
+- **Node.js 20+**
+- **TypeScript 5+** with `experimentalDecorators: true` in your `tsconfig.json` (only when using `@Tool()` decorators)
+- **No `reflect-metadata` import in your application code.** `@hazeljs/agent` declares it as a regular dependency and loads it automatically; importing it again from your code is unnecessary. In standalone mode (without `@hazeljs/agent`), `reflect-metadata` is not used at all.
+- **No `emitDecoratorMetadata` required.** `@Tool()` does not rely on TypeScript's design-time type metadata.
 
 ---
 
@@ -32,8 +41,9 @@ npm install @hazeljs/mcp
 
 ### 1. Define tools on an agent class
 
+> You do **not** need to import `reflect-metadata` yourself. `@hazeljs/agent` lists it as a regular dependency and every decorator module loads it as a side-effect import, so it is already initialized by the time your `@Tool()` runs. Just enable `experimentalDecorators` in your `tsconfig.json`.
+
 ```typescript
-import 'reflect-metadata';
 import { Tool } from '@hazeljs/agent';
 
 export class SupportAgent {
@@ -64,9 +74,6 @@ export class SupportAgent {
 ### 2. Register the agent and create the server
 
 ```typescript
-// reflect-metadata must be the first import
-import 'reflect-metadata';
-
 import { ToolRegistry } from '@hazeljs/agent';
 import { createMcpServer } from '@hazeljs/mcp';
 import { SupportAgent } from './agents/SupportAgent';

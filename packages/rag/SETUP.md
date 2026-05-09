@@ -4,16 +4,13 @@
 
 ### 1. Install Dependencies
 
-The Agentic RAG decorators require `reflect-metadata` for decorator metadata support.
-
 ```bash
 # From the root of the monorepo
 cd packages/rag
 npm install
-
-# Or install reflect-metadata directly
-npm install reflect-metadata@^0.2.1
 ```
+
+> `reflect-metadata` is pulled in transitively via `@hazeljs/core` and is loaded automatically by the framework — you do **not** need to install or import it yourself.
 
 ### 2. Enable Decorators in TypeScript
 
@@ -65,10 +62,10 @@ npx ts-node src/rag/agentic/agentic-rag-agent-integration.example.ts
 
 ### Error: Property 'defineMetadata' does not exist on type 'typeof Reflect'
 
-**Solution**: This should not occur if you're using `@hazeljs/core` which automatically imports `reflect-metadata`. If you still see this error:
+**Solution**: `@hazeljs/core` imports `reflect-metadata` automatically. If you still see this error:
 
-- Ensure `reflect-metadata` is installed: `npm install reflect-metadata`
 - Make sure you're using the latest version of `@hazeljs/core`
+- Verify `reflect-metadata` is present in your `node_modules` (it should be installed transitively by `@hazeljs/core`); if not, `npm install` from the project root will pull it in.
 
 ### Error: Unable to resolve signature of method decorator
 

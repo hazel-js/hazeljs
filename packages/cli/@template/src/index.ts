@@ -1,4 +1,3 @@
-import 'reflect-metadata';
 import { HazelApp } from '@hazeljs/core';
 import { AppModule } from './app.module';
 

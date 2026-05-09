@@ -86,7 +86,7 @@ npm run build
 **If you still see this error**:
 
 - Make sure you're using the latest version of `@hazeljs/core`
-- Ensure `reflect-metadata` is installed: `npm install reflect-metadata`
+- Verify `reflect-metadata` is present in your `node_modules` (it should be installed transitively by `@hazeljs/core`); if missing, run `npm install` from the project root rather than depending on it directly.
 - The core package handles the import automatically, so you don't need to import it manually
 
 ### "Circular dependency detected"

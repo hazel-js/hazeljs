@@ -27,12 +27,13 @@ npm install @hazeljs/saga
 
 ### Peer Dependencies
 
-Ensure you have these installed as they are required for decorators and event-driven sagas:
+`@hazeljs/saga` works with `@hazeljs/core` for runtime integration and `@hazeljs/event-emitter` for choreography events. Install them alongside:
 
 ```bash
-npm install reflect-metadata
-npm install @hazeljs/event-emitter
+npm install @hazeljs/core @hazeljs/event-emitter
 ```
+
+> You do **not** need to install or import `reflect-metadata` yourself. `@hazeljs/saga` declares it as a regular dependency and its decorator modules load it via a side-effect import. Just enable `experimentalDecorators` in your `tsconfig.json`.
 
 ---
 

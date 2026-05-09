@@ -243,11 +243,12 @@ export const handler = createLambdaHandler(AppModule, {
     "deploy:lambda": "aws lambda update-function-code --function-name hazeljs-api --zip-file fileb://function.zip"
   },
   "dependencies": {
-    "@hazeljs/core": "^0.2.0",
-    "reflect-metadata": "^0.2.1"
+    "@hazeljs/core": "^0.2.0"
   }
 }
 ```
+
+> `@hazeljs/core` declares `reflect-metadata` as a regular dependency and loads it on import, so you do not need to add it explicitly here.
 
 #### Step 3: Build and Package
 
