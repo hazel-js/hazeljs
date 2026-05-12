@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/casl",
-  "version": "0.8.6",
+  "version": "0.8.7",
   "description": "Attribute-level (resource-level) authorization for HazelJS via CASL",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -50,7 +50,7 @@
   },
   "homepage": "https://hazeljs.ai",
   "peerDependencies": {
-    "@hazeljs/core": "^0.8.6"
+    "@hazeljs/core": "^0.8.7"
   },
   "gitHead": "083b94562940a86c8e0a8cd81988d04b541608ac"
 }

@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/observability",
-  "version": "0.8.6",
+  "version": "0.8.7",
   "description": "Unified observability, OpenTelemetry tracing, and LLM cost tracking for HazelJS agents and flows",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -32,7 +32,7 @@
     "typescript": "^5.9.3"
   },
   "peerDependencies": {
-    "@hazeljs/core": "^0.8.6"
+    "@hazeljs/core": "^0.8.7"
   },
   "publishConfig": {
     "access": "public"
