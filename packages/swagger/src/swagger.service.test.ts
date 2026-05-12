@@ -2,7 +2,7 @@ import 'reflect-metadata';
 import { SwaggerService } from './swagger.service';
 import { Swagger, ApiOperation } from './swagger.decorator';
 import { SwaggerOptions, SwaggerOperation } from './swagger.types';
-import { Controller, Get, Post } from '@hazeljs/core';
+import { Controller, Get, HazelModule, Patch, Post } from '@hazeljs/core';
 
 describe('SwaggerService', () => {
   let swaggerService: SwaggerService;
@@ -10,6 +10,11 @@ describe('SwaggerService', () => {
   beforeEach((): void => {
     swaggerService = new SwaggerService();
   });
+
+  const expectDefaultSchemas = (spec: ReturnType<SwaggerService['generateSpec']>): void => {
+    expect(spec.components.schemas.Error).toBeDefined();
+    expect(spec.components.schemas.ValidationError).toBeDefined();
+  };
 
   describe('generateSpec', () => {
     it('should generate spec for a controller with Swagger metadata', (): void => {
@@ -54,10 +59,8 @@ describe('SwaggerService', () => {
         createTest(): void {}
       }
 
-      // Mock controller metadata
       Reflect.defineMetadata('hazel:controller', { path: '/test' }, TestController);
 
-      // Mock route metadata
       Reflect.defineMetadata(
         'hazel:routes',
         [
@@ -90,25 +93,26 @@ describe('SwaggerService', () => {
         tags: postOperation.tags,
         responses: postOperation.responses,
       });
+      expectDefaultSchemas(spec);
     });
 
-    it('should handle controller without Swagger metadata', (): void => {
+    it('should auto-generate operations for controller without Swagger metadata', (): void => {
       @Controller({ path: '/test' })
       class TestController {
         @Get()
         getTest(): void {}
       }
 
-      // Mock route metadata
       Reflect.defineMetadata(
         'hazel:routes',
-        [{ propertyKey: 'getTest', path: '/test', method: 'GET' }],
+        [{ propertyKey: 'getTest', path: '', method: 'GET' }],
         TestController
       );
 
       const spec = swaggerService.generateSpec([TestController]);
-      expect(spec).toBeDefined();
-      expect(spec.paths).toEqual({});
+      expect(spec.paths['/test']?.get).toBeDefined();
+      expect(spec.paths['/test'].get.summary).toBe('Get resource(s)');
+      expectDefaultSchemas(spec);
     });
 
     it('should handle invalid controllers', (): void => {
@@ -116,6 +120,7 @@ describe('SwaggerService', () => {
       const spec = swaggerService.generateSpec([InvalidController]);
       expect(spec).toBeDefined();
       expect(spec.paths).toEqual({});
+      expectDefaultSchemas(spec);
     });
 
     it('should handle controller without route metadata', (): void => {
@@ -137,7 +142,6 @@ describe('SwaggerService', () => {
         getTest(): void {}
       }
 
-      // Explicitly remove route metadata
       Reflect.deleteMetadata('hazel:routes', TestController);
 
       const spec = swaggerService.generateSpec([TestController]);
@@ -145,7 +149,7 @@ describe('SwaggerService', () => {
       expect(spec.paths).toEqual({});
     });
 
-    it('should handle controller with method without operation metadata', (): void => {
+    it('should auto-generate when method has no operation metadata but controller has @Swagger', (): void => {
       @Swagger({
         title: 'Test API',
         description: 'Test API description',
@@ -158,7 +162,6 @@ describe('SwaggerService', () => {
         getTest(): void {}
       }
 
-      // Mock route metadata
       Reflect.defineMetadata(
         'hazel:routes',
         [{ propertyKey: 'getTest', path: '/test', method: 'GET' }],
@@ -166,24 +169,47 @@ describe('SwaggerService', () => {
       );
 
       const spec = swaggerService.generateSpec([TestController]);
-      expect(spec).toBeDefined();
+      expect(spec.paths['/test/test']?.get).toBeDefined();
+      expect(spec.paths['/test/test'].get.summary).toBe('Get resource(s)');
+    });
+
+    it('should skip undocumented routes when autoGenerateOperations is false', (): void => {
+      @Swagger({
+        title: 'Test API',
+        description: 'Test API description',
+        version: '1.0.0',
+      })
+      @Controller({ path: '/test' })
+      class TestController {
+        @Get()
+        getTest(): void {}
+      }
+
+      Reflect.defineMetadata(
+        'hazel:routes',
+        [{ propertyKey: 'getTest', path: '', method: 'GET' }],
+        TestController
+      );
+
+      const spec = swaggerService.generateSpec([TestController], {
+        autoGenerateOperations: false,
+      });
       expect(spec.paths).toEqual({});
     });
 
     it('should throw error when controllers is not an array', (): void => {
       expect(() => {
-        swaggerService.generateSpec(null as any);
+        swaggerService.generateSpec(null as never);
       }).toThrow('Controllers must be an array');
     });
 
     it('should handle null and undefined controllers', (): void => {
-      const spec = swaggerService.generateSpec([null, undefined, {} as any]);
+      const spec = swaggerService.generateSpec([null, undefined, {}] as never[]);
       expect(spec).toBeDefined();
       expect(spec.paths).toEqual({});
     });
 
     it('should handle error during spec generation', (): void => {
-      // Test error handling by making getSwaggerMetadata throw
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const swaggerDecorator = require('./swagger.decorator');
 
@@ -208,7 +234,6 @@ describe('SwaggerService', () => {
         swaggerService.generateSpec([TestController]);
       }).toThrow('Metadata access error');
 
-      // Restore original
       jest.restoreAllMocks();
     });
 
@@ -225,9 +250,9 @@ describe('SwaggerService', () => {
       };
 
       @Swagger(swaggerOptions)
-      @Controller({ path: 'test' }) // Path without leading slash
+      @Controller({ path: 'test' })
       class TestController {
-        @Get('path') // Path without leading slash
+        @Get('path')
         @ApiOperation(getOperation)
         getTest(): void {}
       }
@@ -240,12 +265,8 @@ describe('SwaggerService', () => {
       );
 
       const spec = swaggerService.generateSpec([TestController]);
-      // The normalizePath concatenates basePath and path: 'test' + 'path' = 'testpath', then normalizes to '/testpath'
-      // But actually, paths should be joined with '/' if both exist
-      // Let's check what path was actually created
       const pathKeys = Object.keys(spec.paths);
       expect(pathKeys.length).toBeGreaterThan(0);
-      // The normalized path should start with '/'
       const createdPath = pathKeys[0];
       expect(createdPath.startsWith('/')).toBe(true);
       expect(spec.paths[createdPath].get).toBeDefined();
@@ -264,7 +285,7 @@ describe('SwaggerService', () => {
       };
 
       @Swagger(swaggerOptions)
-      @Controller({ path: '/test/' }) // Path with trailing slash
+      @Controller({ path: '/test/' })
       class TestController {
         @Get()
         @ApiOperation(getOperation)
@@ -337,7 +358,6 @@ describe('SwaggerService', () => {
       const getOperation: SwaggerOperation = {
         summary: 'Get test',
         responses: { '200': { description: 'Success' } },
-        // No tags property
       };
 
       @Swagger(swaggerOptions)
@@ -357,6 +377,125 @@ describe('SwaggerService', () => {
 
       const spec = swaggerService.generateSpec([TestController]);
       expect(spec.paths['/test'].get.tags).toEqual(['TestController']);
+    });
+
+    it('should prepend globalPrefix to paths', (): void => {
+      @Controller({ path: '/users' })
+      class UserController {
+        @Get()
+        list(): void {}
+      }
+
+      Reflect.defineMetadata('hazel:controller', { path: '/users' }, UserController);
+      Reflect.defineMetadata(
+        'hazel:routes',
+        [{ propertyKey: 'list', path: '', method: 'GET' }],
+        UserController
+      );
+
+      const spec = swaggerService.generateSpec([UserController], { globalPrefix: '/api' });
+      expect(spec.paths['/api/users']?.get).toBeDefined();
+    });
+
+    it('should merge securitySchemes into components', (): void => {
+      @Controller({ path: '/x' })
+      class XController {
+        @Get()
+        x(): void {}
+      }
+
+      Reflect.defineMetadata('hazel:controller', { path: '/x' }, XController);
+      Reflect.defineMetadata(
+        'hazel:routes',
+        [{ propertyKey: 'x', path: '', method: 'GET' }],
+        XController
+      );
+
+      const spec = swaggerService.generateSpec([XController], {
+        securitySchemes: {
+          bearer: { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
+        },
+        security: [{ bearer: [] }],
+      });
+
+      expect(spec.components.securitySchemes?.bearer).toEqual({
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+      });
+      expect(spec.security).toEqual([{ bearer: [] }]);
+    });
+  });
+
+  describe('generateAutoSpec', () => {
+    it('should collect controllers from module tree', (): void => {
+      @Controller({ path: '/items' })
+      class ItemController {
+        @Get()
+        list(): void {}
+      }
+
+      Reflect.defineMetadata('hazel:controller', { path: '/items' }, ItemController);
+      Reflect.defineMetadata(
+        'hazel:routes',
+        [{ propertyKey: 'list', path: '', method: 'GET' }],
+        ItemController
+      );
+
+      @HazelModule({
+        imports: [],
+        controllers: [ItemController],
+      })
+      class AppModule {}
+
+      const spec = swaggerService.generateAutoSpec(AppModule);
+      expect(spec.paths['/items']?.get).toBeDefined();
+      expectDefaultSchemas(spec);
+    });
+
+    it('should extract path parameters from route template', (): void => {
+      @Controller({ path: '/users' })
+      class UserController {
+        @Get('/:id')
+        one(): void {}
+      }
+
+      Reflect.defineMetadata('hazel:controller', { path: '/users' }, UserController);
+      Reflect.defineMetadata(
+        'hazel:routes',
+        [{ propertyKey: 'one', path: '/:id', method: 'GET' }],
+        UserController
+      );
+
+      @HazelModule({ controllers: [UserController], imports: [] })
+      class AppModule {}
+
+      const spec = swaggerService.generateAutoSpec(AppModule);
+      expect(spec.paths['/users/:id']?.get?.parameters).toEqual([
+        expect.objectContaining({ name: 'id', in: 'path', required: true }),
+      ]);
+    });
+
+    it('should add request body for PATCH', (): void => {
+      @Controller({ path: '/users' })
+      class UserController {
+        @Patch('/:id')
+        patch(): void {}
+      }
+
+      Reflect.defineMetadata('hazel:controller', { path: '/users' }, UserController);
+      Reflect.defineMetadata(
+        'hazel:routes',
+        [{ propertyKey: 'patch', path: '/:id', method: 'PATCH' }],
+        UserController
+      );
+
+      @HazelModule({ controllers: [UserController], imports: [] })
+      class AppModule {}
+
+      const spec = swaggerService.generateAutoSpec(AppModule);
+      expect(spec.paths['/users/:id']?.patch?.requestBody).toBeDefined();
+      expect(spec.paths['/users/:id'].patch.summary).toBe('Update resource');
     });
   });
 });

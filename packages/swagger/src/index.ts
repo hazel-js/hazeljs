@@ -2,15 +2,33 @@
  * @hazeljs/swagger - Swagger/OpenAPI module for HazelJS
  */
 
+import type { Type } from '@hazeljs/core';
+import { SwaggerService } from './swagger.service';
+import type { SwaggerBuildOptions, SwaggerSpec } from './swagger.types';
+
 export { SwaggerModule } from './swagger.module';
-export { SwaggerService, type SwaggerSpec } from './swagger.service';
+export { SwaggerService } from './swagger.service';
 export {
   Swagger,
   ApiOperation,
   getSwaggerMetadata,
   getOperationMetadata,
 } from './swagger.decorator';
-export type { SwaggerOptions, SwaggerOperation, SwaggerSchema } from './swagger.types';
+export type {
+  SwaggerOptions,
+  SwaggerOperation,
+  SwaggerSchema,
+  SwaggerSpec,
+  SwaggerServer,
+  SwaggerBuildOptions,
+  AutoSwaggerOptions,
+  SwaggerModuleOptions,
+} from './swagger.types';
 
-// Auto-generation utilities
-export type { AutoSwaggerOptions } from './swagger.service';
+/** Build an OpenAPI document without serving HTTP (e.g. CI export). */
+export function createOpenApiDocument(
+  rootModule: Type<unknown>,
+  options?: SwaggerBuildOptions
+): SwaggerSpec {
+  return new SwaggerService().generateAutoSpec(rootModule, options);
+}

@@ -1,10 +1,10 @@
 import { Controller, Get } from '@hazeljs/core';
 import { SwaggerService } from './swagger.service';
 import { RequestContext, Type } from '@hazeljs/core';
-import { getModuleMetadata, type DynamicModule } from '@hazeljs/core';
 import logger from '@hazeljs/core';
 import { Swagger, ApiOperation } from './swagger.decorator';
-import { SwaggerSpec } from './swagger.service';
+import type { SwaggerSpec } from './swagger.types';
+import { getSwaggerModuleOptions } from './swagger-config';
 
 @Swagger({
   title: 'Swagger Documentation',
@@ -28,6 +28,21 @@ export class SwaggerController {
   static setRootModule(module: Type<unknown>): void {
     logger.debug(`Setting root module for SwaggerController: ${module.name}`);
     SwaggerController.rootModule = module;
+  }
+
+  private static emptySpec(description: string): SwaggerSpec {
+    return {
+      openapi: '3.0.0',
+      info: {
+        title: 'API Documentation',
+        version: '1.0.0',
+        description,
+      },
+      paths: {},
+      components: {
+        schemas: {},
+      },
+    };
   }
 
   @Get('/spec')
@@ -58,116 +73,25 @@ export class SwaggerController {
     try {
       if (!SwaggerController.rootModule) {
         logger.warn('No root module provided');
-        return {
-          openapi: '3.0.0',
-          info: {
-            title: 'API Documentation',
-            version: '1.0.0',
-            description: 'No root module provided',
-          },
-          paths: {},
-          components: {
-            schemas: {},
-          },
-        };
+        return SwaggerController.emptySpec('No root module provided');
       }
 
       logger.debug('Root module:', SwaggerController.rootModule.name);
 
-      // Get all controllers from the AppModule and its imported modules.
-      // Avoid JSON.stringify on full metadata because dynamic module objects can be circular.
-      const moduleMetadata = getModuleMetadata(SwaggerController.rootModule);
-      logger.debug(
-        'Module metadata summary:',
-        moduleMetadata
-          ? {
-              controllers: moduleMetadata.controllers?.length || 0,
-              imports: moduleMetadata.imports?.length || 0,
-              providers: moduleMetadata.providers?.length || 0,
-            }
-          : null
-      );
+      const opts = getSwaggerModuleOptions();
+      const spec = this.swaggerService.generateAutoSpec(SwaggerController.rootModule, opts);
 
-      const controllers = new Set<Type<unknown>>();
-
-      // Helper function to recursively collect controllers from modules
-      const collectControllers = (moduleRef: Type<unknown> | DynamicModule): void => {
-        const moduleName =
-          typeof moduleRef === 'function'
-            ? moduleRef.name
-            : (moduleRef as DynamicModule).module?.name;
-        logger.debug(`Collecting controllers from module: ${moduleName}`);
-        const metadata = getModuleMetadata(moduleRef as object);
-        if (!metadata) {
-          logger.warn(`No metadata found for module: ${moduleName}`);
-          return;
-        }
-
-        // Add controllers from current module
-        if (metadata.controllers) {
-          const validControllers = metadata.controllers.filter(
-            (c: unknown) => c && typeof c === 'function'
-          );
-          logger.debug(
-            `${moduleName} controllers:`,
-            validControllers.map((c: Type<unknown>) =>
-              typeof c === 'function' ? c.name : undefined
-            )
-          );
-          validControllers.forEach((controller: unknown) =>
-            controllers.add(controller as Type<unknown>)
-          );
-        } else {
-          logger.debug(`No controllers found in module: ${moduleName}`);
-        }
-
-        // Recursively process imported modules (Type or DynamicModule)
-        if (metadata.imports) {
-          const validModules = metadata.imports.filter(
-            (m: unknown) =>
-              m && (typeof m === 'function' || (typeof m === 'object' && 'module' in (m as object)))
-          );
-          logger.debug(
-            `${moduleName} imported modules:`,
-            validModules.map((m: Type<unknown> | DynamicModule) =>
-              typeof m === 'function' ? m.name : (m as DynamicModule).module?.name
-            )
-          );
-          validModules.forEach((moduleRef: Type<unknown> | DynamicModule) =>
-            collectControllers(moduleRef)
-          );
-        } else {
-          logger.debug(`No imports found in module: ${moduleName}`);
-        }
-      };
-
-      // Start collecting controllers from the root module
-      collectControllers(SwaggerController.rootModule);
-
-      const controllerArray = Array.from(controllers);
-      logger.debug('Total controllers found:', controllerArray.length);
-      logger.debug(
-        'Controller names:',
-        controllerArray.map((c) => c.name)
-      );
-
-      if (controllerArray.length === 0) {
-        logger.warn('No valid controllers found');
+      if (Object.keys(spec.paths).length === 0) {
+        logger.warn('No routes found for OpenAPI document');
         return {
-          openapi: '3.0.0',
+          ...spec,
           info: {
-            title: 'API Documentation',
-            version: '1.0.0',
-            description: 'No controllers found',
-          },
-          paths: {},
-          components: {
-            schemas: {},
+            ...spec.info,
+            description: spec.info.description || 'No routes found',
           },
         };
       }
 
-      const spec = this.swaggerService.generateSpec(controllerArray);
       return spec;
     } catch (error) {
       if (process.env.NODE_ENV !== 'test') {
@@ -196,14 +120,23 @@ export class SwaggerController {
     },
   })
   async getDocs(_context: RequestContext): Promise<string> {
-    return `
-<!DOCTYPE html>
+    const opts = getSwaggerModuleOptions();
+    const cdn =
+      opts.swaggerUiCdnBase?.replace(/\/$/, '') ?? 'https://unpkg.com/swagger-ui-dist@5.11.0';
+    let prefix = opts.globalPrefix?.trim() ?? '';
+    if (prefix && !prefix.startsWith('/')) {
+      prefix = `/${prefix}`;
+    }
+    prefix = prefix.replace(/\/$/, '');
+    const specPath = prefix ? `${prefix}/swagger/spec` : '/swagger/spec';
+
+    return `<!DOCTYPE html>
 <html>
 <head>
     <title>API Documentation</title>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@4.18.3/swagger-ui.css" />
+    <link rel="stylesheet" type="text/css" href="${cdn}/swagger-ui.css" />
     <style>
         body {
             margin: 0;
@@ -225,19 +158,18 @@ export class SwaggerController {
         <div class="loading">Loading API Documentation...</div>
     </div>
 
-    <script src="https://unpkg.com/swagger-ui-dist@4.18.3/swagger-ui-bundle.js"></script>
-    <script src="https://unpkg.com/swagger-ui-dist@4.18.3/swagger-ui-standalone-preset.js"></script>
+    <script src="${cdn}/swagger-ui-bundle.js"></script>
+    <script src="${cdn}/swagger-ui-standalone-preset.js"></script>
     <script>
-        // Basic error handling
         window.onerror = function(msg, url, line) {
-            document.getElementById('swagger-ui').innerHTML = 
+            document.getElementById('swagger-ui').innerHTML =
                 '<div style="color: red; padding: 20px;">Error: ' + msg + '<br>at line ' + line + '</div>';
             return false;
         };
 
-        // Simple initialization
+        const specPath = ${JSON.stringify(specPath)};
         const ui = SwaggerUIBundle({
-            url: window.location.origin + "/swagger/spec",
+            url: window.location.origin + specPath,
             dom_id: '#swagger-ui',
             deepLinking: true,
             presets: [
@@ -254,6 +186,6 @@ export class SwaggerController {
     </script>
 </body>
 </html>
-    `;
+`;
   }
 }

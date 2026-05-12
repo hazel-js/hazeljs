@@ -1,564 +1,137 @@
 # @hazeljs/swagger
 
-**API docs that write themselves.**
-
-Add `@ApiOperation` and `@ApiResponse` — get Swagger UI. No manual OpenAPI JSON. Decorators on your controllers, interactive docs at `/api-docs`. Your frontend team will thank you.
+OpenAPI 3.0 documents and Swagger UI for HazelJS: class-level `@Swagger`, method-level `@ApiOperation`, automatic operation stubs for undocumented routes, and a small runtime config API.
 
 [![npm version](https://img.shields.io/npm/v/@hazeljs/swagger.svg)](https://www.npmjs.com/package/@hazeljs/swagger)
-[![npm downloads](https://img.shields.io/npm/dm/@hazeljs/swagger)](https://www.npmjs.com/package/@hazeljs/swagger)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
-
-## Features
-
-- 📚 **Auto-Generated Docs** - Automatic OpenAPI spec generation
-- 🎨 **Swagger UI** - Interactive API explorer
-- 🏷️ **Decorator-Based** - Document APIs with decorators
-- 📝 **Type Safety** - TypeScript integration
-- 🔐 **Authentication** - Document auth requirements
-- 📊 **Request/Response Examples** - Add example payloads
-- 🎯 **Tags & Groups** - Organize endpoints
-- 🔄 **Multiple Formats** - JSON, YAML export
 
 ## Installation
 
 ```bash
-npm install @hazeljs/swagger
+npm install @hazeljs/swagger @hazeljs/core
 ```
 
-## Quick Start
+## Quick start
 
-### 1. Configure Swagger Module
+### 1. Import the module and register your app root
 
 ```typescript
 import { HazelModule } from '@hazeljs/core';
 import { SwaggerModule } from '@hazeljs/swagger';
 
 @HazelModule({
-  imports: [
-    SwaggerModule.forRoot({
-      title: 'My API',
-      description: 'API documentation',
-      version: '1.0.0',
-      path: '/api-docs',
-    }),
-  ],
+  imports: [SwaggerModule],
+  controllers: [/* ... */],
 })
 export class AppModule {}
+
+// After you create the app (e.g. where you bootstrap HazelApp):
+SwaggerModule.setRootModule(AppModule);
 ```
 
-### 2. Document Controllers
+### 2. Optional: document metadata, servers, auth, UI CDN, global prefix
 
 ```typescript
-import { Controller, Get, Post, Body, Param } from '@hazeljs/core';
-import { ApiOperation, ApiResponse, ApiTags } from '@hazeljs/swagger';
+SwaggerModule.configure({
+  title: 'My API',
+  description: 'Production API',
+  version: '1.0.0',
+  servers: [{ url: 'http://localhost:3000', description: 'Local' }],
+  globalPrefix: '/api', // match app.setGlobalPrefix('/api') so paths and Swagger UI spec URL align
+  securitySchemes: {
+    bearer: { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
+  },
+  security: [{ bearer: [] }],
+  swaggerUiCdnBase: 'https://unpkg.com/swagger-ui-dist@5.11.0',
+});
 
-@Controller('/users')
-@ApiTags('Users')
+// Replace all options (e.g. in tests):
+SwaggerModule.configure({}, true);
+```
+
+### 3. Decorate controllers
+
+```typescript
+import { Controller, Get, Post, Body } from '@hazeljs/core';
+import { Swagger, ApiOperation } from '@hazeljs/swagger';
+
+@Swagger({
+  title: 'Users API',
+  description: 'User operations',
+  version: '1.0.0',
+  tags: [{ name: 'users', description: 'Users' }],
+})
+@Controller({ path: '/users' })
 export class UserController {
   @Get()
-  @ApiOperation({ summary: 'Get all users' })
-  @ApiResponse({ status: 200, description: 'List of users' })
-  findAll() {
-    return { users: [] };
-  }
-
-  @Get('/:id')
-  @ApiOperation({ summary: 'Get user by ID' })
-  @ApiResponse({ status: 200, description: 'User found' })
-  @ApiResponse({ status: 404, description: 'User not found' })
-  findOne(@Param('id') id: string) {
-    return { id, name: 'John Doe' };
+  @ApiOperation({
+    summary: 'List users',
+    responses: { '200': { description: 'OK' } },
+  })
+  list() {
+    return [];
   }
 
   @Post()
-  @ApiOperation({ summary: 'Create a new user' })
-  @ApiResponse({ status: 201, description: 'User created' })
-  @ApiResponse({ status: 400, description: 'Invalid input' })
-  create(@Body() createUserDto: CreateUserDto) {
-    return createUserDto;
-  }
-}
-```
-
-### 3. Access Documentation
-
-Navigate to `http://localhost:3000/api-docs` to view the interactive Swagger UI.
-
-## Decorators
-
-### @ApiTags()
-
-Group endpoints by tags:
-
-```typescript
-@Controller('/products')
-@ApiTags('Products', 'Catalog')
-export class ProductController {
-  // All endpoints will be tagged with 'Products' and 'Catalog'
-}
-```
-
-### @ApiOperation()
-
-Document endpoint details:
-
-```typescript
-@Get('/search')
-@ApiOperation({
-  summary: 'Search products',
-  description: 'Search for products by name, category, or tags',
-  operationId: 'searchProducts',
-})
-searchProducts() {
-  return [];
-}
-```
-
-### @ApiResponse()
-
-Document response types:
-
-```typescript
-@Get('/:id')
-@ApiResponse({
-  status: 200,
-  description: 'Product found',
-  type: ProductDto,
-})
-@ApiResponse({
-  status: 404,
-  description: 'Product not found',
-  schema: {
-    type: 'object',
-    properties: {
-      statusCode: { type: 'number' },
-      message: { type: 'string' },
+  @ApiOperation({
+    summary: 'Create user',
+    requestBody: {
+      required: true,
+      content: { 'application/json': { schema: { type: 'object' } } },
     },
-  },
-})
-findOne(@Param('id') id: string) {
-  return this.productService.findOne(id);
-}
-```
-
-### @ApiProperty()
-
-Document DTO properties:
-
-```typescript
-import { ApiProperty } from '@hazeljs/swagger';
-
-export class CreateUserDto {
-  @ApiProperty({
-    description: 'User email address',
-    example: 'user@example.com',
+    responses: { '201': { description: 'Created' } },
   })
-  email: string;
-
-  @ApiProperty({
-    description: 'User password',
-    minLength: 8,
-    example: 'SecurePass123!',
-  })
-  password: string;
-
-  @ApiProperty({
-    description: 'User full name',
-    example: 'John Doe',
-  })
-  name: string;
-
-  @ApiProperty({
-    description: 'User age',
-    minimum: 18,
-    maximum: 120,
-    example: 25,
-    required: false,
-  })
-  age?: number;
-}
-```
-
-### @ApiParam()
-
-Document path parameters:
-
-```typescript
-@Get('/:id')
-@ApiParam({
-  name: 'id',
-  description: 'User ID',
-  type: 'string',
-  example: '123',
-})
-findOne(@Param('id') id: string) {
-  return this.userService.findOne(id);
-}
-```
-
-### @ApiQuery()
-
-Document query parameters:
-
-```typescript
-@Get()
-@ApiQuery({
-  name: 'page',
-  required: false,
-  type: Number,
-  description: 'Page number',
-  example: 1,
-})
-@ApiQuery({
-  name: 'limit',
-  required: false,
-  type: Number,
-  description: 'Items per page',
-  example: 10,
-})
-findAll(
-  @Query('page') page: number = 1,
-  @Query('limit') limit: number = 10
-) {
-  return this.userService.findAll(page, limit);
-}
-```
-
-### @ApiBody()
-
-Document request body:
-
-```typescript
-@Post()
-@ApiBody({
-  description: 'User data',
-  type: CreateUserDto,
-  examples: {
-    user1: {
-      summary: 'Example user',
-      value: {
-        email: 'john@example.com',
-        password: 'SecurePass123!',
-        name: 'John Doe',
-      },
-    },
-  },
-})
-create(@Body() createUserDto: CreateUserDto) {
-  return this.userService.create(createUserDto);
-}
-```
-
-### @ApiHeader()
-
-Document required headers:
-
-```typescript
-@Get('/protected')
-@ApiHeader({
-  name: 'Authorization',
-  description: 'Bearer token',
-  required: true,
-  example: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-})
-getProtectedData() {
-  return { data: 'protected' };
-}
-```
-
-### @ApiBearerAuth()
-
-Document bearer authentication:
-
-```typescript
-@Controller('/admin')
-@ApiBearerAuth()
-export class AdminController {
-  @Get('/dashboard')
-  getDashboard() {
-    return { data: 'admin dashboard' };
+  create(@Body() body: unknown) {
+    return body;
   }
 }
 ```
 
-### @ApiSecurity()
+Routes **without** `@ApiOperation` still appear in the spec when `autoGenerateOperations` is true (default): summaries and placeholder request bodies are inferred from HTTP method and handler name. Set `autoGenerateOperations: false` in `SwaggerModule.configure` or pass `{ autoGenerateOperations: false }` to `SwaggerService.generateSpec` to disable that for programmatic builds.
 
-Document custom security:
+### 4. Open the UI and raw spec
 
-```typescript
-@Controller('/api')
-@ApiSecurity('api_key')
-export class ApiController {
-  @Get('/data')
-  getData() {
-    return { data: [] };
-  }
-}
-```
+- **Swagger UI:** `GET /swagger/` (or `GET {globalPrefix}/swagger/` if configured)
+- **OpenAPI JSON:** `GET /swagger/spec`
 
-## Configuration
-
-### Full Configuration
+## Programmatic export (CI / codegen)
 
 ```typescript
-SwaggerModule.forRoot({
-  // Basic info
+import { createOpenApiDocument } from '@hazeljs/swagger';
+import { AppModule } from './app.module';
+import * as fs from 'node:fs';
+
+const doc = createOpenApiDocument(AppModule, {
   title: 'My API',
-  description: 'Comprehensive API documentation',
   version: '1.0.0',
-
-  // Server info
-  servers: [
-    {
-      url: 'http://localhost:3000',
-      description: 'Development server',
-    },
-    {
-      url: 'https://api.example.com',
-      description: 'Production server',
-    },
-  ],
-
-  // Contact info
-  contact: {
-    name: 'API Support',
-    email: 'support@example.com',
-    url: 'https://example.com/support',
-  },
-
-  // License
-  license: {
-    name: 'Apache-2.0',
-    url: 'https://www.apache.org/licenses/LICENSE-2.0',
-  },
-
-  // Terms of service
-  termsOfService: 'https://example.com/terms',
-
-  // External docs
-  externalDocs: {
-    description: 'Find more info here',
-    url: 'https://docs.example.com',
-  },
-
-  // Security schemes
-  security: [
-    {
-      name: 'bearer',
-      type: 'http',
-      scheme: 'bearer',
-      bearerFormat: 'JWT',
-    },
-    {
-      name: 'api_key',
-      type: 'apiKey',
-      in: 'header',
-      name: 'X-API-Key',
-    },
-  ],
-
-  // Swagger UI options
-  swaggerOptions: {
-    persistAuthorization: true,
-    displayRequestDuration: true,
-    filter: true,
-    showExtensions: true,
-  },
-
-  // Path to serve docs
-  path: '/api-docs',
-
-  // Custom CSS
-  customCss: '.swagger-ui .topbar { display: none }',
-
-  // Custom site title
-  customSiteTitle: 'My API Documentation',
+  globalPrefix: '/api',
 });
+fs.writeFileSync('openapi.json', JSON.stringify(doc, null, 2));
 ```
 
-## Authentication
+YAML is not built in; pipe JSON through your preferred YAML tool if needed.
 
-### JWT Bearer
+## API reference
 
-```typescript
-// Configure security scheme
-SwaggerModule.forRoot({
-  security: [
-    {
-      name: 'bearer',
-      type: 'http',
-      scheme: 'bearer',
-      bearerFormat: 'JWT',
-    },
-  ],
-});
+| Export | Role |
+|--------|------|
+| `SwaggerModule` | Nest-style module; `setRootModule`, `configure`, `getOptions` |
+| `SwaggerService` | `generateAutoSpec(module, options?)`, `generateSpec(controllers, options?)` |
+| `createOpenApiDocument` | Stateless helper around `generateAutoSpec` |
+| `@Swagger` | Class-level OpenAPI `info` / default `tags` |
+| `@ApiOperation` | Per-route operation (summary, parameters, requestBody, responses) |
 
-// Use in controller
-@Controller('/protected')
-@ApiBearerAuth()
-export class ProtectedController {
-  @Get()
-  getData() {
-    return { data: 'protected' };
-  }
-}
-```
+Default components include `Error` and `ValidationError` schemas. Auto-generated error responses reference `#/components/schemas/Error`.
 
-### API Key
+## Roadmap / not implemented
 
-```typescript
-// Configure security scheme
-SwaggerModule.forRoot({
-  security: [
-    {
-      name: 'api_key',
-      type: 'apiKey',
-      in: 'header',
-      name: 'X-API-Key',
-    },
-  ],
-});
+The following are **not** in this package today (do not rely on READMEs or examples that mention Nest’s full `@nestjs/swagger` surface):
 
-// Use in controller
-@Controller('/api')
-@ApiSecurity('api_key')
-export class ApiController {
-  @Get()
-  getData() {
-    return { data: [] };
-  }
-}
-```
+- `@ApiTags`, `@ApiResponse`, `@ApiProperty`, `@ApiParam`, `@ApiQuery`, `@ApiBody`, `@ApiHeader`, `@ApiBearerAuth`, `@ApiSecurity` as separate decorators
+- DTO / class reflection for schemas
+- Built-in YAML export or `SwaggerModule.forRoot` static module factory
 
-### OAuth2
-
-```typescript
-SwaggerModule.forRoot({
-  security: [
-    {
-      name: 'oauth2',
-      type: 'oauth2',
-      flows: {
-        authorizationCode: {
-          authorizationUrl: 'https://example.com/oauth/authorize',
-          tokenUrl: 'https://example.com/oauth/token',
-          scopes: {
-            'read:users': 'Read user information',
-            'write:users': 'Modify user information',
-          },
-        },
-      },
-    },
-  ],
-});
-```
-
-## Examples
-
-### Complete CRUD Example
-
-```typescript
-import { Controller, Get, Post, Put, Delete, Body, Param } from '@hazeljs/core';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiParam,
-  ApiBody,
-  ApiBearerAuth,
-} from '@hazeljs/swagger';
-
-@Controller('/products')
-@ApiTags('Products')
-@ApiBearerAuth()
-export class ProductController {
-  @Get()
-  @ApiOperation({ summary: 'Get all products' })
-  @ApiResponse({
-    status: 200,
-    description: 'List of products',
-    type: [ProductDto],
-  })
-  findAll() {
-    return this.productService.findAll();
-  }
-
-  @Get('/:id')
-  @ApiOperation({ summary: 'Get product by ID' })
-  @ApiParam({ name: 'id', description: 'Product ID' })
-  @ApiResponse({ status: 200, description: 'Product found', type: ProductDto })
-  @ApiResponse({ status: 404, description: 'Product not found' })
-  findOne(@Param('id') id: string) {
-    return this.productService.findOne(id);
-  }
-
-  @Post()
-  @ApiOperation({ summary: 'Create a new product' })
-  @ApiBody({ type: CreateProductDto })
-  @ApiResponse({ status: 201, description: 'Product created', type: ProductDto })
-  @ApiResponse({ status: 400, description: 'Invalid input' })
-  create(@Body() createProductDto: CreateProductDto) {
-    return this.productService.create(createProductDto);
-  }
-
-  @Put('/:id')
-  @ApiOperation({ summary: 'Update a product' })
-  @ApiParam({ name: 'id', description: 'Product ID' })
-  @ApiBody({ type: UpdateProductDto })
-  @ApiResponse({ status: 200, description: 'Product updated', type: ProductDto })
-  @ApiResponse({ status: 404, description: 'Product not found' })
-  update(@Param('id') id: string, @Body() updateProductDto: UpdateProductDto) {
-    return this.productService.update(id, updateProductDto);
-  }
-
-  @Delete('/:id')
-  @ApiOperation({ summary: 'Delete a product' })
-  @ApiParam({ name: 'id', description: 'Product ID' })
-  @ApiResponse({ status: 200, description: 'Product deleted' })
-  @ApiResponse({ status: 404, description: 'Product not found' })
-  delete(@Param('id') id: string) {
-    return this.productService.delete(id);
-  }
-}
-```
-
-## Export OpenAPI Spec
-
-### JSON Format
-
-```typescript
-import { SwaggerModule } from '@hazeljs/swagger';
-
-const document = SwaggerModule.createDocument(app);
-const json = JSON.stringify(document, null, 2);
-
-// Save to file
-fs.writeFileSync('./openapi.json', json);
-```
-
-### YAML Format
-
-```typescript
-import { SwaggerModule } from '@hazeljs/swagger';
-import * as yaml from 'js-yaml';
-
-const document = SwaggerModule.createDocument(app);
-const yamlString = yaml.dump(document);
-
-// Save to file
-fs.writeFileSync('./openapi.yaml', yamlString);
-```
-
-## Best Practices
-
-1. **Document All Endpoints** - Add decorators to every route
-2. **Use DTOs** - Define request/response types with `@ApiProperty`
-3. **Add Examples** - Include realistic examples in documentation
-4. **Group by Tags** - Organize endpoints with `@ApiTags`
-5. **Document Errors** - Include all possible error responses
-6. **Security** - Document authentication requirements
-7. **Versioning** - Update version number with API changes
-8. **External Docs** - Link to additional documentation
+Contributions welcome for any of the above.
 
 ## Testing
 
@@ -566,19 +139,6 @@ fs.writeFileSync('./openapi.yaml', yamlString);
 npm test
 ```
 
-## Contributing
-
-Contributions are welcome! Please read our [Contributing Guide](../../CONTRIBUTING.md) for details.
-
 ## License
 
 Apache 2.0 © [HazelJS](https://hazeljs.ai)
-
-## Links
-
-- [Documentation](https://hazeljs.ai/docs/packages/swagger)
-- [OpenAPI Specification](https://swagger.io/specification/)
-- [Swagger UI](https://swagger.io/tools/swagger-ui/)
-- [GitHub](https://github.com/hazel-js/hazeljs)
-- [Issues](https://github.com/hazel-js/hazeljs/issues)
-- [Discord](https://discord.gg/PxNBPzvQk7)

@@ -1,30 +1,14 @@
 import { Service } from '@hazeljs/core';
-import { SwaggerOperation, SwaggerSchema } from './swagger.types';
+import type {
+  SwaggerBuildOptions,
+  SwaggerOperation,
+  SwaggerSchema,
+  SwaggerSpec,
+} from './swagger.types';
 import { getSwaggerMetadata, getOperationMetadata } from './swagger.decorator';
 import logger from '@hazeljs/core';
 import { Type } from '@hazeljs/core';
 import { collectControllersFromModule } from '@hazeljs/core';
-
-export interface AutoSwaggerOptions {
-  title?: string;
-  description?: string;
-  version?: string;
-  autoGenerateOperations?: boolean;
-}
-
-export interface SwaggerSpec {
-  openapi: string;
-  info: {
-    title?: string;
-    description?: string;
-    version?: string;
-  };
-  paths: Record<string, Record<string, SwaggerOperation>>;
-  components: {
-    schemas: Record<string, SwaggerSchema>;
-  };
-  tags?: Array<{ name: string; description: string }>;
-}
 
 interface RouteMetadata {
   propertyKey: string | symbol;
@@ -43,95 +27,187 @@ export class SwaggerService {
     },
   };
 
-  // Auto-generate spec from module without explicit Swagger decorators
-  generateAutoSpec(moduleType: Type<unknown>, options?: AutoSwaggerOptions): SwaggerSpec {
+  /** Build spec by walking the module tree (imports + controllers). */
+  generateAutoSpec(moduleType: Type<unknown>, options?: SwaggerBuildOptions): SwaggerSpec {
     try {
       logger.debug('Auto-generating Swagger spec from module:', moduleType.name);
-
-      // Reset spec
-      this.spec = {
-        openapi: '3.0.0',
-        info: {
-          title: options?.title || 'HazelJS API',
-          description: options?.description || 'Auto-generated API documentation',
-          version: options?.version || '1.0.0',
-        },
-        paths: {},
-        components: {
-          schemas: {},
-        },
-        tags: [],
-      };
-
       const controllers = collectControllersFromModule(moduleType);
-
-      // Process each controller
-      controllers.forEach((controller) => {
-        this.processControllerAuto(controller, options?.autoGenerateOperations !== false);
-      });
-
-      // Add default error schemas
-      this.addDefaultSchemas();
-
-      logger.debug('Auto-generated Swagger specification completed');
-      return this.spec;
+      return this.buildOpenApiFromControllers(controllers, options);
     } catch (error) {
       logger.error('Failed to auto-generate Swagger specification:', error);
       throw error;
     }
   }
 
-  private processControllerAuto(controller: Type<unknown>, autoGenerateOps: boolean): void {
-    if (!controller) return;
+  /**
+   * Build spec from an explicit controller list.
+   * Controllers do not require `@Swagger` on the class; routes without `@ApiOperation`
+   * are filled when `autoGenerateOperations` is true (default).
+   */
+  generateSpec(controllers: Type<unknown>[], options?: SwaggerBuildOptions): SwaggerSpec {
+    try {
+      if (!Array.isArray(controllers)) {
+        throw new Error('Controllers must be an array');
+      }
 
-    // Get controller path from metadata
+      logger.debug(
+        'Generating spec for controllers:',
+        controllers.map((c) => c?.name || 'undefined')
+      );
+
+      return this.buildOpenApiFromControllers(controllers, options);
+    } catch (error) {
+      if (process.env.NODE_ENV !== 'test') {
+        logger.error('Failed to generate Swagger specification:', error);
+      }
+      throw error;
+    }
+  }
+
+  private buildOpenApiFromControllers(
+    controllers: Type<unknown>[],
+    options: SwaggerBuildOptions = {}
+  ): SwaggerSpec {
+    const autoGenerateOps = options.autoGenerateOperations !== false;
+
+    this.spec = {
+      openapi: '3.0.0',
+      info: {},
+      paths: {},
+      components: {
+        schemas: {},
+      },
+    };
+
+    if (options.title !== undefined) {
+      this.spec.info.title = options.title;
+    }
+    if (options.description !== undefined) {
+      this.spec.info.description = options.description;
+    }
+    if (options.version !== undefined) {
+      this.spec.info.version = options.version;
+    }
+
+    if (options.servers?.length) {
+      this.spec.servers = options.servers;
+    }
+
+    if (options.securitySchemes && Object.keys(options.securitySchemes).length > 0) {
+      this.spec.components.securitySchemes = { ...options.securitySchemes };
+    }
+
+    if (options.security?.length) {
+      this.spec.security = options.security;
+    }
+
+    this.addDefaultSchemas();
+
+    const pathPrefix = this.normalizePrefix(options.globalPrefix);
+
+    for (const controller of controllers) {
+      if (!controller || typeof controller !== 'function') {
+        if (process.env.NODE_ENV !== 'test') {
+          logger.warn('Invalid controller found:', controller);
+        }
+        continue;
+      }
+
+      const swaggerOptions = getSwaggerMetadata(controller.prototype);
+      if (swaggerOptions) {
+        if (!this.spec.info.title) {
+          this.spec.info = {
+            title: swaggerOptions.title,
+            description: swaggerOptions.description,
+            version: swaggerOptions.version,
+          };
+        }
+        if (swaggerOptions.tags && !this.spec.tags?.length) {
+          this.spec.tags = swaggerOptions.tags;
+        }
+      }
+
+      this.processControllerRoutes(controller, pathPrefix, autoGenerateOps);
+    }
+
+    if (!this.spec.info.title) {
+      this.spec.info.title = 'HazelJS API';
+    }
+    if (!this.spec.info.description) {
+      this.spec.info.description = 'API documentation';
+    }
+    if (!this.spec.info.version) {
+      this.spec.info.version = '1.0.0';
+    }
+
+    logger.debug('Generated Swagger specification:', this.spec);
+    return this.spec;
+  }
+
+  private normalizePrefix(prefix: string | undefined): string {
+    if (!prefix) return '';
+    let p = prefix.startsWith('/') ? prefix : `/${prefix}`;
+    p = p.replace(/\/$/, '');
+    return p;
+  }
+
+  private joinPathSegments(...segments: string[]): string {
+    const parts: string[] = [];
+    for (const seg of segments) {
+      if (!seg) continue;
+      for (const piece of String(seg).split('/')) {
+        if (piece) parts.push(piece);
+      }
+    }
+    return parts.length ? `/${parts.join('/')}` : '';
+  }
+
+  private processControllerRoutes(
+    controller: Type<unknown>,
+    pathPrefix: string,
+    autoGenerateOps: boolean
+  ): void {
     const controllerMetadata = Reflect.getMetadata('hazel:controller', controller) || {};
     const basePath = controllerMetadata.path || '';
 
-    // Get API tags from metadata
     const apiTags = Reflect.getMetadata('hazel:api:tags', controller) || [];
-
-    // Add controller as a tag if not already present
-    if (!this.spec.tags) this.spec.tags = [];
     const controllerTag = {
       name: apiTags.length > 0 ? apiTags[0] : controller.name,
       description: `${controller.name} endpoints`,
     };
 
-    if (!this.spec.tags.find((tag) => tag.name === controllerTag.name)) {
-      this.spec.tags.push(controllerTag);
-    }
-
-    // Get route metadata
     const routes = (Reflect.getMetadata('hazel:routes', controller) as RouteMetadata[]) || [];
-
-    // Process each route
-    routes.forEach((route) => {
-      this.processRouteAuto(controller, route, basePath, controllerTag.name, autoGenerateOps);
-    });
+    for (const route of routes) {
+      this.processRoute(
+        controller,
+        route,
+        basePath,
+        pathPrefix,
+        controllerTag.name,
+        autoGenerateOps
+      );
+    }
   }
 
-  private processRouteAuto(
+  private processRoute(
     controller: Type<unknown>,
     route: RouteMetadata,
     basePath: string,
+    pathPrefix: string,
     tag: string,
     autoGenerateOps: boolean
   ): void {
     const { path, method, propertyKey } = route;
-    const fullPath = this.normalizePath(`${basePath}${path}`);
+    const fullPath = this.normalizePath(this.joinPathSegments(pathPrefix, basePath, path));
+    const pathForParams = this.joinPathSegments(basePath, path);
 
-    // Check for existing operation metadata
     let operation = getOperationMetadata(controller.prototype, propertyKey);
-
-    // Auto-generate operation if not found and auto-generation is enabled
     if (!operation && autoGenerateOps) {
-      operation = this.generateAutoOperation(method, propertyKey, tag, route);
+      operation = this.generateAutoOperation(method, propertyKey, tag, pathForParams);
     }
 
     if (!operation) return;
 
-    // Add operation to paths
     const pathItem = this.spec.paths[fullPath] || {};
     pathItem[method.toLowerCase()] = {
       ...operation,
@@ -145,19 +221,20 @@ export class SwaggerService {
     method: string,
     propertyKey: string | symbol,
     tag: string,
-    route: RouteMetadata
+    pathForParams: string
   ): SwaggerOperation {
     const methodName = String(propertyKey);
-    const isGetMethod = method.toLowerCase() === 'get';
-    const isPostMethod = method.toLowerCase() === 'post';
-    const isPutMethod = method.toLowerCase() === 'put';
-    const isDeleteMethod = method.toLowerCase() === 'delete';
+    const m = method.toLowerCase();
+    const isGetMethod = m === 'get';
+    const isPostMethod = m === 'post';
+    const isPutMethod = m === 'put';
+    const isPatchMethod = m === 'patch';
+    const isDeleteMethod = m === 'delete';
 
-    // Generate summary based on method name
     let summary = '';
     if (methodName.includes('create') || isPostMethod) {
       summary = `Create new resource`;
-    } else if (methodName.includes('update') || isPutMethod) {
+    } else if (methodName.includes('update') || isPutMethod || isPatchMethod) {
       summary = `Update resource`;
     } else if (methodName.includes('delete') || isDeleteMethod) {
       summary = `Delete resource`;
@@ -166,6 +243,8 @@ export class SwaggerService {
     } else {
       summary = `${method.toUpperCase()} ${methodName}`;
     }
+
+    const errorSchema: SwaggerSchema = { $ref: '#/components/schemas/Error' };
 
     const operation: SwaggerOperation = {
       summary,
@@ -187,11 +266,27 @@ export class SwaggerService {
             },
           },
         },
+        '400': {
+          description: 'Bad request',
+          content: {
+            'application/json': {
+              schema: errorSchema,
+            },
+          },
+        },
+        '500': {
+          description: 'Internal server error',
+          content: {
+            'application/json': {
+              schema: errorSchema,
+            },
+          },
+        },
       },
     };
 
-    // Add parameters for path variables - need to extract from the route path
-    const pathParams = this.extractPathParameters(route.path);
+    const pathParams = this.extractPathParameters(pathForParams);
+
     if (pathParams.length > 0) {
       operation.parameters = pathParams.map((param: string) => ({
         name: param,
@@ -201,8 +296,7 @@ export class SwaggerService {
       }));
     }
 
-    // Add request body for POST/PUT/PATCH
-    if (isPostMethod || isPutMethod) {
+    if (isPostMethod || isPutMethod || isPatchMethod) {
       operation.requestBody = {
         required: true,
         content: {
@@ -215,36 +309,15 @@ export class SwaggerService {
       };
     }
 
-    // Add common error responses
-    if (operation.responses) {
-      operation.responses['400'] = {
-        description: 'Bad request',
-        content: {
-          'application/json': {
-            schema: { type: 'object' as const },
-          },
-        },
-      };
-
-      operation.responses['500'] = {
-        description: 'Internal server error',
-        content: {
-          'application/json': {
-            schema: { type: 'object' as const },
-          },
-        },
-      };
-    }
-
     return operation;
   }
 
-  private extractPathParameters(path: string): string[] {
+  private extractPathParameters(routePath: string): string[] {
     const params: string[] = [];
     const paramRegex = /:([^/]+)/g;
     let match;
 
-    while ((match = paramRegex.exec(path)) !== null) {
+    while ((match = paramRegex.exec(routePath)) !== null) {
       params.push(match[1]);
     }
 
@@ -252,7 +325,6 @@ export class SwaggerService {
   }
 
   private addDefaultSchemas(): void {
-    // Add common error schemas
     this.spec.components.schemas.Error = {
       type: 'object' as const,
       properties: {
@@ -292,115 +364,11 @@ export class SwaggerService {
     };
   }
 
-  generateSpec(controllers: Type<unknown>[]): SwaggerSpec {
-    try {
-      if (!Array.isArray(controllers)) {
-        throw new Error('Controllers must be an array');
-      }
-
-      logger.debug(
-        'Generating spec for controllers:',
-        controllers.map((c) => c?.name || 'undefined')
-      );
-
-      // Reset spec
-      this.spec = {
-        openapi: '3.0.0',
-        info: {},
-        paths: {},
-        components: {
-          schemas: {},
-        },
-      };
-
-      // Process each controller
-      controllers.forEach((controller) => {
-        if (!controller || typeof controller !== 'function') {
-          if (process.env.NODE_ENV !== 'test') {
-            logger.warn('Invalid controller found:', controller);
-          }
-          return;
-        }
-
-        // Get Swagger metadata from the controller prototype
-        const swaggerOptions = getSwaggerMetadata(controller.prototype);
-        if (!swaggerOptions) {
-          logger.debug(`No Swagger metadata found for controller: ${controller.name}`);
-          return;
-        }
-
-        logger.debug(`Processing controller: ${controller.name}`, swaggerOptions);
-
-        // Update info if not already set
-        if (!this.spec.info.title) {
-          this.spec.info = {
-            title: swaggerOptions.title,
-            description: swaggerOptions.description,
-            version: swaggerOptions.version,
-          };
-        }
-
-        // Add tags if not already set
-        if (swaggerOptions.tags && !this.spec.tags) {
-          this.spec.tags = swaggerOptions.tags;
-        }
-
-        // Get controller path from metadata
-        const controllerMetadata = Reflect.getMetadata('hazel:controller', controller) || {};
-        const basePath = controllerMetadata.path || '';
-
-        // Get route metadata
-        const routes = Reflect.getMetadata('hazel:routes', controller) as
-          | RouteMetadata[]
-          | undefined;
-        if (!routes) {
-          logger.debug(`No routes found for controller: ${controller.name}`);
-          return;
-        }
-
-        logger.debug(`Found routes for ${controller.name}:`, routes);
-
-        // Process each route
-        routes.forEach((route) => {
-          const { path, method, propertyKey } = route;
-          const fullPath = this.normalizePath(`${basePath}${path}`);
-          const operation = getOperationMetadata(controller.prototype, propertyKey);
-
-          if (!operation) {
-            logger.debug(`No operation metadata found for method: ${String(propertyKey)}`);
-            return;
-          }
-
-          logger.debug(`Adding operation for ${method} ${fullPath}`);
-
-          // Add operation to paths
-          const pathItem = this.spec.paths[fullPath] || {};
-          pathItem[method.toLowerCase()] = {
-            ...operation,
-            tags: operation.tags || [controller.name],
-          };
-
-          this.spec.paths[fullPath] = pathItem;
-        });
-      });
-
-      logger.debug('Generated Swagger specification:', this.spec);
-      return this.spec;
-    } catch (error) {
-      if (process.env.NODE_ENV !== 'test') {
-        logger.error('Failed to generate Swagger specification:', error);
-      }
-      throw error;
-    }
-  }
-
   private normalizePath(path: string): string {
-    // Remove trailing slash
     let normalized = path.replace(/\/$/, '');
-    // Ensure path starts with slash
     if (!normalized.startsWith('/')) {
       normalized = '/' + normalized;
     }
-    return normalized;
+    return normalized || '/';
   }
 }
