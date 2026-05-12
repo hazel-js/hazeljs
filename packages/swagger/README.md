@@ -21,7 +21,9 @@ import { SwaggerModule } from '@hazeljs/swagger';
 
 @HazelModule({
   imports: [SwaggerModule],
-  controllers: [/* ... */],
+  controllers: [
+    /* ... */
+  ],
 })
 export class AppModule {}
 
@@ -113,13 +115,13 @@ YAML is not built in; pipe JSON through your preferred YAML tool if needed.
 
 ## API reference
 
-| Export | Role |
-|--------|------|
-| `SwaggerModule` | Nest-style module; `setRootModule`, `configure`, `getOptions` |
-| `SwaggerService` | `generateAutoSpec(module, options?)`, `generateSpec(controllers, options?)` |
-| `createOpenApiDocument` | Stateless helper around `generateAutoSpec` |
-| `@Swagger` | Class-level OpenAPI `info` / default `tags` |
-| `@ApiOperation` | Per-route operation (summary, parameters, requestBody, responses) |
+| Export                  | Role                                                                        |
+| ----------------------- | --------------------------------------------------------------------------- |
+| `SwaggerModule`         | Nest-style module; `setRootModule`, `configure`, `getOptions`               |
+| `SwaggerService`        | `generateAutoSpec(module, options?)`, `generateSpec(controllers, options?)` |
+| `createOpenApiDocument` | Stateless helper around `generateAutoSpec`                                  |
+| `@Swagger`              | Class-level OpenAPI `info` / default `tags`                                 |
+| `@ApiOperation`         | Per-route operation (summary, parameters, requestBody, responses)           |
 
 Default components include `Error` and `ValidationError` schemas. Auto-generated error responses reference `#/components/schemas/Error`.
 
