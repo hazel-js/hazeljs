@@ -16,7 +16,6 @@ export type {
   Citation,
   Context,
   FeedbackData,
-  AgenticGraphSearchResult,
   GraphNode,
   GraphEdge,
   AdaptiveStrategyResult,

@@ -1,4 +1,4 @@
-import { AIService } from './ai.service';
+import { AITaskExecutor } from './ai-task.executor';
 import { AITaskConfig, LLMProvider } from './ai.types';
 
 // Mock OpenAI
@@ -18,11 +18,11 @@ jest.mock('openai', () => ({
 // Mock fetch
 global.fetch = jest.fn();
 
-describe('AIService', () => {
-  let service: AIService;
+describe('AITaskExecutor', () => {
+  let service: AITaskExecutor;
 
   beforeEach(() => {
-    service = new AIService();
+    service = new AITaskExecutor();
     jest.clearAllMocks();
     mockCreate.mockReset();
   });

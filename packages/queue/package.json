@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/queue",
-  "version": "0.8.7",
+  "version": "1.0.0",
   "description": "Redis-backed job queue module for HazelJS framework using BullMQ",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -45,11 +45,11 @@
   "author": "Muhammad Arslan <muhammad.arslan@hazeljs.ai>",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/hazeljs/hazel-js/issues"
+    "url": "https://github.com/hazel-js/hazeljs/issues"
   },
   "homepage": "https://hazeljs.ai",
   "peerDependencies": {
-    "@hazeljs/core": "^0.8.7",
+    "@hazeljs/core": "^1.0.0",
     "ioredis": ">=5.0.0"
   },
   "peerDependenciesMeta": {

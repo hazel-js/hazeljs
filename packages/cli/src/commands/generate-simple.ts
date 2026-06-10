@@ -210,7 +210,7 @@ export const SIMPLE_GENERATORS: SimpleGeneratorConfig[] = [
     nameRequired: true,
     nextSteps: [
       'npm install @hazeljs/rag',
-      'Wire llm() to HazelAI or AIService',
+      'Wire llm() to HazelAI or AIEnhancedService',
       'For production vectors, use HazelAI persistence.rag or construct RAGPipeline with your VectorStore',
     ],
   },

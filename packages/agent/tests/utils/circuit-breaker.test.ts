@@ -1,4 +1,4 @@
-import { CircuitBreaker, CircuitState } from '../../src/utils/circuit-breaker';
+import { CircuitBreaker, CircuitState } from '@hazeljs/resilience';
 
 describe('CircuitBreaker', () => {
   beforeEach(() => {

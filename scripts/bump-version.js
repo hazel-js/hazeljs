@@ -45,8 +45,8 @@ function updatePackageJson(pkgPath, isTemplate = false) {
     changed = true;
   }
 
-  // Update @hazeljs/* ranges in peerDependencies and dependencies
-  for (const section of ['peerDependencies', 'dependencies']) {
+  // Update @hazeljs/* ranges in peerDependencies, dependencies, and devDependencies
+  for (const section of ['peerDependencies', 'dependencies', 'devDependencies']) {
     if (!pkg[section]) continue;
     for (const [name, range] of Object.entries(pkg[section])) {
       if (hazelPackageNames.has(name) && !String(range).startsWith('file:') && range !== 'latest') {
@@ -74,5 +74,16 @@ for (const dir of fs.readdirSync(packagesDir)) {
 
 // Also update root package.json version
 updatePackageJson(rootPkgPath);
+
+// Sync lerna.json version
+const lernaPath = path.join(__dirname, '..', 'lerna.json');
+if (fs.existsSync(lernaPath)) {
+  const lerna = JSON.parse(fs.readFileSync(lernaPath, 'utf8'));
+  if (lerna.version !== newVersion) {
+    lerna.version = newVersion;
+    fs.writeFileSync(lernaPath, JSON.stringify(lerna, null, 2) + '\n');
+    console.log(`  updated: lerna.json`);
+  }
+}
 
 console.log(`\nDone. ${updatedCount} file(s) updated to v${newVersion}.\n`);

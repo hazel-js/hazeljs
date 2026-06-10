@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/core",
-  "version": "0.8.7",
+  "version": "1.0.0",
   "description": "Core HazelJS framework - Dependency injection, routing, decorators, and base functionality",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -9,8 +9,8 @@
   ],
   "scripts": {
     "build": "tsc",
-    "test": "jest --coverage --passWithNoTests",
-    "test:ci": "jest --coverage --coverageReporters=text --coverageReporters=lcov --coverageReporters=clover --no-coverage-threshold",
+    "test": "jest --coverage",
+    "test:ci": "jest --coverage --coverageReporters=text --coverageReporters=lcov --coverageReporters=clover",
     "test:watch": "jest --watch",
     "lint": "eslint \"src/**/*.ts\"",
     "lint:fix": "eslint \"src/**/*.ts\" --fix",
@@ -60,7 +60,7 @@
   "author": "Muhammad Arslan <muhammad.arslan@hazeljs.ai>",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/hazeljs/hazel-js/issues"
+    "url": "https://github.com/hazel-js/hazeljs/issues"
   },
   "homepage": "https://hazeljs.ai",
   "gitHead": "083b94562940a86c8e0a8cd81988d04b541608ac"

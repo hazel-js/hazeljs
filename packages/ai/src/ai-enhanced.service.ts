@@ -30,6 +30,8 @@ import { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 import { messageContentToText } from './utils/message-content';
 import type { AIMetrics } from './platform/hazel-ai.types';
+import { AITaskConfig, AITaskResult } from './ai.types';
+import { AITaskExecutor } from './ai-task.executor';
 
 const dbg = debug('ai');
 
@@ -59,6 +61,7 @@ export class AIEnhancedService {
   private readonly hooks?: AIEnhancedServiceHooks;
   private requestSuccessCount = 0;
   private requestErrorCount = 0;
+  private readonly taskExecutor = new AITaskExecutor();
 
   constructor(
     tokenTracker?: TokenTracker,
@@ -692,5 +695,10 @@ export class AIEnhancedService {
    */
   chat(message: string): ChatBuilder {
     return new ChatBuilder(this, message);
+  }
+
+  /** Run a legacy @AITask configuration (used by the AITask decorator). */
+  async executeTask(config: AITaskConfig, input: unknown): Promise<AITaskResult> {
+    return this.taskExecutor.executeTask(config, input);
   }
 }

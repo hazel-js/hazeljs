@@ -1,4 +1,3 @@
-import { Service } from '@hazeljs/core';
 import { AITaskConfig, AITaskContext, AITaskResult } from './ai.types';
 import logger from '@hazeljs/core';
 import OpenAI from 'openai';
@@ -15,67 +14,25 @@ interface AIProvider {
 }
 
 /**
- * @deprecated Use `AIEnhancedService` instead. `AIService` will be removed in v0.9.0.
- *
- * `AIEnhancedService` provides the same functionality plus:
- * - Multi-provider management (OpenAI, Anthropic, Gemini, Cohere, Ollama)
- * - Token tracking and rate limiting
- * - Response caching
- * - Streaming completions
- * - Embeddings generation
- *
- * Migration:
- * ```ts
- * // Before
- * const ai = new AIService();
- * const result = await ai.executeTask(config, input);
- *
- * // After
- * const ai = new AIEnhancedService();
- * const result = await ai.complete({ messages: [...], model: 'gpt-4' });
- * ```
+ * Executes legacy @AITask configurations using provider-specific adapters.
  */
-@Service()
-export class AIService {
-  private static deprecationWarned = false;
+export class AITaskExecutor {
   private providers: Map<string, AIProvider> = new Map();
 
   constructor() {
-    if (!AIService.deprecationWarned) {
-      AIService.deprecationWarned = true;
-      logger.warn(
-        '[@hazeljs/ai] AIService is deprecated and scheduled for removal in v0.9.0. Use AIEnhancedService instead.'
-      );
-    }
-    // Initialize providers
     this.initializeProviders();
   }
 
   private initializeProviders(): void {
-    logger.debug('Initializing AI providers');
-    // OpenAI provider
+    logger.debug('Initializing AI task providers');
     this.providers.set('openai', {
       execute: async (config: AITaskConfig, input: unknown): Promise<AITaskResult> => {
-        logger.debug('OpenAI provider execute called with config:', {
-          name: config.name,
-          model: config.model,
-          stream: config.stream,
-          provider: config.provider,
-        });
-
         const openai = new OpenAI({
           apiKey: process.env.OPENAI_API_KEY,
         });
-        logger.debug('OpenAI client initialized');
 
         if (config.stream) {
           try {
-            logger.debug('Creating OpenAI stream with config:', {
-              model: config.model,
-              temperature: config.temperature,
-              prompt: this.formatPrompt(config, input),
-            });
-
             const stream = await openai.chat.completions.create({
               model: config.model,
               messages: [
@@ -89,20 +46,15 @@ export class AIService {
               stream: true,
             });
 
-            logger.debug('OpenAI stream created successfully');
             return {
-              // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
               stream: (async function* () {
                 try {
-                  logger.debug('Starting to iterate over stream chunks');
                   for await (const chunk of stream) {
                     const content = chunk.choices[0]?.delta?.content;
                     if (content) {
-                      logger.debug('Yielding chunk:', { content });
                       yield content;
                     }
                   }
-                  logger.debug('Finished iterating over stream chunks');
                 } catch (error) {
                   logger.error('Error in OpenAI stream:', error);
                   throw error;
@@ -136,7 +88,6 @@ export class AIService {
       },
     });
 
-    // Ollama provider
     this.providers.set('ollama', {
       execute: async (config: AITaskConfig, input: unknown): Promise<AITaskResult> => {
         if (config.stream) {
@@ -160,7 +111,6 @@ export class AIService {
           const decoder = new TextDecoder();
 
           return {
-            // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
             stream: (async function* () {
               try {
                 while (true) {
@@ -177,7 +127,6 @@ export class AIService {
                         yield data.response;
                       }
                     } catch {
-                      // Skip invalid JSON lines
                       continue;
                     }
                   }
@@ -205,7 +154,6 @@ export class AIService {
       },
     });
 
-    // Custom provider
     this.providers.set('custom', {
       execute: async (config: AITaskConfig, input: unknown): Promise<AITaskResult> => {
         if (!config.customProvider) {
@@ -240,7 +188,6 @@ export class AIService {
       input: input,
     };
 
-    // Normalise legacy {{variable}} to {variable} and render via PromptTemplate
     const normalizedTemplate = config.prompt.replace(/\{\{(\w+)\}\}/g, '{$1}');
     const tpl = new PromptTemplate<Record<string, unknown>>(normalizedTemplate, {
       name: AI_TASK_FORMAT_KEY,
@@ -249,7 +196,6 @@ export class AIService {
     return tpl.render(context as unknown as Record<string, unknown>);
   }
 
-  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
   private parseResponse(response: unknown, outputType: string): AITaskResult {
     try {
       switch (outputType) {
@@ -270,35 +216,15 @@ export class AIService {
 
   async executeTask(config: AITaskConfig, input: unknown): Promise<AITaskResult> {
     try {
-      logger.debug('Executing AI task:', {
-        task: config.name,
-        provider: config.provider,
-        stream: config.stream,
-        model: config.model,
-      });
-
       const provider = this.providers.get(config.provider);
       if (!provider) {
-        logger.error('Provider not found:', config.provider);
         throw new Error(`Provider ${config.provider} not supported`);
       }
 
-      logger.debug('Found provider, executing task');
-      const result = await provider.execute(config, input);
-      logger.debug('AI task completed:', {
-        task: config.name,
-        hasStream: !!result.stream,
-        hasError: !!result.error,
-      });
-
-      return result;
+      return await provider.execute(config, input);
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      logger.error('AI task failed:', {
-        task: config.name,
-        error: errorMessage,
-        stack: error instanceof Error ? error.stack : undefined,
-      });
+      logger.error('AI task failed:', { task: config.name, error: errorMessage });
       return { error: errorMessage };
     }
   }

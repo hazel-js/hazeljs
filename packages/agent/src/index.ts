@@ -35,7 +35,6 @@ export * from './utils/rate-limiter';
 export * from './utils/logger';
 export * from './utils/metrics';
 export * from './utils/retry';
-export * from './utils/circuit-breaker';
 export * from './utils/health-check';
 
 // Multi-agent orchestration

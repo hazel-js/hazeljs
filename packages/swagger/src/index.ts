@@ -21,7 +21,6 @@ export type {
   SwaggerSpec,
   SwaggerServer,
   SwaggerBuildOptions,
-  AutoSwaggerOptions,
   SwaggerModuleOptions,
 } from './swagger.types';
 

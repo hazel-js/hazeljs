@@ -1,0 +1,16 @@
+{
+  "name": "@hazeljs/integration-tests",
+  "private": true,
+  "scripts": {
+    "test": "jest --config jest.config.js",
+    "test:ci": "jest --config jest.config.js --passWithNoTests"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.14",
+    "@types/node": "^20.19.39",
+    "jest": "^29.7.0",
+    "reflect-metadata": "^0.2.2",
+    "ts-jest": "^29.4.9",
+    "typescript": "^5.9.3"
+  }
+}

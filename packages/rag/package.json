@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/rag",
-  "version": "0.8.7",
+  "version": "1.0.0",
   "description": "Retrieval-Augmented Generation (RAG) and vector search for HazelJS framework",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -28,10 +28,10 @@
     "reflect-metadata": "^0.2.2"
   },
   "peerDependencies": {
-    "@hazeljs/ai": "^0.8.7",
-    "@hazeljs/core": "^0.8.7",
-    "@hazeljs/memory": "^0.8.7",
-    "@hazeljs/prompts": "^0.8.7",
+    "@hazeljs/ai": "^1.0.0",
+    "@hazeljs/core": "^1.0.0",
+    "@hazeljs/memory": "^1.0.0",
+    "@hazeljs/prompts": "^1.0.0",
     "@huggingface/inference": "^2.0.0",
     "@pinecone-database/pinecone": "^3.0.0",
     "@qdrant/js-client-rest": "^1.9.0",
@@ -85,8 +85,8 @@
     }
   },
   "devDependencies": {
-    "@hazeljs/memory": "^0.8.5",
-    "@hazeljs/prompts": "^0.8.5",
+    "@hazeljs/memory": "^1.0.0",
+    "@hazeljs/prompts": "^1.0.0",
     "@types/node": "^20.19.39",
     "@typescript-eslint/eslint-plugin": "^8.58.0",
     "@typescript-eslint/parser": "^8.58.0",
@@ -101,7 +101,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/hazeljs/hazeljs.git",
+    "url": "git+https://github.com/hazel-js/hazeljs.git",
     "directory": "packages/rag"
   },
   "keywords": [
@@ -121,7 +121,7 @@
   "author": "Muhammad Arslan <muhammad.arslan@hazeljs.ai>",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/hazeljs/hazel-js/issues"
+    "url": "https://github.com/hazel-js/hazeljs/issues"
   },
   "homepage": "https://hazeljs.ai",
   "gitHead": "083b94562940a86c8e0a8cd81988d04b541608ac"

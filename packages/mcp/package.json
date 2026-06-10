@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/mcp",
-  "version": "0.8.7",
+  "version": "1.0.0",
   "description": "Expose HazelJS tools as MCP (Model Context Protocol) tools over STDIO",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -31,11 +31,11 @@
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/hazeljs/hazeljs",
+    "url": "git+https://github.com/hazel-js/hazeljs.git",
     "directory": "packages/mcp"
   },
   "bugs": {
-    "url": "https://github.com/hazeljs/hazel-js/issues"
+    "url": "https://github.com/hazel-js/hazeljs/issues"
   },
   "homepage": "https://hazeljs.ai",
   "devDependencies": {
@@ -46,7 +46,7 @@
     "typescript": "^5.9.3"
   },
   "peerDependencies": {
-    "@hazeljs/agent": "^0.8.7"
+    "@hazeljs/agent": "^1.0.0"
   },
   "peerDependenciesMeta": {
     "@hazeljs/agent": {

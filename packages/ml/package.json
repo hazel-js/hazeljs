@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/ml",
-  "version": "0.8.7",
+  "version": "1.0.0",
   "description": "Machine Learning & Model Management for HazelJS framework",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -24,7 +24,7 @@
     "typescript": "^5.9.3"
   },
   "peerDependencies": {
-    "@hazeljs/core": "^0.8.7"
+    "@hazeljs/core": "^1.0.0"
   },
   "publishConfig": {
     "access": "public"
@@ -45,7 +45,7 @@
   "author": "Muhammad Arslan <muhammad.arslan@hazeljs.ai>",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/hazeljs/hazel-js/issues"
+    "url": "https://github.com/hazel-js/hazeljs/issues"
   },
   "homepage": "https://hazeljs.ai",
   "gitHead": "083b94562940a86c8e0a8cd81988d04b541608ac"

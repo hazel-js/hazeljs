@@ -28,7 +28,7 @@ import { RateLimiter } from '../utils/rate-limiter';
 import { MetricsCollector } from '../utils/metrics';
 import { Logger, LogLevel } from '../utils/logger';
 import { RetryHandler } from '../utils/retry';
-import { CircuitBreaker } from '../utils/circuit-breaker';
+import { CircuitBreaker } from '@hazeljs/resilience';
 import { HealthChecker, HealthCheckResult } from '../utils/health-check';
 import { AgentGraph } from '../graph/agent-graph';
 import { SupervisorAgent } from '../supervisor/supervisor';

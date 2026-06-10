@@ -1,7 +1,6 @@
 import {
   // AI Module
   AIModule,
-  AIService,
   AIEnhancedService,
   AITask,
   // Fluent Chat Builder
@@ -64,10 +63,6 @@ describe('index.ts exports', () => {
   describe('AI Module exports', () => {
     it('should export AIModule', () => {
       expect(AIModule).toBeDefined();
-    });
-
-    it('should export AIService', () => {
-      expect(AIService).toBeDefined();
     });
 
     it('should export AIEnhancedService', () => {

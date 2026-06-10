@@ -4,7 +4,6 @@
 
 // AI Module
 export { AIModule } from './ai.module';
-export { AIService } from './ai.service';
 export { AIEnhancedService } from './ai-enhanced.service';
 export type { AITaskConfig, AITaskContext, AITaskResult } from './ai.types';
 export { AITask } from './ai.decorator';

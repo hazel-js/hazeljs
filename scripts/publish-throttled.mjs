@@ -4,7 +4,7 @@
  * Publishes packages sequentially with a delay between each.
  *
  * Usage: node scripts/publish-throttled.mjs <dist-tag> [delay-seconds]
- * Example: node scripts/publish-throttled.mjs beta 15
+ * Example: node scripts/publish-throttled.mjs latest 15
  */
 
 import { spawnSync } from 'child_process';
@@ -17,7 +17,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
 const PACKAGES_DIR = join(ROOT, 'packages');
 
-const DIST_TAG = process.argv[2] || 'beta';
+const DIST_TAG = process.argv[2] || 'latest';
 const DELAY_SEC = parseInt(process.argv[3] || '15', 10);
 
 const SKIP_PACKAGES = ['@template'];

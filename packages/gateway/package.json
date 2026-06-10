@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/gateway",
-  "version": "0.8.7",
+  "version": "1.0.0",
   "description": "Intelligent API Gateway for HazelJS - Version routing, canary deployments, circuit breaking, and traffic management",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -22,9 +22,9 @@
     "reflect-metadata": "^0.2.2"
   },
   "devDependencies": {
-    "@hazeljs/core": "^0.8.5",
-    "@hazeljs/discovery": "^0.8.5",
-    "@hazeljs/resilience": "^0.8.5",
+    "@hazeljs/core": "^1.0.0",
+    "@hazeljs/discovery": "^1.0.0",
+    "@hazeljs/resilience": "^1.0.0",
     "@types/jest": "^29.5.14",
     "@types/node": "^20.19.39",
     "@typescript-eslint/eslint-plugin": "^8.58.0",
@@ -38,10 +38,10 @@
     "typescript": "^5.9.3"
   },
   "peerDependencies": {
-    "@hazeljs/config": "^0.8.7",
-    "@hazeljs/core": "^0.8.7",
-    "@hazeljs/discovery": "^0.8.7",
-    "@hazeljs/resilience": "^0.8.7"
+    "@hazeljs/config": "^1.0.0",
+    "@hazeljs/core": "^1.0.0",
+    "@hazeljs/discovery": "^1.0.0",
+    "@hazeljs/resilience": "^1.0.0"
   },
   "peerDependenciesMeta": {
     "@hazeljs/config": {
@@ -70,7 +70,7 @@
   "author": "Muhammad Arslan <muhammad.arslan@hazeljs.ai>",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/hazeljs/hazel-js/issues"
+    "url": "https://github.com/hazel-js/hazeljs/issues"
   },
   "homepage": "https://hazeljs.ai",
   "gitHead": "083b94562940a86c8e0a8cd81988d04b541608ac"

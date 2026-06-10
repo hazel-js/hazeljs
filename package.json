@@ -1,6 +1,6 @@
 {
   "name": "hazeljs",
-  "version": "0.8.7",
+  "version": "1.0.0",
   "private": true,
   "description": "HazelJS monorepo - A modern, TypeScript-first Node.js framework",
   "workspaces": [
@@ -14,19 +14,20 @@
     "build:tier3": "npm run build --workspace=@hazeljs/agent && npm run build --workspace=@hazeljs/ops-agent",
     "build:packages": "npm run build --workspaces --if-present",
     "publish:all": "npm run publish:core && npm run publish:tier1 && npm run publish:tier2 && npm run publish:tier3",
-    "publish:core": "npm publish --workspace=@hazeljs/core --access public --tag beta",
-    "publish:tier1": "npm publish --workspace=@hazeljs/prompts --workspace=@hazeljs/cache --workspace=@hazeljs/config --workspace=@hazeljs/distributed-lock --workspace=@hazeljs/feature-toggle --workspace=@hazeljs/auth --workspace=@hazeljs/flow --workspace=@hazeljs/flow-runtime --workspace=@hazeljs/oauth --workspace=@hazeljs/payment --workspace=@hazeljs/cron --workspace=@hazeljs/event-emitter --workspace=@hazeljs/graphql --workspace=@hazeljs/grpc --workspace=@hazeljs/queue --workspace=@hazeljs/kafka --workspace=@hazeljs/pubsub --workspace=@hazeljs/prisma --workspace=@hazeljs/typeorm --workspace=@hazeljs/swagger --workspace=@hazeljs/websocket --workspace=@hazeljs/serverless --workspace=@hazeljs/resilience --workspace=@hazeljs/discovery --workspace=@hazeljs/gateway --workspace=@hazeljs/eval --workspace=@hazeljs/cli --workspace=@hazeljs/i18n --workspace=@hazeljs/inspector --workspace=@hazeljs/worker --workspace=@hazeljs/observability --workspace=@hazeljs/mcp --workspace=@hazeljs/casl --access public --tag beta",
-    "publish:tier2": "npm publish --workspace=@hazeljs/memory --workspace=@hazeljs/ai --workspace=@hazeljs/audit --workspace=@hazeljs/data --workspace=@hazeljs/ml --workspace=@hazeljs/rag --workspace=@hazeljs/saga --workspace=@hazeljs/guardrails --workspace=@hazeljs/pdf-to-audio --workspace=@hazeljs/messaging --workspace=@hazeljs/realtime --access public --tag beta",
-    "publish:tier3": "npm publish --workspace=@hazeljs/agent --workspace=@hazeljs/ops-agent --access public --tag beta",
+    "publish:core": "npm publish --workspace=@hazeljs/core --access public --tag latest",
+    "publish:tier1": "npm publish --workspace=@hazeljs/prompts --workspace=@hazeljs/cache --workspace=@hazeljs/config --workspace=@hazeljs/distributed-lock --workspace=@hazeljs/feature-toggle --workspace=@hazeljs/auth --workspace=@hazeljs/flow --workspace=@hazeljs/flow-runtime --workspace=@hazeljs/oauth --workspace=@hazeljs/payment --workspace=@hazeljs/cron --workspace=@hazeljs/event-emitter --workspace=@hazeljs/graphql --workspace=@hazeljs/grpc --workspace=@hazeljs/queue --workspace=@hazeljs/kafka --workspace=@hazeljs/pubsub --workspace=@hazeljs/prisma --workspace=@hazeljs/typeorm --workspace=@hazeljs/swagger --workspace=@hazeljs/websocket --workspace=@hazeljs/serverless --workspace=@hazeljs/resilience --workspace=@hazeljs/discovery --workspace=@hazeljs/gateway --workspace=@hazeljs/eval --workspace=@hazeljs/cli --workspace=@hazeljs/i18n --workspace=@hazeljs/inspector --workspace=@hazeljs/worker --workspace=@hazeljs/observability --workspace=@hazeljs/mcp --workspace=@hazeljs/casl --access public --tag latest",
+    "publish:tier2": "npm publish --workspace=@hazeljs/memory --workspace=@hazeljs/ai --workspace=@hazeljs/audit --workspace=@hazeljs/data --workspace=@hazeljs/ml --workspace=@hazeljs/rag --workspace=@hazeljs/saga --workspace=@hazeljs/guardrails --workspace=@hazeljs/pdf-to-audio --workspace=@hazeljs/messaging --workspace=@hazeljs/realtime --access public --tag latest",
+    "publish:tier3": "npm publish --workspace=@hazeljs/agent --workspace=@hazeljs/ops-agent --access public --tag latest",
     "lerna:version": "lerna version --no-push --no-git-tag-version",
-    "lerna:publish": "lerna publish from-package --dist-tag beta",
+    "lerna:publish": "lerna publish from-package --dist-tag latest",
     "lerna:publish:latest": "lerna publish from-package",
     "version:bump": "node scripts/bump-version.js",
     "version:patch": "lerna version patch --no-push",
     "version:minor": "lerna version minor --no-push",
     "version:major": "lerna version major --no-push",
-    "test": "npm run test --workspaces --if-present",
-    "test:ci": "npm run test:ci --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present && npm run test:integration",
+    "test:integration": "cd tests/integration && npm test",
+    "test:ci": "npm run test:ci --workspaces --if-present && npm run test:integration",
     "lint": "npm run lint --workspaces --if-present",
     "lint:fix": "npm run lint:fix --workspaces --if-present",
     "format": "prettier --write \"**/*.{ts,tsx,json,md}\"",
@@ -59,7 +60,7 @@
   "author": "Muhammad Arslan <muhammad.arslan@hazeljs.ai>",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/hazeljs/hazel-js/issues"
+    "url": "https://github.com/hazel-js/hazeljs/issues"
   },
   "homepage": "https://hazeljs.ai",
   "funding": {

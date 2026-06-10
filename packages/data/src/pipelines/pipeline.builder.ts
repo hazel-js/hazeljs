@@ -270,19 +270,6 @@ export class PipelineBuilder {
     return this.toSchema();
   }
 
-  /** Create a fresh pipeline from a definition (transforms must be re-registered). */
-  static create(name?: string): PipelineBuilder {
-    return new PipelineBuilder(name);
-  }
-
-  /**
-   * @deprecated Use `new PipelineBuilder()` directly. Kept for backward compat.
-   * Note: this instance is now immutable — reset() returns a new empty builder.
-   */
-  reset(): PipelineBuilder {
-    return new PipelineBuilder(this._name);
-  }
-
   get name(): string {
     return this._name;
   }

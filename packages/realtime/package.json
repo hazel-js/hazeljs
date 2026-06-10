@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/realtime",
-  "version": "0.8.7",
+  "version": "1.0.0",
   "description": "Real-time voice AI for HazelJS - OpenAI Realtime API & Gemini Live integration for low-latency speech-to-speech",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -15,11 +15,11 @@
     "clean": "rm -rf dist"
   },
   "peerDependencies": {
-    "@hazeljs/core": "^0.8.7",
-    "@hazeljs/websocket": "^0.8.7"
+    "@hazeljs/core": "^1.0.0",
+    "@hazeljs/websocket": "^1.0.0"
   },
   "devDependencies": {
-    "@hazeljs/websocket": "^0.8.5",
+    "@hazeljs/websocket": "^1.0.0",
     "@types/node": "^20.19.39",
     "@types/ws": "^8.18.1",
     "@typescript-eslint/eslint-plugin": "^8.58.0",
@@ -50,7 +50,7 @@
   "author": "Muhammad Arslan <muhammad.arslan@hazeljs.ai>",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/hazeljs/hazel-js/issues"
+    "url": "https://github.com/hazel-js/hazeljs/issues"
   },
   "homepage": "https://hazeljs.ai",
   "gitHead": "083b94562940a86c8e0a8cd81988d04b541608ac"

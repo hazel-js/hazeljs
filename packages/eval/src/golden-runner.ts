@@ -5,7 +5,7 @@ import { precisionAtK } from './retrieval-metrics';
 export type CaseRunner = (input: {
   id: string;
   input: string;
-  /** @deprecated use metadata */
+  /** Optional case metadata passed to the runner. */
   metadata?: Record<string, unknown>;
 }) => Promise<{ output: string; toolCalls?: string[]; retrievedIds?: string[] }>;
 

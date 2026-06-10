@@ -1,6 +1,6 @@
 import { AITaskConfig } from './ai.types';
 import 'reflect-metadata';
-import { AIService } from './ai.service';
+import { AIEnhancedService } from './ai-enhanced.service';
 import logger from '@hazeljs/core';
 
 const AI_TASK_METADATA_KEY = 'hazel:ai-task';
@@ -24,10 +24,10 @@ export function AITask(config: AITaskConfig): MethodDecorator {
         }
 
         // Get the AI service from the container
-        const aiService = (this as { aiService: AIService }).aiService;
+        const aiService = (this as { aiService: AIEnhancedService }).aiService;
         if (!aiService) {
           throw new Error(
-            'AI service not found. Make sure to inject AIService in the constructor.'
+            'AI service not found. Make sure to inject AIEnhancedService in the constructor.'
           );
         }
 

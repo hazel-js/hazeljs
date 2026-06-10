@@ -38,9 +38,9 @@ describe('PipelineBuilder', () => {
     expect(config.name).toBe('unnamed-pipeline');
   });
 
-  it('reset clears steps', async () => {
+  it('new PipelineBuilder clears steps', async () => {
     const withStep = builder.addTransform('s1', (d) => d);
-    const cleared = withStep.reset();
+    const cleared = new PipelineBuilder(withStep.name);
     const config = cleared.build();
     expect(config.steps).toHaveLength(0);
   });
@@ -128,8 +128,8 @@ describe('PipelineBuilder', () => {
     expect(result).toEqual({ ok: true });
   });
 
-  it('PipelineBuilder.create returns new instance', () => {
-    const b = PipelineBuilder.create('test');
+  it('new PipelineBuilder returns fresh instance', () => {
+    const b = new PipelineBuilder('test');
     expect(b.name).toBe('test');
     expect(b.steps).toHaveLength(0);
   });

@@ -33,9 +33,6 @@ export interface SwaggerBuildOptions {
   security?: Array<Record<string, string[]>>;
 }
 
-/** @deprecated Use `SwaggerBuildOptions` — alias kept for backward compatibility. */
-export type AutoSwaggerOptions = SwaggerBuildOptions;
-
 export interface SwaggerOperation {
   summary?: string;
   description?: string;

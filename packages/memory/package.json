@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/memory",
-  "version": "0.8.7",
+  "version": "1.0.0",
   "description": "Pluggable user memory for HazelJS - profile, preferences, behavioral patterns, emotional state, episodic and semantic memory with multi-store support",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -58,7 +58,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/hazeljs/hazeljs",
+    "url": "git+https://github.com/hazel-js/hazeljs.git",
     "directory": "packages/memory"
   },
   "keywords": [

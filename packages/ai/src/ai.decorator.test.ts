@@ -1,32 +1,21 @@
 import { AITask } from './ai.decorator';
-import { AIService } from './ai.service';
+import { AIEnhancedService } from './ai-enhanced.service';
 import { Container } from '@hazeljs/core';
-import { AITaskConfig } from './ai.types';
 import { Injectable } from '@hazeljs/core';
-
-// Mock the AIService
-jest.mock('./ai.service', () => {
-  const mockAIService = jest.fn().mockImplementation(() => ({
-    executeTask: jest.fn().mockImplementation(async (config: AITaskConfig, input: unknown) => ({
-      data: `Processed: ${input}`,
-    })),
-  }));
-  return {
-    AIService: mockAIService,
-  };
-});
 
 describe('AITask Decorator', () => {
   let container: Container;
-  let mockAIService: AIService;
+  let mockAIService: Pick<AIEnhancedService, 'executeTask'>;
 
   beforeEach(() => {
     container = Container.getInstance();
     container.clear();
-    // Create a mock instance
-    mockAIService = new AIService();
-    // Register AIService with the mock instance
-    container.register(AIService, mockAIService);
+    mockAIService = {
+      executeTask: jest.fn().mockImplementation(async (_config, input: unknown) => ({
+        data: `Processed: ${input}`,
+      })),
+    };
+    container.register(AIEnhancedService, mockAIService as AIEnhancedService);
   });
 
   afterEach(() => {
@@ -34,10 +23,10 @@ describe('AITask Decorator', () => {
     jest.clearAllMocks();
   });
 
-  it('should inject AIService', (): void => {
+  it('should inject AIEnhancedService', (): void => {
     @Injectable()
     class TestClass {
-      constructor(public aiService: AIService) {}
+      constructor(public aiService: AIEnhancedService) {}
 
       @AITask({
         name: 'test-task',
@@ -51,8 +40,7 @@ describe('AITask Decorator', () => {
       }
     }
 
-    // Register the test class
-    container.register(TestClass, new TestClass(mockAIService));
+    container.register(TestClass, new TestClass(mockAIService as AIEnhancedService));
     const instance = container.resolve(TestClass);
     expect(instance.aiService).toBeDefined();
     expect(instance.aiService).toBe(mockAIService);
@@ -65,7 +53,7 @@ describe('AITask Decorator', () => {
     @Injectable()
     class TestClass {
       constructor(
-        public aiService: AIService,
+        public aiService: AIEnhancedService,
         public otherService: OtherService
       ) {}
 
@@ -81,22 +69,22 @@ describe('AITask Decorator', () => {
       }
     }
 
-    // Register both services
     const otherService = new OtherService();
     container.register(OtherService, otherService);
-    container.register(TestClass, new TestClass(mockAIService, otherService));
+    container.register(
+      TestClass,
+      new TestClass(mockAIService as AIEnhancedService, otherService)
+    );
 
     const instance = container.resolve(TestClass);
-    expect(instance.aiService).toBeDefined();
     expect(instance.aiService).toBe(mockAIService);
-    expect(instance.otherService).toBeDefined();
     expect(instance.otherService).toBe(otherService);
   });
 
-  it('should throw error if AIService is not registered', async (): Promise<void> => {
+  it('should throw error if AIEnhancedService is not registered', async (): Promise<void> => {
     @Injectable()
     class TestClass {
-      constructor(public aiService: AIService) {}
+      constructor(public aiService: AIEnhancedService) {}
 
       @AITask({
         name: 'test-task',
@@ -111,21 +99,19 @@ describe('AITask Decorator', () => {
     }
 
     container.clear();
-    // Don't register AIService
-    const instance = new TestClass(null as unknown as AIService);
+    const instance = new TestClass(null as unknown as AIEnhancedService);
     container.register(TestClass, instance);
     const resolved = container.resolve(TestClass);
 
-    // The error should be thrown when trying to execute the decorated method
     await expect(resolved.testMethod('test')).rejects.toThrow(
-      'AI task execution failed: AI service not found. Make sure to inject AIService in the constructor.'
+      'AI task execution failed: AI service not found. Make sure to inject AIEnhancedService in the constructor.'
     );
   });
 
   it('should execute AI task', async () => {
     @Injectable()
     class TestClass {
-      constructor(public aiService: AIService) {}
+      constructor(public aiService: AIEnhancedService) {}
 
       @AITask({
         name: 'test-task',
@@ -140,11 +126,9 @@ describe('AITask Decorator', () => {
       }
     }
 
-    // Register the test class with AIService
-    container.register(TestClass, new TestClass(mockAIService));
+    container.register(TestClass, new TestClass(mockAIService as AIEnhancedService));
     const instance = container.resolve(TestClass);
     const result = await instance.testMethod('test input');
-    expect(result).toBeDefined();
     expect(result).toBe('Processed: test input');
     expect(mockAIService.executeTask).toHaveBeenCalledWith(
       expect.objectContaining({

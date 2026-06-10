@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/ai",
-  "version": "0.8.7",
+  "version": "1.0.0",
   "description": "AI integration module for HazelJS framework",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -29,8 +29,8 @@
     "zod-to-json-schema": "^3.25.0"
   },
   "devDependencies": {
-    "@hazeljs/prompts": "^0.8.5",
-    "@hazeljs/rag": "^0.8.5",
+    "@hazeljs/prompts": "^1.0.0",
+    "@hazeljs/rag": "^1.0.0",
     "@types/node": "^20.19.39",
     "@typescript-eslint/eslint-plugin": "^8.58.0",
     "@typescript-eslint/parser": "^8.58.0",
@@ -59,18 +59,18 @@
   "author": "Muhammad Arslan <muhammad.arslan@hazeljs.ai>",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/hazeljs/hazel-js/issues"
+    "url": "https://github.com/hazel-js/hazeljs/issues"
   },
   "homepage": "https://hazeljs.ai",
   "peerDependencies": {
-    "@hazeljs/agent": "^0.8.7",
-    "@hazeljs/cache": "^0.8.7",
-    "@hazeljs/core": "^0.8.7",
-    "@hazeljs/guardrails": "^0.8.7",
-    "@hazeljs/memory": "^0.8.7",
-    "@hazeljs/ml": "^0.8.7",
-    "@hazeljs/prompts": "^0.8.7",
-    "@hazeljs/rag": "^0.8.7",
+    "@hazeljs/agent": "^1.0.0",
+    "@hazeljs/cache": "^1.0.0",
+    "@hazeljs/core": "^1.0.0",
+    "@hazeljs/guardrails": "^1.0.0",
+    "@hazeljs/memory": "^1.0.0",
+    "@hazeljs/ml": "^1.0.0",
+    "@hazeljs/prompts": "^1.0.0",
+    "@hazeljs/rag": "^1.0.0",
     "tiktoken": "^1.0.22"
   },
   "peerDependenciesMeta": {

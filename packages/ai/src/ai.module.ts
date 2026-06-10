@@ -1,5 +1,4 @@
 import { HazelModule } from '@hazeljs/core';
-import { AIService } from './ai.service';
 import { AIEnhancedService } from './ai-enhanced.service';
 import { AIProvider } from './ai-enhanced.types';
 
@@ -10,8 +9,8 @@ export interface AIModuleOptions {
 }
 
 @HazelModule({
-  providers: [AIService, AIEnhancedService],
-  exports: [AIService, AIEnhancedService],
+  providers: [AIEnhancedService],
+  exports: [AIEnhancedService],
 })
 export class AIModule {
   private static options: AIModuleOptions = {};

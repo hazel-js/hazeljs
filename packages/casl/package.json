@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/casl",
-  "version": "0.8.7",
+  "version": "1.0.0",
   "description": "Attribute-level (resource-level) authorization for HazelJS via CASL",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -46,11 +46,11 @@
   "author": "Muhammad Arslan <muhammad.arslan@hazeljs.ai>",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/hazeljs/hazel-js/issues"
+    "url": "https://github.com/hazel-js/hazeljs/issues"
   },
   "homepage": "https://hazeljs.ai",
   "peerDependencies": {
-    "@hazeljs/core": "^0.8.7"
+    "@hazeljs/core": "^1.0.0"
   },
   "gitHead": "083b94562940a86c8e0a8cd81988d04b541608ac"
 }

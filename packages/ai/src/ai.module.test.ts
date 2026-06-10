@@ -1,5 +1,4 @@
 import { AIModule } from './ai.module';
-import { AIService } from './ai.service';
 import { AIEnhancedService } from './ai-enhanced.service';
 import { HazelApp } from '@hazeljs/core';
 import { AIProvider } from './ai-enhanced.types';
@@ -21,26 +20,11 @@ describe('AIModule', () => {
     expect(AIModule).toBeDefined();
   });
 
-  it('should provide AIService', () => {
-    const app = new HazelApp(AIModule);
-    const container = app.getContainer();
-    const aiService = container.resolve(AIService);
-    expect(aiService).toBeInstanceOf(AIService);
-  });
-
   it('should provide AIEnhancedService', () => {
     const app = new HazelApp(AIModule);
     const container = app.getContainer();
     const enhancedService = container.resolve(AIEnhancedService);
     expect(enhancedService).toBeInstanceOf(AIEnhancedService);
-  });
-
-  it('should provide AIService as singleton', () => {
-    const app = new HazelApp(AIModule);
-    const container = app.getContainer();
-    const service1 = container.resolve(AIService);
-    const service2 = container.resolve(AIService);
-    expect(service1).toBe(service2);
   });
 
   it('should provide AIEnhancedService as singleton', () => {
@@ -185,7 +169,7 @@ describe('AIModule', () => {
       const app = new HazelApp(AIModule);
       const container = app.getContainer();
 
-      expect(() => container.resolve(AIService)).not.toThrow();
+      expect(() => container.resolve(AIEnhancedService)).not.toThrow();
       expect(() => container.resolve(AIEnhancedService)).not.toThrow();
     });
   });

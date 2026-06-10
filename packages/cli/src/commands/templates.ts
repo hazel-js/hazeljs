@@ -196,11 +196,11 @@ export class {{className}}Gateway {
 `;
 
 export const AI_SERVICE_TEMPLATE = `import { Service } from '@hazeljs/core';
-import { AIService, AIFunction, AIPrompt } from '@hazeljs/ai';
+import { AIEnhancedService, AIFunction, AIPrompt } from '@hazeljs/ai';
 
 @Service()
 export class {{className}}AIService {
-  constructor(private readonly aiService: AIService) {}
+  constructor(private readonly aiService: AIEnhancedService) {}
 
   @AIFunction({
     provider: 'openai',
@@ -358,7 +358,7 @@ export class {{className}}RagPipelineService {
       chunkSize: 1000,
       chunkOverlap: 200,
       llm: async (prompt: string) => {
-        // Wire to your LLM (HazelAI, AIService, or HTTP)
+        // Wire to your LLM (HazelAI, AIEnhancedService, or HTTP)
         return prompt;
       },
     });
