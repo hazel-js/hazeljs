@@ -15,7 +15,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "stripe": "^17.7.0"
+    "stripe": "^22.2.0"
   },
   "devDependencies": {
     "@types/node": "^20.19.39",
