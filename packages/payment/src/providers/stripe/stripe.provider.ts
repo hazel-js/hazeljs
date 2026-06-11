@@ -17,9 +17,21 @@ import type {
 
 export const STRIPE_PROVIDER_NAME = 'stripe';
 
+type StripeClient = InstanceType<typeof Stripe>;
+type CheckoutSessionCreateParams = NonNullable<
+  Parameters<StripeClient['checkout']['sessions']['create']>[0]
+>;
+type StripeEvent = ReturnType<StripeClient['webhooks']['constructEvent']>;
+type StripeCustomer = Awaited<ReturnType<StripeClient['customers']['create']>>;
+type StripeSubscription = StripeClient['subscriptions']['list'] extends (
+  ...args: infer _Args
+) => Promise<{ data: Array<infer Item> }>
+  ? Item
+  : never;
+
 export class StripePaymentProvider implements PaymentProvider {
   readonly name = STRIPE_PROVIDER_NAME;
-  private readonly stripe: Stripe;
+  private readonly stripe: StripeClient;
   private readonly webhookSecret: string | undefined;
 
   constructor(options: StripeProviderOptions) {
@@ -36,7 +48,7 @@ export class StripePaymentProvider implements PaymentProvider {
   }
 
   /** Raw Stripe client for advanced usage. */
-  getClient(): Stripe {
+  getClient(): StripeClient {
     return this.stripe;
   }
 
@@ -46,9 +58,9 @@ export class StripePaymentProvider implements PaymentProvider {
     const mode: 'payment' | 'subscription' =
       options.mode ?? (options.subscription ? 'subscription' : 'payment');
     const stripeOptions = (options.providerOptions?.stripe ??
-      {}) as Partial<Stripe.Checkout.SessionCreateParams>;
+      {}) as Partial<CheckoutSessionCreateParams>;
 
-    const params: Stripe.Checkout.SessionCreateParams = {
+    const params: CheckoutSessionCreateParams = {
       success_url: options.successUrl,
       cancel_url: options.cancelUrl,
       mode,
@@ -124,7 +136,7 @@ export class StripePaymentProvider implements PaymentProvider {
       expand: ['data.items.data.price'],
     });
     return {
-      data: list.data.map((s) => ({
+      data: list.data.map((s: StripeSubscription) => ({
         ...s,
         id: s.id,
         status: s.status,
@@ -155,20 +167,16 @@ export class StripePaymentProvider implements PaymentProvider {
     return Boolean(this.webhookSecret);
   }
 
-  parseWebhookEvent(payload: string | Buffer, signature: string): Stripe.Event {
+  parseWebhookEvent(payload: string | Buffer, signature: string): StripeEvent {
     if (!this.webhookSecret) {
       throw new Error(
         'Stripe webhook secret is required. Set STRIPE_WEBHOOK_SECRET or pass webhookSecret in StripeProviderOptions.'
       );
     }
-    return this.stripe.webhooks.constructEvent(
-      payload,
-      signature,
-      this.webhookSecret
-    ) as Stripe.Event;
+    return this.stripe.webhooks.constructEvent(payload, signature, this.webhookSecret);
   }
 
-  private toCustomer(c: Stripe.Customer): Customer {
+  private toCustomer(c: StripeCustomer): Customer {
     return {
       id: c.id,
       email: c.email ?? null,

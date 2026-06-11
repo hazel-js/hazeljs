@@ -7,7 +7,8 @@
     "declarationMap": true,
     "baseUrl": ".",
     "paths": {
-      "@hazeljs/core": ["../core/src"]
+      "@hazeljs/core": ["../core/src"],
+      "@casl/ability": ["../../node_modules/@casl/ability/dist/types/index.d.ts"]
     },
     "types": ["jest", "node"]
   },
