@@ -41,10 +41,10 @@
   },
   "devDependencies": {
     "@hazeljs/queue": "^1.0.0",
-    "@types/jest": "^29.5.14",
+    "@types/jest": "^30.0.0",
     "@types/node": "^20.19.39",
     "@types/pdf-parse": "^1.1.5",
-    "jest": "^29.7.0",
+    "jest": "^30.4.2",
     "ts-jest": "^29.4.9",
     "typescript": "^5.9.3"
   },
