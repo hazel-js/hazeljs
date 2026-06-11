@@ -71,10 +71,7 @@ describe('AITask Decorator', () => {
 
     const otherService = new OtherService();
     container.register(OtherService, otherService);
-    container.register(
-      TestClass,
-      new TestClass(mockAIService as AIEnhancedService, otherService)
-    );
+    container.register(TestClass, new TestClass(mockAIService as AIEnhancedService, otherService));
 
     const instance = container.resolve(TestClass);
     expect(instance.aiService).toBe(mockAIService);

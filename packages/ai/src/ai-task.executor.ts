@@ -47,7 +47,7 @@ export class AITaskExecutor {
             });
 
             return {
-              stream: (async function* () {
+              stream: (async function* (): AsyncGenerator<string, void, unknown> {
                 try {
                   for await (const chunk of stream) {
                     const content = chunk.choices[0]?.delta?.content;
@@ -111,7 +111,7 @@ export class AITaskExecutor {
           const decoder = new TextDecoder();
 
           return {
-            stream: (async function* () {
+            stream: (async function* (): AsyncGenerator<string, void, unknown> {
               try {
                 while (true) {
                   const { done, value } = await reader.read();
