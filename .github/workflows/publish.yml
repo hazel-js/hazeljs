@@ -76,16 +76,17 @@ jobs:
       - name: Run tests
         run: npm run test
       
-      - name: Commit generated files (cli-manifest.json)
+      - name: Commit generated files (cli-manifest, inspector ui-dist)
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add packages/cli/cli-manifest.json 2>/dev/null || true
+          git add -A packages/inspector/ui-dist 2>/dev/null || true
           git diff --cached --stat
           if git diff --cached --quiet; then
             echo "No generated files to commit"
           else
-            git commit -m "chore: add generated manifest files"
+            git commit -m "chore: sync generated build artifacts"
             git pull --rebase --autostash origin "${{ steps.checkout.outputs.default_branch }}"
             git push origin "${{ steps.checkout.outputs.default_branch }}"
           fi
@@ -95,11 +96,15 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           
-          git add package.json packages/*/package.json packages/*/*/package.json 2>/dev/null || true
+          git add package.json lerna.json packages/*/package.json packages/*/*/package.json 2>/dev/null || true
           git diff --cached --stat
-          git commit -m "chore(release): bump versions to ${{ steps.version.outputs.version }}"
-          git pull --rebase --autostash origin "${{ steps.checkout.outputs.default_branch }}"
-          git push origin "${{ steps.checkout.outputs.default_branch }}"
+          if git diff --cached --quiet; then
+            echo "No version files to commit"
+          else
+            git commit -m "chore(release): bump versions to ${{ steps.version.outputs.version }}"
+            git pull --rebase --autostash origin "${{ steps.checkout.outputs.default_branch }}"
+            git push origin "${{ steps.checkout.outputs.default_branch }}"
+          fi
         
       - name: Verify npm authentication
         run: npm whoami
