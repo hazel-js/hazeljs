@@ -4,8 +4,9 @@
  * Publishes via npm Trusted Publisher (OIDC) in CI — no NPM_TOKEN required.
  * Safe to re-run: skips versions already on the registry and repairs dist-tags.
  *
- * Usage: node scripts/publish-throttled.mjs <dist-tag> [delay-seconds]
- * Example: node scripts/publish-throttled.mjs latest 15
+ * Usage: node scripts/publish-throttled.mjs <dist-tag> [delay-seconds] [package-filter]
+ * Example: node scripts/publish-throttled.mjs latest 5
+ * Example: node scripts/publish-throttled.mjs latest 5 saga,queue,distributed-lock
  */
 
 import { spawnSync } from 'child_process';
@@ -19,9 +20,12 @@ const ROOT = join(__dirname, '..');
 const PACKAGES_DIR = join(ROOT, 'packages');
 
 const DIST_TAG = process.argv[2] || 'latest';
-const DELAY_SEC = parseInt(process.argv[3] || '15', 10);
+const DELAY_SEC = parseInt(process.argv[3] || '5', 10);
+const PACKAGE_FILTER = process.argv[4] || process.env.PUBLISH_PACKAGES_ONLY || '';
 
 const SKIP_PACKAGES = ['@template'];
+const RETRY_DELAYS_MS = [15000, 45000, 90000];
+const MAX_ATTEMPTS = RETRY_DELAYS_MS.length + 1;
 
 const ALREADY_PUBLISHED_PATTERNS = [
   'You cannot publish over the previously published versions',
@@ -34,6 +38,22 @@ const ALREADY_PUBLISHED_PATTERNS = [
   'previously published',
   'not allowed to publish the same version',
   'Package version already published',
+];
+
+const TRANSIENT_ERROR_PATTERNS = [
+  '429',
+  'Too Many Requests',
+  'rate limit',
+  'ETIMEDOUT',
+  'ECONNRESET',
+  'socket hang up',
+  '502 Bad Gateway',
+  '503 Service Unavailable',
+  '504 Gateway Timeout',
+  'EAI_AGAIN',
+  'network',
+  'timeout',
+  'temporarily unavailable',
 ];
 
 function getPublishablePackages() {
@@ -49,10 +69,24 @@ function getPublishablePackages() {
     const mainEntry = pkg.main || pkg.module || 'dist/index.js';
     const entryPath = join(pkgDir, mainEntry);
     if (existsSync(distPath) || existsSync(entryPath)) {
-      packages.push({ name: pkg.name, version: pkg.version, path: pkgDir });
+      packages.push({ name: pkg.name, version: pkg.version, path: pkgDir, dir: name });
     }
   }
   return packages;
+}
+
+function filterPackages(packages, filter) {
+  if (!filter?.trim()) return packages;
+  const wanted = new Set(
+    filter
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .flatMap((s) => [s, s.replace(/^@hazeljs\//, '')])
+  );
+  return packages.filter(
+    (p) => wanted.has(p.name) || wanted.has(p.dir) || wanted.has(p.name.replace('@hazeljs/', ''))
+  );
 }
 
 function sleep(ms) {
@@ -66,8 +100,9 @@ function publishEnv() {
   return env;
 }
 
-function runNpm(args) {
+function runNpm(args, cwd) {
   return spawnSync('npm', args, {
+    cwd,
     encoding: 'utf8',
     stdio: ['inherit', 'pipe', 'pipe'],
     env: publishEnv(),
@@ -80,6 +115,12 @@ function npmOutput(result) {
 
 function isAlreadyPublishedOutput(output) {
   return ALREADY_PUBLISHED_PATTERNS.some((pattern) => output.includes(pattern));
+}
+
+function isTransientError(output) {
+  return TRANSIENT_ERROR_PATTERNS.some((pattern) =>
+    output.toLowerCase().includes(pattern.toLowerCase())
+  );
 }
 
 function isVersionOnRegistry(name, version) {
@@ -112,34 +153,28 @@ function ensureDistTag(name, version, tag) {
   return false;
 }
 
-function publishPackage(pkg, tag) {
-  const result = spawnSync(
-    'npm',
-    ['publish', '--access', 'public', '--provenance', '--tag', tag],
-    {
-      cwd: pkg.path,
-      encoding: 'utf8',
-      stdio: ['inherit', 'pipe', 'pipe'],
-      env: publishEnv(),
-    }
-  );
+function publishPackage(pkg, tag, { provenance = true } = {}) {
+  const args = ['publish', '--access', 'public', '--tag', tag];
+  if (provenance) {
+    args.push('--provenance');
+  }
+
+  const result = runNpm(args, pkg.path);
   const output = npmOutput(result);
   if (output) console.log(output);
+
   if (result.status === 0) {
-    return { status: 0, skipped: false };
+    return { status: 0, skipped: false, output };
   }
   if (isAlreadyPublishedOutput(output)) {
-    return { status: 0, skipped: true, reason: 'already published' };
-  }
-  if (output.includes('429') || output.includes('Too Many Requests') || output.includes('rate limit')) {
-    return { status: 429, skipped: false };
+    return { status: 0, skipped: true, reason: 'already published', output };
   }
   if (output.includes('E404') || output.includes('404 Not Found')) {
     console.error(
       '  Publish auth failed (E404). Verify npm Trusted Publisher: repo hazel-js/hazeljs, workflow publish.yml, environment prod, and id-token: write on this job.'
     );
   }
-  return { status: result.status ?? 1, skipped: false };
+  return { status: result.status ?? 1, skipped: false, output };
 }
 
 async function publishOne(pkg, tag) {
@@ -149,53 +184,53 @@ async function publishOne(pkg, tag) {
     return { ok: true, skipped: true };
   }
 
-  const RETRY_DELAY_429 = 120000;
-  const MAX_RETRIES_429 = 3;
+  let lastStatus = 1;
+  let lastOutput = '';
 
-  let result = publishPackage(pkg, tag);
-  let retries = 0;
-  while (result.status === 429 && retries < MAX_RETRIES_429) {
-    retries++;
-    console.log(
-      `  Rate limited (429). Waiting ${RETRY_DELAY_429 / 1000}s before retry ${retries}/${MAX_RETRIES_429}...`
-    );
-    await sleep(RETRY_DELAY_429);
-    result = publishPackage(pkg, tag);
+  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+    const useProvenance = attempt < MAX_ATTEMPTS - 1;
+    if (attempt > 0) {
+      const isRateLimit = lastOutput.includes('429') || lastOutput.toLowerCase().includes('rate limit');
+      const delay = isRateLimit ? 120000 : RETRY_DELAYS_MS[attempt - 1];
+      console.log(
+        `  Attempt ${attempt + 1}/${MAX_ATTEMPTS} in ${delay / 1000}s${useProvenance ? '' : ' (without provenance)'}...`
+      );
+      await sleep(delay);
+    }
+
+    const result = publishPackage(pkg, tag, { provenance: useProvenance });
+    lastOutput = result.output || '';
+    lastStatus = result.status;
+
+    if (result.status === 0) {
+      if (result.skipped) {
+        console.log(`  (already published, ensuring dist-tag ${tag})`);
+        ensureDistTag(pkg.name, pkg.version, tag);
+      }
+      return { ok: true, skipped: result.skipped };
+    }
+
+    if (!isTransientError(lastOutput) && !isAlreadyPublishedOutput(lastOutput) && attempt === 0) {
+      console.error(`  Publish error: ${lastOutput.split('\n').slice(-5).join('\n')}`);
+    }
   }
 
-  if (result.status !== 0) {
-    return { ok: false, skipped: false, status: result.status };
-  }
-
-  if (result.skipped) {
-    console.log(`  (already published, ensuring dist-tag ${tag})`);
-    ensureDistTag(pkg.name, pkg.version, tag);
-  }
-
-  return { ok: true, skipped: result.skipped };
+  return { ok: false, skipped: false, status: lastStatus, output: lastOutput };
 }
 
-async function main() {
-  const packages = getPublishablePackages();
-  console.log(
-    `Publishing ${packages.length} packages with tag "${DIST_TAG}" (${DELAY_SEC}s delay between each)\n`
-  );
-
+async function runPass(packages, tag, passLabel) {
   let published = 0;
   let skipped = 0;
   const failed = [];
 
   for (let i = 0; i < packages.length; i++) {
     const pkg = packages[i];
-    console.log(`[${i + 1}/${packages.length}] Publishing ${pkg.name}@${pkg.version}...`);
+    console.log(`[${i + 1}/${packages.length}] ${passLabel} ${pkg.name}@${pkg.version}...`);
 
-    const outcome = await publishOne(pkg, DIST_TAG);
+    const outcome = await publishOne(pkg, tag);
     if (!outcome.ok) {
-      failed.push({ name: pkg.name, status: outcome.status });
+      failed.push({ name: pkg.name, status: outcome.status, pkg });
       console.error(`  Failed to publish ${pkg.name} (exit ${outcome.status})`);
-      if (outcome.status === 429) {
-        console.error('  Rate limit exceeded. Re-run this workflow to continue from remaining packages.');
-      }
     } else if (outcome.skipped) {
       skipped++;
     } else {
@@ -208,17 +243,55 @@ async function main() {
     }
   }
 
-  console.log('\n--- Publish summary ---');
-  console.log(`Published: ${published}`);
-  console.log(`Skipped (already on registry): ${skipped}`);
-  console.log(`Failed: ${failed.length}`);
+  return { published, skipped, failed };
+}
 
-  if (failed.length > 0) {
+async function main() {
+  const allPackages = getPublishablePackages();
+  const packages = filterPackages(allPackages, PACKAGE_FILTER);
+
+  if (packages.length === 0) {
+    console.error('No packages matched the publish filter.');
+    process.exit(1);
+  }
+
+  console.log(
+    `Publishing ${packages.length} package(s) with tag "${DIST_TAG}" (${DELAY_SEC}s delay between each)\n`
+  );
+  if (PACKAGE_FILTER) {
+    console.log(`Filter: ${PACKAGE_FILTER}\n`);
+  }
+
+  let totals = { published: 0, skipped: 0, failed: [] };
+
+  const first = await runPass(packages, DIST_TAG, 'Publishing');
+  totals.published += first.published;
+  totals.skipped += first.skipped;
+  totals.failed = first.failed;
+
+  if (totals.failed.length > 0) {
+    console.log(`\n=== Final retry pass (${totals.failed.length} packages, 2 min cooldown) ===\n`);
+    await sleep(120000);
+    const retryPkgs = totals.failed.map((f) => f.pkg);
+    const retry = await runPass(retryPkgs, DIST_TAG, 'Retrying');
+    totals.published += retry.published;
+    totals.skipped += retry.skipped;
+    totals.failed = retry.failed;
+  }
+
+  console.log('\n--- Publish summary ---');
+  console.log(`Published: ${totals.published}`);
+  console.log(`Skipped (already on registry): ${totals.skipped}`);
+  console.log(`Failed: ${totals.failed.length}`);
+
+  if (totals.failed.length > 0) {
     console.error('\nFailed packages:');
-    for (const f of failed) {
+    const names = totals.failed.map((f) => f.name.replace('@hazeljs/', ''));
+    for (const f of totals.failed) {
       console.error(`  - ${f.name} (exit ${f.status})`);
     }
-    console.error('\nRe-run the publish workflow to retry only the remaining packages.');
+    console.error('\nRe-run the publish workflow with packages_only:');
+    console.error(`  ${names.join(',')}`);
     process.exit(1);
   }
 

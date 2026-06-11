@@ -45,6 +45,11 @@
   "publishConfig": {
     "access": "public"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hazel-js/hazeljs.git",
+    "directory": "packages/distributed-lock"
+  },
   "author": "Muhammad Arslan <muhammad.arslan@hazeljs.ai>",
   "license": "Apache-2.0",
   "gitHead": "083b94562940a86c8e0a8cd81988d04b541608ac"

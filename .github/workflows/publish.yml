@@ -20,6 +20,10 @@ on:
         description: 'Skip version bump and git commits (use for publish retries)'
         type: boolean
         default: true
+      packages_only:
+        description: 'Optional comma-separated names to publish (e.g. saga,queue,graphql). Empty = all remaining.'
+        required: false
+        default: ''
 
 jobs:
   publish:
@@ -146,7 +150,8 @@ jobs:
           export CI=true
           export NPM_CONFIG_YES=true
           unset NODE_AUTH_TOKEN NPM_TOKEN || true
-          node scripts/publish-throttled.mjs "$RELEASE_TAG" 15
+          FILTER="${{ github.event.inputs.packages_only }}"
+          node scripts/publish-throttled.mjs "$RELEASE_TAG" 5 "$FILTER"
 
       - name: Update latest dist-tag to current version
         if: steps.release-tag.outputs.tag == 'latest'

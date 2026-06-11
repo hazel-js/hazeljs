@@ -277,7 +277,7 @@ On [npmjs.com](https://www.npmjs.com), configure the `@hazeljs` org (or each pac
 
 Requires npm CLI ≥ 11.5.1 (the workflow installs npm 11 on Node 24). Remove any `NPM_TOKEN` secret from the GitHub `prod` environment so OIDC is not overridden.
 
-**Publish retries:** If the workflow stops partway through, re-run it from Actions → **Publish Package to NPM** → **Run workflow** with the same version and `skip_git_updates` enabled. Already-published packages are detected via `npm view` and skipped automatically.
+**Publish retries:** If the workflow stops partway through, re-run it from Actions → **Publish Package to NPM** → **Run workflow** with the same version, `skip_git_updates` enabled, and optionally `packages_only` set to the failed names (e.g. `saga,queue,graphql`). Already-published packages are skipped automatically; transient failures are retried with backoff and a final pass without provenance if needed.
 
 ## Getting Help
 
