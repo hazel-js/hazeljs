@@ -24,6 +24,7 @@ const DELAY_SEC = parseInt(process.argv[3] || '5', 10);
 const PACKAGE_FILTER = process.argv[4] || process.env.PUBLISH_PACKAGES_ONLY || '';
 
 const SKIP_PACKAGES = ['@template'];
+const PROVENANCE_REPOSITORY_URL = 'https://github.com/hazel-js/hazeljs';
 const RETRY_DELAYS_MS = [15000, 45000, 90000];
 const MAX_ATTEMPTS = RETRY_DELAYS_MS.length + 1;
 
@@ -56,6 +57,21 @@ const TRANSIENT_ERROR_PATTERNS = [
   'temporarily unavailable',
 ];
 
+function assertProvenanceRepository(pkg) {
+  const repo = pkg.repository;
+  const url = typeof repo === 'string' ? repo : repo?.url;
+  if (!url) {
+    throw new Error(
+      `${pkg.name}: missing repository.url (required for npm publish --provenance)`
+    );
+  }
+  if (url !== PROVENANCE_REPOSITORY_URL) {
+    throw new Error(
+      `${pkg.name}: repository.url must be "${PROVENANCE_REPOSITORY_URL}" for provenance (got "${url}")`
+    );
+  }
+}
+
 function getPublishablePackages() {
   const packages = [];
   for (const name of readdirSync(PACKAGES_DIR)) {
@@ -65,6 +81,7 @@ function getPublishablePackages() {
     const pkg = JSON.parse(readFileSync(pkgPath, 'utf8'));
     if (pkg.private || !pkg.name || pkg.name.includes('template')) continue;
     if (SKIP_PACKAGES.some((s) => pkg.name.includes(s))) continue;
+    assertProvenanceRepository(pkg);
     const distPath = join(pkgDir, 'dist');
     const mainEntry = pkg.main || pkg.module || 'dist/index.js';
     const entryPath = join(pkgDir, mainEntry);
