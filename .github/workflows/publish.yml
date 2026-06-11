@@ -11,6 +11,15 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version to publish (e.g. 1.0.0)'
+        required: true
+      skip_git_updates:
+        description: 'Skip version bump and git commits (use for publish retries)'
+        type: boolean
+        default: true
 
 jobs:
   publish:
@@ -34,8 +43,13 @@ jobs:
       - name: Extract version from tag
         id: version
         run: |
-          TAG_NAME=${GITHUB_REF#refs/tags/}
-          VERSION=${TAG_NAME#v}
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+            TAG_NAME="v${VERSION}"
+          else
+            TAG_NAME=${GITHUB_REF#refs/tags/}
+            VERSION=${TAG_NAME#v}
+          fi
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
           echo "Extracted version: $VERSION from tag: $TAG_NAME"
@@ -57,6 +71,7 @@ jobs:
           echo "Release tag: $(cat $GITHUB_OUTPUT | grep tag= | cut -d'=' -f2)"
 
       - name: Checkout default branch and update versions
+        if: github.event_name == 'push' || github.event.inputs.skip_git_updates != 'true'
         run: |
           VERSION="${{ steps.version.outputs.version }}"
           DEFAULT_BRANCH=$(git remote show origin | grep 'HEAD branch' | awk '{print $NF}')
@@ -81,6 +96,7 @@ jobs:
         run: npm run test
 
       - name: Commit generated files (cli-manifest, inspector ui-dist)
+        if: github.event_name == 'push' || github.event.inputs.skip_git_updates != 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -96,6 +112,7 @@ jobs:
           fi
 
       - name: Commit and push version updates
+        if: github.event_name == 'push' || github.event.inputs.skip_git_updates != 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -150,11 +167,18 @@ jobs:
           echo "Done"
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: ${{ steps.version.outputs.tag_name }}
-          name: Release ${{ steps.version.outputs.version }}
-          draft: false
-          prerelease: ${{ steps.release-tag.outputs.tag != 'latest' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          tag="${{ steps.version.outputs.tag_name }}"
+          version="${{ steps.version.outputs.version }}"
+          prerelease="${{ steps.release-tag.outputs.tag != 'latest' }}"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            echo "Release $tag already exists, skipping"
+          else
+            args=(release create "$tag" --title "Release $version")
+            if [ "$prerelease" = "true" ]; then
+              args+=(--prerelease)
+            fi
+            gh "${args[@]}"
+          fi
