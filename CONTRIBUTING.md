@@ -269,11 +269,11 @@ npm run build:watch
 
 On [npmjs.com](https://www.npmjs.com), configure the `@hazeljs` org (or each package) with a Trusted Publisher:
 
-| Field | Value |
-| --- | --- |
-| Repository | `hazel-js/hazeljs` |
-| Workflow filename | `publish.yml` |
-| Environment | `prod` |
+| Field             | Value              |
+| ----------------- | ------------------ |
+| Repository        | `hazel-js/hazeljs` |
+| Workflow filename | `publish.yml`      |
+| Environment       | `prod`             |
 
 Requires npm CLI ≥ 11.5.1 (the workflow installs npm 11 on Node 24). Remove any `NPM_TOKEN` secret from the GitHub `prod` environment so OIDC is not overridden.
 
