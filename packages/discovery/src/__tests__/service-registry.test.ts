@@ -2,15 +2,20 @@
  * Service Registry Tests
  */
 
+import axios from 'axios';
 import { ServiceRegistry } from '../registry/service-registry';
 import { MemoryRegistryBackend } from '../backends/memory-backend';
 import { ServiceStatus } from '../types';
+
+jest.mock('axios');
+const mockedAxios = axios as jest.Mocked<typeof axios>;
 
 describe('ServiceRegistry', () => {
   let registry: ServiceRegistry;
   let backend: MemoryRegistryBackend;
 
   beforeEach(() => {
+    mockedAxios.get.mockRejectedValue(new Error('ECONNREFUSED'));
     backend = new MemoryRegistryBackend();
     registry = new ServiceRegistry(
       {
@@ -41,13 +46,23 @@ describe('ServiceRegistry', () => {
       expect(instance?.zone).toBe('us-east-1');
     });
 
-    it('should set initial status to STARTING or DOWN after health check', async () => {
+    it('should set status to DOWN when health check fails', async () => {
       await registry.register();
 
       const instance = registry.getInstance();
-      // Status will be STARTING initially, but health check runs immediately
-      // Since there's no actual server, it will become DOWN
-      expect([ServiceStatus.STARTING, ServiceStatus.DOWN]).toContain(instance?.status);
+      expect(instance?.status).toBe(ServiceStatus.DOWN);
+      expect(mockedAxios.get).toHaveBeenCalledWith(
+        'http://localhost:3000/health',
+        expect.objectContaining({ timeout: 5000 })
+      );
+    });
+
+    it('should set status to UP when health check succeeds', async () => {
+      mockedAxios.get.mockResolvedValueOnce({ status: 200, data: {} });
+
+      await registry.register();
+
+      expect(registry.getInstance()?.status).toBe(ServiceStatus.UP);
     });
   });
 
