@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Publish packages to npm with throttling to avoid rate limits (429).
- * Publishes packages sequentially with a delay between each.
+ * Publishes via npm Trusted Publisher (OIDC) in CI — no NPM_TOKEN required.
  *
  * Usage: node scripts/publish-throttled.mjs <dist-tag> [delay-seconds]
  * Example: node scripts/publish-throttled.mjs latest 15
@@ -45,12 +45,22 @@ function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
+function publishEnv() {
+  const env = { ...process.env, CI: 'true' };
+  delete env.NODE_AUTH_TOKEN;
+  delete env.NPM_TOKEN;
+  return env;
+}
+
 function publishPackage(pkg, tag) {
-  const result = spawnSync('npm', ['publish', '--access', 'public', '--tag', tag], {
+  const result = spawnSync(
+    'npm',
+    ['publish', '--access', 'public', '--provenance', '--tag', tag],
+    {
     cwd: pkg.path,
     encoding: 'utf8',
     stdio: ['inherit', 'pipe', 'pipe'],
-    env: { ...process.env, CI: 'true' },
+    env: publishEnv(),
   });
   const output = [result.stdout, result.stderr].filter(Boolean).join('\n');
   if (output) console.log(output);
@@ -63,6 +73,11 @@ function publishPackage(pkg, tag) {
     }
     if (output.includes('429') || output.includes('Too Many Requests') || output.includes('rate limit')) {
       return 429;
+    }
+    if (output.includes('E404') || output.includes('404 Not Found')) {
+      console.error(
+        '  Publish auth failed (E404). Verify npm Trusted Publisher: repo hazel-js/hazeljs, workflow publish.yml, environment prod, and id-token: write on this job.'
+      );
     }
   }
   return result.status;

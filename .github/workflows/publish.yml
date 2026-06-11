@@ -1,3 +1,10 @@
+# Publishes @hazeljs/* packages via npm Trusted Publisher (OIDC).
+# Configure on npmjs.com: @hazeljs org → Trusted Publishers →
+#   Repository: hazel-js/hazeljs
+#   Workflow: publish.yml
+#   Environment: prod
+# Do not set NPM_TOKEN — OIDC short-lived tokens are used instead.
+
 name: Publish Package to NPM
 
 on:
@@ -11,19 +18,19 @@ jobs:
     environment: prod
     permissions:
       contents: write
+      id-token: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
           token: ${{ secrets.GH_PAT }}
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '23.x'
-          registry-url: 'https://registry.npmjs.org'
-      
+          node-version: '24.x'
+
       - name: Extract version from tag
         id: version
         run: |
@@ -32,7 +39,7 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
           echo "Extracted version: $VERSION from tag: $TAG_NAME"
-      
+
       - name: Determine release tag
         id: release-tag
         run: |
@@ -54,28 +61,25 @@ jobs:
           VERSION="${{ steps.version.outputs.version }}"
           DEFAULT_BRANCH=$(git remote show origin | grep 'HEAD branch' | awk '{print $NF}')
           echo "default_branch=$DEFAULT_BRANCH" >> $GITHUB_OUTPUT
-          
-          # Switch from detached HEAD to the default branch
+
           git checkout "$DEFAULT_BRANCH"
-          
+
           echo "Updating all package.json files to version: $VERSION"
-          
-          # bump-version.js updates all package versions AND @hazeljs/* peer dep ranges
           node scripts/bump-version.js "$VERSION"
-          
+
           echo "Version update complete. Updated files:"
           git diff --name-only
         id: checkout
-      
+
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Build packages in dependency order
         run: npm run build
-      
+
       - name: Run tests
         run: npm run test
-      
+
       - name: Commit generated files (cli-manifest, inspector ui-dist)
         run: |
           git config user.name "github-actions[bot]"
@@ -95,7 +99,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          
+
           git add package.json lerna.json packages/*/package.json packages/*/*/package.json 2>/dev/null || true
           git diff --cached --stat
           if git diff --cached --quiet; then
@@ -105,29 +109,33 @@ jobs:
             git pull --rebase --autostash origin "${{ steps.checkout.outputs.default_branch }}"
             git push origin "${{ steps.checkout.outputs.default_branch }}"
           fi
-        
-      - name: Verify npm authentication
-        run: npm whoami
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Publish packages to NPM with Lerna
+      - name: Configure npm for Trusted Publisher (OIDC)
+        run: |
+          set -euo pipefail
+          npm install -g npm@11
+          registry="https://registry.npmjs.org"
+          npmrc="${NPM_CONFIG_USERCONFIG:-$HOME/.npmrc}"
+          printf '%s\n' "@hazeljs:registry=${registry}" "registry=${registry}" > "$npmrc"
+          unset NODE_AUTH_TOKEN NPM_TOKEN || true
+          echo "npm $(npm --version) on node $(node --version)"
+          npm view @hazeljs/core version
+
+      - name: Publish packages to NPM
         timeout-minutes: 50
         run: |
-          # Use Lerna 8.2.0 (pinned in package.json): 8.2.1+ and some 9.x hang after "Successfully published"
           RELEASE_TAG="${{ steps.release-tag.outputs.tag }}"
-          echo "Publishing with tag: $RELEASE_TAG using Lerna"
+          echo "Publishing with tag: $RELEASE_TAG via Trusted Publisher (OIDC)"
           export CI=true
           export NPM_CONFIG_YES=true
-          # Lerna 8.x uses npm as default client, no need to specify
-          npx lerna publish from-package --yes --dist-tag "$RELEASE_TAG" --no-git-reset --no-git-tag-version --concurrency 4 </dev/null
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          unset NODE_AUTH_TOKEN NPM_TOKEN || true
+          node scripts/publish-throttled.mjs "$RELEASE_TAG" 15
 
       - name: Update latest dist-tag to current version
         if: steps.release-tag.outputs.tag == 'latest'
         timeout-minutes: 10
         run: |
+          unset NODE_AUTH_TOKEN NPM_TOKEN || true
           VERSION="${{ steps.version.outputs.version }}"
           PKGS="core cli ai agent auth cache config cron worker pubsub distributed-lock saga observability inspector casl realtime feature-toggle mcp memory flow flow-runtime prompts i18n typeorm graphql discovery audit oauth kafka gateway guardrails resilience grpc messaging ops-agent data ml rag event-emitter pdf-to-audio prisma queue serverless swagger websocket payment"
           TOTAL=$(echo $PKGS | wc -w)
@@ -140,9 +148,7 @@ jobs:
           done
           wait
           echo "Done"
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}    
-      
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:

@@ -262,9 +262,20 @@ npm run build:watch
 
 1. Update version in `package.json`
 2. Update `CHANGELOG.md`
-3. Create a git tag
-4. Push to GitHub
-5. CI will automatically publish to npm
+3. Create a git tag (e.g. `v1.0.0`) and push it to GitHub
+4. The [publish workflow](.github/workflows/publish.yml) runs on tag push and publishes all `@hazeljs/*` packages via **npm Trusted Publisher (OIDC)** — no long-lived `NPM_TOKEN` is used
+
+### npm Trusted Publisher setup (maintainers)
+
+On [npmjs.com](https://www.npmjs.com), configure the `@hazeljs` org (or each package) with a Trusted Publisher:
+
+| Field | Value |
+| --- | --- |
+| Repository | `hazel-js/hazeljs` |
+| Workflow filename | `publish.yml` |
+| Environment | `prod` |
+
+Requires npm CLI ≥ 11.5.1 (the workflow installs npm 11 on Node 24). Remove any `NPM_TOKEN` secret from the GitHub `prod` environment so OIDC is not overridden.
 
 ## Getting Help
 
