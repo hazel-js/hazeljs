@@ -48,10 +48,10 @@ AgentModule.forRoot({
 
 Environment variables:
 
-| Variable | Values | Default |
-|----------|--------|---------|
+| Variable              | Values                        | Default                                       |
+| --------------------- | ----------------------------- | --------------------------------------------- |
 | `AGENT_STATE_BACKEND` | `memory`, `redis`, `database` | `memory` (or `redis` when `REDIS_URL` is set) |
-| `REDIS_URL` | Redis connection URL | — |
+| `REDIS_URL`           | Redis connection URL          | —                                             |
 
 Factory helpers:
 

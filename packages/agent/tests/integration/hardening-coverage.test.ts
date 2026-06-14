@@ -1,4 +1,8 @@
-import { createStateManager, createStateManagerFromEnv, resolveStateManager } from '../../src/state/create-state-manager';
+import {
+  createStateManager,
+  createStateManagerFromEnv,
+  resolveStateManager,
+} from '../../src/state/create-state-manager';
 import { createApprovalStore } from '../../src/approval/create-approval-store';
 import { RedisApprovalStore } from '../../src/approval/redis-approval.store';
 import { AgentStateManager } from '../../src/state/agent.state';
@@ -332,9 +336,14 @@ describe('Production hardening unit coverage', () => {
       };
 
       await expect(
-        withAgentSpan('fail.span', {}, async () => {
-          throw new Error('span fail');
-        }, provider)
+        withAgentSpan(
+          'fail.span',
+          {},
+          async () => {
+            throw new Error('span fail');
+          },
+          provider
+        )
       ).rejects.toThrow('span fail');
       expect(mockSpan.recordException).toHaveBeenCalled();
     });

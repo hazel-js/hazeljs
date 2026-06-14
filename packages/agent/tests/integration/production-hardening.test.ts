@@ -1,6 +1,9 @@
 import { AgentRuntime } from '../../src/runtime/agent.runtime';
 import { RedisStateManager } from '../../src/state/redis-state.manager';
-import { createStateManager, createStateManagerFromEnv } from '../../src/state/create-state-manager';
+import {
+  createStateManager,
+  createStateManagerFromEnv,
+} from '../../src/state/create-state-manager';
 import { RedisApprovalStore } from '../../src/approval/redis-approval.store';
 import { ToolExecutor } from '../../src/executor/tool.executor';
 import { Agent } from '../../src/decorators/agent.decorator';
