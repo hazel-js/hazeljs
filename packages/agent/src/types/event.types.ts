@@ -23,6 +23,7 @@ export enum AgentEventType {
   USER_INPUT_RECEIVED = 'agent.input.received',
   MEMORY_UPDATED = 'agent.memory.updated',
   RAG_QUERY_EXECUTED = 'agent.rag.executed',
+  RAG_QUERY_FAILED = 'agent.rag.failed',
 
   // Graph orchestration events
   GRAPH_STARTED = 'graph.started',

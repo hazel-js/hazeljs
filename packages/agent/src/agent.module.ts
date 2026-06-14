@@ -7,6 +7,14 @@ import { AgentEventType } from './types/event.types';
 import { getAgentMetadata, getRegisteredAgents } from './decorators/agent.decorator';
 import type { AgentContext, AgentExecutionResult, AgentStreamChunk } from './types/agent.types';
 import type { LLMStreamChunk } from './types/llm.types';
+import {
+  createStateManager,
+  createStateManagerFromEnv,
+  type AgentStateBackend,
+  type CreateStateManagerOptions,
+} from './state/create-state-manager';
+import type { RedisClientLike, PrismaClientLike } from './state/redis-client.types';
+import type { ObservabilityProvider } from './types/observability.types';
 
 type NewableFunction = new (...args: unknown[]) => unknown;
 
@@ -25,7 +33,17 @@ interface _IAIEnhancedService {
 export interface AgentModuleOptions {
   runtime?: AgentRuntimeConfig;
   agents?: NewableFunction[];
-  autoDiscover?: boolean; // Enable auto-discovery of @Agent decorated classes
+  autoDiscover?: boolean;
+  /** Pre-connected Redis client or URL (use forRootAsync when only url is available) */
+  redis?: { client?: RedisClientLike; url?: string };
+  /** Prisma client for database-backed state */
+  database?: { prismaClient?: PrismaClientLike };
+  /** Override AGENT_STATE_BACKEND (memory | redis | database) */
+  stateBackend?: AgentStateBackend;
+  /** Use Redis-backed approval store when redis client is configured */
+  useRedisApprovals?: boolean;
+  /** Optional observability provider from @hazeljs/observability */
+  observabilityProvider?: ObservabilityProvider;
 }
 
 /**
@@ -69,6 +87,14 @@ export class AgentService {
       guardrailsService:
         guardrailsService ?? moduleOpts.runtime?.guardrailsService ?? config.guardrailsService,
       llmProvider: moduleOpts.runtime?.llmProvider ?? config.llmProvider,
+      observabilityProvider:
+        moduleOpts.runtime?.observabilityProvider ??
+        moduleOpts.observabilityProvider ??
+        config.observabilityProvider,
+      stateManagerOptions:
+        moduleOpts.runtime?.stateManagerOptions ??
+        config.stateManagerOptions ??
+        AgentModule.buildStateManagerOptions(moduleOpts),
     };
     this.runtime = new AgentRuntime(runtimeConfig);
 
@@ -93,6 +119,10 @@ export class AgentService {
       logger.info('AgentService: LLM provider configured from AIEnhancedService');
     } else if (retryCount < 10) {
       setTimeout(() => this.resolveLLMProvider(retryCount + 1), 50);
+    } else {
+      logger.error(
+        'AgentService: LLM provider not available after 500ms. Load @hazeljs/ai or set runtime.llmProvider in AgentModule.forRoot().'
+      );
     }
   }
 
@@ -374,8 +404,50 @@ export class AgentModule {
   private static options: AgentModuleOptions = {};
 
   static forRoot(config: AgentModuleOptions = {}): typeof AgentModule {
-    AgentModule.options = config;
+    const runtime: AgentRuntimeConfig = { ...(config.runtime ?? {}) };
+
+    if (!runtime.stateManager) {
+      try {
+        runtime.stateManager = createStateManager(AgentModule.buildStateManagerOptions(config));
+      } catch {
+        // resolveStateManager in AgentRuntime falls back to in-memory
+      }
+    }
+
+    runtime.stateManagerOptions =
+      runtime.stateManagerOptions ?? AgentModule.buildStateManagerOptions(config);
+    runtime.observabilityProvider = runtime.observabilityProvider ?? config.observabilityProvider;
+
+    AgentModule.options = { ...config, runtime };
     return AgentModule;
+  }
+
+  /**
+   * Async module setup — connects Redis from REDIS_URL or redis.url before boot.
+   */
+  static async forRootAsync(config: AgentModuleOptions = {}): Promise<typeof AgentModule> {
+    const runtime: AgentRuntimeConfig = { ...(config.runtime ?? {}) };
+
+    if (!runtime.stateManager) {
+      runtime.stateManager = await createStateManagerFromEnv(
+        AgentModule.buildStateManagerOptions(config)
+      );
+    }
+
+    runtime.stateManagerOptions = AgentModule.buildStateManagerOptions(config);
+    runtime.observabilityProvider = runtime.observabilityProvider ?? config.observabilityProvider;
+
+    AgentModule.options = { ...config, runtime };
+    return AgentModule;
+  }
+
+  static buildStateManagerOptions(config: AgentModuleOptions): CreateStateManagerOptions {
+    return {
+      backend: config.stateBackend,
+      redisClient: config.redis?.client,
+      redisUrl: config.redis?.url,
+      prismaClient: config.database?.prismaClient,
+    };
   }
 
   static getOptions(): AgentModuleOptions {

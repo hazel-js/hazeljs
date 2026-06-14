@@ -1,7 +1,9 @@
 /**
- * Rate Limiter
- * Token bucket algorithm for rate limiting agent executions
+ * @deprecated Use TokenBucketLimiter from @hazeljs/resilience directly.
+ * Adapter preserving tokensPerMinute / waitForToken API used by AgentRuntime.
  */
+
+import { TokenBucketLimiter } from '@hazeljs/resilience';
 
 export interface RateLimiterConfig {
   tokensPerMinute: number;
@@ -9,94 +11,50 @@ export interface RateLimiterConfig {
 }
 
 export class RateLimiter {
-  private tokens: number;
-  private lastRefill: number;
-  private readonly tokensPerMinute: number;
-  private readonly burstSize: number;
-  private readonly refillRate: number;
+  private limiter: TokenBucketLimiter;
+  private readonly maxTokens: number;
+  private readonly refillRatePerSecond: number;
 
   constructor(config: RateLimiterConfig) {
-    this.tokensPerMinute = config.tokensPerMinute;
-    this.burstSize = config.burstSize || config.tokensPerMinute;
-    this.tokens = this.burstSize;
-    this.lastRefill = Date.now();
-    this.refillRate = this.tokensPerMinute / 60000; // tokens per millisecond
+    this.maxTokens = config.burstSize ?? config.tokensPerMinute;
+    this.refillRatePerSecond = config.tokensPerMinute / 60;
+    this.limiter = new TokenBucketLimiter(this.maxTokens, this.refillRatePerSecond);
   }
 
-  /**
-   * Try to consume a token
-   * @returns true if token was consumed, false if rate limit exceeded
-   */
   tryConsume(): boolean {
-    this.refill();
-
-    if (this.tokens >= 1) {
-      this.tokens -= 1;
-      return true;
-    }
-
-    return false;
+    return this.limiter.tryAcquire();
   }
 
-  /**
-   * Wait until a token is available
-   * @param timeoutMs Maximum time to wait in milliseconds
-   * @returns true if token was acquired, false if timeout
-   */
   async waitForToken(timeoutMs: number = 30000): Promise<boolean> {
-    const startTime = Date.now();
-
-    while (Date.now() - startTime < timeoutMs) {
-      if (this.tryConsume()) {
+    const start = Date.now();
+    while (Date.now() - start < timeoutMs) {
+      if (this.limiter.tryAcquire()) {
         return true;
       }
-
-      // Calculate wait time until next token
-      const tokensNeeded = 1 - this.tokens;
-      const waitMs = Math.ceil(tokensNeeded / this.refillRate);
-      const remainingTimeout = timeoutMs - (Date.now() - startTime);
-      const actualWaitMs = Math.min(waitMs, remainingTimeout, 1000);
-
-      if (actualWaitMs > 0) {
-        await this.sleep(actualWaitMs);
+      const waitMs = Math.min(
+        this.limiter.getRetryAfterMs(),
+        1000,
+        timeoutMs - (Date.now() - start)
+      );
+      if (waitMs <= 0) {
+        await sleep(50);
+        continue;
       }
+      await sleep(waitMs);
     }
-
     return false;
   }
 
-  /**
-   * Get current token count
-   */
+  /** Approximate peek: 1 when a token is available, 0 otherwise. */
   getAvailableTokens(): number {
-    this.refill();
-    return Math.floor(this.tokens);
+    return this.limiter.getRetryAfterMs() === 0 ? 1 : 0;
   }
 
-  /**
-   * Reset the rate limiter
-   */
   reset(): void {
-    this.tokens = this.burstSize;
-    this.lastRefill = Date.now();
+    this.limiter = new TokenBucketLimiter(this.maxTokens, this.refillRatePerSecond);
   }
+}
 
-  /**
-   * Refill tokens based on elapsed time
-   */
-  private refill(): void {
-    const now = Date.now();
-    const elapsed = now - this.lastRefill;
-    const tokensToAdd = elapsed * this.refillRate;
-
-    this.tokens = Math.min(this.burstSize, this.tokens + tokensToAdd);
-    this.lastRefill = now;
-  }
-
-  /**
-   * Sleep utility
-   */
-  private sleep(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-  }
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }

@@ -8,6 +8,10 @@ import { Logger, LogLevel } from '../utils/logger';
 
 type EventHandler<T = unknown> = (event: AgentEvent<T>) => void | Promise<void>;
 
+export interface AgentEventEmitterOptions {
+  strictEventHandlers?: boolean;
+}
+
 /**
  * Agent Event Emitter
  * Pub/sub system for agent runtime events
@@ -16,6 +20,11 @@ export class AgentEventEmitter {
   private handlers: Map<AgentEventType, Set<EventHandler>> = new Map();
   private wildcardHandlers: Set<EventHandler> = new Set();
   private logger = new Logger({ level: LogLevel.WARN });
+  private strictEventHandlers: boolean;
+
+  constructor(options: AgentEventEmitterOptions = {}) {
+    this.strictEventHandlers = options.strictEventHandlers ?? false;
+  }
 
   /**
    * Subscribe to an event type
@@ -76,11 +85,11 @@ export class AgentEventEmitter {
         try {
           await handler(event);
         } catch (error) {
-          this.logger.error(
-            `Error in event handler for ${type}`,
-            error instanceof Error ? error : new Error(String(error)),
-            { executionId }
-          );
+          const err = error instanceof Error ? error : new Error(String(error));
+          if (this.strictEventHandlers) {
+            throw err;
+          }
+          this.logger.error(`Error in event handler for ${type}`, err, { executionId });
         }
       }
     }
@@ -89,11 +98,11 @@ export class AgentEventEmitter {
       try {
         await handler(event);
       } catch (error) {
-        this.logger.error(
-          `Error in wildcard event handler for ${type}`,
-          error instanceof Error ? error : new Error(String(error)),
-          { executionId }
-        );
+        const err = error instanceof Error ? error : new Error(String(error));
+        if (this.strictEventHandlers) {
+          throw err;
+        }
+        this.logger.error(`Error in wildcard event handler for ${type}`, err, { executionId });
       }
     }
   }

@@ -24,6 +24,8 @@ import { PromptRegistry } from '@hazeljs/prompts';
 import { AgentError } from '../errors/agent.error';
 import '../prompts/agent-system.prompt';
 import { AGENT_SYSTEM_KEY } from '../prompts/agent-system.prompt';
+import { withAgentSpan, trackLlmCost } from '../utils/agent-tracing';
+import type { ObservabilityProvider } from '../types/observability.types';
 
 /** Options passed to execute() and executeStream() */
 export interface AgentExecutorOptions {
@@ -46,12 +48,17 @@ export class AgentExecutor {
     private toolExecutor: ToolExecutor,
     private toolRegistry: ToolRegistry,
     private llmProvider?: LLMProvider,
-    private eventEmitter?: (type: AgentEventType, executionId: string, data: unknown) => void
+    private eventEmitter?: (type: AgentEventType, executionId: string, data: unknown) => void,
+    private observabilityProvider?: ObservabilityProvider
   ) {}
 
   /** Replace the LLM provider at runtime (e.g. after AI module bootstraps). */
   setLlmProvider(provider: LLMProvider | undefined): void {
     this.llmProvider = provider;
+  }
+
+  setObservabilityProvider(provider: ObservabilityProvider | undefined): void {
+    this.observabilityProvider = provider;
   }
 
   /**
@@ -77,6 +84,23 @@ export class AgentExecutor {
    * Execute agent with controlled loop
    */
   async execute(
+    context: AgentContext,
+    maxSteps: number = 10,
+    options: AgentExecutorOptions = {}
+  ): Promise<AgentExecutionResult> {
+    return withAgentSpan(
+      'agent.execute',
+      {
+        'agent.name': context.agentId,
+        'agent.execution_id': context.executionId,
+        'agent.session_id': context.sessionId,
+      },
+      () => this.executeInternal(context, maxSteps, options),
+      this.observabilityProvider
+    );
+  }
+
+  private async executeInternal(
     context: AgentContext,
     maxSteps: number = 10,
     options: AgentExecutorOptions = {}
@@ -533,7 +557,7 @@ export class AgentExecutor {
         };
       } else if (this.llmProvider) {
         // Fallback to non-streaming
-        const response = await this.llmProvider.chat(request);
+        const response = await this.callLlm(context, request);
         step.action = {
           type: AgentActionType.RESPOND,
           response: response.content,
@@ -629,7 +653,7 @@ export class AgentExecutor {
         };
       }
 
-      const response = await this.llmProvider.chat(request);
+      const response = await this.callLlm(context, request);
 
       if (response.tool_calls && response.tool_calls.length > 0) {
         // Parse all tool calls
@@ -725,6 +749,23 @@ export class AgentExecutor {
         duration: result.duration,
       },
     };
+  }
+
+  /**
+   * Invoke LLM with optional tracing and cost tracking.
+   */
+  private async callLlm(
+    context: AgentContext,
+    request: Parameters<NonNullable<LLMProvider['chat']>>[0]
+  ): ReturnType<NonNullable<LLMProvider['chat']>> {
+    const response = await withAgentSpan(
+      'agent.llm',
+      { 'agent.name': context.agentId, 'agent.execution_id': context.executionId },
+      () => this.llmProvider!.chat(request),
+      this.observabilityProvider
+    );
+    trackLlmCost(this.observabilityProvider, undefined, response.usage);
+    return response;
   }
 
   /**

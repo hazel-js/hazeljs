@@ -203,6 +203,37 @@ npm run test:watch
 npm run build
 ```
 
+## ✅ v1.0 Production Hardening (2026)
+
+### Durable state & approvals
+
+- `createStateManagerFromEnv()` / `createStateManager()` factory helpers
+- `AgentModule.forRoot()` wires Redis when `redis.client` is provided; `forRootAsync()` connects via `REDIS_URL`
+- `IApprovalStore` with `InMemoryApprovalStore` (dev) and `RedisApprovalStore` (multi-instance)
+- Typed `RedisClientLike` / `PrismaClientLike` minimal interfaces for state managers
+
+### Resilience consolidation
+
+- Local `retry.ts` and `rate-limiter.ts` delegate to `@hazeljs/resilience`
+- Removed deprecated `src/utils/circuit-breaker.js` shim
+- Circuit breaker integration tests through `AgentRuntime.execute()`
+
+### Observability
+
+- Optional peer: `@hazeljs/observability` and `@opentelemetry/api`
+- OTel spans: `agent.execute`, `agent.tool.execute`, `agent.llm`
+- `trackLlmCost()` bridge when observability provider is configured
+
+### Error handling
+
+- RAG failures emit `agent.rag.failed` instead of silent empty context
+- `strictEventHandlers` on `AgentEventEmitter` surfaces handler errors in production
+- LLM provider resolution logs error after 500ms timeout if `@hazeljs/ai` is not loaded
+
+### Integration tests
+
+- `tests/integration/production-hardening.test.ts` — Redis state, approvals, circuit breaker, RAG errors
+
 ## 🎯 Coverage Goals
 
 - **Unit Test Coverage**: 80%+ (configured in jest.config.js)

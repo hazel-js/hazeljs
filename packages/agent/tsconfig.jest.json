@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "composite": false,
+    "declaration": false,
+    "declarationMap": false,
+    "paths": {
+      "@hazeljs/eval": ["src/testing/mocks/hazeljs-eval.ts"],
+      "@hazeljs/prompts": ["../prompts/src"],
+      "@hazeljs/rag": ["../rag/src"],
+      "@hazeljs/resilience": ["../resilience/src"]
+    }
+  },
+  "include": ["src/**/*", "tests/**/*"]
+}

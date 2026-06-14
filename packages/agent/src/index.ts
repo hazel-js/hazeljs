@@ -22,6 +22,13 @@ export * from './state/agent.state';
 export * from './state/agent-state.interface';
 export * from './state/redis-state.manager';
 export * from './state/database-state.manager';
+export * from './state/create-state-manager';
+export * from './state/redis-client.types';
+export * from './approval/approval-store.interface';
+export * from './approval/in-memory-approval.store';
+export * from './approval/redis-approval.store';
+export * from './approval/create-approval-store';
+export * from './types/observability.types';
 export * from './context/agent.context';
 
 export * from './executor/agent.executor';

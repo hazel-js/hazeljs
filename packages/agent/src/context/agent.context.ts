@@ -52,7 +52,8 @@ export class AgentContextBuilder {
     context: AgentContext,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ragService: any,
-    topK: number = 5
+    topK: number = 5,
+    onError?: (error: Error) => void
   ): Promise<void> {
     if (!ragService) {
       return;
@@ -62,7 +63,9 @@ export class AgentContextBuilder {
       const results = await ragService.search(context.input, { topK });
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       context.ragContext = results.map((r: any) => r.content || r.text);
-    } catch {
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      onError?.(err);
       context.ragContext = [];
     }
   }

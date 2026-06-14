@@ -8,10 +8,7 @@ import { AgentContext, AgentState, AgentStep } from '../types/agent.types';
 import { AgentError } from '../errors/agent.error';
 import { IAgentStateManager } from './agent-state.interface';
 import { randomUUID } from 'crypto';
-
-// Type for Prisma client (peer dependency)
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type PrismaClient = any;
+import type { PrismaClientLike } from './redis-client.types';
 
 // Database record types
 interface DatabaseStep {
@@ -61,7 +58,7 @@ export interface DatabaseStateManagerConfig {
   /**
    * Prisma client instance
    */
-  client: PrismaClient;
+  client: PrismaClientLike;
   /**
    * Whether to enable soft deletes (keep deleted contexts for audit)
    * @default true
@@ -84,7 +81,7 @@ export interface DatabaseStateManagerConfig {
  * Provides durable persistence with full query capabilities and audit trail
  */
 export class DatabaseStateManager implements IAgentStateManager {
-  private client: PrismaClient;
+  private client: PrismaClientLike;
   private softDelete: boolean;
   private autoArchive: boolean;
   private archiveThresholdDays: number;
@@ -211,7 +208,7 @@ export class DatabaseStateManager implements IAgentStateManager {
       return undefined;
     }
 
-    return this.toContext(record);
+    return this.toContext(record as DatabaseRecord);
   }
 
   async updateState(executionId: string, newState: AgentState): Promise<void> {
@@ -400,6 +397,6 @@ export class DatabaseStateManager implements IAgentStateManager {
       },
     });
 
-    return records.map((record: DatabaseRecord) => this.toContext(record));
+    return (records as DatabaseRecord[]).map((record) => this.toContext(record));
   }
 }

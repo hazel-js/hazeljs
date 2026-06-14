@@ -132,6 +132,26 @@ if (result.state === 'waiting_for_input') {
 }
 ```
 
+## Production setup
+
+For multi-instance deployments, use Redis-backed state and approvals:
+
+```typescript
+import { AgentModule } from '@hazeljs/agent';
+import { createClient } from 'redis';
+
+const redisClient = createClient({ url: process.env.REDIS_URL });
+await redisClient.connect();
+
+await AgentModule.forRootAsync({
+  redis: { client: redisClient },
+  useRedisApprovals: true,
+  runtime: { strictEventHandlers: process.env.NODE_ENV === 'production' },
+});
+```
+
+See [PERSISTENCE.md](./PERSISTENCE.md) for `AGENT_STATE_BACKEND` and factory helpers.
+
 ## Support
 
 - GitHub Issues: [Report bugs](https://github.com/hazeljs/hazeljs/issues)

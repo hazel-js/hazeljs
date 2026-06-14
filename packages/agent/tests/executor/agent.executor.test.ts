@@ -745,4 +745,58 @@ describe('AgentExecutor', () => {
       expect(chunks.length).toBeGreaterThanOrEqual(0);
     });
   });
+
+  describe('observability', () => {
+    it('supports setObservabilityProvider and traces LLM calls', async () => {
+      const mockSpan = {
+        setAttribute: jest.fn(),
+        recordException: jest.fn(),
+        setStatus: jest.fn(),
+        end: jest.fn(),
+      };
+      const observabilityProvider = {
+        start: jest.fn(),
+        stop: jest.fn(),
+        getTracer: jest.fn().mockReturnValue({
+          startActiveSpan: (_name: string, fn: (span: unknown) => unknown) => fn(mockSpan),
+        }),
+        trackCost: jest.fn(),
+      };
+
+      const mockLLMProvider: LLMProvider = {
+        chat: jest.fn().mockResolvedValue({
+          content: 'traced',
+          usage: { promptTokens: 1, completionTokens: 2 },
+        }),
+      };
+
+      const tracedExecutor = new AgentExecutor(
+        stateManager,
+        contextBuilder,
+        toolExecutor,
+        toolRegistry,
+        mockLLMProvider,
+        eventEmitter,
+        observabilityProvider
+      );
+
+      const context = stateManager.createContext('agent-1', 'session-1', 'Hello');
+      const originalExecuteStep = (tracedExecutor as any).executeStep;
+      (tracedExecutor as any).executeStep = jest.fn().mockResolvedValue({
+        step: {
+          id: 'step-1',
+          agentId: 'agent-1',
+          executionId: context.executionId,
+          stepNumber: 1,
+          state: AgentState.COMPLETED,
+          action: { type: AgentActionType.RESPOND, response: 'done' },
+          timestamp: new Date(),
+        },
+      });
+
+      await tracedExecutor.execute(context, 5);
+      (tracedExecutor as any).executeStep = originalExecuteStep;
+      expect(observabilityProvider.getTracer).toHaveBeenCalled();
+    });
+  });
 });

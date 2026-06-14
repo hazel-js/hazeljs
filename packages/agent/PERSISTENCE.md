@@ -26,6 +26,42 @@ The `@hazeljs/agent` package supports multiple persistence backends for agent ex
 - **Pros**: Durable, queryable, full audit trail
 - **Cons**: Slower than Redis, requires database setup
 
+## Environment-driven setup (v1.0+)
+
+Use `createStateManagerFromEnv()` or `AgentModule.forRootAsync()` to pick Redis automatically from `REDIS_URL`:
+
+```typescript
+import { AgentModule } from '@hazeljs/agent';
+
+// Async bootstrap (connects Redis from REDIS_URL)
+await AgentModule.forRootAsync({
+  stateBackend: process.env.AGENT_STATE_BACKEND as 'memory' | 'redis' | 'database',
+  redis: { url: process.env.REDIS_URL },
+});
+
+// Or sync when you already have a connected client
+AgentModule.forRoot({
+  redis: { client: redisClient },
+  useRedisApprovals: true,
+});
+```
+
+Environment variables:
+
+| Variable | Values | Default |
+|----------|--------|---------|
+| `AGENT_STATE_BACKEND` | `memory`, `redis`, `database` | `memory` (or `redis` when `REDIS_URL` is set) |
+| `REDIS_URL` | Redis connection URL | — |
+
+Factory helpers:
+
+```typescript
+import { createStateManager, createStateManagerFromEnv } from '@hazeljs/agent';
+
+const syncManager = createStateManager({ backend: 'redis', redisClient });
+const asyncManager = await createStateManagerFromEnv({ redisUrl: process.env.REDIS_URL });
+```
+
 ## Usage
 
 ### In-Memory (Default)

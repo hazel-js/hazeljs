@@ -13,11 +13,17 @@ import {
 } from '../types/tool.types';
 import { AgentEventType } from '../types/event.types';
 import type { IGuardrailsService } from '../types/agent.types';
+import { IApprovalStore } from '../approval/approval-store.interface';
+import { InMemoryApprovalStore } from '../approval/in-memory-approval.store';
+import { RedisApprovalStore } from '../approval/redis-approval.store';
+import { withAgentSpan } from '../utils/agent-tracing';
+import type { ObservabilityProvider } from '../types/observability.types';
 
-/** Resolver for event-driven approval: resolve(true) = approved, resolve(false) = rejected/expired */
-interface PendingApprovalResolver {
-  resolve: (approved: boolean) => void;
-  timeoutId?: NodeJS.Timeout;
+export interface ToolExecutorOptions {
+  eventEmitter?: (type: AgentEventType, data: unknown) => void;
+  guardrailsService?: IGuardrailsService;
+  approvalStore?: IApprovalStore;
+  observabilityProvider?: ObservabilityProvider;
 }
 
 /**
@@ -25,21 +31,34 @@ interface PendingApprovalResolver {
  * Handles tool execution with approval and retry logic
  */
 export class ToolExecutor {
-  private pendingApprovals: Map<string, ToolApprovalRequest> = new Map();
-  private approvalResolvers: Map<string, PendingApprovalResolver> = new Map();
-  private executionContexts: Map<string, ToolExecutionContext> = new Map();
+  private readonly approvalStore: IApprovalStore;
+  private readonly executionContexts = new Map<string, ToolExecutionContext>();
 
   private static readonly DEFAULT_APPROVAL_TTL_MS = 300_000;
 
-  constructor(
-    private eventEmitter?: (type: AgentEventType, data: unknown) => void,
-    private guardrailsService?: IGuardrailsService
-  ) {}
+  constructor(private options: ToolExecutorOptions = {}) {
+    this.approvalStore = options.approvalStore ?? new InMemoryApprovalStore();
+  }
 
   /**
    * Execute a tool
    */
   async execute(
+    tool: ToolMetadata,
+    input: Record<string, unknown>,
+    agentId: string,
+    sessionId: string,
+    userId?: string
+  ): Promise<ToolExecutionResult> {
+    return withAgentSpan(
+      'agent.tool.execute',
+      { 'agent.tool.name': tool.name, 'agent.id': agentId, 'agent.session_id': sessionId },
+      () => this.executeInternal(tool, input, agentId, sessionId, userId),
+      this.options.observabilityProvider
+    );
+  }
+
+  private async executeInternal(
     tool: ToolMetadata,
     input: Record<string, unknown>,
     agentId: string,
@@ -68,7 +87,6 @@ export class ToolExecutor {
     });
 
     try {
-      // Validate input against Zod schema if provided
       if (tool.schema) {
         const parsed = await tool.schema.safeParseAsync(input);
         if (!parsed.success) {
@@ -90,13 +108,12 @@ export class ToolExecutor {
             duration: context.duration,
           };
         }
-        // Use parsed data which may include defaults/transforms
         input = parsed.data as Record<string, unknown>;
         context.input = input;
       }
 
-      if (this.guardrailsService) {
-        const inputResult = this.guardrailsService.checkInput(input);
+      if (this.options.guardrailsService) {
+        const inputResult = this.options.guardrailsService.checkInput(input);
         if (!inputResult.allowed) {
           context.status = ToolExecutionStatus.FAILED;
           context.completedAt = new Date();
@@ -121,7 +138,12 @@ export class ToolExecutor {
       }
 
       if (tool.requiresApproval) {
-        const { promise, requestId } = this.requestApproval(tool, input, agentId, executionId);
+        const { promise, requestId } = await this.requestApproval(
+          tool,
+          input,
+          agentId,
+          executionId
+        );
         const approved = await promise;
 
         if (!approved) {
@@ -190,9 +212,6 @@ export class ToolExecutor {
     }
   }
 
-  /**
-   * Execute tool with retry logic
-   */
   private async executeWithRetry(
     tool: ToolMetadata,
     input: Record<string, unknown>,
@@ -203,11 +222,9 @@ export class ToolExecutor {
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
         const timeout = tool.timeout || 30000;
-        const result = await this.executeWithTimeout(tool, input, timeout);
-        return result;
+        return await this.executeWithTimeout(tool, input, timeout);
       } catch (error) {
         lastError = error as Error;
-
         if (attempt < maxRetries) {
           await this.delay(Math.pow(2, attempt) * 1000);
         }
@@ -217,9 +234,6 @@ export class ToolExecutor {
     throw lastError;
   }
 
-  /**
-   * Execute tool with timeout
-   */
   private async executeWithTimeout(
     tool: ToolMetadata,
     input: Record<string, unknown>,
@@ -237,8 +251,8 @@ export class ToolExecutor {
         }),
       ]);
 
-      if (this.guardrailsService && result !== undefined && result !== null) {
-        const outputResult = this.guardrailsService.checkOutput(result as string | object);
+      if (this.options.guardrailsService && result !== undefined && result !== null) {
+        const outputResult = this.options.guardrailsService.checkOutput(result as string | object);
         if (!outputResult.allowed) {
           throw new Error(outputResult.blockedReason ?? 'Output blocked by guardrails');
         }
@@ -253,16 +267,12 @@ export class ToolExecutor {
     }
   }
 
-  /**
-   * Request approval for tool execution (event-driven: resolves when approve/reject/expire is called).
-   * Returns { promise, requestId } so callers can emit events with the correct requestId.
-   */
-  private requestApproval(
+  private async requestApproval(
     tool: ToolMetadata,
     input: Record<string, unknown>,
     agentId: string,
     executionId: string
-  ): { promise: Promise<boolean>; requestId: string } {
+  ): Promise<{ promise: Promise<boolean>; requestId: string }> {
     const requestId = randomUUID();
     const expiresAt = new Date(Date.now() + ToolExecutor.DEFAULT_APPROVAL_TTL_MS);
 
@@ -277,7 +287,41 @@ export class ToolExecutor {
       status: 'pending',
     };
 
-    this.pendingApprovals.set(requestId, request);
+    const createResult = this.approvalStore.create(request);
+
+    const promise = new Promise<boolean>((resolve) => {
+      const timeoutId = setTimeout(async () => {
+        const req = await this.unwrap(this.approvalStore.get(requestId));
+        if (req && req.status === 'pending') {
+          req.status = 'expired';
+          await this.unwrap(this.approvalStore.delete(requestId));
+          resolve(false);
+        }
+      }, ToolExecutor.DEFAULT_APPROVAL_TTL_MS);
+
+      if (this.approvalStore instanceof InMemoryApprovalStore) {
+        this.approvalStore.registerResolver(requestId, { resolve, timeoutId });
+        return;
+      }
+
+      if (this.approvalStore instanceof RedisApprovalStore) {
+        this.approvalStore.registerResolver(requestId, { resolve, timeoutId });
+        void this.approvalStore
+          .waitForResolution(requestId, expiresAt)
+          .then((approved) => {
+            clearTimeout(timeoutId);
+            resolve(approved);
+          })
+          .catch(() => {
+            clearTimeout(timeoutId);
+            resolve(false);
+          });
+      }
+    });
+
+    if (createResult instanceof Promise) {
+      await createResult;
+    }
 
     this.emitEvent(AgentEventType.TOOL_APPROVAL_REQUESTED, {
       requestId,
@@ -285,76 +329,35 @@ export class ToolExecutor {
       input,
     });
 
-    const promise = new Promise<boolean>((resolve) => {
-      const timeoutId = setTimeout(() => {
-        const req = this.pendingApprovals.get(requestId);
-        if (req && req.status === 'pending') {
-          req.status = 'expired';
-          this.pendingApprovals.delete(requestId);
-          this.approvalResolvers.delete(requestId);
-          resolve(false);
-        }
-      }, ToolExecutor.DEFAULT_APPROVAL_TTL_MS);
-
-      this.approvalResolvers.set(requestId, { resolve, timeoutId });
-    });
-
     return { promise, requestId };
   }
 
-  /**
-   * Approve a tool execution (event-driven: resolves the pending Promise immediately).
-   */
   approveExecution(requestId: string, approvedBy: string): void {
-    const request = this.pendingApprovals.get(requestId);
-    const resolver = this.approvalResolvers.get(requestId);
-    if (request && request.status === 'pending' && resolver) {
-      request.status = 'approved';
-      request.approvedBy = approvedBy;
-      request.approvedAt = new Date();
-      if (resolver.timeoutId) clearTimeout(resolver.timeoutId);
-      this.approvalResolvers.delete(requestId);
-      this.pendingApprovals.delete(requestId);
-      resolver.resolve(true);
-    }
+    void this.approvalStore.approve(requestId, approvedBy);
   }
 
-  /**
-   * Reject a tool execution (event-driven: resolves the pending Promise immediately).
-   */
   rejectExecution(requestId: string): void {
-    const request = this.pendingApprovals.get(requestId);
-    const resolver = this.approvalResolvers.get(requestId);
-    if (request && request.status === 'pending' && resolver) {
-      request.status = 'rejected';
-      request.rejectedAt = new Date();
-      if (resolver.timeoutId) clearTimeout(resolver.timeoutId);
-      this.approvalResolvers.delete(requestId);
-      this.pendingApprovals.delete(requestId);
-      resolver.resolve(false);
-    }
+    void this.approvalStore.reject(requestId);
   }
 
-  /**
-   * Get pending approval requests
-   */
   getPendingApprovals(): ToolApprovalRequest[] {
-    return Array.from(this.pendingApprovals.values());
+    const result = this.approvalStore.listPending();
+    return result instanceof Promise ? [] : result;
   }
 
-  /**
-   * Emit event
-   */
+  async getPendingApprovalsAsync(): Promise<ToolApprovalRequest[]> {
+    return this.unwrap(this.approvalStore.listPending());
+  }
+
   private emitEvent(type: AgentEventType, data: unknown): void {
-    if (this.eventEmitter) {
-      this.eventEmitter(type, data);
-    }
+    this.options.eventEmitter?.(type, data);
   }
 
-  /**
-   * Delay helper
-   */
   private delay(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  private async unwrap<T>(value: T | Promise<T>): Promise<T> {
+    return value instanceof Promise ? await value : value;
   }
 }

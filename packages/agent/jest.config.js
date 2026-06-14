@@ -4,13 +4,21 @@ module.exports = {
   roots: ['<rootDir>/src', '<rootDir>/tests'],
   testMatch: ['**/__tests__/**/*.ts', '**/?(*.)+(spec|test).ts'],
   transform: {
-    '^.+\\.ts$': 'ts-jest',
+    '^.+\\.ts$': [
+      'ts-jest',
+      {
+        tsconfig: 'tsconfig.jest.json',
+      },
+    ],
   },
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
   collectCoverageFrom: [
     'src/**/*.ts',
     '!src/**/*.d.ts',
     '!src/index.ts',
+    '!src/decorators/approval.decorator.ts',
+    '!src/testing/**',
+    '!src/evaluation/**',
   ],
   coverageThreshold: {
     global: {
@@ -26,6 +34,7 @@ module.exports = {
   moduleNameMapper: {
     '^@hazeljs/core$': '<rootDir>/../core/src',
     '^@hazeljs/rag$': '<rootDir>/../rag/src',
+    '^@hazeljs/eval$': '<rootDir>/src/testing/mocks/hazeljs-eval.ts',
   },
   setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
 };

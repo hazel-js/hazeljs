@@ -9,7 +9,7 @@ describe('ToolExecutor', () => {
   beforeEach(() => {
     jest.useFakeTimers();
     eventEmitter = jest.fn();
-    executor = new ToolExecutor(eventEmitter);
+    executor = new ToolExecutor({ eventEmitter });
   });
 
   afterEach(() => {
@@ -188,7 +188,7 @@ describe('ToolExecutor', () => {
         checkOutput: jest.fn().mockReturnValue({ allowed: true }),
       };
 
-      const guardedExecutor = new ToolExecutor(eventEmitter, mockGuardrails);
+      const guardedExecutor = new ToolExecutor({ eventEmitter, guardrailsService: mockGuardrails });
       const tool: ToolMetadata = {
         name: 'testTool',
         description: 'Test tool',
@@ -215,7 +215,7 @@ describe('ToolExecutor', () => {
         checkOutput: jest.fn().mockReturnValue({ allowed: true }),
       };
 
-      const guardedExecutor = new ToolExecutor(eventEmitter, mockGuardrails);
+      const guardedExecutor = new ToolExecutor({ eventEmitter, guardrailsService: mockGuardrails });
       const input = { email: 'test@example.com' };
       const tool: ToolMetadata = {
         name: 'testTool',
@@ -242,7 +242,7 @@ describe('ToolExecutor', () => {
         }),
       };
 
-      const guardedExecutor = new ToolExecutor(eventEmitter, mockGuardrails);
+      const guardedExecutor = new ToolExecutor({ eventEmitter, guardrailsService: mockGuardrails });
       const tool: ToolMetadata = {
         name: 'testTool',
         description: 'Test tool',
@@ -268,7 +268,7 @@ describe('ToolExecutor', () => {
         }),
       };
 
-      const guardedExecutor = new ToolExecutor(eventEmitter, mockGuardrails);
+      const guardedExecutor = new ToolExecutor({ eventEmitter, guardrailsService: mockGuardrails });
       const tool: ToolMetadata = {
         name: 'testTool',
         description: 'Test tool',
@@ -386,6 +386,43 @@ describe('ToolExecutor', () => {
 
       expect(approvals.length).toBeGreaterThan(0);
       expect(approvals[0].toolName).toBe('testTool');
+    });
+  });
+
+  describe('observability', () => {
+    it('traces tool execution when observability provider is set', async () => {
+      const mockSpan = {
+        setAttribute: jest.fn(),
+        recordException: jest.fn(),
+        setStatus: jest.fn(),
+        end: jest.fn(),
+      };
+      const tracedExecutor = new ToolExecutor({
+        eventEmitter,
+        observabilityProvider: {
+          start: jest.fn(),
+          stop: jest.fn(),
+          getTracer: jest.fn().mockReturnValue({
+            startActiveSpan: (_name: string, fn: (span: unknown) => unknown) => fn(mockSpan),
+          }),
+          trackCost: jest.fn(),
+        },
+      });
+
+      const tool: ToolMetadata = {
+        name: 'tracedTool',
+        description: 'Traced',
+        parameters: [],
+        method: jest.fn().mockResolvedValue('ok'),
+        target: {},
+        propertyKey: 'tracedTool',
+        agentClass: class {},
+      };
+
+      const promise = tracedExecutor.execute(tool, {}, 'agent-1', 'session-1');
+      jest.runAllTimers();
+      await promise;
+      expect(mockSpan.end).toHaveBeenCalled();
     });
   });
 });

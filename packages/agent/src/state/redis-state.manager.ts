@@ -8,16 +8,13 @@ import { AgentContext, AgentState, AgentStep } from '../types/agent.types';
 import { AgentError } from '../errors/agent.error';
 import { IAgentStateManager } from './agent-state.interface';
 import { randomUUID } from 'crypto';
-
-// Type for Redis client (peer dependency)
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type RedisClient = any;
+import type { RedisClientLike } from './redis-client.types';
 
 export interface RedisStateManagerConfig {
   /**
    * Redis client instance
    */
-  client: RedisClient;
+  client: RedisClientLike;
   /**
    * Key prefix for all agent state keys
    * @default "agent:state:"
@@ -45,7 +42,7 @@ export interface RedisStateManagerConfig {
  * Provides fast, distributed state management with automatic expiration
  */
 export class RedisStateManager implements IAgentStateManager {
-  private client: RedisClient;
+  private client: RedisClientLike;
   private keyPrefix: string;
   private defaultTTL: number;
   private completedTTL: number;
@@ -331,7 +328,7 @@ export class RedisStateManager implements IAgentStateManager {
     const pattern = `${this.keyPrefix}*`;
     const keys = await this.client.keys(pattern);
     if (keys.length > 0) {
-      await this.client.del(...keys);
+      await Promise.all(keys.map((key) => this.client.del(key)));
     }
   }
 

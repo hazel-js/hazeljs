@@ -5,8 +5,10 @@
 
 import { AgentRegistry } from '../registry/agent.registry';
 import { ToolRegistry } from '../registry/tool.registry';
-import { AgentStateManager } from '../state/agent.state';
+import { resolveStateManager, CreateStateManagerOptions } from '../state/create-state-manager';
 import { IAgentStateManager } from '../state/agent-state.interface';
+import { createApprovalStore } from '../approval/create-approval-store';
+import { IApprovalStore } from '../approval/approval-store.interface';
 import { AgentContextBuilder } from '../context/agent.context';
 import { AgentExecutor } from '../executor/agent.executor';
 import { ToolExecutor } from '../executor/tool.executor';
@@ -34,16 +36,21 @@ import { AgentGraph } from '../graph/agent-graph';
 import { SupervisorAgent } from '../supervisor/supervisor';
 import { SupervisorConfig } from '../graph/agent-graph.types';
 import { getDelegatedMethods, getDelegateMetadata } from '../decorators/delegate.decorator';
+import type { ObservabilityProvider } from '../types/observability.types';
 
 /**
  * Agent Runtime Configuration
  */
 export interface AgentRuntimeConfig {
   stateManager?: IAgentStateManager;
+  /** Factory options when stateManager is not provided explicitly */
+  stateManagerOptions?: CreateStateManagerOptions;
+  approvalStore?: IApprovalStore;
   memoryManager?: MemoryManager;
   ragService?: RAGService;
   llmProvider?: LLMProvider;
   guardrailsService?: IGuardrailsService;
+  observabilityProvider?: ObservabilityProvider;
   defaultMaxSteps?: number;
   defaultTimeout?: number;
   enableObservability?: boolean;
@@ -52,6 +59,8 @@ export interface AgentRuntimeConfig {
   logLevel?: LogLevel;
   enableRetry?: boolean;
   enableCircuitBreaker?: boolean;
+  /** When true, event handler errors propagate instead of being logged only */
+  strictEventHandlers?: boolean;
 }
 
 /**
@@ -138,13 +147,27 @@ export class AgentRuntime {
 
     this.agentRegistry = new AgentRegistry();
     this.toolRegistry = new ToolRegistry();
-    this.stateManager = config.stateManager || new AgentStateManager();
+    this.stateManager = resolveStateManager(config.stateManager, config.stateManagerOptions);
     this.contextBuilder = new AgentContextBuilder(config.memoryManager);
-    this.eventEmitter = new AgentEventEmitter();
+    this.eventEmitter = new AgentEventEmitter({
+      strictEventHandlers: this.config.strictEventHandlers,
+    });
 
-    this.toolExecutor = new ToolExecutor((type, data) => {
-      this.eventEmitter.emit(type, '', '', data);
-    }, config.guardrailsService);
+    const approvalStore =
+      config.approvalStore ??
+      createApprovalStore({
+        redisClient: config.stateManagerOptions?.redisClient,
+        useRedis: !!config.stateManagerOptions?.redisClient,
+      });
+
+    this.toolExecutor = new ToolExecutor({
+      eventEmitter: (type, data): void => {
+        void this.eventEmitter.emit(type, '', '', data);
+      },
+      guardrailsService: config.guardrailsService,
+      approvalStore,
+      observabilityProvider: config.observabilityProvider,
+    });
 
     this.agentExecutor = new AgentExecutor(
       this.stateManager,
@@ -154,7 +177,8 @@ export class AgentRuntime {
       config.llmProvider,
       (type, executionId, data) => {
         this.eventEmitter.emit(type, '', executionId, data);
-      }
+      },
+      config.observabilityProvider
     );
 
     this.logger.info('Agent runtime initialized', {
@@ -327,7 +351,12 @@ export class AgentRuntime {
       }
 
       if (options.enableRAG !== false && this.config.ragService) {
-        await this.contextBuilder.buildWithRAG(context, this.config.ragService, agent.ragTopK || 5);
+        await this.contextBuilder.buildWithRAG(
+          context,
+          this.config.ragService,
+          agent.ragTopK || 5,
+          (error) => this.handleRagError(context, error)
+        );
       }
 
       if (options.initialContext) {
@@ -348,6 +377,9 @@ export class AgentRuntime {
           signal,
           streaming: options.streaming,
         });
+        if (result.state === AgentState.FAILED) {
+          throw result.error ?? new Error('Agent execution failed');
+        }
         if (this.config.memoryManager) {
           await this.contextBuilder.persistToMemory(context);
         }
@@ -413,7 +445,12 @@ export class AgentRuntime {
       await this.contextBuilder.buildWithMemory(context);
     }
     if (options.enableRAG !== false && this.config.ragService) {
-      await this.contextBuilder.buildWithRAG(context, this.config.ragService, agent.ragTopK || 5);
+      await this.contextBuilder.buildWithRAG(
+        context,
+        this.config.ragService,
+        agent.ragTopK || 5,
+        (error) => this.handleRagError(context, error)
+      );
     }
     if (options.initialContext) {
       Object.assign(context.memory.workingMemory, options.initialContext);
@@ -602,6 +639,29 @@ export class AgentRuntime {
    */
   getPendingApprovals(): import('../types/tool.types').ToolApprovalRequest[] {
     return this.toolExecutor.getPendingApprovals();
+  }
+
+  async getPendingApprovalsAsync(): Promise<import('../types/tool.types').ToolApprovalRequest[]> {
+    return this.toolExecutor.getPendingApprovalsAsync();
+  }
+
+  private handleRagError(context: AgentContext, error: Error): void {
+    this.logger.error('RAG query failed', error, {
+      executionId: context.executionId,
+      sessionId: context.sessionId,
+    });
+    if (this.metrics) {
+      this.metrics.recordLLMCall(0, true);
+    }
+    void this.eventEmitter.emit(
+      AgentEventType.RAG_QUERY_FAILED,
+      context.agentId,
+      context.executionId,
+      {
+        error: error.message,
+        input: context.input,
+      }
+    );
   }
 
   // ---------------------------------------------------------------------------

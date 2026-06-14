@@ -8,7 +8,7 @@ describe('AgentModule', () => {
       const module = AgentModule.forRoot();
 
       expect(module).toBe(AgentModule);
-      expect(AgentModule.getOptions()).toEqual({});
+      expect(AgentModule.getOptions().runtime?.stateManagerOptions).toBeDefined();
     });
 
     it('should store agents config if provided', () => {
