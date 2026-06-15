@@ -61,6 +61,8 @@ export interface AgentRuntimeConfig {
   enableCircuitBreaker?: boolean;
   /** When true, event handler errors propagate instead of being logged only */
   strictEventHandlers?: boolean;
+  /** Use Redis-backed approval store when redisClient is in stateManagerOptions (default: true when client present) */
+  useRedisApprovals?: boolean;
 }
 
 /**
@@ -153,11 +155,14 @@ export class AgentRuntime {
       strictEventHandlers: this.config.strictEventHandlers,
     });
 
+    const useRedisApprovals =
+      config.useRedisApprovals !== false && !!config.stateManagerOptions?.redisClient;
+
     const approvalStore =
       config.approvalStore ??
       createApprovalStore({
         redisClient: config.stateManagerOptions?.redisClient,
-        useRedis: !!config.stateManagerOptions?.redisClient,
+        useRedis: config.useRedisApprovals === true || useRedisApprovals,
       });
 
     this.toolExecutor = new ToolExecutor({

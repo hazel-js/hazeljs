@@ -235,12 +235,29 @@ const runtime = new AgentRuntime({
 ### Production
 
 ```typescript
-// Redis for agent state (fast, distributed)
-// Vector store (Pinecone) for memory (semantic search)
-const stateManager = new RedisStateManager({ client: redisClient });
+// Redis for agent state + durable approvals (multi-instance)
+import { AgentModule } from '@hazeljs/agent';
+import { createClient } from 'redis';
+
+const redisClient = createClient({ url: process.env.REDIS_URL });
+await redisClient.connect();
+
+await AgentModule.forRootAsync({
+  redis: { client: redisClient },
+  useRedisApprovals: true,
+});
+
+// Vector store (Pinecone) for long-term memory (semantic search)
 const memoryStore = new VectorMemory(pineconeStore, embeddings);
 const memoryManager = new MemoryManager(memoryStore);
+```
 
+Or wire managers manually:
+
+```typescript
+import { RedisStateManager } from '@hazeljs/agent';
+
+const stateManager = new RedisStateManager({ client: redisClient });
 const runtime = new AgentRuntime({
   stateManager, // ← Agent execution state
   memoryManager, // ← Long-term memory

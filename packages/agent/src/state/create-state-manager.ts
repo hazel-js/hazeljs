@@ -69,28 +69,44 @@ export function createStateManager(options: CreateStateManagerOptions = {}): IAg
 
 /**
  * Create a state manager from environment (REDIS_URL, AGENT_STATE_BACKEND).
- * Falls back to in-memory when Redis is unavailable.
+ * Throws if Redis backend is selected but connection fails.
+ * Returns updated options with `redisClient` set when Redis was connected (for approval store wiring).
  */
 export async function createStateManagerFromEnv(
   options: CreateStateManagerOptions = {}
 ): Promise<IAgentStateManager> {
+  const { stateManager } = await resolveStateManagerFromEnv(options);
+  return stateManager;
+}
+
+/**
+ * Like createStateManagerFromEnv but also returns options with redisClient populated.
+ */
+export async function resolveStateManagerFromEnv(
+  options: CreateStateManagerOptions = {}
+): Promise<{ stateManager: IAgentStateManager; stateManagerOptions: CreateStateManagerOptions }> {
   const backend = resolveBackend(options);
+  const stateManagerOptions = { ...options };
 
   if (backend === 'redis') {
     const client =
       options.redisClient ??
       (await createRedisClientFromUrl(options.redisUrl ?? process.env.REDIS_URL));
-    return new RedisStateManager({ client });
+    stateManagerOptions.redisClient = client;
+    return { stateManager: new RedisStateManager({ client }), stateManagerOptions };
   }
 
   if (backend === 'database') {
     if (!options.prismaClient) {
       throw new Error('Database state backend requires prismaClient in options.');
     }
-    return new DatabaseStateManager({ client: options.prismaClient });
+    return {
+      stateManager: new DatabaseStateManager({ client: options.prismaClient }),
+      stateManagerOptions,
+    };
   }
 
-  return new AgentStateManager();
+  return { stateManager: new AgentStateManager(), stateManagerOptions };
 }
 
 /**

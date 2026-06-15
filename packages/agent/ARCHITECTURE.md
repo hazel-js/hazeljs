@@ -330,15 +330,15 @@ Check tool.requiresApproval
     ↓ (true)
 Create ToolApprovalRequest
     ↓
-Store in pendingApprovals Map
+Store in IApprovalStore (InMemoryApprovalStore or RedisApprovalStore)
     ↓
 Emit TOOL_APPROVAL_REQUESTED
     ↓
-Wait (polling every 1s)
+Wait (local resolver or Redis polling for cross-instance)
     ↓
 User calls runtime.approveToolExecution()
     ↓
-Remove from pendingApprovals
+Store resolves approval
     ↓
 Continue execution
 ```
@@ -418,32 +418,33 @@ runtime.on(AgentEventType.EXECUTION_FAILED, (event) => {
 
 ## Scalability Considerations
 
-### Current Implementation
+### Current Implementation (v1.0.1+)
 
-- **In-Memory State**: AgentStateManager uses Map
-- **In-Memory Approvals**: ToolExecutor uses Map
-- **Single Process**: No distributed coordination
+- **State**: `AgentStateManager` (default), `RedisStateManager`, `DatabaseStateManager` via `createStateManager` / `createStateManagerFromEnv`
+- **Approvals**: `InMemoryApprovalStore` (default), `RedisApprovalStore` for multi-instance
+- **Multi-instance**: Redis-backed state + approvals when `redis.client` or `REDIS_URL` is configured
 
 ### Production Recommendations
 
-1. **State Persistence**: Replace Map with Redis/Database
-2. **Distributed Approvals**: Use message queue (Redis Pub/Sub, RabbitMQ)
-3. **Execution Queue**: Use job queue for long-running agents
-4. **Event Bus**: Replace in-memory emitter with distributed event bus
+1. **State persistence**: Use `AgentModule.forRootAsync({ redis: { url } })` or pass `redis.client`
+2. **Durable approvals**: Set `useRedisApprovals: true` (default when Redis client is present)
+3. **Execution queue**: Use job queue for long-running agents (future `@hazeljs/flow` integration)
+4. **Observability**: Pass `observabilityProvider` for OTel spans (`agent.execute`, `agent.tool.execute`, `agent.llm`)
 
 ### Scaling Pattern
 
 ```typescript
-// Replace in-memory state with Redis
-class RedisStateManager extends AgentStateManager {
-  async getContext(executionId: string) {
-    return redis.get(`agent:context:${executionId}`);
-  }
+import { AgentModule, resolveStateManagerFromEnv } from '@hazeljs/agent';
 
-  async updateState(executionId: string, state: AgentState) {
-    await redis.hset(`agent:context:${executionId}`, 'state', state);
-  }
-}
+const { stateManager, stateManagerOptions } = await resolveStateManagerFromEnv({
+  redisUrl: process.env.REDIS_URL,
+});
+
+const runtime = new AgentRuntime({
+  stateManager,
+  stateManagerOptions,
+  useRedisApprovals: true,
+});
 ```
 
 ## Security Considerations

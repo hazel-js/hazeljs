@@ -10,6 +10,7 @@ import type { LLMStreamChunk } from './types/llm.types';
 import {
   createStateManager,
   createStateManagerFromEnv,
+  resolveStateManagerFromEnv,
   type AgentStateBackend,
   type CreateStateManagerOptions,
 } from './state/create-state-manager';
@@ -95,6 +96,10 @@ export class AgentService {
         moduleOpts.runtime?.stateManagerOptions ??
         config.stateManagerOptions ??
         AgentModule.buildStateManagerOptions(moduleOpts),
+      useRedisApprovals:
+        moduleOpts.runtime?.useRedisApprovals ??
+        moduleOpts.useRedisApprovals ??
+        config.useRedisApprovals,
     };
     this.runtime = new AgentRuntime(runtimeConfig);
 
@@ -416,6 +421,7 @@ export class AgentModule {
 
     runtime.stateManagerOptions =
       runtime.stateManagerOptions ?? AgentModule.buildStateManagerOptions(config);
+    runtime.useRedisApprovals = runtime.useRedisApprovals ?? config.useRedisApprovals;
     runtime.observabilityProvider = runtime.observabilityProvider ?? config.observabilityProvider;
 
     AgentModule.options = { ...config, runtime };
@@ -427,14 +433,17 @@ export class AgentModule {
    */
   static async forRootAsync(config: AgentModuleOptions = {}): Promise<typeof AgentModule> {
     const runtime: AgentRuntimeConfig = { ...(config.runtime ?? {}) };
+    const baseOptions = AgentModule.buildStateManagerOptions(config);
 
     if (!runtime.stateManager) {
-      runtime.stateManager = await createStateManagerFromEnv(
-        AgentModule.buildStateManagerOptions(config)
-      );
+      const { stateManager, stateManagerOptions } = await resolveStateManagerFromEnv(baseOptions);
+      runtime.stateManager = stateManager;
+      runtime.stateManagerOptions = stateManagerOptions;
+    } else {
+      runtime.stateManagerOptions = baseOptions;
     }
 
-    runtime.stateManagerOptions = AgentModule.buildStateManagerOptions(config);
+    runtime.useRedisApprovals = runtime.useRedisApprovals ?? config.useRedisApprovals;
     runtime.observabilityProvider = runtime.observabilityProvider ?? config.observabilityProvider;
 
     AgentModule.options = { ...config, runtime };

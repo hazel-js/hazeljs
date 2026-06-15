@@ -4,6 +4,21 @@ All notable changes to HazelJS are documented here. The project follows [Semanti
 
 ---
 
+---
+
+## [1.0.1] - 2026-06-14
+
+### `@hazeljs/agent` — Production hardening
+
+- **Durable state**: `createStateManager`, `createStateManagerFromEnv`, `resolveStateManagerFromEnv`; `AgentModule.forRootAsync` for `REDIS_URL`
+- **Durable approvals**: `IApprovalStore`, `RedisApprovalStore`, `useRedisApprovals` module option
+- **Resilience**: Local retry/rate-limiter delegate to `@hazeljs/resilience`; removed `circuit-breaker.js` shim
+- **Observability**: Optional OTel spans via `observabilityProvider` (`agent.execute`, `agent.tool.execute`, `agent.llm`)
+- **Error handling**: `agent.rag.failed` events, `strictEventHandlers`, LLM bootstrap timeout logging
+- **Types**: `RedisClientLike`, `PrismaClientLike` for state manager clients
+
+---
+
 ## [1.0.0] - 2026-06-10
 
 ### Highlights

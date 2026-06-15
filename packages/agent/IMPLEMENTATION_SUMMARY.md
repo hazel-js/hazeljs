@@ -315,36 +315,36 @@ const result = await runtime.execute('chat-agent', message, {
 
 **Benefits**: Memory, tools, state, observability, resumable
 
-## 🚀 Production Considerations
+## Production Considerations (v1.0.1+)
 
-### Current Implementation
+### Shipped persistence
 
-- In-memory state (Map-based)
-- Single process
-- No distributed coordination
+- **State**: `AgentStateManager`, `RedisStateManager`, `DatabaseStateManager`
+- **Approvals**: `InMemoryApprovalStore`, `RedisApprovalStore`
+- **Module bootstrap**: `AgentModule.forRootAsync({ redis: { url } })`
 
-### Production Recommendations
+### Further recommendations
 
-1. **State Persistence**: Replace Map with Redis/Database
-2. **Distributed Approvals**: Use message queue
-3. **Execution Queue**: Use job queue for long-running agents
-4. **Event Bus**: Replace in-memory emitter with distributed bus
+1. **Execution queue**: Job queue for long-running agents (future `@hazeljs/flow`)
+2. **Event bus**: Distributed event bus for cross-service observability
+3. **Observability**: `observabilityProvider` for OTel spans
 
-### Scaling Example
+### Scaling example
 
 ```typescript
-class RedisStateManager extends AgentStateManager {
-  async getContext(executionId: string) {
-    return redis.get(`agent:context:${executionId}`);
-  }
-}
+import { AgentModule } from '@hazeljs/agent';
+import { createClient } from 'redis';
 
-const runtime = new AgentRuntime({
-  stateManager: new RedisStateManager(),
+const redis = createClient({ url: process.env.REDIS_URL });
+await redis.connect();
+
+await AgentModule.forRootAsync({
+  redis: { client: redis },
+  useRedisApprovals: true,
 });
 ```
 
-## 📚 Documentation
+## Documentation
 
 - **README.md** - User-facing documentation with examples
 - **ARCHITECTURE.md** - Technical architecture deep-dive

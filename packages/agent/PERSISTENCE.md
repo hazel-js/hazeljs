@@ -62,6 +62,19 @@ const syncManager = createStateManager({ backend: 'redis', redisClient });
 const asyncManager = await createStateManagerFromEnv({ redisUrl: process.env.REDIS_URL });
 ```
 
+### Durable tool approvals (1.0.1+)
+
+Redis-backed approvals for multi-instance human-in-the-loop:
+
+```typescript
+await AgentModule.forRootAsync({
+  redis: { url: process.env.REDIS_URL },
+  useRedisApprovals: true,
+});
+```
+
+Pass `redis.client` to `forRoot()` when you already have a connected client. Exports: `IApprovalStore`, `InMemoryApprovalStore`, `RedisApprovalStore`, `createApprovalStore`.
+
 ## Usage
 
 ### In-Memory (Default)

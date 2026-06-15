@@ -91,7 +91,7 @@ const runtime = new AgentRuntime({
   memoryManager: new MemoryManager(/* ... */),
   llmProvider: new AIService({ provider: 'openai' }),
   defaultMaxSteps: 10,
-  enableObservability: true,
+  // Optional: pass observabilityProvider from @hazeljs/observability for OTel spans
 });
 
 const agent = new SupportAgent();
@@ -436,6 +436,41 @@ runtime.onAny((e) => console.log(e.type, e.data));
 
 ---
 
+## Production deployment (1.0.1+)
+
+For multi-instance deployments, use Redis-backed state and durable approvals:
+
+```typescript
+import { AgentModule } from '@hazeljs/agent';
+import { createClient } from 'redis';
+
+const redis = createClient({ url: process.env.REDIS_URL });
+await redis.connect();
+
+await AgentModule.forRootAsync({
+  redis: { client: redis },
+  useRedisApprovals: true,
+  runtime: {
+    strictEventHandlers: process.env.NODE_ENV === 'production',
+    observabilityProvider: myObservabilityProvider, // optional, from @hazeljs/observability
+    enableMetrics: true,
+    enableCircuitBreaker: true,
+  },
+});
+```
+
+**Environment variables:** `REDIS_URL`, `AGENT_STATE_BACKEND` (`memory` | `redis` | `database`)
+
+**Factories:** `createStateManager`, `createStateManagerFromEnv`, `createApprovalStore`
+
+**Observability:** Pass `observabilityProvider` for OpenTelemetry spans (`agent.execute`, `agent.tool.execute`, `agent.llm`). The `enableObservability` flag is reserved; spans require an injected provider.
+
+**Resilience:** Circuit breaker and retry use `@hazeljs/resilience` internally.
+
+See [PERSISTENCE.md](./PERSISTENCE.md), [PRODUCTION_READINESS.md](./PRODUCTION_READINESS.md), and [QUICKSTART.md](./QUICKSTART.md).
+
+---
+
 ## HazelJS Module Integration
 
 ```typescript
@@ -449,7 +484,11 @@ import { RagModule } from '@hazeljs/rag';
       /* ... */
     }),
     AgentModule.forRoot({
-      runtime: { defaultMaxSteps: 10, enableObservability: true },
+      runtime: {
+        defaultMaxSteps: 10,
+        enableMetrics: true,
+        strictEventHandlers: process.env.NODE_ENV === 'production',
+      },
       agents: [SupportAgent, ResearchAgent, WriterAgent, OrchestratorAgent],
     }),
   ],

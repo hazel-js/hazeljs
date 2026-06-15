@@ -43,7 +43,7 @@ This document tracks the production readiness improvements made to `@hazeljs/age
 
 ### 4. Rate Limiting
 
-**Implementation**: `src/utils/rate-limiter.ts`
+**Implementation**: `src/utils/rate-limiter.ts` (adapter over `@hazeljs/resilience` `TokenBucketLimiter`)
 
 - Token bucket algorithm for rate limiting
 - Configurable tokens per minute and burst size
@@ -95,7 +95,7 @@ console.log(runtime.getMetricsSummary());
 
 ### 7. Retry Logic
 
-**Implementation**: `src/utils/retry.ts`
+**Implementation**: `src/utils/retry.ts` (adapter over `@hazeljs/resilience` `RetryPolicy`)
 
 - Exponential backoff with jitter
 - Configurable retry attempts and delays
@@ -112,7 +112,7 @@ const runtime = new AgentRuntime({
 
 ### 8. Circuit Breaker
 
-**Implementation**: `src/utils/circuit-breaker.ts`
+**Implementation**: `@hazeljs/resilience` `CircuitBreaker` (used internally by `AgentRuntime`)
 
 - Three states: CLOSED, OPEN, HALF_OPEN
 - Automatic state transitions
@@ -123,11 +123,14 @@ const runtime = new AgentRuntime({
 **Usage**:
 
 ```typescript
+import { CircuitBreakerError } from '@hazeljs/resilience';
+
 const runtime = new AgentRuntime({
   enableCircuitBreaker: true, // Enabled by default
 });
 
 const status = runtime.getCircuitBreakerStatus();
+// Repeated failures throw CircuitBreakerError on execute()
 ```
 
 ### 9. Health Checks
@@ -161,19 +164,12 @@ console.log(health.status); // 'healthy' | 'degraded' | 'unhealthy'
 npm run benchmark
 ```
 
-## 🚧 Remaining Tasks
+## Remaining tasks (post-1.0.1)
 
-### Additional Test Coverage
-
-Create tests for remaining core components:
-
-- `tests/runtime/agent.runtime.test.ts`
-- `tests/executor/agent.executor.test.ts`
-- `tests/executor/tool.executor.test.ts`
-- `tests/state/agent.state.test.ts`
-- `tests/registry/agent.registry.test.ts`
-- `tests/context/agent.context.test.ts`
-- `tests/events/event.emitter.test.ts`
+- Durable **A2A task store** (same Redis pattern as approvals)
+- Full **`@hazeljs/flow`** integration for long-running workflows
+- Typed DI token replacing global `__HAZELJS_AI_ENHANCED_SERVICE__`
+- Cross-link agent OTel spans in `@hazeljs/observability` package docs
 
 ## 📋 Installation Instructions
 
