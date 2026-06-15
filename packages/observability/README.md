@@ -74,7 +74,7 @@ Integrate LLM cost tracking directly into your traces:
 ```typescript
 import { Trace, useObservability } from '@hazeljs/observability';
 
-class AIService {
+class ChatService {
   @Trace('llm-completion')
   async complete(prompt: string) {
     const { trackCost } = useObservability();

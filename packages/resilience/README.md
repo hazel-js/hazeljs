@@ -2,6 +2,8 @@
 
 Fault-tolerance and resilience patterns for HazelJS. Provides circuit breaker, retry, timeout, bulkhead, rate limiter, and metrics collection — all usable via decorators or programmatic API.
 
+**Full documentation:** [hazeljs.ai/docs/packages/resilience](https://hazeljs.ai/docs/packages/resilience)
+
 [![npm version](https://img.shields.io/npm/v/@hazeljs/resilience.svg)](https://www.npmjs.com/package/@hazeljs/resilience)
 [![npm downloads](https://img.shields.io/npm/dm/@hazeljs/resilience)](https://www.npmjs.com/package/@hazeljs/resilience)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)

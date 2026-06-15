@@ -233,7 +233,7 @@ interface IAIProvider {
 ```typescript
 import { OpenAIProvider, GeminiProvider, CohereProvider } from '@hazeljs/ai';
 
-class AIService {
+class AIEnhancedService {
   private providers: Map<string, IAIProvider>;
 
   constructor() {

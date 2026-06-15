@@ -18,14 +18,14 @@ Production-ready AI integration for HazelJS with support for multiple providers.
 ### Installation
 
 ```bash
-npm install @hazeljs/core openai
+npm install @hazeljs/ai @hazeljs/core
 ```
 
 ### Basic Usage
 
 ```typescript
 import { Injectable } from '@hazeljs/core';
-import { AIEnhancedService } from '@hazeljs/core/ai';
+import { AIEnhancedService } from '@hazeljs/ai';
 
 @Injectable()
 export class ChatService {
@@ -80,7 +80,7 @@ async *streamChat(message: string): AsyncGenerator<string> {
 ### Context Management
 
 ```typescript
-import { AIContextManager } from '@hazeljs/core/ai';
+import { AIContextManager } from '@hazeljs/ai';
 
 const context = new AIContextManager(4096);
 
@@ -99,7 +99,7 @@ context.addUserMessage('Very long message...');
 ### Token Tracking
 
 ```typescript
-import { TokenTracker } from '@hazeljs/core/ai';
+import { TokenTracker } from '@hazeljs/ai';
 
 const tracker = new TokenTracker({
   maxTokensPerRequest: 4096,
@@ -142,7 +142,7 @@ console.log(stats);
 ### OpenAI
 
 ```typescript
-import { OpenAIProvider } from '@hazeljs/core/ai';
+import { OpenAIProvider } from '@hazeljs/ai';
 
 const provider = new OpenAIProvider(process.env.OPENAI_API_KEY);
 ```
@@ -158,7 +158,7 @@ const provider = new OpenAIProvider(process.env.OPENAI_API_KEY);
 ### Anthropic
 
 ```typescript
-import { AnthropicProvider } from '@hazeljs/core/ai';
+import { AnthropicProvider } from '@hazeljs/ai';
 
 const provider = new AnthropicProvider(process.env.ANTHROPIC_API_KEY);
 ```
@@ -172,7 +172,7 @@ const provider = new AnthropicProvider(process.env.ANTHROPIC_API_KEY);
 ### Google Gemini
 
 ```typescript
-import { GeminiProvider } from '@hazeljs/core/ai';
+import { GeminiProvider } from '@hazeljs/ai';
 
 const provider = new GeminiProvider(process.env.GEMINI_API_KEY);
 ```
@@ -185,7 +185,7 @@ const provider = new GeminiProvider(process.env.GEMINI_API_KEY);
 ### Cohere
 
 ```typescript
-import { CohereProvider } from '@hazeljs/core/ai';
+import { CohereProvider } from '@hazeljs/ai';
 
 const provider = new CohereProvider(process.env.COHERE_API_KEY);
 ```
@@ -202,7 +202,7 @@ const provider = new CohereProvider(process.env.COHERE_API_KEY);
 
 ```typescript
 import { Controller, Post, Body } from '@hazeljs/core';
-import { AITask } from '@hazeljs/core/ai';
+import { AITask } from '@hazeljs/ai';
 
 @Controller('/ai')
 export class AIController {
@@ -223,7 +223,7 @@ export class AIController {
 ### @AIFunction
 
 ```typescript
-import { AIFunction, AIPrompt } from '@hazeljs/core/ai';
+import { AIFunction, AIPrompt } from '@hazeljs/ai';
 
 @Injectable()
 export class WeatherService {

@@ -39,25 +39,26 @@ Built for **AI-native applications** - not just another AI integration. When you
 npm install @hazeljs/ai
 ```
 
-### Peer Dependencies
+### Provider API keys
 
-Install the provider(s) you want to use:
+Provider SDKs are bundled with `@hazeljs/ai`. Set the API key for the provider you use:
 
 ```bash
-# OpenAI
-npm install openai
+# OpenAI (default)
+export OPENAI_API_KEY=sk-...
 
 # Anthropic
-npm install @anthropic-ai/sdk
+export ANTHROPIC_API_KEY=sk-ant-...
 
 # Google Gemini
-npm install @google/generative-ai
+export GEMINI_API_KEY=...
 
 # Cohere
-npm install cohere-ai
+export COHERE_API_KEY=...
 
-# Ollama (local LLMs)
-npm install ollama
+# Ollama (local — no npm package; HTTP API)
+export OLLAMA_ENABLED=true
+export OLLAMA_BASE_URL=http://localhost:11434
 ```
 
 ## Quick Start
@@ -66,11 +67,11 @@ npm install ollama
 
 ```typescript
 import { Injectable } from '@hazeljs/core';
-import { AIService, AITask } from '@hazeljs/ai';
+import { AIEnhancedService, AITask } from '@hazeljs/ai';
 
 @Injectable()
 export class ChatService {
-  constructor(private aiService: AIService) {}
+  constructor(public aiService: AIEnhancedService) {}
 
   @AITask({
     name: 'chat',

@@ -90,13 +90,13 @@ export class ChatController {
 
 ```typescript
 import { Controller, Post, Body } from '@hazeljs/core';
-import { AIService, AITask } from '@hazeljs/ai';
+import { AIEnhancedService, AITask } from '@hazeljs/ai';
 import { GuardrailsService, GuardrailInput, GuardrailOutput } from '@hazeljs/guardrails';
 
 @Controller({ path: '/chat' })
 export class ChatController {
   constructor(
-    private aiService: AIService,
+    public aiService: AIEnhancedService,
     private guardrailsService: GuardrailsService
   ) {}
 

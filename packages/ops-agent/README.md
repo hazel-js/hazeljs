@@ -83,6 +83,11 @@ runtime.on('tool.approval.requested', (event) => {
 });
 ```
 
+## Learn More
+
+- [Full documentation](https://hazeljs.ai/docs/packages/ops-agent)
+- [@hazeljs/agent](https://hazeljs.ai/docs/packages/agent) — agent runtime used under the hood
+
 ## License
 
 Apache 2.0

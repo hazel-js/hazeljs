@@ -83,13 +83,13 @@ export class SupportAgent {
 ### 2. Set up the runtime
 
 ```typescript
-import { AgentRuntime } from '@hazeljs/agent';
+import { AgentRuntime, AgentService } from '@hazeljs/agent';
 import { MemoryManager } from '@hazeljs/rag';
-import { AIService } from '@hazeljs/ai';
+import { AIEnhancedService } from '@hazeljs/ai';
 
 const runtime = new AgentRuntime({
   memoryManager: new MemoryManager(/* ... */),
-  llmProvider: new AIService({ provider: 'openai' }),
+  llmProvider: AgentService.createLLMProviderFromAI(new AIEnhancedService()),
   defaultMaxSteps: 10,
   // Optional: pass observabilityProvider from @hazeljs/observability for OTel spans
 });
