@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/pdf-to-audio",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Convert PDF documents to audio using TTS - PDF text extraction, chunking, and OpenAI TTS",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -34,13 +34,13 @@
     "reflect-metadata": "^0.2.2"
   },
   "peerDependencies": {
-    "@hazeljs/ai": "^1.0.2",
-    "@hazeljs/core": "^1.0.2",
-    "@hazeljs/queue": "^1.0.2",
-    "@hazeljs/rag": "^1.0.2"
+    "@hazeljs/ai": "^1.0.3",
+    "@hazeljs/core": "^1.0.3",
+    "@hazeljs/queue": "^1.0.3",
+    "@hazeljs/rag": "^1.0.3"
   },
   "devDependencies": {
-    "@hazeljs/queue": "^1.0.2",
+    "@hazeljs/queue": "^1.0.3",
     "@types/jest": "^29.5.14",
     "@types/node": "^20.19.39",
     "@types/pdf-parse": "^1.1.5",
