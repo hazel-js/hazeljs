@@ -17,9 +17,7 @@ export async function createFlowEngine(options: CreateFlowEngineOptions = {}): P
       return new FlowEngine({ storage: createPrismaStorage(prisma), services });
     } catch (err) {
       // eslint-disable-next-line no-console -- startup fallback
-      console.warn(
-        `Flow engine: database unavailable, using memory (${(err as Error).message})`
-      );
+      console.warn(`Flow engine: database unavailable, using memory (${(err as Error).message})`);
     }
   }
 
