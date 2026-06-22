@@ -4,7 +4,8 @@
  */
 import 'reflect-metadata';
 import type { FlowDefinition } from '@hazeljs/flow';
-import { FlowEngine, createMemoryStorage } from '@hazeljs/flow';
+import type { FlowEngine } from '@hazeljs/flow';
+import { createFlowEngine } from './engine.js';
 import { createServiceRegistry } from './services/ServiceRegistry.js';
 import { recovery } from './recovery.js';
 import { createServer } from './server.js';
@@ -31,22 +32,10 @@ export async function runFlowRuntime(options: RunFlowRuntimeOptions): Promise<vo
     unknown
   >;
 
-  let engine: FlowEngine;
-  if (options.databaseUrl) {
-    try {
-      const { createPrismaStorage, createFlowPrismaClient } = await import('@hazeljs/flow/prisma');
-      const prisma = createFlowPrismaClient(options.databaseUrl);
-      await prisma.$connect();
-      engine = new FlowEngine({ storage: createPrismaStorage(prisma), services });
-    } catch (err) {
-      (services as { logger?: { info: (m: string) => void } }).logger?.info(
-        `Database connection failed, using in-memory storage: ${(err as Error).message}`
-      );
-      engine = new FlowEngine({ storage: createMemoryStorage(), services });
-    }
-  } else {
-    engine = new FlowEngine({ storage: createMemoryStorage(), services });
-  }
+  const engine: FlowEngine = await createFlowEngine({
+    databaseUrl: options.databaseUrl,
+    services,
+  });
 
   for (const def of options.flows) {
     await engine.registerDefinition(def);

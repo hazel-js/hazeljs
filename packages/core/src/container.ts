@@ -290,20 +290,28 @@ export class Container {
     resolutionStack?: Set<InjectionToken>
   ): T {
     // Get constructor parameters
-    const params = Reflect.getMetadata('design:paramtypes', token) || [];
+    const paramTypes = Reflect.getMetadata('design:paramtypes', token) || [];
     if (logger.isDebugEnabled()) {
       logger.debug(
-        `Constructor parameters: ${params.map((p: Type<unknown>) => p?.name || 'undefined').join(', ')}`
+        `Constructor parameters: ${paramTypes.map((p: Type<unknown>) => p?.name || 'undefined').join(', ')}`
       );
     }
 
     // Get injection tokens if specified
-    const injectionTokens = Reflect.getMetadata('hazel:inject', token) || [];
+    const injectionTokens: InjectionToken[] = Reflect.getMetadata('hazel:inject', token) || [];
+
+    // design:paramtypes may be empty under tsx / stripped TS emit — honor @Inject indices too.
+    let paramCount = paramTypes.length;
+    for (let i = 0; i < injectionTokens.length; i++) {
+      if (injectionTokens[i] !== undefined) {
+        paramCount = Math.max(paramCount, i + 1);
+      }
+    }
 
     // Resolve dependencies
-    const dependencies = params.map((param: Type<unknown>, index: number) => {
+    const dependencies = Array.from({ length: paramCount }, (_, index) => {
       const injectionToken = injectionTokens[index];
-      const tokenToResolve = injectionToken || param;
+      const tokenToResolve = injectionToken ?? paramTypes[index];
 
       if (!tokenToResolve) {
         if (logger.isDebugEnabled()) {
