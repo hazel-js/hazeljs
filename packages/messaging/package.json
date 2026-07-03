@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/messaging",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Multichannel messaging for HazelJS - WhatsApp, Telegram, Viber with LLM-powered bot responses",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -36,10 +36,10 @@
     "telegraf": "^4.16.3"
   },
   "peerDependencies": {
-    "@hazeljs/ai": "^1.0.3",
-    "@hazeljs/core": "^1.0.3",
-    "@hazeljs/kafka": "^1.0.3",
-    "@hazeljs/rag": "^1.0.3",
+    "@hazeljs/ai": "^1.0.4",
+    "@hazeljs/core": "^1.0.4",
+    "@hazeljs/kafka": "^1.0.4",
+    "@hazeljs/rag": "^1.0.4",
     "ioredis": ">=5.0.0",
     "viber-bot": ">=1.0.0"
   },

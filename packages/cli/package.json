@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/cli",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Command-line interface for scaffolding and generating HazelJS applications and components",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -31,7 +31,7 @@
     "mustache": "^4.2.0"
   },
   "peerDependencies": {
-    "@hazeljs/eval": "^1.0.3"
+    "@hazeljs/eval": "^1.0.4"
   },
   "peerDependenciesMeta": {
     "@hazeljs/eval": {
@@ -39,7 +39,7 @@
     }
   },
   "devDependencies": {
-    "@hazeljs/eval": "^1.0.3",
+    "@hazeljs/eval": "^1.0.4",
     "@types/inquirer": "^8.2.12",
     "@types/jest": "^29.5.14",
     "@types/mustache": "^4.2.6",

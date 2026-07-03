@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/eval",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Evaluation toolkit for HazelJS AI apps — golden datasets, RAG metrics, agent trajectories, LLM-as-judge, CI reports",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -19,10 +19,10 @@
     "zod": "^3.25.76"
   },
   "peerDependencies": {
-    "@hazeljs/core": "^1.0.3"
+    "@hazeljs/core": "^1.0.4"
   },
   "devDependencies": {
-    "@hazeljs/core": "^1.0.3",
+    "@hazeljs/core": "^1.0.4",
     "@types/jest": "^29.5.14",
     "@types/node": "^20.19.39",
     "@typescript-eslint/eslint-plugin": "^8.58.0",
