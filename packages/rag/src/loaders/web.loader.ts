@@ -36,6 +36,7 @@
 
 import { BaseDocumentLoader, Loader } from './base.loader';
 import type { Document } from '../types';
+import { extractFreshnessMetadata } from '../freshness/extract-freshness-metadata';
 
 export interface WebLoaderOptions {
   /** Single URL to scrape. */
@@ -127,8 +128,9 @@ export class WebLoader extends BaseDocumentLoader {
   // ── Private helpers ──────────────────────────────────────────────────────
 
   private async scrape(url: string): Promise<Document | null> {
-    const html = await this.fetchWithRetry(url);
-    if (!html) return null;
+    const fetched = await this.fetchWithRetry(url);
+    if (!fetched) return null;
+    const { html, lastModified } = fetched;
 
     let text: string;
     let title = '';
@@ -164,17 +166,31 @@ export class WebLoader extends BaseDocumentLoader {
       text = this.stripTags(html);
     }
 
+    const freshness = extractFreshnessMetadata({
+      html,
+      text,
+      httpLastModified: lastModified,
+      crawledAt: new Date(),
+    });
+
     return this.createDocument(text, {
       source: url,
       url,
       loaderType: 'web',
       ...(title && { title }),
-      scrapedAt: new Date().toISOString(),
+      scrapedAt: freshness.crawledAt ?? new Date().toISOString(),
+      ...(freshness.contentDate && { contentDate: freshness.contentDate }),
+      ...(freshness.lastModifiedAt && { lastModifiedAt: freshness.lastModifiedAt }),
+      ...(freshness.publishedAt && { publishedAt: freshness.publishedAt }),
+      ...(freshness.detectedYears?.length && { detectedYears: freshness.detectedYears }),
+      ...(freshness.temporalValidity && { temporalValidity: freshness.temporalValidity }),
       ...this.extraMetadata,
     });
   }
 
-  private async fetchWithRetry(url: string): Promise<string | null> {
+  private async fetchWithRetry(
+    url: string
+  ): Promise<{ html: string; lastModified: string | null } | null> {
     let lastError: unknown;
 
     for (let attempt = 0; attempt <= this.retries; attempt++) {
@@ -199,7 +215,9 @@ export class WebLoader extends BaseDocumentLoader {
           return null;
         }
 
-        return await response.text();
+        const html = await response.text();
+        const lastModified = response.headers.get('last-modified');
+        return { html, lastModified };
       } catch (err) {
         lastError = err;
         if (attempt < this.retries) {

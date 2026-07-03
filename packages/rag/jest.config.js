@@ -27,6 +27,8 @@ module.exports = {
     '!src/loaders/youtube-transcript.loader.ts',
     '!src/loaders/index.ts',
     '!src/graph/index.ts',
+    '!src/freshness/index.ts',
+    '!src/lifecycle/index.ts',
     '!src/prompts/**',
     '!src/types/**',
   ],

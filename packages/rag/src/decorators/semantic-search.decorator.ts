@@ -144,12 +144,88 @@ export function EnsembleRetrieval(
   };
 }
 
+const TIME_WEIGHTED_RETRIEVAL_KEY = Symbol('timeWeightedRetrieval');
+
+export interface TimeWeightedRetrievalOptions {
+  /** Half-life in days for recency decay (default: 180). */
+  halfLifeDays?: number;
+  /** Over-fetch multiplier before re-ranking (default: 3). */
+  overFetchMultiplier?: number;
+  /** Filter clearly expired dated content (default: true). */
+  filterExpired?: boolean;
+}
+
+export interface TimeWeightedSearchResult {
+  score: number;
+  metadata?: Record<string, unknown>;
+  content?: string;
+}
+
+let timeWeightedRetrievalHandler:
+  | ((
+      results: TimeWeightedSearchResult[],
+      options: TimeWeightedRetrievalOptions
+    ) => TimeWeightedSearchResult[])
+  | undefined;
+
 /**
- * Time-weighted retrieval favoring recent documents
+ * Register a global handler for {@link TimeWeightedRetrieval} (e.g. applyRecencyRanking from freshness module).
  */
-export function TimeWeightedRetrieval(options: { decayRate?: number } = {}): MethodDecorator {
+export function configureTimeWeightedRetrieval(
+  handler: (
+    results: TimeWeightedSearchResult[],
+    options: TimeWeightedRetrievalOptions
+  ) => TimeWeightedSearchResult[]
+): void {
+  timeWeightedRetrievalHandler = handler;
+}
+
+export function getTimeWeightedRetrievalOptions(
+  target: object,
+  propertyKey: string | symbol
+): TimeWeightedRetrievalOptions | undefined {
+  return Reflect.getMetadata(TIME_WEIGHTED_RETRIEVAL_KEY, target, propertyKey) as
+    | TimeWeightedRetrievalOptions
+    | undefined;
+}
+
+/**
+ * Apply time-weighted re-ranking when a handler is configured via {@link configureTimeWeightedRetrieval}.
+ */
+export function applyTimeWeightedRetrievalIfConfigured<T extends TimeWeightedSearchResult>(
+  target: object,
+  propertyKey: string | symbol,
+  results: T[]
+): T[] {
+  const options = getTimeWeightedRetrievalOptions(target, propertyKey);
+  if (!options || !timeWeightedRetrievalHandler) return results;
+  return timeWeightedRetrievalHandler(results, options) as T[];
+}
+
+/**
+ * Time-weighted retrieval favoring recent documents.
+ * When {@link configureTimeWeightedRetrieval} is set, wraps the method to re-rank its SearchResult[] return value.
+ */
+export function TimeWeightedRetrieval(options: TimeWeightedRetrievalOptions = {}): MethodDecorator {
   return (target: object, propertyKey: string | symbol, descriptor: PropertyDescriptor) => {
-    Reflect.defineMetadata('timeWeightedRetrieval', options, target, propertyKey);
+    Reflect.defineMetadata(TIME_WEIGHTED_RETRIEVAL_KEY, options, target, propertyKey);
+
+    if (!timeWeightedRetrievalHandler) {
+      return descriptor;
+    }
+
+    const originalMethod = descriptor.value as (...args: unknown[]) => Promise<unknown>;
+
+    descriptor.value = async function (...args: unknown[]): Promise<unknown> {
+      const result = await originalMethod.apply(this, args);
+      if (!Array.isArray(result)) return result;
+      return applyTimeWeightedRetrievalIfConfigured(
+        target,
+        propertyKey,
+        result as TimeWeightedSearchResult[]
+      );
+    };
+
     return descriptor;
   };
 }

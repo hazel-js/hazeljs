@@ -28,6 +28,9 @@ export {
   ParentChildRetrieval,
   EnsembleRetrieval,
   TimeWeightedRetrieval,
+  configureTimeWeightedRetrieval,
+  getTimeWeightedRetrievalOptions,
+  applyTimeWeightedRetrievalIfConfigured,
 } from './decorators/semantic-search.decorator';
 
 // Embeddings & Reranking
@@ -55,6 +58,12 @@ export * from './retrieval/multi-query';
 
 // Utils
 export * from './utils/similarity';
+
+// Freshness & recency ranking
+export * from './freshness';
+
+// Ingest lifecycle (versioning helpers, stale sweep)
+export * from './lifecycle';
 
 // Memory
 export * from './memory';
