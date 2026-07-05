@@ -12,3 +12,9 @@ export {
   type RecencyRankOptions,
   type RankableSearchResult,
 } from './recency-ranker';
+
+export {
+  extractQueryPathTokens,
+  computePathRelevanceBoost,
+  applyPathRelevanceBoost,
+} from './path-relevance-boost';

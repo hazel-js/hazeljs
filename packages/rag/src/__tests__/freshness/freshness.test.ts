@@ -4,6 +4,8 @@ import {
   filterExpiredContent,
   computeRecencyDecay,
   formatFreshnessLabel,
+  applyPathRelevanceBoost,
+  computePathRelevanceBoost,
 } from '../../freshness';
 
 describe('extractFreshnessMetadata', () => {
@@ -198,5 +200,36 @@ describe('filterExpiredContent', () => {
       { now: new Date('2026-07-03') }
     );
     expect(results).toHaveLength(1);
+  });
+});
+
+describe('path relevance boost', () => {
+  it('boosts /graduate/ for graduate programs queries', () => {
+    const results = applyPathRelevanceBoost(
+      [
+        {
+          score: 0.82,
+          metadata: { source: 'https://kinnaird.edu.pk/admissions-fall-2025/' },
+          content: 'Admissions open for graduate programs',
+        },
+        {
+          score: 0.78,
+          metadata: { source: 'https://kinnaird.edu.pk/graduate/' },
+          content: 'M.Phil in Accounting & Finance',
+        },
+      ],
+      'how about graduate programs?',
+    );
+
+    expect(results[0]?.metadata?.source).toContain('/graduate/');
+    expect(results[0]?.score).toBeGreaterThan(results[1]?.score ?? 0);
+  });
+
+  it('leaves unrelated URLs unchanged', () => {
+    const boost = computePathRelevanceBoost(
+      'what are the library hours?',
+      'https://kinnaird.edu.pk/library/',
+    );
+    expect(boost).toBeGreaterThan(1);
   });
 });

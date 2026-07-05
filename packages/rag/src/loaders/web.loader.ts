@@ -142,7 +142,11 @@ export class WebLoader extends BaseDocumentLoader {
         const cheerio = require('cheerio') as any;
         const $ = cheerio.load(html);
         title = $('title').first().text().trim();
-        text = $(this.selector).text().trim();
+        const entryContent = $('article .entry-content').text().trim();
+        const articleContent = $('article').text().trim();
+        text = this.selector.includes('entry-content')
+          ? entryContent || articleContent || $(this.selector).text().trim()
+          : $(this.selector).text().trim();
         if (!text) {
           // eslint-disable-next-line no-console
           console.warn(
