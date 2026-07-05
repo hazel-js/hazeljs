@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/resilience",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Fault-tolerance and resilience patterns for HazelJS - Circuit Breaker, Retry, Bulkhead, Timeout, Rate Limiter",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -21,10 +21,10 @@
     "reflect-metadata": "^0.2.2"
   },
   "peerDependencies": {
-    "@hazeljs/core": "^1.0.4"
+    "@hazeljs/core": "^1.0.5"
   },
   "devDependencies": {
-    "@hazeljs/core": "^1.0.4",
+    "@hazeljs/core": "^1.0.5",
     "@types/jest": "^29.5.14",
     "@types/node": "^20.19.39",
     "@typescript-eslint/eslint-plugin": "^8.58.0",
