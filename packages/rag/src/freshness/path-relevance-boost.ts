@@ -111,7 +111,7 @@ export function computePathRelevanceBoost(query: string, sourceUrl?: string): nu
 /** Re-rank results with a URL path relevance boost for the query. */
 export function applyPathRelevanceBoost<T extends RankableSearchResult>(
   results: T[],
-  query: string,
+  query: string
 ): T[] {
   const trimmed = query.trim();
   if (!trimmed || results.length === 0) return results;

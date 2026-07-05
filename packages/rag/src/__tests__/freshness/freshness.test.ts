@@ -218,7 +218,7 @@ describe('path relevance boost', () => {
           content: 'M.Phil in Accounting & Finance',
         },
       ],
-      'how about graduate programs?',
+      'how about graduate programs?'
     );
 
     expect(results[0]?.metadata?.source).toContain('/graduate/');
@@ -228,7 +228,7 @@ describe('path relevance boost', () => {
   it('leaves unrelated URLs unchanged', () => {
     const boost = computePathRelevanceBoost(
       'what are the library hours?',
-      'https://kinnaird.edu.pk/library/',
+      'https://kinnaird.edu.pk/library/'
     );
     expect(boost).toBeGreaterThan(1);
   });
