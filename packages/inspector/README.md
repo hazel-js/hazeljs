@@ -8,6 +8,7 @@ Framework-aware runtime inspector for HazelJS. Explore metadata, routes, modules
 - **Package-specific plugins** – Optional support for @hazeljs/cron, @hazeljs/queue, @hazeljs/websocket
 - **DevTools UI** – Overview dashboard, search, filters, detail views, runtime stats
 - **JSON API** – Consume inspector data programmatically
+- **Agent OS timelines** – SSE live stream + JSON replay for agent execution steps
 
 ## Installation
 
@@ -47,6 +48,26 @@ Then run your app and open:
 - **`http://localhost:3000/__hazel/queues`** – Queue processors (if @hazeljs/queue is installed)
 - **`http://localhost:3000/__hazel/websocket`** – WebSocket gateways (if @hazeljs/websocket is installed)
 - **`http://localhost:3000/__hazel/stats`** – Runtime stats (memory, uptime)
+
+### Agent OS timeline (with `@hazeljs/agent`)
+
+When agents are registered, Inspector exposes live debugging endpoints:
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /__hazel/agents/:name/stream` | SSE stream of timeline steps while the agent runs |
+| `GET /__hazel/agents/:name/timeline` | JSON replay of recorded timeline steps |
+| `POST /__hazel/agents/:name/run` | Run the agent from the UI (optional input prompt) |
+
+In the Agents panel, use **Run** (executes + streams) or **Timeline** (loads history and opens the live SSE feed).
+
+```bash
+# Replay last timeline
+curl http://localhost:3000/__hazel/agents/support-agent/timeline
+
+# Live SSE (EventSource-compatible)
+curl -N http://localhost:3000/__hazel/agents/support-agent/stream
+```
 
 ## Configuration
 

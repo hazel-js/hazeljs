@@ -76,6 +76,27 @@ export class AgentRegistry {
   }
 
   /**
+   * Patch live agent metadata (DNA hot-reload).
+   */
+  patchAgent(
+    name: string,
+    patch: Partial<{
+      description: string;
+      systemPrompt: string;
+      model: string;
+      metadata: Record<string, unknown>;
+      maxSteps: number;
+      temperature: number;
+    }>
+  ): void {
+    const agent = this.agents.get(name);
+    if (!agent) {
+      throw new Error(`Agent ${name} is not registered`);
+    }
+    Object.assign(agent, patch);
+  }
+
+  /**
    * Unregister an agent
    */
   unregister(name: string): void {

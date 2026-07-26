@@ -43,6 +43,11 @@ export enum AgentEventType {
   // Agent delegation events (agent-as-tool)
   DELEGATE_STARTED = 'agent.delegate.started',
   DELEGATE_COMPLETED = 'agent.delegate.completed',
+
+  // Confidence loop (Agent OS)
+  LOOP_ITERATION = 'agent.loop.iteration',
+  LOOP_CRITIQUE = 'agent.loop.critique',
+  LOOP_COMPLETE = 'agent.loop.complete',
 }
 
 /**
@@ -234,4 +239,25 @@ export interface DelegateEventData {
   input: string;
   response?: string;
   duration?: number;
+}
+
+export interface LoopIterationEventData {
+  iteration: number;
+  maxIterations: number;
+  stage: string;
+  plan?: string;
+}
+
+export interface LoopCritiqueEventData {
+  iteration: number;
+  score: number;
+  feedback: string;
+  successScore: number;
+}
+
+export interface LoopCompleteEventData {
+  iterations: number;
+  finalScore: number;
+  success: boolean;
+  response?: string;
 }

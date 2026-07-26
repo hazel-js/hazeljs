@@ -31,15 +31,25 @@
     "mustache": "^4.2.0"
   },
   "peerDependencies": {
-    "@hazeljs/eval": "^1.0.4"
+    "@hazeljs/eval": "^1.0.4",
+    "@hazeljs/benchmark": "^1.0.4",
+    "@hazeljs/agent": "^1.0.4"
   },
   "peerDependenciesMeta": {
     "@hazeljs/eval": {
+      "optional": true
+    },
+    "@hazeljs/benchmark": {
+      "optional": true
+    },
+    "@hazeljs/agent": {
       "optional": true
     }
   },
   "devDependencies": {
     "@hazeljs/eval": "^1.0.4",
+    "@hazeljs/benchmark": "^1.0.4",
+    "@hazeljs/agent": "^1.0.4",
     "@types/inquirer": "^8.2.12",
     "@types/jest": "^29.5.14",
     "@types/mustache": "^4.2.6",

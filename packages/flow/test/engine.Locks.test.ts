@@ -2,24 +2,26 @@ import { describe, it, expect, vi } from 'vitest';
 import { runIdToLockKey, withAdvisoryLock } from '../src/engine/Locks.js';
 
 describe('withAdvisoryLock', () => {
-  it('throws LockBusyError when lock not acquired', async () => {
-    const prisma = {
-      $queryRaw: vi.fn().mockResolvedValue([{ acquired: false }]),
+  it('runs fn inside a transaction after acquiring xact lock', async () => {
+    const tx = {
       $executeRaw: vi.fn().mockResolvedValue(undefined),
+    };
+    const prisma = {
+      $transaction: vi.fn(async (fn: (client: typeof tx) => Promise<unknown>) => fn(tx)),
+    };
+    const result = await withAdvisoryLock(prisma as never, 'run-1', async () => 99);
+    expect(result).toBe(99);
+    expect(prisma.$transaction).toHaveBeenCalledOnce();
+    expect(tx.$executeRaw).toHaveBeenCalledOnce();
+  });
+
+  it('maps transaction start failures to LockBusyError', async () => {
+    const prisma = {
+      $transaction: vi.fn().mockRejectedValue(new Error('Unable to start a transaction')),
     };
     await expect(withAdvisoryLock(prisma as never, 'run-1', async () => 42)).rejects.toThrow(
       /Lock busy for run run-1/
     );
-  });
-
-  it('executes fn and unlocks when lock acquired', async () => {
-    const prisma = {
-      $queryRaw: vi.fn().mockResolvedValue([{ acquired: true }]),
-      $executeRaw: vi.fn().mockResolvedValue(undefined),
-    };
-    const result = await withAdvisoryLock(prisma as never, 'run-1', async () => 99);
-    expect(result).toBe(99);
-    expect(prisma.$executeRaw).toHaveBeenCalled();
   });
 });
 

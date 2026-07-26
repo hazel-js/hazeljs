@@ -12,7 +12,8 @@
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 
 _Stop the glue code. Build AI backends that feel native — not bolted on._  
-**HCEL** · **AI** · **Agents** · **RAG** · **Flow** · **Prompts** — one cohesive stack.
+**HCEL** · **AI** · **Agents** · **RAG** · **Flow** · **Prompts** — one cohesive stack.  
+Also an **[Agent OS](../AGENT_OS_ROADMAP.md)** for production agent lifecycle: loop, state, timeline, test, and observe.
 
 [Get Started](#quick-start) · [Why HazelJS?](#-why-hazeljs) · [Documentation](#-documentation) · [Starter](./hazeljs-starter-example)
 
@@ -49,6 +50,10 @@ You've built APIs before. You know the drill: wire up routing, configure middlew
 - ⚡ **[@hazeljs/flow](packages/flow)** — Durable workflows: WAIT/resume, idempotency, audit timeline
 - 📝 **[@hazeljs/prompts](packages/prompts)** — Versioned prompts, hot-swap from Redis/DB
 - 👁️ **[@hazeljs/observability](packages/observability)** — Native OTel tracing, cost monitoring, and reasoning loop debugging
+
+### Agent OS (production lifecycle)
+
+HazelJS is also an **Agent Operating System** for teams that need more than a ReAct loop: confidence loops, rich execution state, Inspector timelines, and `describeAgent` CI tests via [`@hazeljs/testing`](packages/testing). See the full map in [AGENT_OS_ROADMAP.md](../AGENT_OS_ROADMAP.md).
 
 ### Production-ready
 

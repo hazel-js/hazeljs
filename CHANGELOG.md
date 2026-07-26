@@ -4,6 +4,44 @@ All notable changes to HazelJS are documented here. The project follows [Semanti
 
 ---
 
+## [Unreleased]
+
+### Agent OS — production hardening
+
+- Separate **critique** vs **validate** loop stages; failed loops return `FAILED` below `successScore`; softer no-LLM heuristic (score 70)
+- `executeStream` honors `options.loop` (yields final `done` chunk)
+- `RETRYING` / `BLOCKED` state transitions in recovery path
+- `runtime.hotReloadDna()` / `installAgentPackage()` + `hazel agent install|dna`
+- `assessKnowledgeFreshness` wired into RAG context metadata
+- GraphRAG bridge: `memoryGraphFromKnowledgeGraph` / `syncMemoryGraphToKnowledgeGraph`
+- `FileTimelineStore` + `attachTimelineStore` for durable timelines
+- `@hazeljs/testing` suite-level `maxLatencyMs` / `maxCostUsd` enforcement
+
+### Agent OS Phases 2–4
+
+- **Time travel** — `TimeTravelDebugger` (fork / edit prompt|tool output / prepareContinue); `runtime.getTimeTravel()`
+- **Contracts** — `validateAgentContract`, `executeWithContract`, `options.contract` (+ fallback agent)
+- **Policies** — `PolicyEngine` allow / deny / mask / require_approval; wired into `ToolExecutor`
+- **Recovery** — `runRecoveryLadder`, `options.recovery`
+- **Benchmark** — `@hazeljs/benchmark` + `hazel benchmark` (baseline compare, `--ci`)
+- **Skills** — `openApiToSkills`, `createSkillInvoker`
+- **Memory graph** — `AgentMemoryGraph`
+- **Evolution** — `evolveSystemPrompt`, `runEvolutionLoop`
+- **Cost** — `CostOptimizer`, `options.costRoute`
+- **Simulator** — `runAgentSimulator`
+- **Digital twin** — `runDigitalTwin`, `shouldRunCanary`
+- **DNA / marketplace** — `exportAgentDna`, `parseDna`, `toMarketplacePackage`
+- **Consensus** — `runConsensus`, `collectConsensusVotes`
+- **Governance** — `GovernanceGate`, `options.governance`
+
+### Agent OS Phase 1
+
+- **`@hazeljs/agent` — Loop Engine**: `options.loop: { maxIterations, successScore, stages? }` — plan → execute → critique → validate around Think→Act
+- **`@hazeljs/agent` — State machine**: Extended `AgentState` (`planning`, `searching_knowledge`, `searching_memory`, `retrying`, `blocked`, `validating`, …) plus `onState` / `onStateChange`
+- **`@hazeljs/agent` — Visual timeline**: Timeline recorder (`getTimeline` / `getTimelineRecorder`); events `LOOP_ITERATION`, `LOOP_CRITIQUE`, `LOOP_COMPLETE`
+- **`@hazeljs/inspector`**: `GET /__hazel/agents/:name/stream` (SSE), `GET /__hazel/agents/:name/timeline`, Agents UI Timeline panel
+- **`@hazeljs/testing`**: New package — `describeAgent`, `runAgentSuite`, `bindAgentSuite`, `assertAgentResult`, `expectTools`, `runAgentGolden` / `reportAgentCi`
+
 ---
 
 ## [1.0.1] - 2026-06-14
