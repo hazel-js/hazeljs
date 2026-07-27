@@ -29,10 +29,16 @@ export interface IGuardrailsService {
  */
 export enum AgentState {
   IDLE = 'idle',
+  PLANNING = 'planning',
   THINKING = 'thinking',
+  SEARCHING_KNOWLEDGE = 'searching_knowledge',
+  SEARCHING_MEMORY = 'searching_memory',
   USING_TOOL = 'using_tool',
   WAITING_FOR_INPUT = 'waiting_for_input',
   WAITING_FOR_APPROVAL = 'waiting_for_approval',
+  RETRYING = 'retrying',
+  BLOCKED = 'blocked',
+  VALIDATING = 'validating',
   COMPLETED = 'completed',
   FAILED = 'failed',
 }
@@ -156,6 +162,22 @@ export interface AgentMetadata extends AgentConfig {
   instance?: unknown;
 }
 
+/** Stages for the outer confidence loop (Agent OS Loop Engine). */
+export type AgentLoopStage = 'plan' | 'execute' | 'critique' | 'validate';
+
+/**
+ * Outer confidence-loop options. When set, execute() runs plan→execute→critique→validate
+ * until successScore or maxIterations.
+ */
+export interface AgentLoopOptions {
+  /** Max outer-loop iterations (default 5). */
+  maxIterations?: number;
+  /** Stop when critique/validate score >= this (0–100, default 95). */
+  successScore?: number;
+  /** Stages to run per iteration (default all). */
+  stages?: AgentLoopStage[];
+}
+
 /**
  * Agent execution options
  */
@@ -173,6 +195,16 @@ export interface AgentExecutionOptions {
   metadata?: Record<string, unknown>;
   /** When true and LLM supports streamChat, tokens are streamed for final response. */
   streaming?: boolean;
+  /** Outer confidence loop (Agent OS). */
+  loop?: AgentLoopOptions;
+  /** Phase 2 — validate result against contract (and optional fallback). */
+  contract?: import('../contracts/agent-contract').AgentContract;
+  /** Phase 2 — recovery ladder options for this execute. */
+  recovery?: import('../recovery/recovery-ladder').RecoveryLadderOptions;
+  /** Phase 3 — auto-select model id via CostOptimizer (stored in metadata). */
+  costRoute?: import('../cost/cost-optimizer').CostRouteRequest;
+  /** Phase 4 — governance check before execute. */
+  governance?: import('../governance/governance').GovernanceContext;
 }
 
 /**
@@ -188,6 +220,12 @@ export interface AgentExecutionResult {
   metadata: Record<string, unknown>;
   duration: number;
   completedAt: Date;
+  /** Present when loop options were used. */
+  loop?: {
+    iterations: number;
+    finalScore: number;
+    success: boolean;
+  };
 }
 
 /**

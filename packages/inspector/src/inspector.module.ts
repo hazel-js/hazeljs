@@ -124,18 +124,20 @@ function createInspectorHandler(
   config: ReturnType<typeof mergeInspectorConfig>,
   app: { getContainer: () => unknown; getRouter: () => unknown; getModuleType: () => unknown }
 ): (
-  req: { url?: string; method?: string; on?: (e: string, cb: (chunk?: Buffer) => void) => void },
+  req: { url?: string; method?: string; on: (e: string, cb: (chunk?: Buffer) => void) => void },
   res: {
     writeHead: (c: number, h?: Record<string, string>) => void;
     setHeader: (k: string, v: string) => void;
+    write: (chunk: string) => boolean | void;
     end: (b?: string) => void;
   }
 ) => Promise<void> {
   return async (
-    req: { url?: string; method?: string; on?: (e: string, cb: (chunk?: Buffer) => void) => void },
+    req: { url?: string; method?: string; on: (e: string, cb: (chunk?: Buffer) => void) => void },
     res: {
       writeHead: (c: number, h?: Record<string, string>) => void;
       setHeader: (k: string, v: string) => void;
+      write: (chunk: string) => boolean | void;
       end: (b?: string) => void;
     }
   ) => {
@@ -346,6 +348,85 @@ function createInspectorHandler(
         }
         return;
       }
+
+      // Agent OS Visual Timeline — SSE live stream
+      const agentStreamMatch = pathSeg.match(/^\/agents\/([^/]+)\/stream\/?$/);
+      if (agentStreamMatch && req.method === 'GET') {
+        const agentName = decodeURIComponent(agentStreamMatch[1]);
+        try {
+          const { AgentService } = require('@hazeljs/agent');
+          const container = app.getContainer() as { resolve: (t: unknown) => unknown };
+          const svc = container.resolve(AgentService) as {
+            getRuntime?: () => {
+              getTimelineRecorder: () => {
+                subscribe: (fn: (step: unknown) => void) => () => void;
+                getTimeline: (f: { agentName?: string }) => unknown[];
+              };
+            };
+            getTimeline?: (f: { agentName?: string }) => unknown[];
+          };
+          if (!svc?.getRuntime && !svc?.getTimeline) {
+            res.writeHead(503);
+            res.end(JSON.stringify({ error: 'AgentService not found' }));
+            return;
+          }
+          res.writeHead(200, {
+            'Content-Type': 'text/event-stream',
+            'Cache-Control': 'no-cache',
+            Connection: 'keep-alive',
+          });
+          const recorder = svc.getRuntime?.()?.getTimelineRecorder?.();
+          const existing =
+            recorder?.getTimeline({ agentName }) ?? svc.getTimeline?.({ agentName }) ?? [];
+          for (const step of existing) {
+            res.write(`data: ${JSON.stringify(step)}\n\n`);
+          }
+          const unsub = recorder?.subscribe((step) => {
+            const s = step as { agentId?: string };
+            if (!s.agentId || s.agentId === agentName) {
+              res.write(`data: ${JSON.stringify(step)}\n\n`);
+            }
+          });
+          const heartbeat = setInterval(() => {
+            res.write(`: heartbeat\n\n`);
+          }, 15000);
+          req.on('close', () => {
+            clearInterval(heartbeat);
+            unsub?.();
+          });
+        } catch (err) {
+          res.writeHead(500);
+          res.end(JSON.stringify({ error: String(err) }));
+        }
+        return;
+      }
+
+      // Replay timeline for agent or execution
+      const agentTimelineMatch = pathSeg.match(/^\/agents\/([^/]+)\/timeline\/?$/);
+      if (agentTimelineMatch && req.method === 'GET') {
+        const agentName = decodeURIComponent(agentTimelineMatch[1]);
+        const url = new URL(req.url ?? '/', 'http://localhost');
+        const executionId = url.searchParams.get('executionId') ?? undefined;
+        try {
+          const { AgentService } = require('@hazeljs/agent');
+          const container = app.getContainer() as { resolve: (t: unknown) => unknown };
+          const svc = container.resolve(AgentService) as {
+            getTimeline?: (f: { agentName?: string; executionId?: string }) => unknown[];
+          };
+          if (!svc?.getTimeline) {
+            res.writeHead(503);
+            res.end(JSON.stringify({ error: 'AgentService.getTimeline not available' }));
+            return;
+          }
+          const steps = svc.getTimeline(executionId ? { executionId } : { agentName });
+          res.writeHead(200);
+          res.end(JSON.stringify({ agentName, executionId, steps }));
+        } catch (err) {
+          res.writeHead(500);
+          res.end(JSON.stringify({ error: String(err) }));
+        }
+        return;
+      }
       if (pathSeg === '/rag' || pathSeg === '/rag/') {
         const rag = snapshot.entries.filter((e: { kind?: string }) => e.kind === 'rag');
         res.writeHead(200);
@@ -533,6 +614,8 @@ function createInspectorHandler(
               '/queues',
               '/websocket',
               '/agents',
+              '/agents/:name/stream',
+              '/agents/:name/timeline',
               '/rag',
               '/prompts',
               '/aifunctions',

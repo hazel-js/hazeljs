@@ -1,9 +1,13 @@
 /**
  * Postgres advisory locks for flow run concurrency safety.
- * Uses a stable hash of runId -> bigint for pg_advisory_lock.
+ * Uses a stable hash of runId -> bigint for pg_advisory_xact_lock.
  *
  * Hash algorithm: djb2-like string hash, then take mod to fit in int8 range.
  * PostgreSQL advisory lock keys are int8 (signed 64-bit).
+ *
+ * Locks are transaction-scoped and acquired inside an interactive transaction so
+ * the same backend session holds the lock for the full tick. Session-level
+ * pg_try_advisory_lock/unlock across pooled connections is unsafe with Prisma.
  */
 
 import type { PrismaClient } from '../persistence/prisma.js';
@@ -18,21 +22,37 @@ export function runIdToLockKey(runId: string): bigint {
   return BigInt(h % Number.MAX_SAFE_INTEGER);
 }
 
+function lockTransactionTimeoutMs(): number {
+  const raw = Number(process.env.FLOW_LOCK_TRANSACTION_TIMEOUT_MS || '120000');
+  return Number.isFinite(raw) && raw >= 5_000 ? raw : 120_000;
+}
+
 export async function withAdvisoryLock<T>(
   prisma: PrismaClient,
   runId: string,
   fn: () => Promise<T>
 ): Promise<T> {
   const key = runIdToLockKey(runId);
+  const timeout = lockTransactionTimeoutMs();
+
   try {
-    const result = await prisma.$queryRaw`SELECT pg_try_advisory_lock(${key}) as acquired`;
-    const acquired = (result as Array<{ acquired: boolean }>)[0]?.acquired;
-    if (!acquired) {
+    return await prisma.$transaction(
+      async (tx) => {
+        // Blocks until acquired; released automatically at transaction end.
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(${key})`;
+        return await fn();
+      },
+      {
+        maxWait: 10_000,
+        timeout,
+      }
+    );
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    if (/Unable to start a transaction|timed out fetching a new connection|P2028/i.test(message)) {
       const { LockBusyError } = await import('../types/Errors.js');
       throw new LockBusyError(runId);
     }
-    return await fn();
-  } finally {
-    await prisma.$executeRaw`SELECT pg_advisory_unlock(${key})`;
+    throw err;
   }
 }

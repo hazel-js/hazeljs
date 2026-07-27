@@ -73,6 +73,7 @@ describe('AgentExecutor', () => {
 
       expect(eventEmitter).toHaveBeenCalledWith(
         AgentEventType.EXECUTION_STARTED,
+        context.agentId,
         context.executionId,
         expect.any(Object)
       );
@@ -482,6 +483,7 @@ describe('AgentExecutor', () => {
         expect(step.state).toBe(AgentState.WAITING_FOR_INPUT);
         expect(eventEmitter).toHaveBeenCalledWith(
           AgentEventType.USER_INPUT_REQUESTED,
+          context.agentId,
           context.executionId,
           expect.objectContaining({ question: 'What do you need?' })
         );
@@ -504,6 +506,7 @@ describe('AgentExecutor', () => {
         expect(step.error).toBeDefined();
         expect(eventEmitter).toHaveBeenCalledWith(
           AgentEventType.STEP_FAILED,
+          context.agentId,
           context.executionId,
           expect.any(Object)
         );

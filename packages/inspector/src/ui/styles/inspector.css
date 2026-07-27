@@ -1358,3 +1358,41 @@ td.empty-state {
   margin: 0 0 1rem;
   color: var(--text-primary);
 }
+
+.agent-timeline-panel {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.agent-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.timeline-step {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-secondary);
+}
+
+.timeline-step-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  font-size: 12px;
+}
+
+.timeline-prompt {
+  margin: 0.4rem 0 0;
+  font-size: 11px;
+  white-space: pre-wrap;
+  color: var(--text-muted);
+  max-height: 80px;
+  overflow: auto;
+}

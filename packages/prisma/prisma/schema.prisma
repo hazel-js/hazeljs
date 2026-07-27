@@ -1,0 +1,14 @@
+// Stub schema so `@prisma/client` can be generated for package typecheck/build.
+// Consumers replace this with their app schema and run `prisma generate`.
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model HazelPrismaTypecheck {
+  id String @id @default(cuid())
+}

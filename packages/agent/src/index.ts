@@ -24,6 +24,7 @@ export * from './state/redis-state.manager';
 export * from './state/database-state.manager';
 export * from './state/create-state-manager';
 export * from './state/redis-client.types';
+export * from './state/emitting-state.manager';
 export * from './approval/approval-store.interface';
 export * from './approval/in-memory-approval.store';
 export * from './approval/redis-approval.store';
@@ -37,6 +38,30 @@ export * from './executor/tool.executor';
 export * from './events/event.emitter';
 
 export * from './runtime/agent.runtime';
+
+export * from './loop/confidence-loop';
+export * from './timeline/timeline.recorder';
+
+// Agent OS Phase 2–4
+export * from './timetravel/time-travel';
+export * from './contracts/agent-contract';
+export * from './policies/policy.engine';
+export * from './recovery/recovery-ladder';
+export * from './benchmark/benchmark';
+export * from './skills/openapi-skills';
+export * from './memory-graph/memory-graph';
+export * from './evolution/agent-evolution';
+export * from './cost/cost-optimizer';
+export * from './simulator/agent-simulator';
+export * from './twin/digital-twin';
+export * from './dna/agent-dna';
+export * from './dna/hot-reload';
+export * from './dna/marketplace';
+export * from './knowledge/knowledge-freshness';
+export * from './memory-graph/graphrag-bridge';
+export * from './timeline/timeline.store';
+export * from './consensus/consensus';
+export * from './governance/governance';
 
 export * from './utils/rate-limiter';
 export * from './utils/logger';

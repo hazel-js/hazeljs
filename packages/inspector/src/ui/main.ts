@@ -809,7 +809,8 @@ function renderTable(
             const method = String((e as Record<string, string>).httpMethod ?? 'GET').toUpperCase();
             actions = `<td><button class="btn btn-sm try-route" data-method="${method}" data-path="${escapeHtml(path)}">Try</button></td>`;
           } else if (options?.runAgent && e.agentName != null) {
-            actions = `<td><button class="btn btn-sm run-agent" data-name="${escapeHtml(String(e.agentName))}">Run</button></td>`;
+            const n = escapeHtml(String(e.agentName));
+            actions = `<td><button class="btn btn-sm run-agent" data-name="${n}">Run</button> <button class="btn btn-sm timeline-agent" data-name="${n}">Timeline</button></td>`;
           } else if (options?.previewPrompt && e.promptKey != null) {
             actions = `<td><button class="btn btn-sm preview-prompt" data-key="${escapeHtml(String(e.promptKey))}">Preview</button></td>`;
           } else if (options?.tryRoute || options?.runAgent || options?.previewPrompt) {
@@ -867,6 +868,13 @@ function renderTable(
       runAgent(name);
     });
   });
+  table.querySelectorAll('.timeline-agent').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const name = (btn as HTMLElement).dataset.name ?? '';
+      openAgentTimeline(name);
+    });
+  });
   table.querySelectorAll('.preview-prompt').forEach((btn) => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -889,8 +897,77 @@ function openRouteTestModal(method: string, path: string) {
   modal.classList.remove('hidden');
 }
 
+let agentTimelineSource: EventSource | null = null;
+
+function renderTimelineSteps(steps: Record<string, unknown>[]) {
+  const el = document.getElementById('agent-timeline');
+  if (!el) return;
+  if (!steps.length) {
+    el.innerHTML = '<p class="muted">No timeline events yet. Run an agent to stream steps.</p>';
+    return;
+  }
+  el.innerHTML = steps
+    .map((s) => {
+      const type = escapeHtml(String(s.type ?? ''));
+      const state = s.state ? `<span class="badge">${escapeHtml(String(s.state))}</span>` : '';
+      const dur =
+        s.durationMs != null
+          ? `<span class="muted">${escapeHtml(String(s.durationMs))}ms</span>`
+          : '';
+      const conf =
+        s.confidence != null
+          ? `<span class="muted">confidence ${escapeHtml(String(s.confidence))}</span>`
+          : '';
+      const tokens =
+        s.tokens != null ? `<span class="muted">${escapeHtml(String(s.tokens))} tok</span>` : '';
+      const cost =
+        s.cost != null ? `<span class="muted">$${escapeHtml(String(s.cost))}</span>` : '';
+      const prompt = s.prompt
+        ? `<pre class="timeline-prompt">${escapeHtml(String(s.prompt).slice(0, 400))}</pre>`
+        : '';
+      return `<div class="timeline-step" data-id="${escapeHtml(String(s.id ?? ''))}">
+        <div class="timeline-step-head"><strong>${type}</strong> ${state} ${dur} ${conf} ${tokens} ${cost}</div>
+        ${prompt}
+      </div>`;
+    })
+    .join('');
+}
+
+async function openAgentTimeline(name: string) {
+  const el = document.getElementById('agent-timeline');
+  if (el) el.innerHTML = '<p class="muted">Loading timeline…</p>';
+  try {
+    const res = await fetch(`${BASE}/agents/${encodeURIComponent(name)}/timeline`);
+    const data = await res.json();
+    if (!res.ok) {
+      if (el) el.innerHTML = `<p class="muted">${escapeHtml(data.error ?? 'Failed')}</p>`;
+      return;
+    }
+    renderTimelineSteps((data.steps ?? []) as Record<string, unknown>[]);
+  } catch (e) {
+    if (el) el.innerHTML = `<p class="muted">${escapeHtml(String(e))}</p>`;
+  }
+
+  if (agentTimelineSource) {
+    agentTimelineSource.close();
+    agentTimelineSource = null;
+  }
+  const steps: Record<string, unknown>[] = [];
+  agentTimelineSource = new EventSource(`${BASE}/agents/${encodeURIComponent(name)}/stream`);
+  agentTimelineSource.onmessage = (ev) => {
+    try {
+      const step = JSON.parse(ev.data) as Record<string, unknown>;
+      steps.push(step);
+      renderTimelineSteps(steps.slice(-100));
+    } catch {
+      /* ignore */
+    }
+  };
+}
+
 async function runAgent(name: string) {
   const input = prompt('Enter input for agent (or leave empty for empty string):') ?? '';
+  openAgentTimeline(name);
   try {
     const res = await fetch(`${BASE}/agents/${encodeURIComponent(name)}/run`, {
       method: 'POST',
@@ -903,6 +980,12 @@ async function runAgent(name: string) {
       return;
     }
     showDetail({ agentName: name, result: data.result });
+    // Refresh replay after run
+    const tl = await fetch(`${BASE}/agents/${encodeURIComponent(name)}/timeline`);
+    if (tl.ok) {
+      const body = await tl.json();
+      renderTimelineSteps((body.steps ?? []) as Record<string, unknown>[]);
+    }
   } catch (e) {
     showDetail({ error: String(e), agentName: name });
   }

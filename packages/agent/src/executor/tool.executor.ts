@@ -24,6 +24,7 @@ export interface ToolExecutorOptions {
   guardrailsService?: IGuardrailsService;
   approvalStore?: IApprovalStore;
   observabilityProvider?: ObservabilityProvider;
+  policyEngine?: import('../policies/policy.engine').PolicyEngine;
 }
 
 /**
@@ -38,6 +39,10 @@ export class ToolExecutor {
 
   constructor(private options: ToolExecutorOptions = {}) {
     this.approvalStore = options.approvalStore ?? new InMemoryApprovalStore();
+  }
+
+  setPolicyEngine(engine: import('../policies/policy.engine').PolicyEngine): void {
+    this.options.policyEngine = engine;
   }
 
   /**
@@ -59,12 +64,13 @@ export class ToolExecutor {
   }
 
   private async executeInternal(
-    tool: ToolMetadata,
+    toolMeta: ToolMetadata,
     input: Record<string, unknown>,
     agentId: string,
     sessionId: string,
     userId?: string
   ): Promise<ToolExecutionResult> {
+    let tool = toolMeta;
     const executionId = randomUUID();
     const startTime = Date.now();
 
@@ -87,6 +93,33 @@ export class ToolExecutor {
     });
 
     try {
+      if (this.options.policyEngine) {
+        const decision = this.options.policyEngine.evaluate(tool.name, input);
+        input = decision.input;
+        context.input = input;
+        if (!decision.allowed) {
+          context.status = ToolExecutionStatus.FAILED;
+          context.completedAt = new Date();
+          context.duration = Date.now() - startTime;
+          const errorMsg = decision.reason ?? 'Denied by policy';
+          this.emitEvent(AgentEventType.TOOL_EXECUTION_FAILED, {
+            toolName: tool.name,
+            input,
+            error: errorMsg,
+            duration: context.duration,
+            policyRuleId: decision.ruleId,
+          });
+          return {
+            success: false,
+            error: new Error(errorMsg),
+            duration: context.duration,
+          };
+        }
+        if (decision.requiresApproval) {
+          tool = { ...tool, requiresApproval: true };
+        }
+      }
+
       if (tool.schema) {
         const parsed = await tool.schema.safeParseAsync(input);
         if (!parsed.success) {

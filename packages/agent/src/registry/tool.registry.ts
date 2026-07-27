@@ -158,6 +158,51 @@ export class ToolRegistry {
   }
 
   /**
+   * Register or replace a dynamic tool (DNA / OpenAPI skills).
+   */
+  registerDynamicTool(
+    agentName: string,
+    tool: {
+      name: string;
+      description?: string;
+      parameters?: unknown;
+      requiresApproval?: boolean;
+      handler?: (input: Record<string, unknown>) => Promise<unknown>;
+    }
+  ): void {
+    const registeredName = tool.name;
+    const fullToolName = `${agentName}.${registeredName}`;
+    const handler =
+      tool.handler ??
+      (async (): Promise<never> => {
+        throw new Error(
+          `Dynamic tool ${registeredName} has no handler — wire createSkillInvoker or provide handler`
+        );
+      });
+
+    const metadata: ToolMetadata = {
+      name: registeredName,
+      description: tool.description ?? registeredName,
+      requiresApproval: tool.requiresApproval,
+      parameters: Array.isArray(tool.parameters)
+        ? (tool.parameters as ToolMetadata['parameters'])
+        : undefined,
+      target: { [registeredName]: handler },
+      propertyKey: registeredName,
+      method: handler,
+      metadata: { dynamic: true, dna: true },
+    };
+
+    this.tools.set(fullToolName, metadata);
+    let set = this.agentTools.get(agentName);
+    if (!set) {
+      set = new Set();
+      this.agentTools.set(agentName, set);
+    }
+    set.add(fullToolName);
+  }
+
+  /**
    * Unregister all tools for an agent
    */
   unregisterAgentTools(agentName: string): void {

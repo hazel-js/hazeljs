@@ -2,7 +2,7 @@
 
 **Build AI agents that actually do things.**
 
-Part of the HazelJS AI-Native Backend Framework. Stateful, tool-using, memory-enabled. Define tools with `@Tool`, delegate between agents with `@Delegate`, orchestrate multi-agent pipelines with `AgentGraph`, and route tasks automatically with `SupervisorAgent`. Production-grade agent infrastructure without the complexity.
+Part of the HazelJS **AI-native backend** and **Agent OS**. Stateful, tool-using, memory-enabled — plus confidence loops, a rich state machine, Inspector timelines, and CI tests via `@hazeljs/testing`. Define tools with `@Tool`, delegate between agents with `@Delegate`, orchestrate multi-agent pipelines with `AgentGraph`, and route tasks automatically with `SupervisorAgent`.
 
 **🚀 Trusted by 200K+ monthly downloads • 37+ GitHub stars • 15+ daily active developers**
 
@@ -32,6 +32,56 @@ Unlike stateless request handlers, agents are:
 - **Memory-enabled** — Integrate with persistent memory systems
 - **Observable** — Full event system for monitoring and debugging
 - **Resumable** — Support pause/resume and human-in-the-loop
+
+### Agent OS (Phase 1)
+
+```typescript
+// Confidence loop — plan → execute → critique → validate
+await runtime.execute('support-agent', goal, {
+  loop: { maxIterations: 8, successScore: 95 },
+});
+
+// Rich state subscriptions
+runtime.onState('planning', (e) => console.log('planning', e));
+runtime.onStateChange((e) => console.log(e.from, '→', e.to));
+
+// Timeline for Inspector / debugging
+const steps = runtime.getTimeline({ executionId });
+```
+
+Install `@hazeljs/testing` for `describeAgent` CI suites, and `@hazeljs/inspector` for SSE timelines at `/__hazel/agents/:name/stream`.
+
+### Agent OS Phases 2–4 (highlights)
+
+```typescript
+import {
+  PolicyEngine,
+  TimeTravelDebugger,
+  CostOptimizer,
+  exportAgentDna,
+  runConsensus,
+  GovernanceGate,
+} from '@hazeljs/agent';
+
+runtime.setPolicyEngine(
+  new PolicyEngine([{ id: 'deny-x', tool: 'x', effect: 'deny', priority: 10 }])
+);
+
+await runtime.execute('support-agent', goal, {
+  contract: {
+    name: 'refund',
+    outputIncludes: 'refund',
+    maxLatencyMs: 8000,
+    fallbackAgent: 'safe-agent',
+  },
+  recovery: { maxRetries: 3, fallbackAgent: 'safe-agent' },
+  costRoute: { qualityBias: 0.3, maxCostUsd: 0.05 },
+});
+
+const fork = runtime.getTimeTravel().fork(executionId);
+```
+
+Also: `openApiToSkills`, `AgentMemoryGraph`, `runEvolutionLoop`, `runAgentSimulator`, `runDigitalTwin`, `hazel benchmark` (`@hazeljs/benchmark`).
 
 ---
 

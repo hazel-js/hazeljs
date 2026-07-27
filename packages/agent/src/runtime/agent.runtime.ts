@@ -7,6 +7,7 @@ import { AgentRegistry } from '../registry/agent.registry';
 import { ToolRegistry } from '../registry/tool.registry';
 import { resolveStateManager, CreateStateManagerOptions } from '../state/create-state-manager';
 import { IAgentStateManager } from '../state/agent-state.interface';
+import { EmittingStateManager } from '../state/emitting-state.manager';
 import { createApprovalStore } from '../approval/create-approval-store';
 import { IApprovalStore } from '../approval/approval-store.interface';
 import { AgentContextBuilder } from '../context/agent.context';
@@ -22,7 +23,7 @@ import {
   AgentStreamChunk,
 } from '../types/agent.types';
 import { AgentError } from '../errors/agent.error';
-import { AgentEventType } from '../types/event.types';
+import { AgentEvent, AgentEventType, StateChangedEvent } from '../types/event.types';
 import { LLMProvider } from '../types/llm.types';
 import { RAGService } from '../types/rag.types';
 import { MemoryManager } from '@hazeljs/rag';
@@ -37,6 +38,19 @@ import { SupervisorAgent } from '../supervisor/supervisor';
 import { SupervisorConfig } from '../graph/agent-graph.types';
 import { getDelegatedMethods, getDelegateMetadata } from '../decorators/delegate.decorator';
 import type { ObservabilityProvider } from '../types/observability.types';
+import { runConfidenceLoop } from '../loop/confidence-loop';
+import { AgentTimelineRecorder } from '../timeline/timeline.recorder';
+import { TimeTravelDebugger } from '../timetravel/time-travel';
+import { PolicyEngine } from '../policies/policy.engine';
+import { CostOptimizer } from '../cost/cost-optimizer';
+import { GovernanceGate } from '../governance/governance';
+import { executeWithContract } from '../contracts/agent-contract';
+import { runRecoveryLadder } from '../recovery/recovery-ladder';
+import { attachTimelineStore } from '../timeline/timeline.store';
+import { hotReloadAgentDna, type HotReloadResult } from '../dna/hot-reload';
+import { installAgentPackage } from '../dna/marketplace';
+import type { AgentDna, MarketplaceAgentPackage } from '../dna/agent-dna';
+import { CircuitBreakerError } from '@hazeljs/resilience';
 
 /**
  * Agent Runtime Configuration
@@ -63,6 +77,16 @@ export interface AgentRuntimeConfig {
   strictEventHandlers?: boolean;
   /** Use Redis-backed approval store when redisClient is in stateManagerOptions (default: true when client present) */
   useRedisApprovals?: boolean;
+  /** Agent OS Phase 2 — declarative tool policies */
+  policyEngine?: import('../policies/policy.engine').PolicyEngine;
+  /** Agent OS Phase 4 — governance gate */
+  governanceGate?: import('../governance/governance').GovernanceGate;
+  /** Agent OS Phase 3 — cost optimizer for model routing hints */
+  costOptimizer?: import('../cost/cost-optimizer').CostOptimizer;
+  /** Persist timeline steps (file JSONL or custom store) */
+  timelineStore?: import('../timeline/timeline.store').TimelineStore;
+  /** Knowledge freshness defaults for RAG */
+  knowledgeFreshness?: { maxAgeMs?: number; minConfidence?: number };
 }
 
 /**
@@ -86,6 +110,15 @@ export class AgentRuntime {
   private healthChecker: HealthChecker;
   /** AbortControllers for in-flight executions, keyed by executionId (for cancel()). */
   private executionAbortControllers: Map<string, AbortController> = new Map();
+  private timelineRecorder: AgentTimelineRecorder;
+  private timeTravel: TimeTravelDebugger;
+  private policyEngine?: PolicyEngine;
+  private costOptimizer?: CostOptimizer;
+  private governanceGate?: GovernanceGate;
+  private stateHandlers: Map<
+    (event: AgentEvent<StateChangedEvent>) => void,
+    (event: AgentEvent) => void
+  > = new Map();
 
   constructor(config: AgentRuntimeConfig = {}) {
     this.config = {
@@ -149,11 +182,29 @@ export class AgentRuntime {
 
     this.agentRegistry = new AgentRegistry();
     this.toolRegistry = new ToolRegistry();
-    this.stateManager = resolveStateManager(config.stateManager, config.stateManagerOptions);
-    this.contextBuilder = new AgentContextBuilder(config.memoryManager);
     this.eventEmitter = new AgentEventEmitter({
       strictEventHandlers: this.config.strictEventHandlers,
     });
+    this.timelineRecorder = new AgentTimelineRecorder();
+    this.timeTravel = new TimeTravelDebugger(this.timelineRecorder);
+    this.policyEngine = config.policyEngine;
+    this.costOptimizer = config.costOptimizer ?? new CostOptimizer();
+    this.governanceGate = config.governanceGate;
+    this.eventEmitter.onAny((event) => {
+      this.timelineRecorder.record(event);
+    });
+    if (config.timelineStore) {
+      attachTimelineStore(this.timelineRecorder, config.timelineStore);
+    }
+
+    const rawStateManager = resolveStateManager(config.stateManager, config.stateManagerOptions);
+    this.stateManager = new EmittingStateManager(
+      rawStateManager,
+      (type, agentId, executionId, data) => {
+        void this.eventEmitter.emit(type, agentId, executionId, data);
+      }
+    );
+    this.contextBuilder = new AgentContextBuilder(config.memoryManager);
 
     const useRedisApprovals =
       config.useRedisApprovals !== false && !!config.stateManagerOptions?.redisClient;
@@ -172,6 +223,7 @@ export class AgentRuntime {
       guardrailsService: config.guardrailsService,
       approvalStore,
       observabilityProvider: config.observabilityProvider,
+      policyEngine: this.policyEngine,
     });
 
     this.agentExecutor = new AgentExecutor(
@@ -180,8 +232,8 @@ export class AgentRuntime {
       this.toolExecutor,
       this.toolRegistry,
       config.llmProvider,
-      (type, executionId, data) => {
-        this.eventEmitter.emit(type, '', executionId, data);
+      (type, agentId, executionId, data) => {
+        this.eventEmitter.emit(type, agentId, executionId, data);
       },
       config.observabilityProvider
     );
@@ -267,6 +319,75 @@ export class AgentRuntime {
     input: string,
     options: AgentExecutionOptions = {}
   ): Promise<AgentExecutionResult> {
+    if (options.governance && this.governanceGate) {
+      const decision = this.governanceGate.evaluate({
+        ...options.governance,
+        action: options.governance.action || 'agent.execute',
+      });
+      if (!decision.allowed) {
+        throw new Error(`Governance denied: ${decision.reason}`);
+      }
+    }
+
+    if (options.costRoute && this.costOptimizer) {
+      const model = this.costOptimizer.selectModel(options.costRoute);
+      options = {
+        ...options,
+        metadata: { ...options.metadata, costRoutedModel: model.id, costRoutedTier: model.tier },
+      };
+    }
+
+    const runOnce = async (
+      name: string,
+      goal: string,
+      opts: AgentExecutionOptions
+    ): Promise<AgentExecutionResult> => {
+      if (opts.recovery) {
+        const ladder = await runRecoveryLadder({
+          execute: (): Promise<AgentExecutionResult> => this.executeCore(name, goal, opts),
+          executeFallback: opts.recovery.fallbackAgent
+            ? (): Promise<AgentExecutionResult> =>
+                this.executeCore(opts.recovery!.fallbackAgent!, goal, {
+                  ...opts,
+                  recovery: undefined,
+                })
+            : undefined,
+          ladder: opts.recovery,
+        });
+        if (!ladder.success || !ladder.result) {
+          throw ladder.error ?? new Error('Recovery ladder failed');
+        }
+        return ladder.result;
+      }
+      return this.executeCore(name, goal, opts);
+    };
+
+    if (options.contract) {
+      const { result, validation, usedFallback } = await executeWithContract({
+        contract: options.contract,
+        input,
+        primaryAgent: agentName,
+        execute: (name, goal) => runOnce(name, goal, { ...options, contract: undefined }),
+      });
+      result.metadata = {
+        ...result.metadata,
+        contract: validation,
+        usedFallback,
+      };
+      return result;
+    }
+
+    return runOnce(agentName, input, options);
+  }
+
+  /**
+   * Core execute path (rate limit + loop + protection). Prefer `execute()`.
+   */
+  private async executeCore(
+    agentName: string,
+    input: string,
+    options: AgentExecutionOptions = {}
+  ): Promise<AgentExecutionResult> {
     // Check rate limit
     if (this.rateLimiter) {
       const allowed = await this.rateLimiter.waitForToken(5000);
@@ -286,8 +407,19 @@ export class AgentRuntime {
         userId: options.userId,
       });
 
-      // Execute with retry and circuit breaker
-      const result = await this.executeWithProtection(agentName, input, options);
+      const result = options.loop
+        ? await runConfidenceLoop({
+            agentName,
+            input,
+            options,
+            executeOnce: (name, goal, opts) => this.executeWithProtection(name, goal, opts),
+            llmProvider: this.config.llmProvider,
+            stateManager: this.stateManager,
+            emit: (type, agentId, executionId, data) => {
+              void this.eventEmitter.emit(type, agentId, executionId, data);
+            },
+          })
+        : await this.executeWithProtection(agentName, input, options);
 
       success = result.state === AgentState.COMPLETED;
       const duration = Date.now() - startTime;
@@ -352,15 +484,18 @@ export class AgentRuntime {
       const context = contextResult instanceof Promise ? await contextResult : contextResult;
 
       if (options.enableMemory !== false && this.config.memoryManager) {
+        await this.stateManager.updateState(context.executionId, AgentState.SEARCHING_MEMORY);
         await this.contextBuilder.buildWithMemory(context);
       }
 
       if (options.enableRAG !== false && this.config.ragService) {
+        await this.stateManager.updateState(context.executionId, AgentState.SEARCHING_KNOWLEDGE);
         await this.contextBuilder.buildWithRAG(
           context,
           this.config.ragService,
           agent.ragTopK || 5,
-          (error) => this.handleRagError(context, error)
+          (error) => this.handleRagError(context, error),
+          this.config.knowledgeFreshness
         );
       }
 
@@ -377,6 +512,7 @@ export class AgentRuntime {
       const timeoutMs = options.timeout ?? this.config.defaultTimeout;
 
       try {
+        await this.stateManager.updateState(context.executionId, AgentState.THINKING);
         const result = await this.agentExecutor.execute(context, maxSteps, {
           timeoutMs,
           signal,
@@ -398,33 +534,84 @@ export class AgentRuntime {
 
     // Apply circuit breaker if enabled
     if (this.circuitBreaker) {
-      const circuitBreakerFn = (): Promise<AgentExecutionResult> =>
-        this.circuitBreaker!.execute(executeFn);
+      const circuitBreakerFn = async (): Promise<AgentExecutionResult> => {
+        try {
+          return await this.circuitBreaker!.execute(executeFn);
+        } catch (e) {
+          if (e instanceof CircuitBreakerError) {
+            throw Object.assign(e, { agentStateHint: AgentState.BLOCKED });
+          }
+          throw e;
+        }
+      };
 
-      // Apply retry if enabled
       if (this.retryHandler) {
-        return this.retryHandler.execute(circuitBreakerFn);
+        return this.executeWithRetryStates(circuitBreakerFn);
       }
 
       return circuitBreakerFn();
     }
 
-    // Apply retry only if circuit breaker is disabled
     if (this.retryHandler) {
-      return this.retryHandler.execute(executeFn);
+      return this.executeWithRetryStates(executeFn);
     }
 
     return executeFn();
   }
 
+  /** Errors that should fail fast (no backoff retries). */
+  private isNonRetryableExecutionError(error: unknown): boolean {
+    if (error instanceof CircuitBreakerError) return true;
+    const msg = error instanceof Error ? error.message : String(error);
+    return /not found|not registered|is not decorated|already registered|invalid dna/i.test(msg);
+  }
+
+  /** Retry with RETRYING / BLOCKED state transitions when an executionId is known. */
+  private async executeWithRetryStates(
+    fn: () => Promise<AgentExecutionResult>
+  ): Promise<AgentExecutionResult> {
+    let lastExecutionId: string | undefined;
+    let attempt = 0;
+    const maxAttempts = 3;
+
+    while (attempt < maxAttempts) {
+      attempt += 1;
+      try {
+        if (attempt > 1 && lastExecutionId) {
+          await this.stateManager.updateState(lastExecutionId, AgentState.RETRYING);
+        }
+        const result = await fn();
+        lastExecutionId = result.executionId;
+        return result;
+      } catch (e) {
+        if (e instanceof CircuitBreakerError) {
+          if (lastExecutionId) {
+            await this.stateManager.updateState(lastExecutionId, AgentState.BLOCKED);
+          }
+          throw e;
+        }
+        if (this.isNonRetryableExecutionError(e) || attempt >= maxAttempts) throw e;
+        await new Promise((r) => setTimeout(r, Math.min(1000 * 2 ** (attempt - 1), 5000)));
+      }
+    }
+    throw new Error('Retry exhausted');
+  }
+
   /**
-   * Execute an agent and stream step/token chunks. Use when options.streaming is true and LLM supports streamChat.
+   * Execute an agent and stream step/token chunks.
+   * When `options.loop` is set, runs the confidence loop via `execute()` and yields a final `done` chunk.
    */
   async *executeStream(
     agentName: string,
     input: string,
     options: AgentExecutionOptions = {}
   ): AsyncGenerator<AgentStreamChunk> {
+    if (options.loop) {
+      const result = await this.execute(agentName, input, options);
+      yield { type: 'done', result };
+      return;
+    }
+
     const agent = this.agentRegistry.getAgent(agentName);
     if (!agent) {
       throw new Error(`Agent ${agentName} not found`);
@@ -447,14 +634,17 @@ export class AgentRuntime {
     const context = contextResult instanceof Promise ? await contextResult : contextResult;
 
     if (options.enableMemory !== false && this.config.memoryManager) {
+      await this.stateManager.updateState(context.executionId, AgentState.SEARCHING_MEMORY);
       await this.contextBuilder.buildWithMemory(context);
     }
     if (options.enableRAG !== false && this.config.ragService) {
+      await this.stateManager.updateState(context.executionId, AgentState.SEARCHING_KNOWLEDGE);
       await this.contextBuilder.buildWithRAG(
         context,
         this.config.ragService,
         agent.ragTopK || 5,
-        (error) => this.handleRagError(context, error)
+        (error) => this.handleRagError(context, error),
+        this.config.knowledgeFreshness
       );
     }
     if (options.initialContext) {
@@ -521,6 +711,32 @@ export class AgentRuntime {
   }
 
   /**
+   * Subscribe when the agent enters a specific state.
+   * @example runtime.onState('planning', (e) => console.log(e))
+   */
+  onState(
+    state: AgentState | string,
+    callback: (event: AgentEvent<StateChangedEvent>) => void | Promise<void>
+  ): void {
+    const wrapped = (event: AgentEvent): void => {
+      if (event.type !== AgentEventType.STATE_CHANGED) return;
+      const data = event.data as StateChangedEvent;
+      if (data.newState === state) {
+        void callback(event as AgentEvent<StateChangedEvent>);
+      }
+    };
+    this.stateHandlers.set(callback as (event: AgentEvent<StateChangedEvent>) => void, wrapped);
+    this.eventEmitter.on(AgentEventType.STATE_CHANGED, wrapped);
+  }
+
+  /**
+   * Subscribe to every state transition.
+   */
+  onStateChange(callback: (event: AgentEvent<StateChangedEvent>) => void | Promise<void>): void {
+    this.eventEmitter.on(AgentEventType.STATE_CHANGED, callback as (event: AgentEvent) => void);
+  }
+
+  /**
    * Subscribe to all agent events
    */
   onAny(handler: (event: unknown) => void): void {
@@ -532,6 +748,75 @@ export class AgentRuntime {
    */
   off(type: AgentEventType, handler: (event: unknown) => void): void {
     this.eventEmitter.off(type, handler);
+  }
+
+  /**
+   * Timeline recorder for Inspector / Visual Reasoning Timeline.
+   */
+  getTimelineRecorder(): AgentTimelineRecorder {
+    return this.timelineRecorder;
+  }
+
+  /**
+   * Get recorded timeline for an agent (by name) or executionId.
+   */
+  getTimeline(filter: {
+    agentName?: string;
+    executionId?: string;
+  }): import('../timeline/timeline.recorder').TimelineStep[] {
+    return this.timelineRecorder.getTimeline(filter);
+  }
+
+  /** Agent OS Phase 2 — time travel debugger */
+  getTimeTravel(): TimeTravelDebugger {
+    return this.timeTravel;
+  }
+
+  setPolicyEngine(engine: PolicyEngine): void {
+    this.policyEngine = engine;
+    this.toolExecutor.setPolicyEngine(engine);
+  }
+
+  getPolicyEngine(): PolicyEngine | undefined {
+    return this.policyEngine;
+  }
+
+  getCostOptimizer(): CostOptimizer | undefined {
+    return this.costOptimizer;
+  }
+
+  getGovernanceGate(): GovernanceGate | undefined {
+    return this.governanceGate;
+  }
+
+  /** Hot-reload agent DNA (system prompt, model, policies, dynamic tools) without restart. */
+  hotReloadDna(dna: string | AgentDna): HotReloadResult {
+    return hotReloadAgentDna(
+      {
+        getAgent: (name) => this.agentRegistry.getAgent(name),
+        patchAgent: (name, patch) => this.agentRegistry.patchAgent(name, patch),
+        setPolicyEngine: (engine) => this.setPolicyEngine(engine),
+        getPolicyEngine: () => this.policyEngine,
+        registerDynamicTool: (agentName, tool) =>
+          this.toolRegistry.registerDynamicTool(agentName, tool),
+      },
+      dna
+    );
+  }
+
+  /** Install a marketplace package or .dna JSON file into the live runtime. */
+  installAgentPackage(source: string | AgentDna | MarketplaceAgentPackage): HotReloadResult {
+    return installAgentPackage(
+      {
+        getAgent: (name) => this.agentRegistry.getAgent(name),
+        patchAgent: (name, patch) => this.agentRegistry.patchAgent(name, patch),
+        setPolicyEngine: (engine) => this.setPolicyEngine(engine),
+        getPolicyEngine: () => this.policyEngine,
+        registerDynamicTool: (agentName, tool) =>
+          this.toolRegistry.registerDynamicTool(agentName, tool),
+      },
+      source
+    );
   }
 
   /**

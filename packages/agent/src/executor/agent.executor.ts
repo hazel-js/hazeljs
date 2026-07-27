@@ -48,7 +48,12 @@ export class AgentExecutor {
     private toolExecutor: ToolExecutor,
     private toolRegistry: ToolRegistry,
     private llmProvider?: LLMProvider,
-    private eventEmitter?: (type: AgentEventType, executionId: string, data: unknown) => void,
+    private eventEmitter?: (
+      type: AgentEventType,
+      agentId: string,
+      executionId: string,
+      data: unknown
+    ) => void,
     private observabilityProvider?: ObservabilityProvider
   ) {}
 
@@ -113,7 +118,7 @@ export class AgentExecutor {
     try {
       this.throwIfAborted(signal);
 
-      this.emitEvent(AgentEventType.EXECUTION_STARTED, context.executionId, {
+      this.emitEvent(AgentEventType.EXECUTION_STARTED, context.agentId, context.executionId, {
         input: context.input,
         sessionId: context.sessionId,
         userId: context.userId,
@@ -167,7 +172,7 @@ export class AgentExecutor {
 
       const duration = Date.now() - startTime;
 
-      this.emitEvent(AgentEventType.EXECUTION_COMPLETED, context.executionId, {
+      this.emitEvent(AgentEventType.EXECUTION_COMPLETED, context.agentId, context.executionId, {
         response: finalResponse,
         steps: stepNumber,
         duration,
@@ -188,7 +193,7 @@ export class AgentExecutor {
 
       const duration = Date.now() - startTime;
 
-      this.emitEvent(AgentEventType.EXECUTION_FAILED, context.executionId, {
+      this.emitEvent(AgentEventType.EXECUTION_FAILED, context.agentId, context.executionId, {
         error: error as Error,
         step: context.steps.length,
         duration,
@@ -224,7 +229,7 @@ export class AgentExecutor {
     try {
       this.throwIfAborted(signal);
 
-      this.emitEvent(AgentEventType.EXECUTION_STARTED, context.executionId, {
+      this.emitEvent(AgentEventType.EXECUTION_STARTED, context.agentId, context.executionId, {
         input: context.input,
         sessionId: context.sessionId,
         userId: context.userId,
@@ -334,7 +339,7 @@ export class AgentExecutor {
         completedAt: new Date(),
       };
 
-      this.emitEvent(AgentEventType.EXECUTION_COMPLETED, context.executionId, {
+      this.emitEvent(AgentEventType.EXECUTION_COMPLETED, context.agentId, context.executionId, {
         response: finalResponse,
         steps: stepNumber,
         duration,
@@ -356,7 +361,7 @@ export class AgentExecutor {
         completedAt: new Date(),
       };
 
-      this.emitEvent(AgentEventType.EXECUTION_FAILED, context.executionId, {
+      this.emitEvent(AgentEventType.EXECUTION_FAILED, context.agentId, context.executionId, {
         error: error as Error,
         step: context.steps.length,
         duration,
@@ -387,7 +392,7 @@ export class AgentExecutor {
       timestamp: new Date(),
     };
 
-    this.emitEvent(AgentEventType.STEP_STARTED, context.executionId, {
+    this.emitEvent(AgentEventType.STEP_STARTED, context.agentId, context.executionId, {
       stepNumber,
       state: step.state,
     });
@@ -405,9 +410,14 @@ export class AgentExecutor {
 
         case AgentActionType.ASK_USER:
           step.state = AgentState.WAITING_FOR_INPUT;
-          this.emitEvent(AgentEventType.USER_INPUT_REQUESTED, context.executionId, {
-            question: action.question,
-          });
+          this.emitEvent(
+            AgentEventType.USER_INPUT_REQUESTED,
+            context.agentId,
+            context.executionId,
+            {
+              question: action.question,
+            }
+          );
           break;
 
         case AgentActionType.RESPOND:
@@ -461,7 +471,7 @@ export class AgentExecutor {
 
       step.duration = Date.now() - startTime;
 
-      this.emitEvent(AgentEventType.STEP_COMPLETED, context.executionId, {
+      this.emitEvent(AgentEventType.STEP_COMPLETED, context.agentId, context.executionId, {
         stepNumber,
         state: step.state,
         action,
@@ -474,7 +484,7 @@ export class AgentExecutor {
       step.error = error as Error;
       step.duration = Date.now() - startTime;
 
-      this.emitEvent(AgentEventType.STEP_FAILED, context.executionId, {
+      this.emitEvent(AgentEventType.STEP_FAILED, context.agentId, context.executionId, {
         stepNumber,
         state: step.state,
         error: (error as Error).message,
@@ -505,7 +515,7 @@ export class AgentExecutor {
       timestamp: new Date(),
     };
 
-    this.emitEvent(AgentEventType.STEP_STARTED, context.executionId, {
+    this.emitEvent(AgentEventType.STEP_STARTED, context.agentId, context.executionId, {
       stepNumber,
       state: step.state,
     });
@@ -582,7 +592,7 @@ export class AgentExecutor {
 
       step.duration = Date.now() - startTime;
 
-      this.emitEvent(AgentEventType.STEP_COMPLETED, context.executionId, {
+      this.emitEvent(AgentEventType.STEP_COMPLETED, context.agentId, context.executionId, {
         stepNumber,
         state: step.state,
         duration: step.duration,
@@ -595,7 +605,7 @@ export class AgentExecutor {
       step.error = error as Error;
       step.duration = Date.now() - startTime;
 
-      this.emitEvent(AgentEventType.STEP_FAILED, context.executionId, {
+      this.emitEvent(AgentEventType.STEP_FAILED, context.agentId, context.executionId, {
         stepNumber,
         state: step.state,
         error: (error as Error).message,
@@ -818,7 +828,7 @@ export class AgentExecutor {
 
     if (input) {
       await this.unwrap(this.stateManager.addMessage(executionId, 'user', input));
-      this.emitEvent(AgentEventType.USER_INPUT_RECEIVED, executionId, {
+      this.emitEvent(AgentEventType.USER_INPUT_RECEIVED, context.agentId, executionId, {
         response: input,
       });
     }
@@ -831,9 +841,14 @@ export class AgentExecutor {
   /**
    * Emit event
    */
-  private emitEvent(type: AgentEventType, executionId: string, data: unknown): void {
+  private emitEvent(
+    type: AgentEventType,
+    agentId: string,
+    executionId: string,
+    data: unknown
+  ): void {
     if (this.eventEmitter) {
-      this.eventEmitter(type, executionId, data);
+      this.eventEmitter(type, agentId, executionId, data);
     }
   }
 }

@@ -53,7 +53,8 @@ export class AgentContextBuilder {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ragService: any,
     topK: number = 5,
-    onError?: (error: Error) => void
+    onError?: (error: Error) => void,
+    freshnessOpts?: { maxAgeMs?: number; minConfidence?: number }
   ): Promise<void> {
     if (!ragService) {
       return;
@@ -63,6 +64,36 @@ export class AgentContextBuilder {
       const results = await ragService.search(context.input, { topK });
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       context.ragContext = results.map((r: any) => r.content || r.text);
+
+      const { assessKnowledgeFreshness } = await import('../knowledge/knowledge-freshness');
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const docs = (results as any[]).map((r) => ({
+        id: r.id ?? r.documentId,
+        content: r.content || r.text,
+        updatedAt: r.updatedAt ?? r.metadata?.updatedAt ?? r.metadata?.indexedAt,
+        expiresAt: r.expiresAt ?? r.metadata?.expiresAt,
+        confidence: r.score ?? r.confidence ?? r.metadata?.confidence,
+        metadata: r.metadata,
+      }));
+      const freshness = assessKnowledgeFreshness(docs, freshnessOpts);
+      context.metadata = {
+        ...context.metadata,
+        knowledgeFreshness: freshness,
+      };
+      if (
+        freshness.stale &&
+        freshness.recommendation === 're_fetch' &&
+        typeof ragService.reindex === 'function'
+      ) {
+        // Best-effort refresh hook when the RAG service exposes reindex
+        try {
+          await ragService.reindex({
+            ids: freshness.staleDocuments.map((d) => d.id).filter(Boolean),
+          });
+        } catch {
+          // ignore reindex failures — freshness report still surfaces to callers
+        }
+      }
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
       onError?.(err);

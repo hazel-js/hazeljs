@@ -523,14 +523,22 @@ runtime.onAny((event) => {
 });
 ```
 
+## Agent OS roadmap
+
+HazelJS Agent Runtime is the kernel of the broader **Agent OS**.
+
+**Phases 1–4 (API surface in `@hazeljs/agent`):** loop, state, timeline, testing, time travel, contracts, policies, recovery, benchmark, skills, memory graph, evolution, cost optimizer, simulator, digital twin, DNA, consensus, governance.
+
+See [AGENT_OS_ROADMAP.md](../../../AGENT_OS_ROADMAP.md).
+
 ## Future Enhancements
 
-1. **Durable Execution**: Persist execution state to survive crashes
-2. **Multi-Agent Coordination**: Agents calling other agents
-3. **Streaming Responses**: Stream LLM responses in real-time
-4. **Policy Engine**: Advanced authorization for tools
-5. **Agent Marketplace**: Shareable agent templates
-6. **Visual Debugger**: UI for debugging agent execution
+1. Publish `@hazeljs/testing` + `@hazeljs/benchmark` and harden GraphRAG-backed memory graph
+2. DNA hot-reload into live runtimes
+3. Knowledge freshness signals on RAG results
+4. Deeper Inspector analytics for twin/canary divergences
+5. Streaming confidence loops (`executeStream` + `options.loop`)
+6. Extract `@hazeljs/policies` / `@hazeljs/timetravel` when consumers need independent versioning
 
 ## Conclusion
 

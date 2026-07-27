@@ -1,17 +1,13 @@
 import 'reflect-metadata';
 
-// Global test setup
+// Global test setup — replace console methods so Jest does not reprint expected error noise
 beforeAll(() => {
-  // Suppress console logs during tests unless explicitly needed
   if (!process.env.DEBUG_TESTS) {
-    jest.spyOn(console, 'log').mockImplementation();
-    jest.spyOn(console, 'debug').mockImplementation();
-    jest.spyOn(console, 'info').mockImplementation();
-    jest.spyOn(console, 'warn').mockImplementation();
-    jest.spyOn(console, 'error').mockImplementation();
+    const noop = (): void => undefined;
+    console.log = noop;
+    console.debug = noop;
+    console.info = noop;
+    console.warn = noop;
+    console.error = noop;
   }
-});
-
-afterAll(() => {
-  jest.restoreAllMocks();
 });

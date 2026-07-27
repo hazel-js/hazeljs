@@ -1,0 +1,41 @@
+{
+  "name": "@hazeljs/benchmark",
+  "version": "1.0.4",
+  "description": "Agent OS benchmark CLI helpers — golden runs and commit comparison",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "jest --coverage --passWithNoTests",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@hazeljs/eval": "^1.0.4"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.14",
+    "@types/node": "^20.19.39",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.4.9",
+    "typescript": "^5.9.3"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hazel-js/hazeljs",
+    "directory": "packages/benchmark"
+  },
+  "keywords": [
+    "hazeljs",
+    "benchmark",
+    "agent",
+    "Agent OS"
+  ],
+  "author": "Muhammad Arslan <muhammad.arslan@hazeljs.ai>",
+  "license": "Apache-2.0"
+}

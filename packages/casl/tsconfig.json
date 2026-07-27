@@ -5,10 +5,11 @@
     "rootDir": "./src",
     "composite": true,
     "declarationMap": true,
+    "module": "Node16",
+    "moduleResolution": "Node16",
     "baseUrl": ".",
     "paths": {
-      "@hazeljs/core": ["../core/src"],
-      "@casl/ability": ["../../node_modules/@casl/ability/dist/types/index.d.ts"]
+      "@hazeljs/core": ["../core/src"]
     },
     "types": ["jest", "node"]
   },
