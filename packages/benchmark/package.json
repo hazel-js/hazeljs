@@ -9,7 +9,7 @@
   ],
   "scripts": {
     "build": "tsc",
-    "test": "jest --passWithNoTests",
+    "test": "jest --coverage --passWithNoTests",
     "clean": "rm -rf dist"
   },
   "dependencies": {
