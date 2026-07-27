@@ -44,7 +44,7 @@ export class TimeTravelDebugger {
   fork(executionId: string): TimeTravelSnapshot {
     const steps = this.timeline.getTimeline({ executionId }).map((s) => ({
       ...s,
-      data: (() => {
+      data: ((): unknown => {
         try {
           return structuredClone(s.data);
         } catch {

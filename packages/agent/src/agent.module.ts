@@ -14,7 +14,6 @@ import type {
 import type { LLMStreamChunk } from './types/llm.types';
 import {
   createStateManager,
-  createStateManagerFromEnv,
   resolveStateManagerFromEnv,
   type AgentStateBackend,
   type CreateStateManagerOptions,

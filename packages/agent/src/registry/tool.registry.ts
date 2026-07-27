@@ -174,7 +174,7 @@ export class ToolRegistry {
     const fullToolName = `${agentName}.${registeredName}`;
     const handler =
       tool.handler ??
-      (async () => {
+      (async (): Promise<never> => {
         throw new Error(
           `Dynamic tool ${registeredName} has no handler — wire createSkillInvoker or provide handler`
         );

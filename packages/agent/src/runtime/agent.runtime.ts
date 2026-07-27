@@ -47,9 +47,9 @@ import { GovernanceGate } from '../governance/governance';
 import { executeWithContract } from '../contracts/agent-contract';
 import { runRecoveryLadder } from '../recovery/recovery-ladder';
 import { attachTimelineStore } from '../timeline/timeline.store';
-import { hotReloadAgentDna } from '../dna/hot-reload';
+import { hotReloadAgentDna, type HotReloadResult } from '../dna/hot-reload';
 import { installAgentPackage } from '../dna/marketplace';
-import type { AgentDna } from '../dna/agent-dna';
+import type { AgentDna, MarketplaceAgentPackage } from '../dna/agent-dna';
 import { CircuitBreakerError } from '@hazeljs/resilience';
 
 /**
@@ -337,12 +337,16 @@ export class AgentRuntime {
       };
     }
 
-    const runOnce = async (name: string, goal: string, opts: AgentExecutionOptions) => {
+    const runOnce = async (
+      name: string,
+      goal: string,
+      opts: AgentExecutionOptions
+    ): Promise<AgentExecutionResult> => {
       if (opts.recovery) {
         const ladder = await runRecoveryLadder({
-          execute: () => this.executeCore(name, goal, opts),
+          execute: (): Promise<AgentExecutionResult> => this.executeCore(name, goal, opts),
           executeFallback: opts.recovery.fallbackAgent
-            ? () =>
+            ? (): Promise<AgentExecutionResult> =>
                 this.executeCore(opts.recovery!.fallbackAgent!, goal, {
                   ...opts,
                   recovery: undefined,
@@ -779,7 +783,7 @@ export class AgentRuntime {
   }
 
   /** Hot-reload agent DNA (system prompt, model, policies, dynamic tools) without restart. */
-  hotReloadDna(dna: string | AgentDna) {
+  hotReloadDna(dna: string | AgentDna): HotReloadResult {
     return hotReloadAgentDna(
       {
         getAgent: (name) => this.agentRegistry.getAgent(name),
@@ -794,9 +798,7 @@ export class AgentRuntime {
   }
 
   /** Install a marketplace package or .dna JSON file into the live runtime. */
-  installAgentPackage(
-    source: string | AgentDna | import('../dna/agent-dna').MarketplaceAgentPackage
-  ) {
+  installAgentPackage(source: string | AgentDna | MarketplaceAgentPackage): HotReloadResult {
     return installAgentPackage(
       {
         getAgent: (name) => this.agentRegistry.getAgent(name),

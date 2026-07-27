@@ -61,10 +61,14 @@ export async function runAgentSimulator(opts: SimulatorOptions): Promise<Simulat
   let failed = 0;
   let next = 0;
 
-  const worker = async () => {
-    while (true) {
+  const worker = async (): Promise<void> => {
+    let active = true;
+    while (active) {
       const i = next++;
-      if (i >= iterations) return;
+      if (i >= iterations) {
+        active = false;
+        break;
+      }
       const c = pickCase(opts.cases);
       try {
         const res = await opts.run(c.input, c.id);
