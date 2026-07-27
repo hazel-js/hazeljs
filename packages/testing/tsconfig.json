@@ -4,6 +4,11 @@
     "outDir": "./dist",
     "rootDir": "./src",
     "composite": true,
+    "baseUrl": ".",
+    "paths": {
+      "@hazeljs/eval": ["../eval/src/index.ts"],
+      "@hazeljs/agent": ["../agent/src/index.ts"]
+    },
     "types": ["jest", "node"]
   },
   "include": ["src/**/*"],

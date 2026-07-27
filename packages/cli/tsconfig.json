@@ -15,10 +15,12 @@
     "composite": true,
     "baseUrl": ".",
     "paths": {
-      "@hazeljs/eval": ["../eval/dist/index.d.ts"]
+      "@hazeljs/eval": ["../eval/src/index.ts"],
+      "@hazeljs/agent": ["../agent/src/index.ts"],
+      "@hazeljs/benchmark": ["../benchmark/src/index.ts"]
     }
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"],
-  "references": [{ "path": "../eval" }]
+  "references": [{ "path": "../eval" }, { "path": "../agent" }, { "path": "../benchmark" }]
 }

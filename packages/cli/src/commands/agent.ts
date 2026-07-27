@@ -25,7 +25,7 @@ export function registerAgentCommand(program: Command): void {
               package: pkg.name,
               version: pkg.version,
               agent: pkg.dna.name,
-              tools: pkg.dna.tools.map((t) => t.name),
+              tools: pkg.dna.tools.map((t: { name: string }) => t.name),
               hasPolicies: Boolean(pkg.dna.policies?.length),
               note: 'Call runtime.installAgentPackage(path) in your app to hot-reload',
             },

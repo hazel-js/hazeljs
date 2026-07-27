@@ -133,6 +133,7 @@
     { "path": "./packages/observability" },
     { "path": "./packages/ops-agent" },
     { "path": "./packages/eval" },
+    { "path": "./packages/benchmark" },
     { "path": "./packages/testing" }
   ]
 }

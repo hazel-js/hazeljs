@@ -37,7 +37,7 @@ export function registerBenchmarkCommand(program: Command): void {
             label: opts.label ?? raw.label ?? 'local',
             commit: opts.commit,
             cases: raw.cases,
-            run: async (input, id) => {
+            run: async (input: string, id: string) => {
               const expected = raw.cases.find((c) => c.id === id)?.expected;
               // Smoke runner: score 1 if expected substring matches input echo, else 0.5
               const output = input;

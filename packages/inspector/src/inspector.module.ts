@@ -124,18 +124,20 @@ function createInspectorHandler(
   config: ReturnType<typeof mergeInspectorConfig>,
   app: { getContainer: () => unknown; getRouter: () => unknown; getModuleType: () => unknown }
 ): (
-  req: { url?: string; method?: string; on?: (e: string, cb: (chunk?: Buffer) => void) => void },
+  req: { url?: string; method?: string; on: (e: string, cb: (chunk?: Buffer) => void) => void },
   res: {
     writeHead: (c: number, h?: Record<string, string>) => void;
     setHeader: (k: string, v: string) => void;
+    write: (chunk: string) => boolean | void;
     end: (b?: string) => void;
   }
 ) => Promise<void> {
   return async (
-    req: { url?: string; method?: string; on?: (e: string, cb: (chunk?: Buffer) => void) => void },
+    req: { url?: string; method?: string; on: (e: string, cb: (chunk?: Buffer) => void) => void },
     res: {
       writeHead: (c: number, h?: Record<string, string>) => void;
       setHeader: (k: string, v: string) => void;
+      write: (chunk: string) => boolean | void;
       end: (b?: string) => void;
     }
   ) => {
