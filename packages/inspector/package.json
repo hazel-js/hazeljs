@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/inspector",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Framework-aware runtime inspector for HazelJS - metadata explorer and DevTools UI",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -22,22 +22,22 @@
     "reflect-metadata": "^0.2.2"
   },
   "peerDependencies": {
-    "@hazeljs/agent": "^1.0.5",
-    "@hazeljs/ai": "^1.0.5",
-    "@hazeljs/core": "^1.0.5",
-    "@hazeljs/cron": "^1.0.5",
-    "@hazeljs/data": "^1.0.5",
-    "@hazeljs/event-emitter": "^1.0.5",
-    "@hazeljs/flow": "^1.0.5",
-    "@hazeljs/graphql": "^1.0.5",
-    "@hazeljs/grpc": "^1.0.5",
-    "@hazeljs/kafka": "^1.0.5",
-    "@hazeljs/ml": "^1.0.5",
-    "@hazeljs/prompts": "^1.0.5",
-    "@hazeljs/queue": "^1.0.5",
-    "@hazeljs/rag": "^1.0.5",
-    "@hazeljs/serverless": "^1.0.5",
-    "@hazeljs/websocket": "^1.0.5"
+    "@hazeljs/agent": "^1.0.6",
+    "@hazeljs/ai": "^1.0.6",
+    "@hazeljs/core": "^1.0.6",
+    "@hazeljs/cron": "^1.0.6",
+    "@hazeljs/data": "^1.0.6",
+    "@hazeljs/event-emitter": "^1.0.6",
+    "@hazeljs/flow": "^1.0.6",
+    "@hazeljs/graphql": "^1.0.6",
+    "@hazeljs/grpc": "^1.0.6",
+    "@hazeljs/kafka": "^1.0.6",
+    "@hazeljs/ml": "^1.0.6",
+    "@hazeljs/prompts": "^1.0.6",
+    "@hazeljs/queue": "^1.0.6",
+    "@hazeljs/rag": "^1.0.6",
+    "@hazeljs/serverless": "^1.0.6",
+    "@hazeljs/websocket": "^1.0.6"
   },
   "peerDependenciesMeta": {
     "@hazeljs/cron": {
@@ -87,7 +87,7 @@
     }
   },
   "devDependencies": {
-    "@hazeljs/core": "^1.0.5",
+    "@hazeljs/core": "^1.0.6",
     "@types/jest": "^29.5.14",
     "@types/node": "^20.19.39",
     "@typescript-eslint/eslint-plugin": "^8.58.0",
