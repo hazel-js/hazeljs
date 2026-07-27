@@ -8,24 +8,13 @@ import { Agent } from '../src/decorators/agent.decorator';
 import { AgentRuntime } from '../src/runtime/agent.runtime';
 import { AgentState } from '../src/types/agent.types';
 import { AgentEventType } from '../src/types/event.types';
-import {
-  executeWithContract,
-  validateAgentContract,
-} from '../src/contracts/agent-contract';
+import { executeWithContract, validateAgentContract } from '../src/contracts/agent-contract';
 import { runRecoveryLadder } from '../src/recovery/recovery-ladder';
 import { createSkillInvoker, openApiToSkills } from '../src/skills/openapi-skills';
 import { evolveSystemPrompt, runEvolutionLoop } from '../src/evolution/agent-evolution';
-import {
-  defaultAgentGovernance,
-  GovernanceGate,
-} from '../src/governance/governance';
+import { defaultAgentGovernance, GovernanceGate } from '../src/governance/governance';
 import { collectConsensusVotes, runConsensus } from '../src/consensus/consensus';
-import {
-  exportAgentDna,
-  parseDna,
-  serializeDna,
-  toMarketplacePackage,
-} from '../src/dna/agent-dna';
+import { exportAgentDna, parseDna, serializeDna, toMarketplacePackage } from '../src/dna/agent-dna';
 import { hotReloadAgentDna } from '../src/dna/hot-reload';
 import {
   installAgentPackage,
@@ -37,7 +26,11 @@ import {
   syncMemoryGraphToKnowledgeGraph,
 } from '../src/memory-graph/graphrag-bridge';
 import { AgentMemoryGraph } from '../src/memory-graph/memory-graph';
-import { compareBenchmarkRuns, runBenchmark, summarizeBenchmarkRun } from '../src/benchmark/benchmark';
+import {
+  compareBenchmarkRuns,
+  runBenchmark,
+  summarizeBenchmarkRun,
+} from '../src/benchmark/benchmark';
 import { CostOptimizer, estimateCost } from '../src/cost/cost-optimizer';
 import { runAgentSimulator } from '../src/simulator/agent-simulator';
 import { jaccardSimilarity, runDigitalTwin, shouldRunCanary } from '../src/twin/digital-twin';
@@ -386,9 +379,7 @@ describe('Agent OS coverage', () => {
   describe('consensus', () => {
     it('covers strategies and vote collection', async () => {
       expect(runConsensus([], 'majority').agreed).toBe(false);
-      expect(
-        runConsensus([{ agentId: 'a', value: 'yes' }], 'unanimous').agreed
-      ).toBe(true);
+      expect(runConsensus([{ agentId: 'a', value: 'yes' }], 'unanimous').agreed).toBe(true);
       expect(
         runConsensus(
           [
@@ -408,8 +399,13 @@ describe('Agent OS coverage', () => {
         ).agreed
       ).toBe(true);
       expect(
-        runConsensus([{ agentId: 'a', value: '  ' }, { agentId: 'b', value: 'ok' }], 'first_valid')
-          .value
+        runConsensus(
+          [
+            { agentId: 'a', value: '  ' },
+            { agentId: 'b', value: 'ok' },
+          ],
+          'first_valid'
+        ).value
       ).toBe('ok');
       expect(runConsensus([{ agentId: 'a', value: '   ' }], 'first_valid').agreed).toBe(false);
 
@@ -469,7 +465,14 @@ describe('Agent OS coverage', () => {
 
       const reloaded = hotReloadAgentDna(target, dna);
       expect(reloaded.updated).toEqual(
-        expect.arrayContaining(['systemPrompt', 'description', 'model', 'metadata', 'policies', 'tools'])
+        expect.arrayContaining([
+          'systemPrompt',
+          'description',
+          'model',
+          'metadata',
+          'policies',
+          'tools',
+        ])
       );
       expect(installAgentPackage(target, pkg).agentName).toBe('bot');
       expect(installAgentPackage(target, dnaFile).agentName).toBe('bot');
@@ -496,10 +499,7 @@ describe('Agent OS coverage', () => {
               metadata: { y: 2 },
             },
           ],
-          [
-            'bad',
-            { id: 'bad', sourceId: 'missing', targetId: '2', type: 'x' },
-          ],
+          ['bad', { id: 'bad', sourceId: 'missing', targetId: '2', type: 'x' }],
         ]),
         addEntity: jest.fn(),
         addRelationship: jest.fn(),
@@ -557,9 +557,9 @@ describe('Agent OS coverage', () => {
         },
       ]);
       expect(estimateCost(opt.selectModel({ qualityBias: 1 }), 1000, 500)).toBeGreaterThan(0);
-      expect(() =>
-        opt.selectModel({ maxCostUsd: 0, requireTier: ['premium'] })
-      ).toThrow(/No model/);
+      expect(() => opt.selectModel({ maxCostUsd: 0, requireTier: ['premium'] })).toThrow(
+        /No model/
+      );
 
       const sim = await runAgentSimulator({
         cases: [
@@ -629,9 +629,9 @@ describe('Agent OS coverage', () => {
       expect(() => tt.edit('bad', { stepId: 'x', kind: 'prompt', value: 'y' })).toThrow(
         /Unknown fork/
       );
-      expect(() =>
-        tt.edit(fork.forkId, { stepId: 'missing', kind: 'prompt', value: 'y' })
-      ).toThrow(/not found/);
+      expect(() => tt.edit(fork.forkId, { stepId: 'missing', kind: 'prompt', value: 'y' })).toThrow(
+        /not found/
+      );
 
       tt.edit(fork.forkId, { stepId: fork.steps[0].id, kind: 'thought', value: 't' });
       tt.edit(fork.forkId, { stepId: fork.steps[0].id, kind: 'tool_output', value: { ok: 1 } });
