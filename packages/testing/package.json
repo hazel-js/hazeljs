@@ -49,6 +49,7 @@
     "describeAgent",
     "eval"
   ],
+  "homepage": "https://hazeljs.ai",
   "author": "Muhammad Arslan <muhammad.arslan@hazeljs.ai>",
   "license": "Apache-2.0"
 }
