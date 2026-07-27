@@ -128,7 +128,7 @@ export class AgentService {
       logger.info('AgentService: LLM provider configured from AIEnhancedService');
     } else if (retryCount < 10) {
       setTimeout(() => this.resolveLLMProvider(retryCount + 1), 50);
-    } else {
+    } else if (process.env.NODE_ENV !== 'test') {
       logger.error(
         'AgentService: LLM provider not available after 500ms. Load @hazeljs/ai or set runtime.llmProvider in AgentModule.forRoot().'
       );

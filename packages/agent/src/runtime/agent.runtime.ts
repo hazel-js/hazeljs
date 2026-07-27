@@ -559,6 +559,13 @@ export class AgentRuntime {
     return executeFn();
   }
 
+  /** Errors that should fail fast (no backoff retries). */
+  private isNonRetryableExecutionError(error: unknown): boolean {
+    if (error instanceof CircuitBreakerError) return true;
+    const msg = error instanceof Error ? error.message : String(error);
+    return /not found|not registered|is not decorated|already registered|invalid dna/i.test(msg);
+  }
+
   /** Retry with RETRYING / BLOCKED state transitions when an executionId is known. */
   private async executeWithRetryStates(
     fn: () => Promise<AgentExecutionResult>
@@ -583,7 +590,7 @@ export class AgentRuntime {
           }
           throw e;
         }
-        if (attempt >= maxAttempts) throw e;
+        if (this.isNonRetryableExecutionError(e) || attempt >= maxAttempts) throw e;
         await new Promise((r) => setTimeout(r, Math.min(1000 * 2 ** (attempt - 1), 5000)));
       }
     }
