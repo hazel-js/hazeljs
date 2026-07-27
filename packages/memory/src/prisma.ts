@@ -17,4 +17,4 @@ export {
   getMemoryPrismaClient,
   resetMemoryPrismaClient,
 } from './prisma-client';
-export { PrismaClient } from './generated/prisma';
+export { PrismaClient } from '@prisma/client';

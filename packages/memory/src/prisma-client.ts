@@ -1,9 +1,9 @@
 /**
- * Prisma client for @hazeljs/memory (generated to src/generated/prisma).
- * Use getMemoryPrismaClient() or pass your own PrismaClient to createPrismaMemoryStore().
+ * Prisma client for @hazeljs/memory.
+ * Uses the standard `@prisma/client` package output from `prisma generate`.
  */
 
-import { PrismaClient } from './generated/prisma';
+import { PrismaClient } from '@prisma/client';
 
 let memoryPrismaInstance: PrismaClient | null = null;
 
