@@ -59,7 +59,9 @@ export function assessKnowledgeFreshness(
   for (const doc of docs) {
     const id = doc.id ?? (metaField(doc, 'id') as string | undefined);
     const expiresAt = toMs(doc.expiresAt ?? metaField(doc, 'expiresAt'));
-    const updatedAt = toMs(doc.updatedAt ?? metaField(doc, 'updatedAt') ?? metaField(doc, 'indexedAt'));
+    const updatedAt = toMs(
+      doc.updatedAt ?? metaField(doc, 'updatedAt') ?? metaField(doc, 'indexedAt')
+    );
     const confidence =
       typeof doc.confidence === 'number'
         ? doc.confidence
@@ -83,11 +85,14 @@ export function assessKnowledgeFreshness(
   }
 
   const averageConfidence =
-    confidences.length > 0 ? confidences.reduce((a, b) => a + b, 0) / confidences.length : undefined;
+    confidences.length > 0
+      ? confidences.reduce((a, b) => a + b, 0) / confidences.length
+      : undefined;
 
   const stale = staleDocuments.length > 0;
   let recommendation: KnowledgeFreshnessReport['recommendation'] = 'ok';
-  if (staleDocuments.some((d) => d.reason.startsWith('confidence'))) recommendation = 'low_confidence';
+  if (staleDocuments.some((d) => d.reason.startsWith('confidence')))
+    recommendation = 'low_confidence';
   if (staleDocuments.some((d) => d.reason === 'expired' || d.reason.startsWith('older_than'))) {
     recommendation = 're_fetch';
   }

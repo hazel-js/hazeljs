@@ -63,10 +63,17 @@ import {
   GovernanceGate,
 } from '@hazeljs/agent';
 
-runtime.setPolicyEngine(new PolicyEngine([{ id: 'deny-x', tool: 'x', effect: 'deny', priority: 10 }]));
+runtime.setPolicyEngine(
+  new PolicyEngine([{ id: 'deny-x', tool: 'x', effect: 'deny', priority: 10 }])
+);
 
 await runtime.execute('support-agent', goal, {
-  contract: { name: 'refund', outputIncludes: 'refund', maxLatencyMs: 8000, fallbackAgent: 'safe-agent' },
+  contract: {
+    name: 'refund',
+    outputIncludes: 'refund',
+    maxLatencyMs: 8000,
+    fallbackAgent: 'safe-agent',
+  },
   recovery: { maxRetries: 3, fallbackAgent: 'safe-agent' },
   costRoute: { qualityBias: 0.3, maxCostUsd: 0.05 },
 });

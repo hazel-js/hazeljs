@@ -3,12 +3,7 @@
  * retry → circuit_breaker → fallback_agent → hitl → fail
  */
 
-export type RecoveryStep =
-  | 'retry'
-  | 'circuit_breaker'
-  | 'fallback_agent'
-  | 'hitl'
-  | 'fail';
+export type RecoveryStep = 'retry' | 'circuit_breaker' | 'fallback_agent' | 'hitl' | 'fail';
 
 export interface RecoveryLadderOptions {
   /** Ordered steps (default full ladder). */

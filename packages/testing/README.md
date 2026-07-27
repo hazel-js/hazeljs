@@ -11,12 +11,7 @@ npm install @hazeljs/testing @hazeljs/eval
 ## Usage
 
 ```ts
-import {
-  describeAgent,
-  runAgentSuite,
-  assertAgentResult,
-  expectTools,
-} from '@hazeljs/testing';
+import { describeAgent, runAgentSuite, assertAgentResult, expectTools } from '@hazeljs/testing';
 
 const suite = describeAgent('Support Agent', ({ test }) => {
   test('Refund', async ({ run }) => {
@@ -43,9 +38,7 @@ it('support agent regression', async () => {
       return {
         output: out.response ?? '',
         durationMs: out.duration,
-        toolCalls: out.steps
-          .filter((s) => s.action?.toolName)
-          .map((s) => s.action!.toolName!),
+        toolCalls: out.steps.filter((s) => s.action?.toolName).map((s) => s.action!.toolName!),
       };
     },
   });

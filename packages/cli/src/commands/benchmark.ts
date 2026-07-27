@@ -10,7 +10,10 @@ export function registerBenchmarkCommand(program: Command): void {
   program
     .command('benchmark')
     .description('Run agent benchmark cases and optionally compare to a baseline JSON')
-    .argument('<cases>', 'Path to benchmark cases JSON: { label?, cases: [{ id, input, expected? }] }')
+    .argument(
+      '<cases>',
+      'Path to benchmark cases JSON: { label?, cases: [{ id, input, expected? }] }'
+    )
     .option('--baseline <file>', 'Previous BenchmarkRun JSON to compare against')
     .option('--out <file>', 'Write BenchmarkRun JSON to file')
     .option('--label <label>', 'Run label', 'local')
@@ -23,7 +26,9 @@ export function registerBenchmarkCommand(program: Command): void {
       ) => {
         try {
           const { runBenchmark, compareBenchmarkRuns } = await import('@hazeljs/benchmark');
-          const raw = JSON.parse(fs.readFileSync(path.resolve(process.cwd(), casesPath), 'utf8')) as {
+          const raw = JSON.parse(
+            fs.readFileSync(path.resolve(process.cwd(), casesPath), 'utf8')
+          ) as {
             label?: string;
             cases: Array<{ id: string; input: string; expected?: string }>;
           };

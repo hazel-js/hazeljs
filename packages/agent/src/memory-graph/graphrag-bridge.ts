@@ -2,14 +2,34 @@
  * Bridge AgentMemoryGraph ↔ @hazeljs/rag KnowledgeGraph (GraphRAG).
  */
 
-import { AgentMemoryGraph, type MemoryGraphEdge, type MemoryGraphNode } from '../memory-graph/memory-graph';
+import {
+  AgentMemoryGraph,
+  type MemoryGraphEdge,
+  type MemoryGraphNode,
+} from '../memory-graph/memory-graph';
 
 /** Minimal KnowledgeGraph shape from @hazeljs/rag (avoid hard compile dep on rag types). */
 export interface KnowledgeGraphLike {
-  entities: Map<string, { id: string; name: string; type: string; description?: string; metadata?: Record<string, unknown> }>;
+  entities: Map<
+    string,
+    {
+      id: string;
+      name: string;
+      type: string;
+      description?: string;
+      metadata?: Record<string, unknown>;
+    }
+  >;
   relationships: Map<
     string,
-    { id: string; sourceId: string; targetId: string; type: string; weight?: number; metadata?: Record<string, unknown> }
+    {
+      id: string;
+      sourceId: string;
+      targetId: string;
+      type: string;
+      weight?: number;
+      metadata?: Record<string, unknown>;
+    }
   >;
   addEntity?(entity: {
     id: string;

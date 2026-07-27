@@ -48,8 +48,9 @@ export function bindAgentSuite(
   suite: RegisteredSuite,
   createContext: () => AgentTestContext | Promise<AgentTestContext>
 ): void {
-  const describeGlobal = (globalThis as unknown as { describe?: (n: string, f: () => void) => void })
-    .describe;
+  const describeGlobal = (
+    globalThis as unknown as { describe?: (n: string, f: () => void) => void }
+  ).describe;
   const itGlobal = (
     globalThis as unknown as { it?: (n: string, f: () => void | Promise<void>) => void }
   ).it;

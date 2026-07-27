@@ -416,9 +416,7 @@ function createInspectorHandler(
             res.end(JSON.stringify({ error: 'AgentService.getTimeline not available' }));
             return;
           }
-          const steps = svc.getTimeline(
-            executionId ? { executionId } : { agentName }
-          );
+          const steps = svc.getTimeline(executionId ? { executionId } : { agentName });
           res.writeHead(200);
           res.end(JSON.stringify({ agentName, executionId, steps }));
         } catch (err) {

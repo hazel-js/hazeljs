@@ -19,9 +19,7 @@ export function expectTools(result: AgentRunResult, expected: string[], minScore
 
 export function expectMaxLatency(result: AgentRunResult, maxLatencyMs: number): void {
   if (result.durationMs > maxLatencyMs) {
-    throw new AgentAssertionError(
-      `Latency ${result.durationMs}ms exceeds max ${maxLatencyMs}ms`
-    );
+    throw new AgentAssertionError(`Latency ${result.durationMs}ms exceeds max ${maxLatencyMs}ms`);
   }
 }
 

@@ -5,7 +5,12 @@ import type { SupervisorConfig } from './graph/agent-graph.types';
 import { SupervisorAgent } from './supervisor/supervisor';
 import { AgentEventType } from './types/event.types';
 import { getAgentMetadata, getRegisteredAgents } from './decorators/agent.decorator';
-import type { AgentContext, AgentExecutionResult, AgentStreamChunk, AgentState } from './types/agent.types';
+import type {
+  AgentContext,
+  AgentExecutionResult,
+  AgentStreamChunk,
+  AgentState,
+} from './types/agent.types';
 import type { LLMStreamChunk } from './types/llm.types';
 import {
   createStateManager,
@@ -379,10 +384,7 @@ export class AgentService {
     return this.runtime.on(type, handler);
   }
 
-  onState(
-    state: AgentState | string,
-    callback: (event: unknown) => void | Promise<void>
-  ): void {
+  onState(state: AgentState | string, callback: (event: unknown) => void | Promise<void>): void {
     this.ensureDiscovery();
     this.runtime.onState(state, callback as Parameters<AgentRuntime['onState']>[1]);
   }

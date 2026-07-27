@@ -39,7 +39,12 @@ export interface OpenApiLike {
           schema?: { type?: string };
         }>;
         requestBody?: {
-          content?: Record<string, { schema?: { type?: string; properties?: Record<string, unknown>; required?: string[] } }>;
+          content?: Record<
+            string,
+            {
+              schema?: { type?: string; properties?: Record<string, unknown>; required?: string[] };
+            }
+          >;
         };
       }
     >
@@ -64,7 +69,9 @@ export function openApiToSkills(spec: OpenApiLike): DynamicSkillTool[] {
 
   for (const [path, methods] of Object.entries(paths)) {
     for (const [method, op] of Object.entries(methods)) {
-      if (!['get', 'post', 'put', 'patch', 'delete', 'head', 'options'].includes(method.toLowerCase())) {
+      if (
+        !['get', 'post', 'put', 'patch', 'delete', 'head', 'options'].includes(method.toLowerCase())
+      ) {
         continue;
       }
       const parameters: DynamicSkillTool['parameters'] = [];
@@ -129,7 +136,8 @@ export function createSkillInvoker(
       const val = input[p.name];
       if (val === undefined) continue;
       if (p.in === 'path') path = path.replace(`{${p.name}}`, encodeURIComponent(String(val)));
-      else if (p.in === 'query') query.push(`${encodeURIComponent(p.name)}=${encodeURIComponent(String(val))}`);
+      else if (p.in === 'query')
+        query.push(`${encodeURIComponent(p.name)}=${encodeURIComponent(String(val))}`);
       else if (p.in === 'header') headers[p.name] = String(val);
       else {
         body = body ?? {};

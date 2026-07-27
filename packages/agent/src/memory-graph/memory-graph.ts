@@ -61,7 +61,10 @@ export class AgentMemoryGraph {
     return this.nodes.get(id);
   }
 
-  neighbors(nodeId: string, relation?: string): Array<{ node: MemoryGraphNode; edge: MemoryGraphEdge }> {
+  neighbors(
+    nodeId: string,
+    relation?: string
+  ): Array<{ node: MemoryGraphNode; edge: MemoryGraphEdge }> {
     const out: Array<{ node: MemoryGraphNode; edge: MemoryGraphEdge }> = [];
     for (const edge of this.edges.values()) {
       if (edge.from !== nodeId && edge.to !== nodeId) continue;
@@ -73,11 +76,16 @@ export class AgentMemoryGraph {
     return out;
   }
 
-  search(query: string, opts?: { type?: string; domain?: string; limit?: number }): MemoryGraphNode[] {
+  search(
+    query: string,
+    opts?: { type?: string; domain?: string; limit?: number }
+  ): MemoryGraphNode[] {
     const q = query.toLowerCase();
     const limit = opts?.limit ?? 20;
     return [...this.nodes.values()]
-      .filter((n) => (!opts?.type || n.type === opts.type) && (!opts?.domain || n.domain === opts.domain))
+      .filter(
+        (n) => (!opts?.type || n.type === opts.type) && (!opts?.domain || n.domain === opts.domain)
+      )
       .filter(
         (n) =>
           n.label.toLowerCase().includes(q) ||

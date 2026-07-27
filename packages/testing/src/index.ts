@@ -10,6 +10,12 @@ export type {
   AgentRunResult,
 } from './types';
 
-export { describeAgent, bindAgentSuite, getRegisteredSuites, clearRegisteredSuites, runAgentSuite } from './describe-agent';
+export {
+  describeAgent,
+  bindAgentSuite,
+  getRegisteredSuites,
+  clearRegisteredSuites,
+  runAgentSuite,
+} from './describe-agent';
 export { assertAgentResult, expectTools, expectMaxCost, expectMaxLatency } from './assertions';
 export { runAgentGolden, reportAgentCi } from './ci';

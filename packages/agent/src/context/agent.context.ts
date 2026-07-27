@@ -80,10 +80,16 @@ export class AgentContextBuilder {
         ...context.metadata,
         knowledgeFreshness: freshness,
       };
-      if (freshness.stale && freshness.recommendation === 're_fetch' && typeof ragService.reindex === 'function') {
+      if (
+        freshness.stale &&
+        freshness.recommendation === 're_fetch' &&
+        typeof ragService.reindex === 'function'
+      ) {
         // Best-effort refresh hook when the RAG service exposes reindex
         try {
-          await ragService.reindex({ ids: freshness.staleDocuments.map((d) => d.id).filter(Boolean) });
+          await ragService.reindex({
+            ids: freshness.staleDocuments.map((d) => d.id).filter(Boolean),
+          });
         } catch {
           // ignore reindex failures — freshness report still surfaces to callers
         }

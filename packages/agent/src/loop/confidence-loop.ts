@@ -36,7 +36,8 @@ export interface ConfidenceLoopDeps {
 }
 
 function parseScore(text: string): { score: number; feedback: string } {
-  const scoreMatch = text.match(/score\s*[:=]\s*(\d{1,3})/i) ?? text.match(/\b(\d{1,3})\s*\/\s*100\b/);
+  const scoreMatch =
+    text.match(/score\s*[:=]\s*(\d{1,3})/i) ?? text.match(/\b(\d{1,3})\s*\/\s*100\b/);
   let score = scoreMatch ? Math.min(100, Math.max(0, parseInt(scoreMatch[1], 10))) : 50;
   const feedbackMatch = text.match(/feedback\s*[:=]\s*([\s\S]+)/i);
   const feedback = feedbackMatch ? feedbackMatch[1].trim() : text.trim();
@@ -100,12 +101,17 @@ export async function runConfidenceLoop(deps: ConfidenceLoopDeps): Promise<Agent
         'You are a planning assistant. Output only the plan as a numbered list.',
         planPrompt
       );
-      await deps.emit(AgentEventType.LOOP_ITERATION, deps.agentName, lastResult?.executionId ?? '', {
-        iteration,
-        maxIterations,
-        stage: 'plan',
-        plan,
-      });
+      await deps.emit(
+        AgentEventType.LOOP_ITERATION,
+        deps.agentName,
+        lastResult?.executionId ?? '',
+        {
+          iteration,
+          maxIterations,
+          stage: 'plan',
+          plan,
+        }
+      );
     }
 
     if (stages.includes('execute')) {
@@ -248,6 +254,7 @@ export async function runConfidenceLoop(deps: ConfidenceLoopDeps): Promise<Agent
     },
     error: success
       ? result.error
-      : result.error ?? new Error(`Loop did not reach successScore ${successScore} (got ${finalScore})`),
+      : (result.error ??
+        new Error(`Loop did not reach successScore ${successScore} (got ${finalScore})`)),
   };
 }

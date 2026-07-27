@@ -911,7 +911,9 @@ function renderTimelineSteps(steps: Record<string, unknown>[]) {
       const type = escapeHtml(String(s.type ?? ''));
       const state = s.state ? `<span class="badge">${escapeHtml(String(s.state))}</span>` : '';
       const dur =
-        s.durationMs != null ? `<span class="muted">${escapeHtml(String(s.durationMs))}ms</span>` : '';
+        s.durationMs != null
+          ? `<span class="muted">${escapeHtml(String(s.durationMs))}ms</span>`
+          : '';
       const conf =
         s.confidence != null
           ? `<span class="muted">confidence ${escapeHtml(String(s.confidence))}</span>`

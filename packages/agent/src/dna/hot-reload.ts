@@ -29,7 +29,10 @@ export interface HotReloadTarget {
   ): void;
   setPolicyEngine?(engine: PolicyEngine): void;
   getPolicyEngine?(): PolicyEngine | undefined;
-  registerDynamicTool?(agentName: string, tool: AgentDnaTool & { handler?: (input: Record<string, unknown>) => Promise<unknown> }): void;
+  registerDynamicTool?(
+    agentName: string,
+    tool: AgentDnaTool & { handler?: (input: Record<string, unknown>) => Promise<unknown> }
+  ): void;
 }
 
 export interface HotReloadResult {

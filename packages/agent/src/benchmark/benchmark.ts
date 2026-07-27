@@ -37,9 +37,7 @@ export function summarizeBenchmarkRun(
   cases: BenchmarkCaseResult[],
   commit?: string
 ): BenchmarkRun {
-  const averageScore = cases.length
-    ? cases.reduce((s, c) => s + c.score, 0) / cases.length
-    : 0;
+  const averageScore = cases.length ? cases.reduce((s, c) => s + c.score, 0) / cases.length : 0;
   const averageDurationMs = cases.length
     ? cases.reduce((s, c) => s + c.durationMs, 0) / cases.length
     : 0;
@@ -90,7 +88,16 @@ export async function runBenchmark(opts: {
   label: string;
   commit?: string;
   cases: Array<{ id: string; input: string }>;
-  run: (input: string, id: string) => Promise<{ score: number; durationMs: number; costUsd?: number; passed?: boolean; error?: string }>;
+  run: (
+    input: string,
+    id: string
+  ) => Promise<{
+    score: number;
+    durationMs: number;
+    costUsd?: number;
+    passed?: boolean;
+    error?: string;
+  }>;
 }): Promise<BenchmarkRun> {
   const results: BenchmarkCaseResult[] = [];
   for (const c of opts.cases) {

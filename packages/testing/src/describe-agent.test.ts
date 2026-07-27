@@ -50,9 +50,9 @@ describe('@hazeljs/testing', () => {
       )
     ).not.toThrow();
 
-    expect(() =>
-      expectTools({ output: '', durationMs: 0, toolCalls: ['x'] }, ['y'])
-    ).toThrow(/Tool trajectory/);
+    expect(() => expectTools({ output: '', durationMs: 0, toolCalls: ['x'] }, ['y'])).toThrow(
+      /Tool trajectory/
+    );
 
     expect(() => expectMaxCost({ output: '', durationMs: 0, costUsd: 1 }, 0.1)).toThrow(/Cost/);
   });

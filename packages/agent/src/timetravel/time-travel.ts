@@ -78,9 +78,11 @@ export class TimeTravelDebugger {
     const step = fork.steps.find((s) => s.id === edit.stepId);
     if (!step) throw new Error(`Step ${edit.stepId} not found on fork ${forkId}`);
 
-    const data = (typeof step.data === 'object' && step.data !== null
-      ? { ...(step.data as Record<string, unknown>) }
-      : {}) as Record<string, unknown>;
+    const data = (
+      typeof step.data === 'object' && step.data !== null
+        ? { ...(step.data as Record<string, unknown>) }
+        : {}
+    ) as Record<string, unknown>;
 
     switch (edit.kind) {
       case 'prompt':

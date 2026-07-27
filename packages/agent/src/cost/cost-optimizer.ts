@@ -28,11 +28,46 @@ export interface CostRouteRequest {
 }
 
 export const DEFAULT_MODEL_PROFILES: ModelCostProfile[] = [
-  { id: 'gpt-4o-mini', provider: 'openai', tier: 'economy', inputPer1k: 0.00015, outputPer1k: 0.0006, quality: 0.7 },
-  { id: 'gpt-4o', provider: 'openai', tier: 'balanced', inputPer1k: 0.0025, outputPer1k: 0.01, quality: 0.9 },
-  { id: 'o1', provider: 'openai', tier: 'premium', inputPer1k: 0.015, outputPer1k: 0.06, quality: 0.98 },
-  { id: 'claude-haiku', provider: 'anthropic', tier: 'economy', inputPer1k: 0.00025, outputPer1k: 0.00125, quality: 0.72 },
-  { id: 'claude-sonnet', provider: 'anthropic', tier: 'balanced', inputPer1k: 0.003, outputPer1k: 0.015, quality: 0.92 },
+  {
+    id: 'gpt-4o-mini',
+    provider: 'openai',
+    tier: 'economy',
+    inputPer1k: 0.00015,
+    outputPer1k: 0.0006,
+    quality: 0.7,
+  },
+  {
+    id: 'gpt-4o',
+    provider: 'openai',
+    tier: 'balanced',
+    inputPer1k: 0.0025,
+    outputPer1k: 0.01,
+    quality: 0.9,
+  },
+  {
+    id: 'o1',
+    provider: 'openai',
+    tier: 'premium',
+    inputPer1k: 0.015,
+    outputPer1k: 0.06,
+    quality: 0.98,
+  },
+  {
+    id: 'claude-haiku',
+    provider: 'anthropic',
+    tier: 'economy',
+    inputPer1k: 0.00025,
+    outputPer1k: 0.00125,
+    quality: 0.72,
+  },
+  {
+    id: 'claude-sonnet',
+    provider: 'anthropic',
+    tier: 'balanced',
+    inputPer1k: 0.003,
+    outputPer1k: 0.015,
+    quality: 0.92,
+  },
 ];
 
 export function estimateCost(

@@ -7,7 +7,11 @@ import { AgentTimelineRecorder } from '../src/timeline/timeline.recorder';
 import { AgentEventType } from '../src/types/event.types';
 import { exportAgentDna, parseDna } from '../src/dna/agent-dna';
 import { hotReloadAgentDna } from '../src/dna/hot-reload';
-import { installAgentPackage, saveMarketplacePackage, loadMarketplacePackage } from '../src/dna/marketplace';
+import {
+  installAgentPackage,
+  saveMarketplacePackage,
+  loadMarketplacePackage,
+} from '../src/dna/marketplace';
 import { memoryGraphFromKnowledgeGraph } from '../src/memory-graph/graphrag-bridge';
 import { AgentMemoryGraph } from '../src/memory-graph/memory-graph';
 import { AgentRegistry } from '../src/registry/agent.registry';
@@ -49,11 +53,14 @@ describe('Agent OS production hardening', () => {
   it('hot-reloads DNA onto registry', () => {
     const registry = new AgentRegistry();
     // manually seed metadata map via registerInstance path — use patch after fake insert
-    (registry as unknown as { agents: Map<string, { name: string; systemPrompt?: string }> }).agents.set(
-      'support',
-      { name: 'support', systemPrompt: 'old' }
-    );
-    const dna = exportAgentDna({ name: 'support', systemPrompt: 'new prompt', tools: [{ name: 'lookup' }] });
+    (
+      registry as unknown as { agents: Map<string, { name: string; systemPrompt?: string }> }
+    ).agents.set('support', { name: 'support', systemPrompt: 'old' });
+    const dna = exportAgentDna({
+      name: 'support',
+      systemPrompt: 'new prompt',
+      tools: [{ name: 'lookup' }],
+    });
     const engine = new PolicyEngine();
     const tools: string[] = [];
     const result = hotReloadAgentDna(
@@ -87,9 +94,7 @@ describe('Agent OS production hardening', () => {
 
   it('bridges memory graph from knowledge graph like', () => {
     const kg = {
-      entities: new Map([
-        ['1', { id: '1', name: 'Ada', type: 'person', description: 'dev' }],
-      ]),
+      entities: new Map([['1', { id: '1', name: 'Ada', type: 'person', description: 'dev' }]]),
       relationships: new Map(),
     };
     const g = memoryGraphFromKnowledgeGraph(kg);

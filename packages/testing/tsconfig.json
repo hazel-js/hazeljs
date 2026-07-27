@@ -8,8 +8,5 @@
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "**/*.test.ts"],
-  "references": [
-    { "path": "../eval" },
-    { "path": "../agent" }
-  ]
+  "references": [{ "path": "../eval" }, { "path": "../agent" }]
 }

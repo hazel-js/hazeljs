@@ -115,8 +115,10 @@ export class AgentRuntime {
   private policyEngine?: PolicyEngine;
   private costOptimizer?: CostOptimizer;
   private governanceGate?: GovernanceGate;
-  private stateHandlers: Map<(event: AgentEvent<StateChangedEvent>) => void, (event: AgentEvent) => void> =
-    new Map();
+  private stateHandlers: Map<
+    (event: AgentEvent<StateChangedEvent>) => void,
+    (event: AgentEvent) => void
+  > = new Map();
 
   constructor(config: AgentRuntimeConfig = {}) {
     this.config = {
@@ -196,9 +198,12 @@ export class AgentRuntime {
     }
 
     const rawStateManager = resolveStateManager(config.stateManager, config.stateManagerOptions);
-    this.stateManager = new EmittingStateManager(rawStateManager, (type, agentId, executionId, data) => {
-      void this.eventEmitter.emit(type, agentId, executionId, data);
-    });
+    this.stateManager = new EmittingStateManager(
+      rawStateManager,
+      (type, agentId, executionId, data) => {
+        void this.eventEmitter.emit(type, agentId, executionId, data);
+      }
+    );
     this.contextBuilder = new AgentContextBuilder(config.memoryManager);
 
     const useRedisApprovals =
@@ -337,7 +342,11 @@ export class AgentRuntime {
         const ladder = await runRecoveryLadder({
           execute: () => this.executeCore(name, goal, opts),
           executeFallback: opts.recovery.fallbackAgent
-            ? () => this.executeCore(opts.recovery!.fallbackAgent!, goal, { ...opts, recovery: undefined })
+            ? () =>
+                this.executeCore(opts.recovery!.fallbackAgent!, goal, {
+                  ...opts,
+                  recovery: undefined,
+                })
             : undefined,
           ladder: opts.recovery,
         });
@@ -712,9 +721,7 @@ export class AgentRuntime {
   /**
    * Subscribe to every state transition.
    */
-  onStateChange(
-    callback: (event: AgentEvent<StateChangedEvent>) => void | Promise<void>
-  ): void {
+  onStateChange(callback: (event: AgentEvent<StateChangedEvent>) => void | Promise<void>): void {
     this.eventEmitter.on(AgentEventType.STATE_CHANGED, callback as (event: AgentEvent) => void);
   }
 
@@ -742,7 +749,10 @@ export class AgentRuntime {
   /**
    * Get recorded timeline for an agent (by name) or executionId.
    */
-  getTimeline(filter: { agentName?: string; executionId?: string }): import('../timeline/timeline.recorder').TimelineStep[] {
+  getTimeline(filter: {
+    agentName?: string;
+    executionId?: string;
+  }): import('../timeline/timeline.recorder').TimelineStep[] {
     return this.timelineRecorder.getTimeline(filter);
   }
 
@@ -776,21 +786,25 @@ export class AgentRuntime {
         patchAgent: (name, patch) => this.agentRegistry.patchAgent(name, patch),
         setPolicyEngine: (engine) => this.setPolicyEngine(engine),
         getPolicyEngine: () => this.policyEngine,
-        registerDynamicTool: (agentName, tool) => this.toolRegistry.registerDynamicTool(agentName, tool),
+        registerDynamicTool: (agentName, tool) =>
+          this.toolRegistry.registerDynamicTool(agentName, tool),
       },
       dna
     );
   }
 
   /** Install a marketplace package or .dna JSON file into the live runtime. */
-  installAgentPackage(source: string | AgentDna | import('../dna/agent-dna').MarketplaceAgentPackage) {
+  installAgentPackage(
+    source: string | AgentDna | import('../dna/agent-dna').MarketplaceAgentPackage
+  ) {
     return installAgentPackage(
       {
         getAgent: (name) => this.agentRegistry.getAgent(name),
         patchAgent: (name, patch) => this.agentRegistry.patchAgent(name, patch),
         setPolicyEngine: (engine) => this.setPolicyEngine(engine),
         getPolicyEngine: () => this.policyEngine,
-        registerDynamicTool: (agentName, tool) => this.toolRegistry.registerDynamicTool(agentName, tool),
+        registerDynamicTool: (agentName, tool) =>
+          this.toolRegistry.registerDynamicTool(agentName, tool),
       },
       source
     );

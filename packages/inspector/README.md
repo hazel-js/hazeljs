@@ -53,11 +53,11 @@ Then run your app and open:
 
 When agents are registered, Inspector exposes live debugging endpoints:
 
-| Endpoint | Description |
-|----------|-------------|
-| `GET /__hazel/agents/:name/stream` | SSE stream of timeline steps while the agent runs |
-| `GET /__hazel/agents/:name/timeline` | JSON replay of recorded timeline steps |
-| `POST /__hazel/agents/:name/run` | Run the agent from the UI (optional input prompt) |
+| Endpoint                             | Description                                       |
+| ------------------------------------ | ------------------------------------------------- |
+| `GET /__hazel/agents/:name/stream`   | SSE stream of timeline steps while the agent runs |
+| `GET /__hazel/agents/:name/timeline` | JSON replay of recorded timeline steps            |
+| `POST /__hazel/agents/:name/run`     | Run the agent from the UI (optional input prompt) |
 
 In the Agents panel, use **Run** (executes + streams) or **Timeline** (loads history and opens the live SSE feed).
 

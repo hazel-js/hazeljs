@@ -19,7 +19,8 @@ export interface EvolutionLlm {
   complete(prompt: string): Promise<string>;
 }
 
-const FALLBACK_RATIONALE = 'Heuristic evolution without LLM — appended failure lessons to system prompt.';
+const FALLBACK_RATIONALE =
+  'Heuristic evolution without LLM — appended failure lessons to system prompt.';
 
 /** Build an improved system prompt from failures (LLM optional). */
 export async function evolveSystemPrompt(opts: {
@@ -96,7 +97,11 @@ export async function runEvolutionLoop(opts: {
           failures.push({ input: c.input, output: out, expectedHint: c.expectedHint });
         }
       } catch (e) {
-        failures.push({ input: c.input, error: (e as Error).message, expectedHint: c.expectedHint });
+        failures.push({
+          input: c.input,
+          error: (e as Error).message,
+          expectedHint: c.expectedHint,
+        });
       }
     }
     if (failures.length === 0) {

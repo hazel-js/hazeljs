@@ -60,7 +60,11 @@ export class GovernanceGate {
     };
 
     if (!policy) {
-      const decision: GovernanceDecision = { allowed: true, reason: 'No policy — allow by default', audit };
+      const decision: GovernanceDecision = {
+        allowed: true,
+        reason: 'No policy — allow by default',
+        audit,
+      };
       this.auditLog.push(audit);
       return decision;
     }
@@ -79,7 +83,10 @@ export class GovernanceGate {
     }
 
     if (policy.allowedResidencies?.length && ctx.residency) {
-      if (!policy.allowedResidencies.includes(ctx.residency) && !policy.allowedResidencies.includes('global')) {
+      if (
+        !policy.allowedResidencies.includes(ctx.residency) &&
+        !policy.allowedResidencies.includes('global')
+      ) {
         const decision: GovernanceDecision = {
           allowed: false,
           reason: policy.denyReason ?? `Residency ${ctx.residency} not allowed`,
@@ -105,7 +112,11 @@ export class GovernanceGate {
       }
     }
 
-    const decision: GovernanceDecision = { allowed: true, reason: 'Governance checks passed', audit };
+    const decision: GovernanceDecision = {
+      allowed: true,
+      reason: 'Governance checks passed',
+      audit,
+    };
     this.auditLog.push(audit);
     return decision;
   }

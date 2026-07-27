@@ -13,7 +13,10 @@ export interface SimulatorOptions {
   concurrency?: number;
   iterations?: number;
   cases: SimulatorCase[];
-  run: (input: string, caseId: string) => Promise<{ ok: boolean; durationMs: number; error?: string; output?: string }>;
+  run: (
+    input: string,
+    caseId: string
+  ) => Promise<{ ok: boolean; durationMs: number; error?: string; output?: string }>;
 }
 
 export interface SimulatorFailure {

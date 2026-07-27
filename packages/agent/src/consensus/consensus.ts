@@ -36,10 +36,7 @@ export function runConsensus(
   const tally: Record<string, number> = {};
   for (const v of votes) {
     const key = normalize(v.value);
-    const w =
-      strategy === 'weighted'
-        ? (v.weight ?? v.confidence ?? 1)
-        : 1;
+    const w = strategy === 'weighted' ? (v.weight ?? v.confidence ?? 1) : 1;
     tally[key] = (tally[key] ?? 0) + w;
   }
 

@@ -9,7 +9,10 @@ import { AgentTimelineRecorder } from '../timeline/timeline.recorder';
 
 export interface TimelineStore {
   append(step: TimelineStep): void | Promise<void>;
-  load(filter: { agentName?: string; executionId?: string }): TimelineStep[] | Promise<TimelineStep[]>;
+  load(filter: {
+    agentName?: string;
+    executionId?: string;
+  }): TimelineStep[] | Promise<TimelineStep[]>;
   clear(): void | Promise<void>;
 }
 

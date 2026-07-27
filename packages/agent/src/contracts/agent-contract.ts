@@ -45,9 +45,7 @@ function toolNames(result: AgentExecutionResult): string[] {
   return result.steps
     .filter((s) => s.action?.toolName)
     .map((s) => s.action!.toolName!)
-    .concat(
-      result.steps.flatMap((s) => s.action?.toolCalls?.map((t) => t.toolName) ?? [])
-    );
+    .concat(result.steps.flatMap((s) => s.action?.toolCalls?.map((t) => t.toolName) ?? []));
 }
 
 export async function validateAgentContract(

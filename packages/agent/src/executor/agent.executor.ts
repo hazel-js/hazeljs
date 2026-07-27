@@ -410,9 +410,14 @@ export class AgentExecutor {
 
         case AgentActionType.ASK_USER:
           step.state = AgentState.WAITING_FOR_INPUT;
-          this.emitEvent(AgentEventType.USER_INPUT_REQUESTED, context.agentId, context.executionId, {
-            question: action.question,
-          });
+          this.emitEvent(
+            AgentEventType.USER_INPUT_REQUESTED,
+            context.agentId,
+            context.executionId,
+            {
+              question: action.question,
+            }
+          );
           break;
 
         case AgentActionType.RESPOND:

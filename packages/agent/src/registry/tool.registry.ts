@@ -175,14 +175,18 @@ export class ToolRegistry {
     const handler =
       tool.handler ??
       (async () => {
-        throw new Error(`Dynamic tool ${registeredName} has no handler — wire createSkillInvoker or provide handler`);
+        throw new Error(
+          `Dynamic tool ${registeredName} has no handler — wire createSkillInvoker or provide handler`
+        );
       });
 
     const metadata: ToolMetadata = {
       name: registeredName,
       description: tool.description ?? registeredName,
       requiresApproval: tool.requiresApproval,
-      parameters: Array.isArray(tool.parameters) ? (tool.parameters as ToolMetadata['parameters']) : undefined,
+      parameters: Array.isArray(tool.parameters)
+        ? (tool.parameters as ToolMetadata['parameters'])
+        : undefined,
       target: { [registeredName]: handler },
       propertyKey: registeredName,
       method: handler,
