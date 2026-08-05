@@ -208,9 +208,11 @@ export class SwaggerService {
 
     if (!operation) return;
 
+    const methodName = String(propertyKey);
     const pathItem = this.spec.paths[fullPath] || {};
     pathItem[method.toLowerCase()] = {
       ...operation,
+      operationId: operation.operationId || methodName,
       tags: operation.tags || [tag],
     };
 
@@ -249,6 +251,7 @@ export class SwaggerService {
     const operation: SwaggerOperation = {
       summary,
       description: `Auto-generated ${method.toUpperCase()} operation`,
+      operationId: methodName,
       tags: [tag],
       responses: {
         '200': {

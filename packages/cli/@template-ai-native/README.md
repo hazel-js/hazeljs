@@ -36,6 +36,25 @@ A complete AI-native backend application with HazelJS, featuring:
    - Inspector: http://localhost:3000/\_\_hazel
    - Health: http://localhost:3000/health
 
+## Skillgate (optional)
+
+Turn selected REST controllers into governed agent skills:
+
+```bash
+npm install @hazeljs/skillgate @hazeljs/swagger
+```
+
+See `src/examples/skillgate.example.ts` and https://hazeljs.ai/docs/guides/skillgate
+
+Tag controllers with `@ApiTags('agent')` or `@AgentSkill`, then:
+
+```ts
+Skillgate.fromModule(AppModule, { invoke: { baseUrl: 'http://127.0.0.1:3000' } }).register(
+  registry,
+  'api-concierge'
+);
+```
+
 ## Available Endpoints
 
 ### AI Chat

@@ -37,6 +37,22 @@ export interface SwaggerOperation {
   summary?: string;
   description?: string;
   tags?: string[];
+  /** Stable id — used by Skillgate as the tool name when present. */
+  operationId?: string;
+  /**
+   * Opt an operation into Skillgate (`true` / object) or exclude it (`false`).
+   * See `@hazeljs/skillgate` and `@AgentSkill`.
+   */
+  'x-hazel-skill'?:
+    | boolean
+    | {
+        enabled?: boolean;
+        name?: string;
+        description?: string;
+        readOnly?: boolean;
+        requiresApproval?: boolean;
+        class?: 'read' | 'write' | 'destructive' | 'admin';
+      };
   parameters?: SwaggerParameter[];
   requestBody?: {
     required?: boolean;

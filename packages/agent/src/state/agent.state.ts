@@ -197,6 +197,31 @@ export class AgentStateManager implements IAgentStateManager {
   }
 
   /**
+   * Restore a snapshotted context (durable HITL).
+   */
+  putContext(context: AgentContext): void {
+    const revived: AgentContext = {
+      ...context,
+      createdAt:
+        context.createdAt instanceof Date ? context.createdAt : new Date(context.createdAt),
+      updatedAt:
+        context.updatedAt instanceof Date ? context.updatedAt : new Date(context.updatedAt),
+      steps: (context.steps ?? []).map((s) => ({
+        ...s,
+        timestamp: s.timestamp instanceof Date ? s.timestamp : new Date(s.timestamp),
+      })),
+      memory: {
+        ...context.memory,
+        conversationHistory: (context.memory?.conversationHistory ?? []).map((m) => ({
+          ...m,
+          timestamp: m.timestamp instanceof Date ? m.timestamp : new Date(m.timestamp),
+        })),
+      },
+    };
+    this.contexts.set(revived.executionId, revived);
+  }
+
+  /**
    * Get all contexts for a session
    */
   getSessionContexts(sessionId: string): AgentContext[] {

@@ -253,6 +253,25 @@ server.start();
 `,
   },
   {
+    shortName: 'skillgate',
+    npm: '@hazeljs/skillgate',
+    label: 'Skillgate - OpenAPI → governed agent skills (@hazeljs/skillgate)',
+    hint: 'import { Skillgate } from "@hazeljs/skillgate";\n  // Skillgate.fromOpenApi(spec).register(toolRegistry, "api-concierge");',
+    moduleImport: null,
+    moduleExpression: null,
+    setupTemplate: `import { Skillgate } from '@hazeljs/skillgate';
+import { ToolRegistry } from '@hazeljs/agent';
+
+// Opt-in: tags agent|skillgate, x-hazel-skill, or explicit allowlists.
+const gate = Skillgate.fromOpenApi(openApiSpec, {
+  include: { tags: ['agent'] },
+  invoke: { baseUrl: process.env.API_BASE_URL || 'http://127.0.0.1:3000' },
+});
+const registry = new ToolRegistry();
+gate.register(registry, 'api-concierge');
+`,
+  },
+  {
     shortName: 'pdf-to-audio',
     npm: '@hazeljs/pdf-to-audio',
     label: 'PDF to Audio (@hazeljs/pdf-to-audio)',

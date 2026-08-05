@@ -94,4 +94,11 @@ export class EmittingStateManager implements IAgentStateManager {
   getSessionContexts(sessionId: string): Promise<AgentContext[]> | AgentContext[] {
     return this.inner.getSessionContexts(sessionId);
   }
+
+  putContext(context: AgentContext): Promise<void> | void {
+    if (typeof this.inner.putContext === 'function') {
+      return this.inner.putContext(context);
+    }
+    throw new Error('State manager does not support putContext (required for durable HITL resume)');
+  }
 }

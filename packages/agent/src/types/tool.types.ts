@@ -19,6 +19,8 @@ export enum ToolExecutionStatus {
 /**
  * Tool configuration
  */
+export type ToolRiskLevel = 'low' | 'medium' | 'high' | 'critical';
+
 export interface ToolConfig {
   name: string;
   description: string;
@@ -31,6 +33,14 @@ export interface ToolConfig {
   retries?: number;
   policy?: string;
   metadata?: Record<string, unknown>;
+  /** Capability / skill namespace (e.g. payments.write) — AOS-007 / Skillgate */
+  capability?: string;
+  /** Relative risk for policy / approval defaults */
+  riskLevel?: ToolRiskLevel;
+  /** True when the tool has no side effects */
+  readOnly?: boolean;
+  /** Safe to retry with the same input */
+  idempotent?: boolean;
 }
 
 /**
@@ -85,6 +95,9 @@ export interface ToolExecutionResult {
   error?: Error;
   metadata?: Record<string, unknown>;
   duration: number;
+  /** Set when durableSuspend returns without awaiting approval (AOS-006). */
+  pendingApproval?: boolean;
+  requestId?: string;
 }
 
 /**

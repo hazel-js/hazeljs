@@ -37,6 +37,17 @@ export interface McpToolDefinition {
     properties: Record<string, JsonSchemaProperty>;
     required: string[];
   };
+  /** MCP tool annotations (hints for clients / policy). */
+  annotations?: {
+    readOnlyHint?: boolean;
+    idempotentHint?: boolean;
+    destructiveHint?: boolean;
+  };
+  /** Hazel / Skillgate extensions */
+  _meta?: {
+    capability?: string;
+    riskLevel?: string;
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -122,6 +133,11 @@ export interface HazelTool {
   /** The callable function — invoked as method.call(target, input) */
   // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
   method: Function;
+  /** Tool-driver metadata (AOS-007) — mirrored into MCP annotations / _meta */
+  capability?: string;
+  riskLevel?: 'low' | 'medium' | 'high' | 'critical';
+  readOnly?: boolean;
+  idempotent?: boolean;
 }
 
 /**

@@ -147,25 +147,48 @@ npx prisma generate
 4. Configure database state manager:
 
 ```typescript
-import { AgentRuntime, DatabaseStateManager } from '@hazeljs/agent';
+import { AgentRuntime, DatabaseStateManager, createSqlDurableRunStore } from '@hazeljs/agent';
 import { PrismaClient } from '@prisma/client';
 
-// Create Prisma client
+// Create Prisma client (any Prisma SQL provider)
 const prisma = new PrismaClient();
 
 // Create database state manager
 const stateManager = new DatabaseStateManager({
   client: prisma,
   softDelete: true, // Keep deleted contexts for audit
-  autoArchive: false, // Optional: auto-archive old contexts
-  archiveThresholdDays: 30,
+```
+
+autoArchive: false, // Optional: auto-archive old contexts
+archiveThresholdDays: 30,
 });
 
 // Use with runtime
 const runtime = new AgentRuntime({
-  stateManager,
+stateManager,
 });
-```
+
+````
+
+### Agent OS process store (SQL — AOS-014)
+
+Same Prisma client can back durable `AgentRun` / HITL / A2A stores. Copy the **Agent OS** models from `prisma-schema.example.prisma` (provider-agnostic).
+
+```typescript
+import { AgentRuntime, createSqlDurableRunStore } from '@hazeljs/agent';
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
+const store = createSqlDurableRunStore(prisma);
+
+const runtime = new AgentRuntime({
+  runRepository: store.runRepository,
+  checkpointService: store.checkpointService,
+  humanTaskService: store.humanTaskService,
+});
+````
+
+See [docs/agent-os-audit/17-agent-os-gamma-sql.md](../../../docs/agent-os-audit/17-agent-os-gamma-sql.md).
 
 ## Hybrid Approach (Recommended for Production)
 

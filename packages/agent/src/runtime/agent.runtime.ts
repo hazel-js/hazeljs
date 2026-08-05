@@ -51,7 +51,23 @@ import { hotReloadAgentDna, type HotReloadResult } from '../dna/hot-reload';
 import { installAgentPackage } from '../dna/marketplace';
 import type { AgentDna, MarketplaceAgentPackage } from '../dna/agent-dna';
 import { CircuitBreakerError } from '@hazeljs/resilience';
-
+import { InMemoryAgentRunRepository, type AgentRunRepository } from '../run/agent-run.repository';
+import { AgentRunStatus } from '../run/agent-run.types';
+import { InMemoryHumanTaskService, type HumanTaskService } from '../run/human-task.service';
+import { isDurableHitlCheckpoint, type DurableHitlCheckpoint } from '../run/durable-hitl.types';
+import { startFlowHitlWait, resumeFlowHitlWait } from '../run/flow-hitl-bridge';
+import { identityFromAgentConfig, type AgentIdentity } from '../identity/agent-identity';
+import { PolicyService } from '../policies/policy.service';
+import { BudgetExceededError, type RunBudget } from '../budget/run-budget';
+import { InMemoryAgentScheduler, type AgentScheduler } from '../scheduler/agent-scheduler';
+import { withAgentSpan } from '../utils/agent-tracing';
+import { InMemoryCheckpointService, type CheckpointService } from '../run/checkpoint.service';
+import type { AgentRun } from '../run/agent-run.types';
+import {
+  RepositoryAgentRunLeaseService,
+  type AgentRunLease,
+  type AgentRunLeaseService,
+} from '../run/agent-run-lease';
 /**
  * Agent Runtime Configuration
  */
@@ -87,6 +103,37 @@ export interface AgentRuntimeConfig {
   timelineStore?: import('../timeline/timeline.store').TimelineStore;
   /** Knowledge freshness defaults for RAG */
   knowledgeFreshness?: { maxAgeMs?: number; minConfidence?: number };
+  /** Agent OS — durable run repository (defaults to in-memory) */
+  runRepository?: import('../run/agent-run.repository').AgentRunRepository;
+  /** When false, skip AgentRun tracking (default true) */
+  enableAgentRuns?: boolean;
+  /** Agent OS — checkpoint service (defaults to in-memory) */
+  checkpointService?: import('../run/checkpoint.service').CheckpointService;
+  /** Agent OS — human tasks for HITL / approval (defaults to in-memory) */
+  humanTaskService?: import('../run/human-task.service').HumanTaskService;
+  /**
+   * When true, approval-required tools suspend the AgentRun and return from execute()
+   * instead of holding an in-process approval promise (AOS-006).
+   */
+  durableSuspend?: boolean;
+  /**
+   * Optional FlowEngine peer (ADR-003). When set with durableSuspend, mirrors HITL as flow WAITING.
+   */
+  flowEngine?: import('../run/flow-hitl-bridge').FlowEngineLike;
+  /** Default run budget (AOS-012); overridable per execute. */
+  defaultBudget?: import('../budget/run-budget').RunBudget;
+  /** Agent scheduler for QUEUED / delayed runs (AOS-010). */
+  scheduler?: import('../scheduler/agent-scheduler').AgentScheduler;
+  /** Policy service for capability gates (AOS-008); auto-created when policyEngine set. */
+  policyService?: import('../policies/policy.service').PolicyService;
+  /**
+   * Worker id for AgentRun leases (Gamma). When set, execute acquires a lease on the run.
+   */
+  workerId?: string;
+  /** Override lease service (defaults to RepositoryAgentRunLeaseService when workerId set). */
+  runLeaseService?: import('../run/agent-run-lease').AgentRunLeaseService;
+  /** Lease TTL in ms (default 30_000). */
+  runLeaseTtlMs?: number;
 }
 
 /**
@@ -115,6 +162,19 @@ export class AgentRuntime {
   private policyEngine?: PolicyEngine;
   private costOptimizer?: CostOptimizer;
   private governanceGate?: GovernanceGate;
+  private runRepository: AgentRunRepository;
+  private checkpointService: CheckpointService;
+  private humanTaskService: HumanTaskService;
+  private enableAgentRuns: boolean;
+  private durableSuspend: boolean;
+  private flowEngine?: import('../run/flow-hitl-bridge').FlowEngineLike;
+  private defaultBudget?: RunBudget;
+  private scheduler?: AgentScheduler;
+  private policyService?: PolicyService;
+  private runLeaseService?: AgentRunLeaseService;
+  private workerId?: string;
+  private runLeaseTtlMs: number;
+  private activeLeases = new Map<string, AgentRunLease>();
   private stateHandlers: Map<
     (event: AgentEvent<StateChangedEvent>) => void,
     (event: AgentEvent) => void
@@ -129,8 +189,27 @@ export class AgentRuntime {
       enableRetry: true,
       enableCircuitBreaker: true,
       logLevel: LogLevel.INFO,
+      enableAgentRuns: true,
       ...config,
     };
+
+    this.enableAgentRuns = this.config.enableAgentRuns !== false;
+    this.runRepository = this.config.runRepository ?? new InMemoryAgentRunRepository();
+    this.checkpointService = this.config.checkpointService ?? new InMemoryCheckpointService();
+    this.humanTaskService = this.config.humanTaskService ?? new InMemoryHumanTaskService();
+    this.durableSuspend = this.config.durableSuspend === true;
+    this.flowEngine = this.config.flowEngine;
+    this.defaultBudget = this.config.defaultBudget;
+    this.scheduler = this.config.scheduler;
+    this.workerId = this.config.workerId;
+    this.runLeaseTtlMs = this.config.runLeaseTtlMs ?? 30_000;
+    this.runLeaseService =
+      this.config.runLeaseService ??
+      (this.workerId
+        ? new RepositoryAgentRunLeaseService(this.runRepository, {
+            defaultTtlMs: this.runLeaseTtlMs,
+          })
+        : undefined);
 
     // Initialize logger
     this.logger = new Logger({ level: this.config.logLevel });
@@ -188,8 +267,23 @@ export class AgentRuntime {
     this.timelineRecorder = new AgentTimelineRecorder();
     this.timeTravel = new TimeTravelDebugger(this.timelineRecorder);
     this.policyEngine = config.policyEngine;
+    this.policyService =
+      this.config.policyService ??
+      new PolicyService({ policyEngine: this.policyEngine ?? new PolicyEngine() });
     this.costOptimizer = config.costOptimizer ?? new CostOptimizer();
     this.governanceGate = config.governanceGate;
+    if (this.scheduler) {
+      this.scheduler.setHandler((job) => {
+        void this.execute(job.agentName, job.input, {
+          ...(job.options as AgentExecutionOptions | undefined),
+          metadata: {
+            ...((job.options as AgentExecutionOptions | undefined)?.metadata ?? {}),
+            scheduledJobId: job.id,
+            precreatedRunId: job.runId,
+          },
+        });
+      });
+    }
     this.eventEmitter.onAny((event) => {
       this.timelineRecorder.record(event);
     });
@@ -224,6 +318,10 @@ export class AgentRuntime {
       approvalStore,
       observabilityProvider: config.observabilityProvider,
       policyEngine: this.policyEngine,
+      policyService: this.policyService,
+      durableSuspend: this.durableSuspend,
+      onApprovalRequested: (info) => this.handleApprovalRequested(info),
+      onApprovalResolved: (info) => this.handleApprovalResolved(info),
     });
 
     this.agentExecutor = new AgentExecutor(
@@ -301,7 +399,10 @@ export class AgentRuntime {
           input: agentInput,
         });
 
-        const result = await this.execute(targetAgentName, agentInput);
+        const result = await this.execute(targetAgentName, agentInput, {
+          parentRunId: undefined, // set below if we can find parent — callers use callAgent
+          metadata: { delegatedFrom: agentName },
+        });
         return result.response ?? '';
       };
 
@@ -388,69 +489,80 @@ export class AgentRuntime {
     input: string,
     options: AgentExecutionOptions = {}
   ): Promise<AgentExecutionResult> {
-    // Check rate limit
-    if (this.rateLimiter) {
-      const allowed = await this.rateLimiter.waitForToken(5000);
-      if (!allowed) {
-        this.logger.error('Rate limit exceeded', undefined, { agentName });
-        throw AgentError.rateLimitExceeded();
-      }
-    }
+    return withAgentSpan(
+      'agent.run',
+      {
+        'agent.name': agentName,
+        'agent.session_id': options.sessionId ?? '',
+        'agent.user_id': options.userId ?? '',
+      },
+      async () => {
+        // Check rate limit
+        if (this.rateLimiter) {
+          const allowed = await this.rateLimiter.waitForToken(5000);
+          if (!allowed) {
+            this.logger.error('Rate limit exceeded', undefined, { agentName });
+            throw AgentError.rateLimitExceeded();
+          }
+        }
 
-    const startTime = Date.now();
-    let success = false;
+        const startTime = Date.now();
+        let success = false;
 
-    try {
-      this.logger.info('Starting agent execution', {
-        agentName,
-        sessionId: options.sessionId,
-        userId: options.userId,
-      });
-
-      const result = options.loop
-        ? await runConfidenceLoop({
+        try {
+          this.logger.info('Starting agent execution', {
             agentName,
-            input,
-            options,
-            executeOnce: (name, goal, opts) => this.executeWithProtection(name, goal, opts),
-            llmProvider: this.config.llmProvider,
-            stateManager: this.stateManager,
-            emit: (type, agentId, executionId, data) => {
-              void this.eventEmitter.emit(type, agentId, executionId, data);
-            },
-          })
-        : await this.executeWithProtection(agentName, input, options);
+            sessionId: options.sessionId,
+            userId: options.userId,
+          });
 
-      success = result.state === AgentState.COMPLETED;
-      const duration = Date.now() - startTime;
+          const result = options.loop
+            ? await runConfidenceLoop({
+                agentName,
+                input,
+                options,
+                executeOnce: (name, goal, opts) => this.executeWithProtection(name, goal, opts),
+                llmProvider: this.config.llmProvider,
+                stateManager: this.stateManager,
+                emit: (type, agentId, executionId, data) => {
+                  void this.eventEmitter.emit(type, agentId, executionId, data);
+                },
+              })
+            : await this.executeWithProtection(agentName, input, options);
 
-      // Record metrics
-      if (this.metrics) {
-        this.metrics.recordExecution(success, duration);
-      }
+          success = result.state === AgentState.COMPLETED;
+          const duration = Date.now() - startTime;
 
-      this.logger.info('Agent execution completed', {
-        agentName,
-        executionId: result.executionId,
-        state: result.state,
-        duration,
-      });
+          // Record metrics
+          if (this.metrics) {
+            this.metrics.recordExecution(success, duration);
+          }
 
-      return result;
-    } catch (error) {
-      const duration = Date.now() - startTime;
+          this.logger.info('Agent execution completed', {
+            agentName,
+            executionId: result.executionId,
+            state: result.state,
+            duration,
+          });
 
-      if (this.metrics) {
-        this.metrics.recordExecution(false, duration);
-      }
+          return result;
+        } catch (error) {
+          const duration = Date.now() - startTime;
 
-      this.logger.error('Agent execution failed', error as Error, {
-        agentName,
-        duration,
-      });
+          if (this.metrics) {
+            this.metrics.recordExecution(false, duration);
+          }
 
-      throw error;
-    }
+          this.logger.error('Agent execution failed', error as Error, {
+            agentName,
+            duration,
+          });
+
+          throw error;
+        }
+      },
+      this.config.observabilityProvider
+    );
   }
 
   /**
@@ -466,6 +578,17 @@ export class AgentRuntime {
       if (!agent) {
         throw new Error(`Agent ${agentName} not found`);
       }
+
+      const identity: AgentIdentity =
+        options.identity ??
+        identityFromAgentConfig({
+          name: agent.name,
+          version: agent.version,
+          tenantId: agent.tenantId,
+          capabilities: agent.capabilities,
+        });
+      this.policyService?.setIdentity(identity);
+      this.toolExecutor.setAgentIdentity(identity);
 
       const sessionId = options.sessionId || this.generateSessionId();
       const maxSteps = options.maxSteps || this.config.defaultMaxSteps || 10;
@@ -503,6 +626,8 @@ export class AgentRuntime {
         Object.assign(context.memory.workingMemory, options.initialContext);
       }
 
+      await this.trackRunCreated(agentName, context.executionId, input, options);
+
       let controller: AbortController | undefined;
       if (!options.signal) {
         controller = new AbortController();
@@ -512,19 +637,73 @@ export class AgentRuntime {
       const timeoutMs = options.timeout ?? this.config.defaultTimeout;
 
       try {
+        await this.trackRunStatus(context.executionId, AgentRunStatus.RUNNING);
+        await this.acquireRunLease(context.executionId);
         await this.stateManager.updateState(context.executionId, AgentState.THINKING);
         const result = await this.agentExecutor.execute(context, maxSteps, {
           timeoutMs,
           signal,
           streaming: options.streaming,
+          budget: options.budget ?? this.defaultBudget,
+          modelId: agent.model,
         });
+        if (result.state === AgentState.WAITING_FOR_APPROVAL) {
+          await this.persistDurableHitlSuspend(context, result, agentName, maxSteps);
+          await this.releaseRunLease(context.executionId);
+          return result;
+        }
+        if (result.state === AgentState.WAITING_FOR_INPUT) {
+          await this.releaseRunLease(context.executionId);
+          return result;
+        }
         if (result.state === AgentState.FAILED) {
+          const isBudget =
+            result.error instanceof BudgetExceededError ||
+            result.error?.name === 'BudgetExceededError';
+          await this.trackRunStatus(
+            context.executionId,
+            isBudget ? AgentRunStatus.CANCELLED : AgentRunStatus.FAILED,
+            {
+              error: {
+                message: result.error?.message ?? 'Agent execution failed',
+                code: isBudget ? 'BUDGET_EXCEEDED' : undefined,
+              },
+            }
+          );
+          await this.releaseRunLease(context.executionId);
           throw result.error ?? new Error('Agent execution failed');
         }
         if (this.config.memoryManager) {
           await this.contextBuilder.persistToMemory(context);
         }
+        await this.trackRunStatus(context.executionId, AgentRunStatus.COMPLETED, {
+          output: result.response,
+        });
+        await this.releaseRunLease(context.executionId);
         return result;
+      } catch (err) {
+        const existing = await this.runRepository.get(context.executionId);
+        if (
+          existing &&
+          existing.status !== AgentRunStatus.CANCELLED &&
+          existing.status !== AgentRunStatus.FAILED &&
+          existing.status !== AgentRunStatus.COMPLETED
+        ) {
+          const message = err instanceof Error ? err.message : String(err);
+          const isCancel =
+            message.toLowerCase().includes('cancel') ||
+            (err instanceof AgentError &&
+              String((err as { code?: string }).code).includes('CANCEL'));
+          await this.trackRunStatus(
+            context.executionId,
+            isCancel ? AgentRunStatus.CANCELLED : AgentRunStatus.FAILED,
+            {
+              error: { message },
+            }
+          );
+        }
+        await this.releaseRunLease(context.executionId);
+        throw err;
       } finally {
         if (controller) {
           this.executionAbortControllers.delete(context.executionId);
@@ -701,6 +880,539 @@ export class AgentRuntime {
       this.executionAbortControllers.delete(executionId);
       this.logger.info('Execution cancelled', { executionId });
     }
+    void this.trackRunStatus(executionId, AgentRunStatus.CANCELLED).then(() => {
+      void this.eventEmitter.emit(AgentEventType.RUN_CANCELLED, 'unknown', executionId, {
+        executionId,
+      });
+    });
+  }
+
+  /** Agent OS — durable run repository */
+  getRunRepository(): AgentRunRepository {
+    return this.runRepository;
+  }
+
+  /** Agent OS — checkpoint service */
+  getCheckpointService(): CheckpointService {
+    return this.checkpointService;
+  }
+
+  async getRun(runId: string): Promise<AgentRun | undefined> {
+    return this.runRepository.get(runId);
+  }
+
+  getHumanTaskService(): HumanTaskService {
+    return this.humanTaskService;
+  }
+
+  getPolicyService(): PolicyService | undefined {
+    return this.policyService;
+  }
+
+  getScheduler(): AgentScheduler | undefined {
+    return this.scheduler ?? undefined;
+  }
+
+  getRunLeaseService(): AgentRunLeaseService | undefined {
+    return this.runLeaseService;
+  }
+
+  /**
+   * Typed child-agent call with parent/root AgentRun linkage (AOS-009).
+   */
+  async callAgent(
+    targetAgent: string,
+    input: string,
+    options: AgentExecutionOptions & { parentRunId?: string; rootRunId?: string } = {}
+  ): Promise<AgentExecutionResult> {
+    const parentRunId = options.parentRunId;
+    if (parentRunId && this.enableAgentRuns) {
+      const parent = await this.runRepository.get(parentRunId);
+      if (parent && parent.status === AgentRunStatus.RUNNING) {
+        await this.trackRunStatus(parentRunId, AgentRunStatus.WAITING_FOR_AGENT);
+      }
+    }
+    void this.eventEmitter.emit(AgentEventType.AGENT_CALL_STARTED, targetAgent, parentRunId ?? '', {
+      targetAgent,
+      parentRunId,
+    });
+    try {
+      const result = await this.execute(targetAgent, input, {
+        ...options,
+        parentRunId,
+        rootRunId: options.rootRunId ?? parentRunId,
+        metadata: {
+          ...options.metadata,
+          parentRunId,
+          rootRunId: options.rootRunId ?? parentRunId,
+        },
+      });
+      if (parentRunId && this.enableAgentRuns) {
+        const parent = await this.runRepository.get(parentRunId);
+        if (parent?.status === AgentRunStatus.WAITING_FOR_AGENT) {
+          await this.trackRunStatus(parentRunId, AgentRunStatus.RUNNING);
+        }
+      }
+      void this.eventEmitter.emit(
+        AgentEventType.AGENT_CALL_COMPLETED,
+        targetAgent,
+        result.executionId,
+        { parentRunId, state: result.state }
+      );
+      return result;
+    } catch (err) {
+      if (parentRunId && this.enableAgentRuns) {
+        const parent = await this.runRepository.get(parentRunId);
+        if (parent?.status === AgentRunStatus.WAITING_FOR_AGENT) {
+          await this.trackRunStatus(parentRunId, AgentRunStatus.RUNNING);
+        }
+      }
+      throw err;
+    }
+  }
+
+  /**
+   * Queue or delay an agent run (AOS-010). Creates AgentRun in QUEUED then executes when due.
+   */
+  async scheduleRun(
+    agentName: string,
+    input: string,
+    opts: { at?: Date; runId?: string; options?: AgentExecutionOptions } = {}
+  ): Promise<{ jobId: string; runId: string }> {
+    const scheduler = this.scheduler ?? new InMemoryAgentScheduler();
+    if (!this.scheduler) {
+      this.scheduler = scheduler;
+      scheduler.setHandler((job) => {
+        void this.execute(job.agentName, job.input, {
+          ...(job.options as AgentExecutionOptions | undefined),
+          metadata: {
+            ...((job.options as AgentExecutionOptions | undefined)?.metadata ?? {}),
+            scheduledJobId: job.id,
+          },
+        });
+      });
+    }
+    const runId = opts.runId ?? `queued_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    if (this.enableAgentRuns) {
+      const existing = await this.runRepository.get(runId);
+      if (!existing) {
+        await this.runRepository.create({
+          id: runId,
+          agentName,
+          input,
+          metadata: { scheduled: true },
+        });
+        await this.runRepository.updateStatus(runId, AgentRunStatus.QUEUED);
+      }
+    }
+    const when = opts.at ?? new Date();
+    const jobId = await scheduler.scheduleAt(when, {
+      id: undefined,
+      agentName,
+      input,
+      runId,
+      options: opts.options as Record<string, unknown> | undefined,
+    });
+    return { jobId, runId };
+  }
+
+  /**
+   * Persist a durable HITL checkpoint and mark the run SUSPENDED (AOS-006).
+   * Prefer `approveAndResume` to continue after approval.
+   */
+  async suspendRun(runId: string, payload?: unknown): Promise<AgentRun | undefined> {
+    if (!this.enableAgentRuns) return undefined;
+    const existing = await this.runRepository.get(runId);
+    if (!existing) return undefined;
+    const cp = await this.checkpointService.save(runId, payload ?? { reason: 'suspend' });
+    await this.trackRunStatus(runId, AgentRunStatus.SUSPENDED, { checkpointId: cp.id });
+    await this.releaseRunLease(runId);
+    void this.eventEmitter.emit(AgentEventType.CHECKPOINT_CREATED, existing.agentName, runId, {
+      checkpointId: cp.id,
+    });
+    return this.runRepository.get(runId);
+  }
+
+  /**
+   * Mark a suspended run RUNNING again (status only).
+   * For durable HITL continuation after approval, use `approveAndResume`.
+   */
+  async resumeRun(runId: string): Promise<AgentRun | undefined> {
+    if (!this.enableAgentRuns) return undefined;
+    await this.trackRunStatus(runId, AgentRunStatus.RUNNING);
+    await this.acquireRunLease(runId);
+    return this.runRepository.get(runId);
+  }
+
+  /**
+   * Approve or reject a durable HITL wait and continue the agent (AOS-006).
+   * Survives process restart when using file-backed run/checkpoint/human-task stores.
+   */
+  async approveAndResume(
+    runIdOrRequestId: string,
+    opts: { approved: boolean; approvedBy: string }
+  ): Promise<AgentExecutionResult> {
+    const startTime = Date.now();
+    let run = await this.runRepository.get(runIdOrRequestId);
+    let requestId: string | undefined;
+
+    if (!run) {
+      const all = await this.runRepository.list();
+      for (const r of all) {
+        const tasks = await this.humanTaskService.listByRun(r.id);
+        const hit = tasks.find(
+          (t) =>
+            t.status === 'pending' &&
+            (t.id === runIdOrRequestId ||
+              t.metadata?.requestId === runIdOrRequestId ||
+              (t.payload as { requestId?: string } | undefined)?.requestId === runIdOrRequestId)
+        );
+        if (hit) {
+          run = r;
+          requestId = String(
+            hit.metadata?.requestId ?? (hit.payload as { requestId?: string })?.requestId ?? ''
+          );
+          break;
+        }
+      }
+    }
+
+    if (!run) {
+      throw new Error(`AgentRun not found for approveAndResume: ${runIdOrRequestId}`);
+    }
+
+    const runId = run.id;
+    const cp = await this.checkpointService.load(runId, run.checkpointId);
+    if (!cp || !isDurableHitlCheckpoint(cp.payload)) {
+      throw new Error(`No durable HITL checkpoint for run ${runId}`);
+    }
+    const payload = cp.payload;
+    requestId = requestId ?? payload.pendingTool.requestId;
+
+    const tasks = await this.humanTaskService.listByRun(runId);
+    const pending = tasks.find(
+      (t) =>
+        t.status === 'pending' &&
+        (t.metadata?.requestId === requestId ||
+          (t.payload as { requestId?: string } | undefined)?.requestId === requestId)
+    );
+    if (pending) {
+      await this.humanTaskService.resolve(
+        pending.id,
+        opts.approved ? 'approved' : 'rejected',
+        opts.approvedBy
+      );
+    }
+
+    if (payload.flowRunId && this.flowEngine) {
+      await resumeFlowHitlWait(this.flowEngine, payload.flowRunId, {
+        approved: opts.approved,
+        requestId,
+        approvedBy: opts.approvedBy,
+      });
+    }
+
+    if (!opts.approved) {
+      await this.trackRunStatus(runId, AgentRunStatus.CANCELLED, {
+        error: { message: `Tool approval rejected by ${opts.approvedBy}` },
+      });
+      return {
+        executionId: runId,
+        agentId: payload.agentName,
+        state: AgentState.FAILED,
+        error: new Error('Tool execution rejected by user'),
+        steps: payload.context.steps ?? [],
+        metadata: { rejected: true, requestId },
+        duration: Date.now() - startTime,
+        completedAt: new Date(),
+      };
+    }
+
+    await this.trackRunStatus(runId, AgentRunStatus.RUNNING);
+    await this.acquireRunLease(runId);
+
+    const context = { ...payload.context, state: AgentState.THINKING };
+    if (typeof this.stateManager.putContext !== 'function') {
+      throw new Error(
+        'State manager does not support putContext (required for durable HITL resume)'
+      );
+    }
+    await this.stateManager.putContext(context);
+
+    const fullToolName = `${context.agentId}.${payload.pendingTool.toolName}`;
+    const tool = this.toolRegistry.getTool(fullToolName);
+    if (!tool) {
+      await this.trackRunStatus(runId, AgentRunStatus.FAILED, {
+        error: { message: `Tool not found on resume: ${payload.pendingTool.toolName}` },
+      });
+      throw new Error(`Tool not found on resume: ${payload.pendingTool.toolName}`);
+    }
+
+    const toolResult = await this.toolExecutor.execute(
+      tool,
+      payload.pendingTool.toolInput,
+      context.agentId,
+      context.sessionId,
+      context.userId,
+      runId,
+      { skipApproval: true }
+    );
+
+    const toolSummary = `[Tool: ${payload.pendingTool.toolName}]\nInput: ${JSON.stringify(payload.pendingTool.toolInput)}\nOutput: ${JSON.stringify(toolResult.output)}`;
+    await this.stateManager.addMessage(runId, 'assistant', toolSummary);
+
+    if (!toolResult.success) {
+      await this.trackRunStatus(runId, AgentRunStatus.FAILED, {
+        error: { message: toolResult.error?.message ?? 'Tool failed after approval' },
+      });
+      await this.releaseRunLease(runId);
+      return {
+        executionId: runId,
+        agentId: context.agentId,
+        state: AgentState.FAILED,
+        error: toolResult.error ?? new Error('Tool failed after approval'),
+        steps: context.steps,
+        metadata: { requestId },
+        duration: Date.now() - startTime,
+        completedAt: new Date(),
+      };
+    }
+
+    const refreshed = (await this.stateManager.getContext(runId)) ?? context;
+    refreshed.state = AgentState.THINKING;
+    const result = await this.agentExecutor.execute(refreshed, payload.maxSteps);
+    if (
+      result.state === AgentState.WAITING_FOR_APPROVAL ||
+      result.state === AgentState.WAITING_FOR_INPUT
+    ) {
+      if (result.state === AgentState.WAITING_FOR_APPROVAL) {
+        await this.persistDurableHitlSuspend(
+          refreshed,
+          result,
+          payload.agentName,
+          payload.maxSteps
+        );
+      }
+      await this.releaseRunLease(runId);
+      return result;
+    }
+    if (result.state === AgentState.FAILED) {
+      await this.trackRunStatus(runId, AgentRunStatus.FAILED, {
+        error: { message: result.error?.message ?? 'Agent execution failed after resume' },
+      });
+      await this.releaseRunLease(runId);
+      return result;
+    }
+    await this.trackRunStatus(runId, AgentRunStatus.COMPLETED, { output: result.response });
+    await this.releaseRunLease(runId);
+    return result;
+  }
+
+  private async persistDurableHitlSuspend(
+    context: AgentContext,
+    result: AgentExecutionResult,
+    agentName: string,
+    maxSteps: number
+  ): Promise<void> {
+    const pending = (result.metadata?.pendingApproval ?? {}) as {
+      requestId?: string;
+      toolName?: string;
+      toolInput?: Record<string, unknown>;
+    };
+
+    let flowRunId: string | undefined;
+    if (this.durableSuspend && this.flowEngine) {
+      try {
+        flowRunId = await startFlowHitlWait(this.flowEngine, {
+          agentRunId: context.executionId,
+          requestId: pending.requestId,
+        });
+      } catch (err) {
+        this.logger.warn('Flow HITL bridge failed; continuing with agent-owned durability', {
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
+    }
+
+    const live = (await this.stateManager.getContext(context.executionId)) ?? context;
+    const checkpoint: DurableHitlCheckpoint = {
+      kind: 'durable_hitl',
+      context: live,
+      pendingTool: {
+        toolName: pending.toolName ?? 'unknown',
+        toolInput: pending.toolInput ?? {},
+        requestId: pending.requestId ?? '',
+      },
+      maxSteps,
+      agentName,
+      flowRunId,
+    };
+
+    await this.suspendRun(context.executionId, checkpoint);
+  }
+
+  private async handleApprovalRequested(info: {
+    runId?: string;
+    requestId: string;
+    toolName: string;
+    input: Record<string, unknown>;
+  }): Promise<void> {
+    if (!info.runId || !this.enableAgentRuns) return;
+    const existing = await this.runRepository.get(info.runId);
+    if (!existing || existing.status !== AgentRunStatus.RUNNING) return;
+
+    const cp = await this.checkpointService.save(info.runId, {
+      kind: 'tool_approval',
+      requestId: info.requestId,
+      toolName: info.toolName,
+      input: info.input,
+    });
+
+    await this.trackRunStatus(info.runId, AgentRunStatus.WAITING_FOR_HUMAN, {
+      checkpointId: cp.id,
+      metadata: {
+        pendingApprovalRequestId: info.requestId,
+        pendingToolName: info.toolName,
+      },
+    });
+
+    await this.humanTaskService.create({
+      runId: info.runId,
+      type: 'tool_approval',
+      toolName: info.toolName,
+      payload: { requestId: info.requestId, input: info.input },
+      metadata: { requestId: info.requestId },
+    });
+
+    void this.eventEmitter.emit(AgentEventType.CHECKPOINT_CREATED, existing.agentName, info.runId, {
+      checkpointId: cp.id,
+    });
+  }
+
+  private async handleApprovalResolved(info: {
+    runId?: string;
+    requestId: string;
+    approved: boolean;
+  }): Promise<void> {
+    if (!info.runId || !this.enableAgentRuns) return;
+    const existing = await this.runRepository.get(info.runId);
+    if (!existing || existing.status !== AgentRunStatus.WAITING_FOR_HUMAN) return;
+
+    const tasks = await this.humanTaskService.listByRun(info.runId);
+    const pending = tasks.find(
+      (t) =>
+        t.status === 'pending' &&
+        (t.metadata?.requestId === info.requestId ||
+          (t.payload as { requestId?: string } | undefined)?.requestId === info.requestId)
+    );
+    if (pending) {
+      await this.humanTaskService.resolve(pending.id, info.approved ? 'approved' : 'rejected');
+    }
+
+    if (info.approved) {
+      await this.trackRunStatus(info.runId, AgentRunStatus.RUNNING, {
+        metadata: { pendingApprovalRequestId: undefined, pendingToolName: undefined },
+      });
+    }
+  }
+
+  private async trackRunCreated(
+    agentName: string,
+    executionId: string,
+    input: string,
+    options: AgentExecutionOptions
+  ): Promise<void> {
+    if (!this.enableAgentRuns) return;
+    const existing = await this.runRepository.get(executionId);
+    if (existing) return;
+    const agent = this.agentRegistry.getAgent(agentName);
+    const identity =
+      options.identity ??
+      (agent
+        ? identityFromAgentConfig({
+            name: agent.name,
+            version: agent.version,
+            tenantId: agent.tenantId,
+            capabilities: agent.capabilities,
+          })
+        : undefined);
+    const parentRunId =
+      options.parentRunId ?? (options.metadata?.parentRunId as string | undefined);
+    const rootRunId =
+      options.rootRunId ??
+      (options.metadata?.rootRunId as string | undefined) ??
+      parentRunId ??
+      executionId;
+    const run = await this.runRepository.create({
+      id: executionId,
+      agentName,
+      agentVersion: identity?.version ?? agent?.version,
+      input,
+      userId: options.userId,
+      tenantId: identity?.tenantId ?? agent?.tenantId,
+      parentRunId,
+      rootRunId,
+      metadata: {
+        ...options.metadata,
+        capabilities: identity?.capabilities,
+      },
+    });
+    void this.eventEmitter.emit(AgentEventType.RUN_CREATED, agentName, executionId, { run });
+  }
+
+  private async trackRunStatus(
+    executionId: string,
+    status: AgentRunStatus,
+    patch?: Parameters<AgentRunRepository['updateStatus']>[2]
+  ): Promise<void> {
+    if (!this.enableAgentRuns) return;
+    const existing = await this.runRepository.get(executionId);
+    if (!existing) return;
+    if (existing.status === status && !patch) return;
+    try {
+      const run = await this.runRepository.updateStatus(executionId, status, patch);
+      if (existing.status !== status) {
+        void this.eventEmitter.emit(
+          AgentEventType.RUN_STATUS_CHANGED,
+          existing.agentName,
+          executionId,
+          {
+            from: existing.status,
+            to: status,
+            run,
+          }
+        );
+      }
+    } catch (e) {
+      this.logger.warn('AgentRun status update skipped', {
+        executionId,
+        status,
+        error: e instanceof Error ? e.message : String(e),
+      });
+    }
+  }
+
+  private async acquireRunLease(runId: string): Promise<void> {
+    if (!this.runLeaseService || !this.workerId) return;
+    const result = await this.runLeaseService.tryAcquire(runId, this.workerId, this.runLeaseTtlMs);
+    if (!result.acquired || !result.lease) {
+      throw AgentError.leaseHeld(runId);
+    }
+    this.activeLeases.set(runId, result.lease);
+  }
+
+  private async releaseRunLease(runId: string): Promise<void> {
+    const lease = this.activeLeases.get(runId);
+    if (!lease || !this.runLeaseService) return;
+    this.activeLeases.delete(runId);
+    try {
+      await this.runLeaseService.release(runId, lease.owner, lease.token);
+    } catch (e) {
+      this.logger.warn('AgentRun lease release failed', {
+        runId,
+        error: e instanceof Error ? e.message : String(e),
+      });
+    }
   }
 
   /**
@@ -817,6 +1529,14 @@ export class AgentRuntime {
       },
       source
     );
+  }
+
+  /** Register or replace a dynamic tool (DNA / CLI bootstrap). */
+  registerDynamicTool(
+    agentName: string,
+    tool: Parameters<ToolRegistry['registerDynamicTool']>[1]
+  ): void {
+    this.toolRegistry.registerDynamicTool(agentName, tool);
   }
 
   /**

@@ -128,6 +128,7 @@
     { "path": "./packages/data" },
     { "path": "./packages/ml" },
     { "path": "./packages/mcp" },
+    { "path": "./packages/skillgate" },
     { "path": "./packages/casl" },
     { "path": "./packages/pdf-to-audio" },
     { "path": "./packages/observability" },

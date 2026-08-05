@@ -1,32 +1,34 @@
-// Example Prisma schema for Agent State Persistence
-// 
+// Example Prisma schema for Agent State Persistence + Agent OS process store
+//
 // INSTRUCTIONS:
 // 1. Copy the models below into your existing prisma/schema.prisma file
-// 2. Run: npx prisma migrate dev --name add_agent_state_models
-// 3. Run: npx prisma generate
-// 4. See PRISMA_INTEGRATION.md for detailed instructions
+// 2. Set datasource provider to any Prisma SQL DB (postgresql | mysql | sqlite | sqlserver | …)
+// 3. Run: npx prisma migrate dev --name add_agent_os_models
+// 4. Run: npx prisma generate
+// 5. See PRISMA_INTEGRATION.md / docs/agent-os-audit/17-agent-os-gamma-sql.md
 //
 // NOTE: This is an example file. You need to add these models to your actual schema.prisma
+// Agent OS run stores are provider-agnostic — not Postgres-only.
 
 model AgentContext {
-  id                String   @id @default(uuid())
-  executionId      String   @unique
-  agentId          String
-  sessionId        String
-  userId           String?
-  input            String
-  state            String   // AgentState enum as string
-  steps            Json     // AgentStep[]
-  conversationHistory Json   // ConversationMessage[]
-  workingMemory    Json     // Record<string, unknown>
-  facts            Json     // string[]
-  entities         Json     // Entity[]
-  ragContext       Json?    // string[]
-  metadata         Json     // Record<string, unknown>
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-  deletedAt        DateTime? // For soft deletes
-  agentSteps       AgentStep[]? // Optional: relation to steps table
+  id                  String    @id @default(uuid())
+  executionId         String    @unique
+  agentId             String
+  sessionId           String
+  userId              String?
+  input               String
+  state               String // AgentState enum as string
+  steps               Json // AgentStep[]
+  conversationHistory Json // ConversationMessage[]
+  workingMemory       Json // Record<string, unknown>
+  facts               Json // string[]
+  entities            Json // Entity[]
+  ragContext          Json? // string[]
+  metadata            Json // Record<string, unknown>
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  deletedAt           DateTime? // For soft deletes
+  agentSteps          AgentStep[]? // Optional: relation to steps table
 
   @@index([sessionId])
   @@index([userId])
@@ -39,18 +41,18 @@ model AgentContext {
 
 // Optional: Separate table for execution steps (for better querying)
 model AgentStep {
-  id            String   @id @default(uuid())
-  executionId   String
-  stepNumber    Int
-  state         String
-  action        Json?
-  result        Json?
-  error         String?
-  timestamp     DateTime @default(now())
-  duration      Int?
+  id          String   @id @default(uuid())
+  executionId String
+  stepNumber  Int
+  state       String
+  action      Json?
+  result      Json?
+  error       String?
+  timestamp   DateTime @default(now())
+  duration    Int?
 
-  context       AgentContext @relation(fields: [executionId], references: [executionId], onDelete: Cascade)
-  
+  context AgentContext @relation(fields: [executionId], references: [executionId], onDelete: Cascade)
+
   // Note: If you don't want a separate steps table, remove this model
   // and store steps as JSON in AgentContext.steps field
 
@@ -61,16 +63,91 @@ model AgentStep {
 
 // Optional: Session tracking
 model AgentSession {
-  id            String   @id @default(uuid())
-  sessionId     String   @unique
-  userId        String?
-  agentId       String
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  completedAt   DateTime?
+  id          String    @id @default(uuid())
+  sessionId   String    @unique
+  userId      String?
+  agentId     String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  completedAt DateTime?
 
   @@index([userId])
   @@index([agentId])
   @@index([createdAt])
   @@map("agent_sessions")
+}
+
+// ---------------------------------------------------------------------------
+// Agent OS — durable process store (AOS-014)
+// Used by createSqlDurableRunStore(prisma)
+// ---------------------------------------------------------------------------
+
+model AgentRun {
+  id             String    @id
+  agentName      String
+  agentVersion   String?
+  status         String
+  input          Json?
+  output         Json?
+  error          Json?
+  tenantId       String?
+  userId         String?
+  parentRunId    String?
+  rootRunId      String
+  attempt        Int       @default(1)
+  checkpointId   String?
+  leaseOwner     String?
+  leaseExpiresAt DateTime?
+  leaseToken     String?
+  createdAt      DateTime  @default(now())
+  startedAt      DateTime?
+  completedAt    DateTime?
+  updatedAt      DateTime  @updatedAt
+  metadata       Json?
+
+  @@index([agentName])
+  @@index([status])
+  @@index([tenantId])
+  @@index([rootRunId])
+  @@index([updatedAt])
+  @@index([leaseExpiresAt])
+  @@map("agent_runs")
+}
+
+model AgentRunCheckpoint {
+  id        String   @id
+  runId     String
+  step      Int?
+  payload   Json
+  createdAt DateTime @default(now())
+
+  @@index([runId])
+  @@index([runId, createdAt])
+  @@map("agent_run_checkpoints")
+}
+
+model AgentHumanTask {
+  id         String    @id
+  runId      String
+  type       String
+  status     String
+  toolName   String?
+  payload    Json?
+  createdAt  DateTime  @default(now())
+  resolvedAt DateTime?
+  resolvedBy String?
+  metadata   Json?
+
+  @@index([runId])
+  @@index([status])
+  @@map("agent_human_tasks")
+}
+
+model AgentA2ATask {
+  id          String   @id
+  taskJson    Json?
+  executionId String?
+  updatedAt   DateTime @updatedAt
+
+  @@map("agent_a2a_tasks")
 }

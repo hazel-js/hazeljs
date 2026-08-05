@@ -83,4 +83,10 @@ export interface IAgentStateManager {
    * Get all contexts for a session
    */
   getSessionContexts(sessionId: string): Promise<AgentContext[]> | AgentContext[];
+
+  /**
+   * Restore a previously snapshotted context (durable HITL resume).
+   * Optional — required for approveAndResume after process restart.
+   */
+  putContext?(context: AgentContext): Promise<void> | void;
 }

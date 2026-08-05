@@ -26,6 +26,7 @@ import '../prompts/agent-system.prompt';
 import { AGENT_SYSTEM_KEY } from '../prompts/agent-system.prompt';
 import { withAgentSpan, trackLlmCost } from '../utils/agent-tracing';
 import type { ObservabilityProvider } from '../types/observability.types';
+import { RunBudgetTracker, BudgetExceededError } from '../budget/run-budget';
 
 /** Options passed to execute() and executeStream() */
 export interface AgentExecutorOptions {
@@ -35,6 +36,10 @@ export interface AgentExecutorOptions {
   signal?: AbortSignal;
   /** When true and LLM has streamChat, tokens are streamed in executeStream(). */
   streaming?: boolean;
+  /** Hard budget for this run (AOS-012). */
+  budget?: import('../budget/run-budget').RunBudget;
+  /** Model id for cost estimate when recording usage. */
+  modelId?: string;
 }
 
 /**
@@ -42,6 +47,9 @@ export interface AgentExecutorOptions {
  * Implements the core agent execution loop
  */
 export class AgentExecutor {
+  private budgetTracker?: RunBudgetTracker;
+  private budgetModelId?: string;
+
   constructor(
     private stateManager: IAgentStateManager,
     private contextBuilder: AgentContextBuilder,
@@ -114,6 +122,8 @@ export class AgentExecutor {
     const timeoutMs = options.timeoutMs;
     const signal = options.signal;
     const deadline = timeoutMs != null ? startTime + timeoutMs : undefined;
+    this.budgetTracker = options.budget ? new RunBudgetTracker(options.budget) : undefined;
+    this.budgetModelId = options.modelId;
 
     try {
       this.throwIfAborted(signal);
@@ -152,14 +162,35 @@ export class AgentExecutor {
           await this.unwrap(
             this.stateManager.updateState(context.executionId, AgentState.WAITING_FOR_APPROVAL)
           );
-          break;
+          const duration = Date.now() - startTime;
+          return {
+            executionId: context.executionId,
+            agentId: context.agentId,
+            state: AgentState.WAITING_FOR_APPROVAL,
+            steps: context.steps,
+            metadata: {
+              ...context.metadata,
+              pendingApproval: step.result?.metadata,
+            },
+            duration,
+            completedAt: new Date(),
+          };
         }
 
         if (step.state === AgentState.WAITING_FOR_INPUT) {
           await this.unwrap(
             this.stateManager.updateState(context.executionId, AgentState.WAITING_FOR_INPUT)
           );
-          break;
+          const duration = Date.now() - startTime;
+          return {
+            executionId: context.executionId,
+            agentId: context.agentId,
+            state: AgentState.WAITING_FOR_INPUT,
+            steps: context.steps,
+            metadata: context.metadata,
+            duration,
+            completedAt: new Date(),
+          };
         }
       }
 
@@ -240,6 +271,7 @@ export class AgentExecutor {
 
       let stepNumber = 0;
       let finalResponse: string | undefined;
+      let waitingState: AgentState | undefined;
 
       while (await this.unwrap(this.stateManager.canContinue(context.executionId, maxSteps))) {
         if (deadline != null) this.throwIfTimeout(deadline);
@@ -272,12 +304,18 @@ export class AgentExecutor {
             await this.unwrap(
               this.stateManager.updateState(context.executionId, AgentState.WAITING_FOR_APPROVAL)
             );
+            waitingState = AgentState.WAITING_FOR_APPROVAL;
+            context.metadata = {
+              ...context.metadata,
+              pendingApproval: step.result?.metadata,
+            };
             break;
           }
           if (step.state === AgentState.WAITING_FOR_INPUT) {
             await this.unwrap(
               this.stateManager.updateState(context.executionId, AgentState.WAITING_FOR_INPUT)
             );
+            waitingState = AgentState.WAITING_FOR_INPUT;
             break;
           }
           continue;
@@ -309,6 +347,11 @@ export class AgentExecutor {
           await this.unwrap(
             this.stateManager.updateState(context.executionId, AgentState.WAITING_FOR_APPROVAL)
           );
+          waitingState = AgentState.WAITING_FOR_APPROVAL;
+          context.metadata = {
+            ...context.metadata,
+            pendingApproval: step.result?.metadata,
+          };
           break;
         }
 
@@ -316,13 +359,31 @@ export class AgentExecutor {
           await this.unwrap(
             this.stateManager.updateState(context.executionId, AgentState.WAITING_FOR_INPUT)
           );
+          waitingState = AgentState.WAITING_FOR_INPUT;
           break;
         }
       }
 
-      if (stepNumber >= maxSteps) {
+      if (!waitingState && stepNumber >= maxSteps) {
         await this.unwrap(this.stateManager.updateState(context.executionId, AgentState.FAILED));
         throw AgentError.maxSteps(maxSteps);
+      }
+
+      if (waitingState) {
+        const duration = Date.now() - startTime;
+        yield {
+          type: 'done',
+          result: {
+            executionId: context.executionId,
+            agentId: context.agentId,
+            state: waitingState,
+            steps: context.steps,
+            metadata: context.metadata,
+            duration,
+            completedAt: new Date(),
+          },
+        };
+        return;
       }
 
       await this.unwrap(this.stateManager.updateState(context.executionId, AgentState.COMPLETED));
@@ -406,6 +467,9 @@ export class AgentExecutor {
         case AgentActionType.USE_TOOL:
           step.state = AgentState.USING_TOOL;
           step.result = await this.executeTool(context, action);
+          if (step.result?.metadata?.pendingApproval) {
+            step.state = AgentState.WAITING_FOR_APPROVAL;
+          }
           break;
 
         case AgentActionType.ASK_USER:
@@ -435,25 +499,39 @@ export class AgentExecutor {
         case AgentActionType.USE_TOOLS:
           step.state = AgentState.USING_TOOL;
           if (action.toolCalls && action.toolCalls.length > 0) {
-            const toolResults = await Promise.all(
-              action.toolCalls.map((tc) =>
-                this.executeTool(context, {
-                  ...action,
-                  type: AgentActionType.USE_TOOL,
-                  toolName: tc.toolName,
-                  toolInput: tc.toolInput,
-                })
-              )
-            );
-            // Combine all tool results
-            step.result = {
-              success: toolResults.every((r) => r.success),
-              output: toolResults.map((r, i) => ({
-                tool: action.toolCalls![i].toolName,
-                output: r.output,
-                error: r.error,
-              })),
-            };
+            const toolResults = [];
+            for (const tc of action.toolCalls) {
+              const r = await this.executeTool(context, {
+                ...action,
+                type: AgentActionType.USE_TOOL,
+                toolName: tc.toolName,
+                toolInput: tc.toolInput,
+              });
+              toolResults.push(r);
+              if (r.metadata?.pendingApproval) {
+                step.state = AgentState.WAITING_FOR_APPROVAL;
+                step.result = {
+                  success: false,
+                  output: toolResults.map((tr, i) => ({
+                    tool: action.toolCalls![i].toolName,
+                    output: tr.output,
+                    error: tr.error,
+                  })),
+                  metadata: r.metadata,
+                };
+                break;
+              }
+            }
+            if (step.state !== AgentState.WAITING_FOR_APPROVAL) {
+              step.result = {
+                success: toolResults.every((r) => r.success),
+                output: toolResults.map((r, i) => ({
+                  tool: action.toolCalls![i].toolName,
+                  output: r.output,
+                  error: r.error,
+                })),
+              };
+            }
           }
           break;
 
@@ -742,8 +820,23 @@ export class AgentExecutor {
       action.toolInput,
       context.agentId,
       context.sessionId,
-      context.userId
+      context.userId,
+      context.executionId
     );
+
+    if (result.pendingApproval) {
+      return {
+        success: false,
+        error: 'Pending human approval',
+        metadata: {
+          pendingApproval: true,
+          requestId: result.requestId,
+          toolName: action.toolName,
+          toolInput: action.toolInput,
+          duration: result.duration,
+        },
+      };
+    }
 
     // Store as assistant message summarizing the tool call + result (OpenAI requires tool
     // messages to follow assistant messages with tool_calls; we avoid that format to keep
@@ -775,6 +868,17 @@ export class AgentExecutor {
       this.observabilityProvider
     );
     trackLlmCost(this.observabilityProvider, undefined, response.usage);
+    try {
+      this.budgetTracker?.recordLlmUsage(response.usage, this.budgetModelId);
+    } catch (err) {
+      if (err instanceof BudgetExceededError) {
+        this.emitEvent(AgentEventType.BUDGET_EXCEEDED, context.agentId, context.executionId, {
+          usage: err.usage,
+          budget: err.budget,
+        });
+      }
+      throw err;
+    }
     return response;
   }
 

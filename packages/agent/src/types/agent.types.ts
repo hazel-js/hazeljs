@@ -150,6 +150,12 @@ export interface AgentConfig {
   tools?: string[];
   policies?: string[];
   metadata?: Record<string, unknown>;
+  /** Agent OS identity version (ADR-007). */
+  version?: string;
+  /** Tenant scope for the agent process (not the end-user JWT). */
+  tenantId?: string;
+  /** Capability grants for tool/memory/model policy (AOS-008). Empty = unrestricted. */
+  capabilities?: string[];
 }
 
 type NewableFunction = new (...args: unknown[]) => unknown;
@@ -205,6 +211,14 @@ export interface AgentExecutionOptions {
   costRoute?: import('../cost/cost-optimizer').CostRouteRequest;
   /** Phase 4 — governance check before execute. */
   governance?: import('../governance/governance').GovernanceContext;
+  /** Agent OS Beta — hard budget for this run (AOS-012). */
+  budget?: import('../budget/run-budget').RunBudget;
+  /** Override agent identity for this execute (defaults from @Agent config). */
+  identity?: import('../identity/agent-identity').AgentIdentity;
+  /** Parent AgentRun id when this execute is a child (AOS-009). */
+  parentRunId?: string;
+  /** Root AgentRun id for a call tree. */
+  rootRunId?: string;
 }
 
 /**

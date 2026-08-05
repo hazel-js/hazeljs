@@ -238,3 +238,24 @@ describe('HazelToolAdapter.invoke()', () => {
     expect(method).toHaveBeenCalledWith({});
   });
 });
+
+describe('HazelToolAdapter tool-driver annotations (AOS-007)', () => {
+  it('emits annotations and _meta for tool-driver fields', () => {
+    const adapter = HazelToolAdapter.fromRegistry(
+      makeRegistry([
+        makeTool({
+          name: 'refund',
+          readOnly: false,
+          idempotent: false,
+          riskLevel: 'high',
+          capability: 'payments.write',
+        }),
+      ])
+    );
+    const [def] = adapter.listTools();
+    expect(def.annotations?.destructiveHint).toBe(true);
+    expect(def.annotations?.readOnlyHint).toBe(false);
+    expect(def._meta?.capability).toBe('payments.write');
+    expect(def._meta?.riskLevel).toBe('high');
+  });
+});

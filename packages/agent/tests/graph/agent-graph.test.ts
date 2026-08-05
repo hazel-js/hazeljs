@@ -659,7 +659,10 @@ describe('@Delegate decorator', () => {
     const response = await patched({ task: 'hello' });
 
     expect(response).toBe('worker done!');
-    expect(runtime.execute).toHaveBeenCalledWith('WorkerAgent', 'hello');
+    expect(runtime.execute).toHaveBeenCalledWith('WorkerAgent', 'hello', {
+      parentRunId: undefined,
+      metadata: { delegatedFrom: 'orchestrator-patch' },
+    });
   });
 });
 

@@ -48,6 +48,17 @@ export enum AgentEventType {
   LOOP_ITERATION = 'agent.loop.iteration',
   LOOP_CRITIQUE = 'agent.loop.critique',
   LOOP_COMPLETE = 'agent.loop.complete',
+
+  // Durable AgentRun process (Agent OS)
+  RUN_CREATED = 'agent.run.created',
+  RUN_STATUS_CHANGED = 'agent.run.status.changed',
+  RUN_CANCELLED = 'agent.run.cancelled',
+  CHECKPOINT_CREATED = 'agent.checkpoint.created',
+  /** Agent OS Beta — budget hard-stop */
+  BUDGET_EXCEEDED = 'agent.budget.exceeded',
+  /** Child agent call started / completed */
+  AGENT_CALL_STARTED = 'agent.call.started',
+  AGENT_CALL_COMPLETED = 'agent.call.completed',
 }
 
 /**

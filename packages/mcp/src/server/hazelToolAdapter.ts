@@ -111,6 +111,18 @@ export class HazelToolAdapter {
         properties,
         required,
       },
+      annotations: {
+        readOnlyHint: tool.readOnly === true,
+        idempotentHint: tool.idempotent === true,
+        destructiveHint:
+          tool.riskLevel === 'high' ||
+          tool.riskLevel === 'critical' ||
+          (tool.readOnly === false && tool.riskLevel === 'medium'),
+      },
+      _meta: {
+        ...(tool.capability ? { capability: tool.capability } : {}),
+        ...(tool.riskLevel ? { riskLevel: tool.riskLevel } : {}),
+      },
     };
   }
 }

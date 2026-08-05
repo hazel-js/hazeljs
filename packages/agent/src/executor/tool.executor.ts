@@ -18,13 +18,35 @@ import { InMemoryApprovalStore } from '../approval/in-memory-approval.store';
 import { RedisApprovalStore } from '../approval/redis-approval.store';
 import { withAgentSpan } from '../utils/agent-tracing';
 import type { ObservabilityProvider } from '../types/observability.types';
-
+import { getApprovalMetadata } from '../decorators/approval.decorator';
 export interface ToolExecutorOptions {
   eventEmitter?: (type: AgentEventType, data: unknown) => void;
   guardrailsService?: IGuardrailsService;
   approvalStore?: IApprovalStore;
   observabilityProvider?: ObservabilityProvider;
   policyEngine?: import('../policies/policy.engine').PolicyEngine;
+  /** Fired when a tool waits for human approval (AgentRun id when known). */
+  onApprovalRequested?: (info: {
+    runId?: string;
+    requestId: string;
+    toolName: string;
+    input: Record<string, unknown>;
+  }) => void | Promise<void>;
+  /** Fired after approval is granted or denied. */
+  onApprovalResolved?: (info: {
+    runId?: string;
+    requestId: string;
+    approved: boolean;
+  }) => void | Promise<void>;
+  /**
+   * When true, approval-required tools return `pendingApproval` instead of awaiting
+   * an in-process promise (AOS-006 durable HITL).
+   */
+  durableSuspend?: boolean;
+  /** Capability + policy gate (AOS-008). */
+  policyService?: import('../policies/policy.service').PolicyService;
+  /** Agent identity for capability checks (AOS-008). */
+  agentIdentity?: import('../identity/agent-identity').AgentIdentity;
 }
 
 /**
@@ -45,6 +67,19 @@ export class ToolExecutor {
     this.options.policyEngine = engine;
   }
 
+  setDurableSuspend(enabled: boolean): void {
+    this.options.durableSuspend = enabled;
+  }
+
+  setPolicyService(service: import('../policies/policy.service').PolicyService): void {
+    this.options.policyService = service;
+  }
+
+  setAgentIdentity(identity: import('../identity/agent-identity').AgentIdentity | undefined): void {
+    this.options.agentIdentity = identity;
+    this.options.policyService?.setIdentity(identity);
+  }
+
   /**
    * Execute a tool
    */
@@ -53,12 +88,19 @@ export class ToolExecutor {
     input: Record<string, unknown>,
     agentId: string,
     sessionId: string,
-    userId?: string
+    userId?: string,
+    runId?: string,
+    opts?: { skipApproval?: boolean }
   ): Promise<ToolExecutionResult> {
     return withAgentSpan(
       'agent.tool.execute',
-      { 'agent.tool.name': tool.name, 'agent.id': agentId, 'agent.session_id': sessionId },
-      () => this.executeInternal(tool, input, agentId, sessionId, userId),
+      {
+        'agent.tool.name': tool.name,
+        'agent.id': agentId,
+        'agent.session_id': sessionId,
+        'agent.run_id': runId ?? '',
+      },
+      () => this.executeInternal(tool, input, agentId, sessionId, userId, runId, opts),
       this.options.observabilityProvider
     );
   }
@@ -68,7 +110,9 @@ export class ToolExecutor {
     input: Record<string, unknown>,
     agentId: string,
     sessionId: string,
-    userId?: string
+    userId?: string,
+    runId?: string,
+    opts?: { skipApproval?: boolean }
   ): Promise<ToolExecutionResult> {
     let tool = toolMeta;
     const executionId = randomUUID();
@@ -93,7 +137,33 @@ export class ToolExecutor {
     });
 
     try {
-      if (this.options.policyEngine) {
+      if (this.options.policyService) {
+        this.options.policyService.setIdentity(this.options.agentIdentity);
+        const decision = this.options.policyService.evaluateTool(tool.name, input, tool.capability);
+        input = decision.input;
+        context.input = input;
+        if (!decision.allowed) {
+          context.status = ToolExecutionStatus.FAILED;
+          context.completedAt = new Date();
+          context.duration = Date.now() - startTime;
+          const errorMsg = decision.reason ?? 'Denied by policy';
+          this.emitEvent(AgentEventType.TOOL_EXECUTION_FAILED, {
+            toolName: tool.name,
+            input,
+            error: errorMsg,
+            duration: context.duration,
+            policyRuleId: decision.ruleId,
+          });
+          return {
+            success: false,
+            error: new Error(errorMsg),
+            duration: context.duration,
+          };
+        }
+        if (decision.requiresApproval) {
+          tool = { ...tool, requiresApproval: true };
+        }
+      } else if (this.options.policyEngine) {
         const decision = this.options.policyEngine.evaluate(tool.name, input);
         input = decision.input;
         context.input = input;
@@ -170,14 +240,38 @@ export class ToolExecutor {
         }
       }
 
-      if (tool.requiresApproval) {
+      if (
+        !opts?.skipApproval &&
+        (tool.requiresApproval || this.toolRequiresApprovalDecorator(tool))
+      ) {
+        if (!tool.requiresApproval) {
+          tool = { ...tool, requiresApproval: true };
+        }
         const { promise, requestId } = await this.requestApproval(
           tool,
           input,
           agentId,
-          executionId
+          executionId,
+          runId
         );
+
+        if (this.options.durableSuspend) {
+          context.status = ToolExecutionStatus.PENDING;
+          context.duration = Date.now() - startTime;
+          return {
+            success: false,
+            pendingApproval: true,
+            requestId,
+            duration: context.duration,
+            metadata: { toolName: tool.name, input, runId },
+          };
+        }
+
         const approved = await promise;
+
+        if (this.options.onApprovalResolved) {
+          await this.options.onApprovalResolved({ runId, requestId, approved });
+        }
 
         if (!approved) {
           context.status = ToolExecutionStatus.REJECTED;
@@ -304,7 +398,8 @@ export class ToolExecutor {
     tool: ToolMetadata,
     input: Record<string, unknown>,
     agentId: string,
-    executionId: string
+    executionId: string,
+    runId?: string
   ): Promise<{ promise: Promise<boolean>; requestId: string }> {
     const requestId = randomUUID();
     const expiresAt = new Date(Date.now() + ToolExecutor.DEFAULT_APPROVAL_TTL_MS);
@@ -318,6 +413,7 @@ export class ToolExecutor {
       requestedAt: new Date(),
       expiresAt,
       status: 'pending',
+      metadata: runId ? { runId } : undefined,
     };
 
     const createResult = this.approvalStore.create(request);
@@ -360,7 +456,17 @@ export class ToolExecutor {
       requestId,
       toolName: tool.name,
       input,
+      runId,
     });
+
+    if (this.options.onApprovalRequested) {
+      await this.options.onApprovalRequested({
+        runId,
+        requestId,
+        toolName: tool.name,
+        input,
+      });
+    }
 
     return { promise, requestId };
   }
@@ -384,6 +490,15 @@ export class ToolExecutor {
 
   private emitEvent(type: AgentEventType, data: unknown): void {
     this.options.eventEmitter?.(type, data);
+  }
+
+  /** Honor `@RequiresApproval()` in addition to `@Tool({ requiresApproval })`. */
+  private toolRequiresApprovalDecorator(tool: ToolMetadata): boolean {
+    try {
+      return Boolean(getApprovalMetadata(tool.target, tool.propertyKey));
+    } catch {
+      return false;
+    }
   }
 
   private delay(ms: number): Promise<void> {

@@ -33,7 +33,8 @@
   "peerDependencies": {
     "@hazeljs/eval": "^1.0.6",
     "@hazeljs/benchmark": "^1.0.6",
-    "@hazeljs/agent": "^1.0.6"
+    "@hazeljs/agent": "^1.0.6",
+    "@hazeljs/skillgate": "^1.0.6"
   },
   "peerDependenciesMeta": {
     "@hazeljs/eval": {
@@ -44,12 +45,16 @@
     },
     "@hazeljs/agent": {
       "optional": true
+    },
+    "@hazeljs/skillgate": {
+      "optional": true
     }
   },
   "devDependencies": {
     "@hazeljs/eval": "^1.0.6",
     "@hazeljs/benchmark": "^1.0.6",
     "@hazeljs/agent": "^1.0.6",
+    "@hazeljs/skillgate": "^1.0.6",
     "@types/inquirer": "^8.2.12",
     "@types/jest": "^29.5.14",
     "@types/mustache": "^4.2.6",

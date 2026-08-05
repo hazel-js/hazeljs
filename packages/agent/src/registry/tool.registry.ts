@@ -168,6 +168,12 @@ export class ToolRegistry {
       parameters?: unknown;
       requiresApproval?: boolean;
       handler?: (input: Record<string, unknown>) => Promise<unknown>;
+      /** Extra metadata (Skillgate, DNA, etc.). Merged with `{ dynamic: true }`. */
+      metadata?: Record<string, unknown>;
+      capability?: string;
+      riskLevel?: import('../types/tool.types').ToolRiskLevel;
+      readOnly?: boolean;
+      idempotent?: boolean;
     }
   ): void {
     const registeredName = tool.name;
@@ -187,10 +193,14 @@ export class ToolRegistry {
       parameters: Array.isArray(tool.parameters)
         ? (tool.parameters as ToolMetadata['parameters'])
         : undefined,
+      capability: tool.capability,
+      riskLevel: tool.riskLevel,
+      readOnly: tool.readOnly,
+      idempotent: tool.idempotent,
       target: { [registeredName]: handler },
       propertyKey: registeredName,
       method: handler,
-      metadata: { dynamic: true, dna: true },
+      metadata: { dynamic: true, dna: true, ...tool.metadata },
     };
 
     this.tools.set(fullToolName, metadata);

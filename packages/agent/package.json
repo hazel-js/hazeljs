@@ -57,6 +57,7 @@
     "@hazeljs/rag": "^1.0.6",
     "@hazeljs/resilience": "^1.0.6",
     "@hazeljs/observability": "^1.0.6",
+    "@hazeljs/flow": "^1.0.6",
     "@opentelemetry/api": "^1.9.0",
     "redis": ">=4.0.0"
   },
@@ -71,7 +72,7 @@
     },
     "@prisma/client": {
       "optional": true,
-      "description": "Required for DatabaseStateManager"
+      "description": "Required for DatabaseStateManager and createSqlDurableRunStore (any Prisma SQL provider)"
     },
     "@hazeljs/guardrails": {
       "optional": true,
@@ -80,6 +81,10 @@
     "@hazeljs/observability": {
       "optional": true,
       "description": "OpenTelemetry spans and LLM cost tracking"
+    },
+    "@hazeljs/flow": {
+      "optional": true,
+      "description": "Optional FlowEngine peer for durable HITL wait/resume bridge (ADR-003)"
     },
     "@opentelemetry/api": {
       "optional": true,

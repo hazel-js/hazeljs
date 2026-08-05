@@ -40,6 +40,7 @@ import type {
 } from './a2a.types';
 
 import type { AgentExecutionResult } from '../types/agent.types';
+import { InMemoryA2ATaskStore, type A2ATaskStore } from './a2a-task.store';
 
 /** Minimal runtime interface to avoid circular deps */
 interface RuntimeLike {
@@ -58,21 +59,26 @@ interface RuntimeLike {
 export interface A2AServerOptions {
   /** Default agent to use when no specific agent is targeted */
   defaultAgent?: string;
+  /** Durable or in-memory task store (AOS-009). Defaults to in-memory. */
+  taskStore?: A2ATaskStore;
 }
 
 /**
  * A2A Protocol Server — handles JSON-RPC requests per the A2A spec
  */
 export class A2AServer {
-  /** In-memory task store. Replace with persistent store for production. */
-  private tasks: Map<string, A2ATask> = new Map();
-  /** Maps task IDs to execution IDs for cancel support */
-  private taskExecutionMap: Map<string, string> = new Map();
+  private readonly taskStore: A2ATaskStore;
 
   constructor(
     private readonly runtime: RuntimeLike,
     private readonly options: A2AServerOptions = {}
-  ) {}
+  ) {
+    this.taskStore = options.taskStore ?? new InMemoryA2ATaskStore();
+  }
+
+  getTaskStore(): A2ATaskStore {
+    return this.taskStore;
+  }
 
   // -------------------------------------------------------------------------
   // JSON-RPC Router
@@ -99,7 +105,7 @@ export class A2AServer {
           return {
             jsonrpc: '2.0',
             id,
-            result: this.handleTaskGet(request.params as A2ATaskGetParams),
+            result: await this.handleTaskGet(request.params as A2ATaskGetParams),
           };
 
         case 'tasks/cancel':
@@ -150,10 +156,11 @@ export class A2AServer {
       history: [params.message],
       metadata: params.metadata,
     };
-    this.tasks.set(taskId, task);
+    await this.taskStore.set(task);
 
     // Update to working state
     task.status = { state: 'working', timestamp: new Date().toISOString() };
+    await this.taskStore.set(task);
 
     // Execute the agent
     const result = await this.runtime.execute(agentName, input, {
@@ -161,7 +168,7 @@ export class A2AServer {
     });
 
     // Store the mapping for cancel support
-    this.taskExecutionMap.set(taskId, result.executionId);
+    await this.taskStore.setExecutionMap(taskId, result.executionId);
 
     // Map agent result to A2A task
     const agentMessage: A2AMessage = {
@@ -185,6 +192,7 @@ export class A2AServer {
       ];
     }
 
+    await this.taskStore.set(task);
     return task;
   }
 
@@ -192,8 +200,8 @@ export class A2AServer {
   // tasks/get
   // -------------------------------------------------------------------------
 
-  private handleTaskGet(params: A2ATaskGetParams): A2ATask {
-    const task = this.tasks.get(params.id);
+  private async handleTaskGet(params: A2ATaskGetParams): Promise<A2ATask> {
+    const task = await this.taskStore.get(params.id);
     if (!task) {
       throw new Error(`Task not found: ${params.id}`);
     }
@@ -213,18 +221,19 @@ export class A2AServer {
   // -------------------------------------------------------------------------
 
   private async handleTaskCancel(params: A2ATaskCancelParams): Promise<A2ATask> {
-    const task = this.tasks.get(params.id);
+    const task = await this.taskStore.get(params.id);
     if (!task) {
       throw new Error(`Task not found: ${params.id}`);
     }
 
     // Cancel the underlying execution
-    const executionId = this.taskExecutionMap.get(params.id);
+    const executionId = await this.taskStore.getExecutionId(params.id);
     if (executionId) {
       this.runtime.cancel(executionId);
     }
 
     task.status = { state: 'canceled', timestamp: new Date().toISOString() };
+    await this.taskStore.set(task);
     return task;
   }
 
@@ -264,7 +273,7 @@ export class A2AServer {
       history: [params.message],
       metadata: params.metadata,
     };
-    this.tasks.set(taskId, task);
+    await this.taskStore.set(task);
 
     // Emit submitted status
     yield {
@@ -274,6 +283,7 @@ export class A2AServer {
 
     // Update to working
     task.status = { state: 'working', timestamp: new Date().toISOString() };
+    await this.taskStore.set(task);
     yield {
       type: 'status',
       event: { id: taskId, status: task.status, final: false },
@@ -284,7 +294,7 @@ export class A2AServer {
       sessionId: params.sessionId,
     });
 
-    this.taskExecutionMap.set(taskId, result.executionId);
+    await this.taskStore.setExecutionMap(taskId, result.executionId);
 
     // Emit artifact if there's a response
     if (result.response) {
@@ -313,6 +323,8 @@ export class A2AServer {
       timestamp: new Date().toISOString(),
     };
     task.history = [...(task.history ?? []), agentMessage];
+
+    await this.taskStore.set(task);
 
     yield {
       type: 'status',

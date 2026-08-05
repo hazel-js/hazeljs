@@ -11,6 +11,7 @@ export enum AgentErrorCode {
   LLM_ERROR = 'AGENT_LLM_ERROR',
   EXECUTION_NOT_FOUND = 'AGENT_EXECUTION_NOT_FOUND',
   RATE_LIMIT_EXCEEDED = 'AGENT_RATE_LIMIT_EXCEEDED',
+  LEASE_HELD = 'AGENT_LEASE_HELD',
 }
 
 /**
@@ -70,5 +71,12 @@ export class AgentError extends Error {
     message: string = 'Rate limit exceeded - too many requests'
   ): AgentError {
     return new AgentError(message, AgentErrorCode.RATE_LIMIT_EXCEEDED);
+  }
+
+  static leaseHeld(runId: string): AgentError {
+    return new AgentError(
+      `AgentRun ${runId} lease held by another worker`,
+      AgentErrorCode.LEASE_HELD
+    );
   }
 }

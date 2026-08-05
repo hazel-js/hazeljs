@@ -57,6 +57,8 @@ export * from './twin/digital-twin';
 export * from './dna/agent-dna';
 export * from './dna/hot-reload';
 export * from './dna/marketplace';
+export * from './dna/bootstrap-from-dna';
+export * from './llm/http-llm.provider';
 export * from './knowledge/knowledge-freshness';
 export * from './memory-graph/graphrag-bridge';
 export * from './timeline/timeline.store';
@@ -80,7 +82,18 @@ export { buildAgentCard, buildSingleAgentCard } from './a2a/agent-card.builder';
 export type { AgentCardOptions } from './a2a/agent-card.builder';
 export { A2AServer } from './a2a/a2a.server';
 export type { A2AServerOptions } from './a2a/a2a.server';
+export * from './a2a/a2a-task.store';
+export { SqlA2ATaskStore } from './a2a/sql-a2a-task.store';
 
 export { AgentModule, AgentService, GUARDRAILS_SERVICE_TOKEN } from './agent.module';
 
 export * from './evaluation/agent-eval';
+
+// Agent OS — durable run process (AOS-001+)
+export * from './run';
+
+// Agent OS Beta
+export * from './identity/agent-identity';
+export * from './policies/policy.service';
+export * from './budget/run-budget';
+export * from './scheduler/agent-scheduler';
