@@ -1,8 +1,8 @@
 # @hazeljs/skillgate
 
-**Turn selected HazelJS REST endpoints into governed agent skills.**
+**Turn selected OpenAPI / REST endpoints into governed agent skills.**
 
-Reads by default. Writes need approval. Agent OS runs the think loop. Skillgate is **not** a magic “learn every API” brain — it is a **gate**: allowlist / tags / `x-hazel-skill`, classify, harden, register.
+Works with **any** OpenAPI 3 document (HazelJS APIs, third-party services, or a hand-written spec). Reads by default. Writes need approval. Agent OS runs the think loop. Skillgate is **not** a magic “learn every API” brain — it is a **gate**: allowlist / tags / `x-hazel-skill`, classify, harden, register. Use `fromModule` + `@AgentSkill` when the API is a HazelJS app.
 
 [![npm version](https://img.shields.io/npm/v/@hazeljs/skillgate.svg)](https://www.npmjs.com/package/@hazeljs/skillgate)
 [![npm downloads](https://img.shields.io/npm/dm/@hazeljs/skillgate)](https://www.npmjs.com/package/@hazeljs/skillgate)
