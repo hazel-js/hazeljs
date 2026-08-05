@@ -41,7 +41,12 @@ function buildHitlDefinition(): Parameters<FlowEngineLike['registerDefinition']>
     nodes: {
       await_approval: {
         id: 'await_approval',
-        handler: async (ctx) => {
+        handler: async (ctx: {
+          state: Record<string, unknown>;
+        }): Promise<
+          | { status: 'ok'; output?: unknown; patch?: Record<string, unknown> }
+          | { status: 'wait'; reason?: string; until?: string }
+        > => {
           if (ctx.state._resumePayload) {
             return {
               status: 'ok',
@@ -54,7 +59,10 @@ function buildHitlDefinition(): Parameters<FlowEngineLike['registerDefinition']>
       },
       done: {
         id: 'done',
-        handler: async () => ({ status: 'ok', output: { done: true } }),
+        handler: async (): Promise<{ status: 'ok'; output?: unknown }> => ({
+          status: 'ok',
+          output: { done: true },
+        }),
       },
     },
     edges: [{ from: 'await_approval', to: 'done' }],

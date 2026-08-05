@@ -104,7 +104,7 @@ export function bootstrapRuntimeFromDna(
     const handler =
       options.toolHandlers?.[tool.name] ??
       (stubTools
-        ? async (input: Record<string, unknown>) => ({
+        ? async (input: Record<string, unknown>): Promise<unknown> => ({
             ok: true,
             tool: tool.name,
             input,

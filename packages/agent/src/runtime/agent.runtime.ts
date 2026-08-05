@@ -320,8 +320,8 @@ export class AgentRuntime {
       policyEngine: this.policyEngine,
       policyService: this.policyService,
       durableSuspend: this.durableSuspend,
-      onApprovalRequested: (info) => this.handleApprovalRequested(info),
-      onApprovalResolved: (info) => this.handleApprovalResolved(info),
+      onApprovalRequested: (info): Promise<void> => this.handleApprovalRequested(info),
+      onApprovalResolved: (info): Promise<void> => this.handleApprovalResolved(info),
     });
 
     this.agentExecutor = new AgentExecutor(

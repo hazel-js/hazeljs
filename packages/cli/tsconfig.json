@@ -17,10 +17,16 @@
     "paths": {
       "@hazeljs/eval": ["../eval/src/index.ts"],
       "@hazeljs/agent": ["../agent/src/index.ts"],
-      "@hazeljs/benchmark": ["../benchmark/src/index.ts"]
+      "@hazeljs/benchmark": ["../benchmark/src/index.ts"],
+      "@hazeljs/skillgate": ["../skillgate/src/index.ts"]
     }
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"],
-  "references": [{ "path": "../eval" }, { "path": "../agent" }, { "path": "../benchmark" }]
+  "references": [
+    { "path": "../eval" },
+    { "path": "../agent" },
+    { "path": "../benchmark" },
+    { "path": "../skillgate" }
+  ]
 }
