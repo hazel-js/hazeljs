@@ -86,12 +86,14 @@ describe('SwaggerService', () => {
         description: getOperation.description,
         tags: getOperation.tags,
         responses: getOperation.responses,
+        operationId: 'getTest',
       });
       expect(spec.paths['/test'].post).toEqual({
         summary: postOperation.summary,
         description: postOperation.description,
         tags: postOperation.tags,
         responses: postOperation.responses,
+        operationId: 'createTest',
       });
       expectDefaultSchemas(spec);
     });
