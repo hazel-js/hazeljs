@@ -114,7 +114,6 @@ hazel skillgate init
 - `@hazeljs/agent` — `openApiToSkills`, `createSkillInvoker`, AgentRuntime
 - `@hazeljs/swagger` — OpenAPI from controllers
 - `@hazeljs/mcp` — export ToolRegistry to MCP
-- [SKILLGATE_PLAN.md](https://github.com/hazel-js/hazeljs) — product plan
 
 ## License
 
