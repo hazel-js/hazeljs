@@ -1,26 +1,31 @@
-/\*\*
+# @hazeljs/skillgate
 
-- @hazeljs/skillgate
--
-- **Turn selected HazelJS REST endpoints into governed agent skills.**
-- Reads by default. Writes need approval. Agent OS runs the think loop.
--
-- Skillgate is **not** a magic “learn every API” brain — it is a **gate**:
-- allowlist / tags / `x-hazel-skill`, classify, harden, register.
-  \*/
+**Turn selected HazelJS REST endpoints into governed agent skills.**
+
+Reads by default. Writes need approval. Agent OS runs the think loop. Skillgate is **not** a magic “learn every API” brain — it is a **gate**: allowlist / tags / `x-hazel-skill`, classify, harden, register.
 
 [![npm version](https://img.shields.io/npm/v/@hazeljs/skillgate.svg)](https://www.npmjs.com/package/@hazeljs/skillgate)
+[![npm downloads](https://img.shields.io/npm/dm/@hazeljs/skillgate)](https://www.npmjs.com/package/@hazeljs/skillgate)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 
-## Install
+## Features
+
+- **Opt-in curation** — only operations with tag `agent` / `skillgate`, `x-hazel-skill`, or an explicit allowlist
+- **Safe defaults** — reads are read-only; writes require approval; DELETE and admin paths denied unless opted in
+- **OpenAPI + decorators** — `fromOpenApi`, `fromModule`, and `@AgentSkill`
+- **Agent OS ready** — register into `@hazeljs/agent` `ToolRegistry` / `AgentRuntime`
+- **Optional MCP export** — `toMcpServer()` for Cursor / Claude Desktop
+- **CLI** — `hazel skillgate from-openapi` and `hazel skillgate init`
+
+## Installation
 
 ```bash
 npm install @hazeljs/skillgate @hazeljs/agent
 ```
 
-## 60-second example
+## Quick Start
 
-```ts
+```typescript
 import { Skillgate } from '@hazeljs/skillgate';
 import { ToolRegistry } from '@hazeljs/agent';
 
@@ -39,8 +44,6 @@ gate.register(registry, 'api-concierge');
 console.log(gate.report());
 // → included skills + denied destructive/admin + warnings
 ```
-
-Opt-in by default: only operations with tag `agent` / `skillgate`, or `x-hazel-skill`, or an explicit allowlist.
 
 ## OpenAPI extension
 
@@ -62,7 +65,7 @@ paths:
 
 ## Decorator
 
-```ts
+```typescript
 import { AgentSkill } from '@hazeljs/skillgate';
 
 class OrdersController {
@@ -78,7 +81,7 @@ Use `toXHazelSkill(getAgentSkillMetadata(...))` when generating OpenAPI (`x-haze
 
 ## fromModule + MCP
 
-```ts
+```typescript
 const gate = Skillgate.fromModule(AppModule, {
   swagger: { title: 'API', servers: [{ url: 'http://127.0.0.1:3000' }] },
   invoke: { baseUrl: 'http://127.0.0.1:3000' },
