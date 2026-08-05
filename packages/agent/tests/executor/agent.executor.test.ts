@@ -333,6 +333,57 @@ describe('AgentExecutor', () => {
       expect(action.response).toBe('Hello response');
     });
 
+    it('should not re-append the user message after a tool result', async () => {
+      const chat = jest
+        .fn()
+        .mockResolvedValueOnce({
+          content: '',
+          tool_calls: [
+            {
+              id: 'c1',
+              type: 'function',
+              function: { name: 'getShipment', arguments: '{"id":"ORD-1001"}' },
+            },
+          ],
+        })
+        .mockResolvedValueOnce({
+          content: 'Shipped via UPS',
+        });
+
+      const mockLLMProvider: LLMProvider = { chat } as any;
+      toolRegistry.registerDynamicTool('agent-1', {
+        name: 'getShipment',
+        description: 'Get shipment',
+        parameters: { type: 'object' },
+        handler: async () => ({ carrier: 'UPS', tracking: '1Z' }),
+      });
+
+      const executorWithLLM = new AgentExecutor(
+        stateManager,
+        contextBuilder,
+        toolExecutor,
+        toolRegistry,
+        mockLLMProvider,
+        eventEmitter
+      );
+
+      const context = stateManager.createContext(
+        'agent-1',
+        'session-1',
+        'Where is package ORD-1001?'
+      );
+      const result = await executorWithLLM.execute(context, 5);
+
+      expect(result.state).toBe(AgentState.COMPLETED);
+      expect(chat).toHaveBeenCalledTimes(2);
+
+      const secondMessages = (chat.mock.calls[1][0] as { messages: Array<{ role: string }> })
+        .messages;
+      const userTurns = secondMessages.filter((m) => m.role === 'user');
+      expect(userTurns).toHaveLength(1);
+      expect(secondMessages[secondMessages.length - 1].role).not.toBe('user');
+    });
+
     it('should throw AgentError when LLM errors', async () => {
       const { AgentError: AgentErrorClass } = await import('../../src/errors/agent.error');
       const mockLLMProvider: LLMProvider = {

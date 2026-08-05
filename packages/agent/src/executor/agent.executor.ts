@@ -136,6 +136,7 @@ export class AgentExecutor {
       });
 
       await this.unwrap(this.stateManager.updateState(context.executionId, AgentState.THINKING));
+      await this.ensureUserMessageSeeded(context);
 
       let stepNumber = 0;
       let finalResponse: string | undefined;
@@ -268,6 +269,7 @@ export class AgentExecutor {
       });
 
       await this.unwrap(this.stateManager.updateState(context.executionId, AgentState.THINKING));
+      await this.ensureUserMessageSeeded(context);
 
       let stepNumber = 0;
       let finalResponse: string | undefined;
@@ -601,14 +603,10 @@ export class AgentExecutor {
     try {
       this.throwIfAborted(signal);
 
-      // Build the LLM request
+      // Build the LLM request (history already includes the user turn)
       const prompt = this.buildPrompt(context);
       const tools = this.toolRegistry.getToolDefinitionsForLLM(context.agentId);
-      const messages = [
-        { role: 'system' as const, content: prompt.system },
-        ...prompt.messages,
-        { role: 'user' as const, content: context.input },
-      ];
+      const messages = this.composeChatMessages(context, prompt);
       const request = {
         messages,
         tools: tools.length > 0 ? tools : undefined,
@@ -711,11 +709,7 @@ export class AgentExecutor {
 
     const prompt = this.buildPrompt(context);
     const tools = this.toolRegistry.getToolDefinitionsForLLM(context.agentId);
-    const messages = [
-      { role: 'system' as const, content: prompt.system },
-      ...prompt.messages,
-      { role: 'user' as const, content: context.input },
-    ];
+    const messages = this.composeChatMessages(context, prompt);
     const request = {
       messages,
       tools: tools.length > 0 ? tools : undefined,
@@ -838,10 +832,9 @@ export class AgentExecutor {
       };
     }
 
-    // Store as assistant message summarizing the tool call + result (OpenAI requires tool
-    // messages to follow assistant messages with tool_calls; we avoid that format to keep
-    // storage simple and ensure the LLM receives the tool result context)
-    const toolSummary = `[Tool: ${action.toolName}]\nInput: ${JSON.stringify(action.toolInput)}\nOutput: ${JSON.stringify(result.output)}`;
+    // Store tool result in history so the next LLM turn sees it without
+    // re-asking the original user question (which caused repeated tool calls).
+    const toolSummary = `[Tool result: ${action.toolName}]\nInput: ${JSON.stringify(action.toolInput)}\nOutput: ${JSON.stringify(result.output)}\nUse this result to answer. Only call tools again if more data is required.`;
     await this.unwrap(this.stateManager.addMessage(context.executionId, 'assistant', toolSummary));
 
     return {
@@ -852,6 +845,42 @@ export class AgentExecutor {
         duration: result.duration,
       },
     };
+  }
+
+  /**
+   * Seed the initial user turn once so later steps do not re-append context.input
+   * after tool results (that pattern makes models re-call the same tool).
+   */
+  private async ensureUserMessageSeeded(context: AgentContext): Promise<void> {
+    const history = context.memory.conversationHistory;
+    const alreadySeeded = history.some((m) => m.role === 'user' && m.content === context.input);
+    if (!alreadySeeded && context.input) {
+      await this.unwrap(this.stateManager.addMessage(context.executionId, 'user', context.input));
+    }
+  }
+
+  /**
+   * Compose OpenAI-style chat messages from system prompt + conversation history.
+   * Falls back to context.input only when history has no user turn yet (unit tests /
+   * decideNextAction called outside execute).
+   */
+  private composeChatMessages(
+    context: AgentContext,
+    prompt: {
+      system: string;
+      messages: Array<{ role: 'system' | 'user' | 'assistant' | 'tool'; content: string }>;
+    }
+  ): Array<{ role: 'system' | 'user' | 'assistant' | 'tool'; content: string }> {
+    const messages: Array<{
+      role: 'system' | 'user' | 'assistant' | 'tool';
+      content: string;
+    }> = [{ role: 'system', content: prompt.system }, ...prompt.messages];
+
+    const hasUserTurn = prompt.messages.some((m) => m.role === 'user');
+    if (!hasUserTurn && context.input) {
+      messages.push({ role: 'user', content: context.input });
+    }
+    return messages;
   }
 
   /**
