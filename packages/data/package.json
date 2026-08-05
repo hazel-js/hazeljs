@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/data",
-  "version": "1.0.6",
+  "version": "2.0.0",
   "description": "Data Processing & ETL for HazelJS framework",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -24,7 +24,7 @@
     "typescript": "^5.9.3"
   },
   "peerDependencies": {
-    "@hazeljs/core": "^1.0.6"
+    "@hazeljs/core": "^2.0.0"
   },
   "publishConfig": {
     "access": "public"

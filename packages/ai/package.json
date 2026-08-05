@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/ai",
-  "version": "1.0.6",
+  "version": "2.0.0",
   "description": "AI integration module for HazelJS framework",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -29,8 +29,8 @@
     "zod-to-json-schema": "^3.25.0"
   },
   "devDependencies": {
-    "@hazeljs/prompts": "^1.0.6",
-    "@hazeljs/rag": "^1.0.6",
+    "@hazeljs/prompts": "^2.0.0",
+    "@hazeljs/rag": "^2.0.0",
     "@types/node": "^20.19.39",
     "@typescript-eslint/eslint-plugin": "^8.58.0",
     "@typescript-eslint/parser": "^8.58.0",
@@ -63,14 +63,14 @@
   },
   "homepage": "https://hazeljs.ai",
   "peerDependencies": {
-    "@hazeljs/agent": "^1.0.6",
-    "@hazeljs/cache": "^1.0.6",
-    "@hazeljs/core": "^1.0.6",
-    "@hazeljs/guardrails": "^1.0.6",
-    "@hazeljs/memory": "^1.0.6",
-    "@hazeljs/ml": "^1.0.6",
-    "@hazeljs/prompts": "^1.0.6",
-    "@hazeljs/rag": "^1.0.6",
+    "@hazeljs/agent": "^2.0.0",
+    "@hazeljs/cache": "^2.0.0",
+    "@hazeljs/core": "^2.0.0",
+    "@hazeljs/guardrails": "^2.0.0",
+    "@hazeljs/memory": "^2.0.0",
+    "@hazeljs/ml": "^2.0.0",
+    "@hazeljs/prompts": "^2.0.0",
+    "@hazeljs/rag": "^2.0.0",
     "tiktoken": "^1.0.22"
   },
   "peerDependenciesMeta": {

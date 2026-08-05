@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/swagger",
-  "version": "1.0.6",
+  "version": "2.0.0",
   "description": "Swagger/OpenAPI documentation module for HazelJS framework",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -45,7 +45,7 @@
   },
   "homepage": "https://hazeljs.ai",
   "peerDependencies": {
-    "@hazeljs/core": "^1.0.6"
+    "@hazeljs/core": "^2.0.0"
   },
   "gitHead": "083b94562940a86c8e0a8cd81988d04b541608ac"
 }
