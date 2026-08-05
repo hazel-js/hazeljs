@@ -33,6 +33,29 @@ describe('AgentModule', () => {
       expect(module).toBe(AgentModule);
       expect(AgentModule.getOptions().runtime?.defaultMaxSteps).toBe(20);
     });
+
+    it('should not log missing LLM when runtime.llmProvider is set', async () => {
+      const { logger } = require('@hazeljs/core');
+      const errorSpy = jest.spyOn(logger, 'error').mockImplementation(() => undefined);
+
+      AgentModule.forRoot({
+        runtime: {
+          llmProvider: {
+            chat: async () => ({ content: 'ok', finishReason: 'stop' }),
+          },
+        },
+      });
+      // Construct AgentService the same way DI would
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      new AgentService(undefined as any, {});
+
+      await new Promise((r) => setTimeout(r, 600));
+
+      expect(
+        errorSpy.mock.calls.some((c) => String(c[0]).includes('LLM provider not available'))
+      ).toBe(false);
+      errorSpy.mockRestore();
+    });
   });
 
   describe('createLLMProviderFromAI', () => {

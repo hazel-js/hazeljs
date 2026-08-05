@@ -108,9 +108,12 @@ export class AgentService {
     this.runtime = new AgentRuntime(runtimeConfig);
 
     // Defer agent discovery and LLM provider resolution until after all modules are loaded
+    const hasExplicitLlm = !!(moduleOpts.runtime?.llmProvider ?? config.llmProvider);
     setImmediate(() => {
       this.autoDiscoverAgents();
-      this.resolveLLMProvider();
+      if (!hasExplicitLlm) {
+        this.resolveLLMProvider();
+      }
     });
   }
 
@@ -118,6 +121,11 @@ export class AgentService {
    * Resolve AIEnhancedService from global registry if no LLM provider is configured
    */
   private resolveLLMProvider(retryCount = 0): void {
+    // Someone may have called setLLMProvider between retries
+    if (AgentModule.getOptions().runtime?.llmProvider) {
+      return;
+    }
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const aiService = (global as any).__HAZELJS_AI_ENHANCED_SERVICE__;
 
