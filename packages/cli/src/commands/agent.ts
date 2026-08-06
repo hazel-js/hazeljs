@@ -2,12 +2,18 @@ import { Command } from 'commander';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
+import {
+  listAgentTemplates,
+  scaffoldAgentProject,
+  type AgentTemplateId,
+} from './agent-templates';
 
 const DEFAULT_RUN_STORE = path.join('.hazel', 'agent-runs.json');
 const DEFAULT_DURABLE_DIR = path.join('.hazel', 'runs');
 const DEFAULT_TIMELINE = path.join('.hazel', 'runs', 'timeline.jsonl');
 
 /**
+ * `hazel agent new` — scaffold Agent OS / DNA templates (G2 template unification).
  * `hazel agent install <file.dna.json>` — validate / print marketplace install plan.
  * `hazel agent run` — live execute from DNA (AOS-011).
  * `hazel agent logs` / `doctor` — timeline + environment checks.
@@ -17,6 +23,85 @@ export function registerAgentCommand(program: Command): void {
   const agent = program
     .command('agent')
     .description('Agent OS DNA / runtime / marketplace helpers');
+
+  agent
+    .command('templates')
+    .description('List Agent OS / DNA project templates')
+    .option('--json', 'Print JSON')
+    .action((opts: { json?: boolean }) => {
+      const templates = listAgentTemplates();
+      if (opts.json) {
+        // eslint-disable-next-line no-console
+        console.log(JSON.stringify({ ok: true, templates }, null, 2));
+        return;
+      }
+      // eslint-disable-next-line no-console
+      console.log('\nAgent OS templates (`hazel agent new <name> --template <id>`):\n');
+      for (const t of templates) {
+        // eslint-disable-next-line no-console
+        console.log(`  ${t.id.padEnd(12)} ${t.label}`);
+        // eslint-disable-next-line no-console
+        console.log(`               ${t.description}\n`);
+      }
+    });
+
+  agent
+    .command('new')
+    .description(
+      'Scaffold an Agent OS / DNA project (bare | agent-os | skillgate). DNA = contract; app tools = implementation.'
+    )
+    .argument('<name>', 'Project directory / package name')
+    .option('-t, --template <id>', 'Template: bare | agent-os | skillgate', 'agent-os')
+    .option('-d, --dest <dir>', 'Parent directory', '.')
+    .option('-f, --force', 'Allow non-empty destination')
+    .option('--json', 'Print machine-readable result')
+    .action(
+      (
+        name: string,
+        opts: { template: string; dest: string; force?: boolean; json?: boolean }
+      ) => {
+        try {
+          const destDir = path.resolve(process.cwd(), opts.dest, name);
+          const result = scaffoldAgentProject({
+            name,
+            destDir,
+            template: opts.template as AgentTemplateId,
+            force: opts.force,
+          });
+          const payload = {
+            ok: true,
+            action: 'agent-new',
+            ...result,
+            next: [
+              `cd ${path.relative(process.cwd(), result.path) || '.'}`,
+              result.template === 'bare'
+                ? 'npx hazel agent run dna/agent.marketplace.json "hello"'
+                : 'npm install && npm run dev',
+              'npx hazel store publish dna/agent.marketplace.json',
+            ],
+          };
+          // eslint-disable-next-line no-console
+          console.log(
+            opts.json
+              ? JSON.stringify(payload, null, 2)
+              : [
+                  `✓ Created Agent OS project (${result.template})`,
+                  `  ${result.path}`,
+                  `  files: ${result.files.length}`,
+                  '',
+                  'Next:',
+                  ...payload.next.map((l) => `  ${l}`),
+                  '',
+                  'Note: `hazel agent run` on DNA uses stub tools. Use the app (`npm run dev`) for real @Tool / Skillgate handlers.',
+                ].join('\n')
+          );
+        } catch (e) {
+          // eslint-disable-next-line no-console
+          console.error(e instanceof Error ? e.message : e);
+          process.exitCode = 1;
+        }
+      }
+    );
 
   agent
     .command('install')
@@ -36,7 +121,7 @@ export function registerAgentCommand(program: Command): void {
               agent: pkg.dna.name,
               tools: pkg.dna.tools.map((t: { name: string }) => t.name),
               hasPolicies: Boolean(pkg.dna.policies?.length),
-              note: 'Call runtime.installAgentPackage(path) in your app to hot-reload',
+              note: 'Validate only. Use hazel store install to materialize into .hazel/agents; call runtime.installAgentPackage(path) to hot-reload',
             },
             null,
             2

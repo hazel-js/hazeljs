@@ -84,3 +84,47 @@ export function toMarketplacePackage(
     keywords: extras?.keywords ?? ['hazeljs', 'agent', 'dna'],
   };
 }
+
+export interface ValidationResult {
+  ok: boolean;
+  errors: string[];
+}
+
+/**
+ * Validate MarketplaceAgentPackage shape (G2 Package+Store schema freeze).
+ * Source of truth: these TypeScript types — no separate @hazeljs/agent-manifest yet.
+ */
+export function validateMarketplacePackage(pkg: unknown): ValidationResult {
+  const errors: string[] = [];
+  if (pkg === null || typeof pkg !== 'object') {
+    return { ok: false, errors: ['Package must be an object'] };
+  }
+  const p = pkg as Record<string, unknown>;
+  if (typeof p.name !== 'string' || !p.name.trim()) {
+    errors.push('Package missing name');
+  }
+  if (typeof p.version !== 'string' || !p.version.trim()) {
+    errors.push('Package missing version');
+  }
+  if (p.dna === undefined || p.dna === null) {
+    errors.push('Package missing dna');
+  } else {
+    try {
+      parseDna(p.dna as AgentDna);
+    } catch (e) {
+      errors.push(e instanceof Error ? e.message : String(e));
+    }
+  }
+  if (p.keywords !== undefined && !Array.isArray(p.keywords)) {
+    errors.push('Package keywords must be an array');
+  }
+  return { ok: errors.length === 0, errors };
+}
+
+/** Assert package is valid or throw with joined errors. */
+export function assertValidMarketplacePackage(pkg: unknown): asserts pkg is MarketplaceAgentPackage {
+  const result = validateMarketplacePackage(pkg);
+  if (!result.ok) {
+    throw new Error(`Invalid marketplace package: ${result.errors.join('; ')}`);
+  }
+}

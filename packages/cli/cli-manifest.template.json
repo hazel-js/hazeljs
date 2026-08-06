@@ -865,6 +865,87 @@
       "description": "Display information about the current HazelJS project",
       "args": [],
       "options": []
+    },
+    {
+      "name": "store",
+      "usage": "hazel store <subcommand>",
+      "description": "Local Agent OS package registry (publish / install DNA packages)",
+      "subcommands": [
+        {
+          "name": "publish",
+          "usage": "hazel store publish <file> [--registry <dir>]",
+          "description": "Publish marketplace/DNA JSON to ~/.hazel/registry",
+          "args": [
+            {
+              "name": "file",
+              "type": "string",
+              "required": true,
+              "description": "Path to .dna.json or marketplace package JSON"
+            }
+          ],
+          "options": [
+            {
+              "name": "registry",
+              "type": "string",
+              "description": "Override registry root (default: ~/.hazel/registry)"
+            }
+          ]
+        },
+        {
+          "name": "install",
+          "usage": "hazel store install <spec> [--cwd <dir>] [--registry <dir>]",
+          "description": "Install package into project .hazel/agents (file path or name@version from local registry)",
+          "args": [
+            {
+              "name": "spec",
+              "type": "string",
+              "required": true,
+              "description": "File path or package name[@version]"
+            }
+          ],
+          "options": [
+            {
+              "name": "cwd",
+              "type": "string",
+              "default": ".",
+              "description": "Project root"
+            },
+            {
+              "name": "registry",
+              "type": "string",
+              "description": "Override registry root"
+            }
+          ]
+        },
+        {
+          "name": "list",
+          "usage": "hazel store list [query]",
+          "description": "List packages in the local registry"
+        },
+        {
+          "name": "remove",
+          "usage": "hazel store remove <name[@version]>",
+          "description": "Remove a package from the local registry"
+        },
+        {
+          "name": "doctor",
+          "usage": "hazel store doctor",
+          "description": "Check local registry health"
+        }
+      ]
+    },
+    {
+      "name": "install",
+      "usage": "hazel install <spec> [--cwd <dir>] [--registry <dir>]",
+      "description": "Alias for hazel store install",
+      "args": [
+        {
+          "name": "spec",
+          "type": "string",
+          "required": true,
+          "description": "File path or package name[@version]"
+        }
+      ]
     }
   ],
   "globalOptions": [

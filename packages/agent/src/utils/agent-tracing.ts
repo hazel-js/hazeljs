@@ -86,6 +86,19 @@ export async function withAgentSpan<T>(
   });
 }
 
+/** Set attributes on the current active OTEL span (no-op if none / no API). */
+export function setAgentSpanAttributes(
+  attributes: Record<string, string | number | boolean>
+): void {
+  const api = getOtelApiSync();
+  if (!api) return;
+  const span = api.trace.getActiveSpan() as SpanLike | undefined;
+  if (!span?.setAttribute) return;
+  for (const [key, value] of Object.entries(attributes)) {
+    span.setAttribute(key, value);
+  }
+}
+
 export function trackLlmCost(
   observability: ObservabilityProvider | undefined,
   model: string | undefined,

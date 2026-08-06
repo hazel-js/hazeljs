@@ -1,0 +1,6 @@
+{
+  "@hazeljs/support-desk-agent": {
+    "version": "1.0.0",
+    "path": ".hazel/agents/hazeljs__support-desk-agent/package.json"
+  }
+}

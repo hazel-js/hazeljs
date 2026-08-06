@@ -97,8 +97,10 @@ export class ToolExecutor {
       {
         'agent.tool.name': tool.name,
         'agent.id': agentId,
+        'agent.name': agentId,
         'agent.session_id': sessionId,
         'agent.run_id': runId ?? '',
+        'agent.execution_id': runId ?? '',
       },
       () => this.executeInternal(tool, input, agentId, sessionId, userId, runId, opts),
       this.options.observabilityProvider
