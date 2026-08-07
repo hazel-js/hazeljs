@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>HazelJS Inspector</title>
-  <script type="module" crossorigin src="/__hazel/assets/index-WT8tdMSx.js"></script>
+  <script type="module" crossorigin src="/__hazel/assets/index-BMiGVZZN.js"></script>
   <link rel="stylesheet" crossorigin href="/__hazel/assets/index-DsSZSL8P.css">
 </head>
 <body>
@@ -55,6 +55,7 @@
         <div class="nav-section">
           <span class="nav-section-title">AI & Intelligence</span>
           <a href="#" data-tab="agents"><span class="nav-icon"></span>Agents</a>
+          <a href="#" data-tab="agent-runs"><span class="nav-icon"></span>Agent Runs</a>
           <a href="#" data-tab="ai"><span class="nav-icon"></span>AI</a>
           <a href="#" data-tab="rag"><span class="nav-icon"></span>RAG</a>
           <a href="#" data-tab="prompts"><span class="nav-icon"></span>Prompts</a>
@@ -162,6 +163,24 @@
             Select an agent and click Timeline, or Run to stream live steps (Agent OS).
           </p>
           <div id="agent-timeline" class="agent-timeline"></div>
+        </div>
+      </div>
+      <div id="agent-runs" class="tab-panel">
+        <h2 class="section-title">Agent Runs</h2>
+        <p class="muted" style="font-size:12px;margin:0 0 8px">
+          Durable <code>AgentRun</code> records from the runtime repository. Click a row for detail + timeline.
+        </p>
+        <div id="agent-runs-cost" class="agent-runs-cost muted" style="font-size:12px;margin:0 0 12px"></div>
+        <div class="form-group" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+          <input type="text" id="agent-runs-filter-agent" placeholder="Filter agentName" style="min-width:160px" />
+          <input type="text" id="agent-runs-filter-status" placeholder="Filter status" style="min-width:120px" />
+          <button id="agent-runs-refresh" class="btn btn-sm btn-primary" type="button">Refresh</button>
+        </div>
+        <div class="table-container"><table id="agent-runs-table"></table></div>
+        <div id="agent-run-detail" class="agent-run-detail" style="margin-top:16px"></div>
+        <div class="agent-timeline-panel" style="margin-top:12px">
+          <h3 class="section-title">Run Timeline</h3>
+          <div id="agent-run-timeline" class="agent-timeline"></div>
         </div>
       </div>
       <div id="ai" class="tab-panel">
