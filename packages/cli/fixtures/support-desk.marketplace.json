@@ -41,9 +41,5 @@
     "exportedAt": "2026-08-07T08:17:50.815Z"
   },
   "readme": "Nordhelm Commerce support desk agent",
-  "keywords": [
-    "support",
-    "ecommerce",
-    "agent-os"
-  ]
+  "keywords": ["support", "ecommerce", "agent-os"]
 }
