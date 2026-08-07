@@ -376,7 +376,7 @@ export class ToolExecutor {
       const target = tool.target as Record<string, unknown> | undefined;
       const live =
         target && typeof target[tool.propertyKey] === 'function'
-          ? (target[tool.propertyKey] as Function)
+          ? (target[tool.propertyKey] as (...args: unknown[]) => unknown)
           : tool.method;
       const result = await Promise.race([
         live.call(tool.target, input),

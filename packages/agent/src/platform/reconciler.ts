@@ -6,7 +6,7 @@ import type { AdmissionController } from './admission';
 import { assertAdmitted } from './admission';
 import type { PlatformEventSink } from './events';
 import type { ResourceRepository } from './repository';
-import type { PackageResolver, ResolvedPackage } from './resolve-package';
+import type { PackageResolver } from './resolve-package';
 import type { DurableRunLookup } from './run-correlation';
 import {
   conditionOf,

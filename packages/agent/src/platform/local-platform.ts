@@ -24,11 +24,7 @@ import {
   InMemoryResourceRepository,
   type ResourceRepository,
 } from './repository';
-import {
-  createCompositePackageResolver,
-  createPackageResolverFromRegistry,
-  type PackageResolver,
-} from './resolve-package';
+import { createCompositePackageResolver, type PackageResolver } from './resolve-package';
 import { createAgentPackageRegistry } from '../store/create-registry';
 import type { AgentPackageRegistry } from '../store/registry';
 import { createFileDurableRunLookup, type DurableRunLookup } from './run-correlation';
@@ -273,7 +269,7 @@ function sleep(ms: number, signal?: AbortSignal): Promise<void> {
       return;
     }
     const timer = setTimeout(resolve, ms);
-    const onAbort = () => {
+    const onAbort = (): void => {
       clearTimeout(timer);
       resolve();
     };

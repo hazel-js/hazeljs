@@ -120,7 +120,9 @@ export function createRequestBasedKubernetesClient(
   request: KubernetesRequestFn
 ): KubernetesWorkloadClient {
   return {
-    async applyDeployment(manifest) {
+    async applyDeployment(
+      manifest: Record<string, unknown>
+    ): Promise<KubernetesWorkloadObservation> {
       const metadata = (manifest.metadata ?? {}) as Record<string, unknown>;
       const name = String(metadata.name ?? '');
       const namespace = String(metadata.namespace ?? 'default');
@@ -148,7 +150,10 @@ export function createRequestBasedKubernetesClient(
       return toObservation(created.data, true);
     },
 
-    async getDeployment(namespace, name) {
+    async getDeployment(
+      namespace: string,
+      name: string
+    ): Promise<KubernetesWorkloadObservation | undefined> {
       try {
         const result = await request({
           method: 'GET',
@@ -161,7 +166,7 @@ export function createRequestBasedKubernetesClient(
       }
     },
 
-    async deleteDeployment(namespace, name) {
+    async deleteDeployment(namespace: string, name: string): Promise<{ deleted: boolean }> {
       try {
         const result = await request({
           method: 'DELETE',
@@ -224,7 +229,9 @@ export function createKubectlKubernetesClient(
   options: KubectlKubernetesClientOptions = {}
 ): KubernetesWorkloadClient {
   return {
-    async applyDeployment(manifest) {
+    async applyDeployment(
+      manifest: Record<string, unknown>
+    ): Promise<KubernetesWorkloadObservation> {
       const result = await runKubectl(
         options,
         ['apply', '-f', '-', '-o', 'json'],
@@ -236,7 +243,10 @@ export function createKubectlKubernetesClient(
       return toObservation(JSON.parse(result.stdout) as unknown, true);
     },
 
-    async getDeployment(namespace, name) {
+    async getDeployment(
+      namespace: string,
+      name: string
+    ): Promise<KubernetesWorkloadObservation | undefined> {
       const result = await runKubectl(options, [
         'get',
         'deployment',
@@ -253,7 +263,7 @@ export function createKubectlKubernetesClient(
       return toObservation(JSON.parse(result.stdout) as unknown, true);
     },
 
-    async deleteDeployment(namespace, name) {
+    async deleteDeployment(namespace: string, name: string): Promise<{ deleted: boolean }> {
       const result = await runKubectl(options, [
         'delete',
         'deployment',

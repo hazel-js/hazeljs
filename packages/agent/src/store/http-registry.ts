@@ -178,7 +178,7 @@ export function createMemoryRegistryFetch(memory: {
     const u = new URL(url);
     const pathname = u.pathname.replace(/\/+$/, '') || '/';
 
-    const json = (status: number, body: unknown) =>
+    const json = (status: number, body: unknown): Response =>
       new Response(JSON.stringify(body), {
         status,
         headers: { 'Content-Type': 'application/json' },
