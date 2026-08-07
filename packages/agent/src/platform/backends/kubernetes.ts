@@ -10,14 +10,8 @@ import type {
   ResourceRef,
 } from '../resources';
 import { metaNamespace, resourceKey } from '../resources';
-import {
-  buildKubernetesDeploymentManifest,
-  readKubernetesExtension,
-} from './kubernetes-manifest';
-import type {
-  KubernetesWorkloadClient,
-  KubernetesWorkloadObservation,
-} from './kubernetes-types';
+import { buildKubernetesDeploymentManifest, readKubernetesExtension } from './kubernetes-manifest';
+import type { KubernetesWorkloadClient, KubernetesWorkloadObservation } from './kubernetes-types';
 
 export interface KubernetesDeploymentBackendOptions {
   /** Cluster client. Required unless every apply uses dryRun. */
@@ -32,10 +26,7 @@ function deploymentRefKey(ref: ResourceRef): string {
   return resourceKey('AgentDeployment', ref.name, ref.namespace ?? 'default');
 }
 
-function isReadyObservation(
-  obs: KubernetesWorkloadObservation,
-  desiredReplicas: number
-): boolean {
+function isReadyObservation(obs: KubernetesWorkloadObservation, desiredReplicas: number): boolean {
   if (!obs.exists) return false;
   const ready = obs.readyReplicas ?? 0;
   return ready >= desiredReplicas;
@@ -118,8 +109,7 @@ export class KubernetesDeploymentBackend implements DeploymentBackend {
     if (!ext.image?.trim()) {
       return {
         ready: false,
-        message:
-          'Kubernetes backend requires spec.backend.kubernetes.image (or dryRun: true)',
+        message: 'Kubernetes backend requires spec.backend.kubernetes.image (or dryRun: true)',
         unsupported: ['missing image'],
         observed: {
           name: built.name,
@@ -132,8 +122,7 @@ export class KubernetesDeploymentBackend implements DeploymentBackend {
     if (!this.client) {
       return {
         ready: false,
-        message:
-          'KubernetesWorkloadClient not configured — inject a client or set dryRun: true',
+        message: 'KubernetesWorkloadClient not configured — inject a client or set dryRun: true',
         unsupported: ['no kubernetes client'],
         observed: {
           name: built.name,

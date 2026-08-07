@@ -18,9 +18,8 @@ describe('registerStoreCommand (G2 Package+Store)', () => {
   });
 
   it('publish then install materializes support-desk style package', async () => {
-    const { exportAgentDna, toMarketplacePackage, saveMarketplacePackage } = await import(
-      '@hazeljs/agent'
-    );
+    const { exportAgentDna, toMarketplacePackage, saveMarketplacePackage } =
+      await import('@hazeljs/agent');
 
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'hazel-store-cli-'));
     const registryDir = path.join(tmp, 'registry');
@@ -40,10 +39,9 @@ describe('registerStoreCommand (G2 Package+Store)', () => {
     const program = new Command();
     registerStoreCommand(program);
 
-    await program.parseAsync(
-      ['store', 'publish', pkgFile, '--registry', registryDir],
-      { from: 'user' }
-    );
+    await program.parseAsync(['store', 'publish', pkgFile, '--registry', registryDir], {
+      from: 'user',
+    });
     expect(process.exitCode ?? 0).toBe(0);
 
     await program.parseAsync(

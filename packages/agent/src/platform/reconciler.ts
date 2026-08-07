@@ -80,9 +80,7 @@ export class PlatformReconciler {
     this.defaultRuntimeClass = options.defaultRuntimeClass ?? 'local';
   }
 
-  private emit(
-    partial: Parameters<NonNullable<PlatformEventSink['emit']>>[0]
-  ): void {
+  private emit(partial: Parameters<NonNullable<PlatformEventSink['emit']>>[0]): void {
     this.events?.emit(partial);
   }
 
@@ -183,18 +181,14 @@ export class PlatformReconciler {
       );
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
-      status = setCondition(
-        status,
-        stamp('Validated', 'False', 'ResolveFailed', msg, generation)
-      );
+      status = setCondition(status, stamp('Validated', 'False', 'ResolveFailed', msg, generation));
       status = setCondition(status, stamp('Ready', 'False', 'ResolveFailed', msg, generation));
       status = setCondition(status, stamp('Degraded', 'True', 'ResolveFailed', msg, generation));
       const updated = this.repo.updateStatus('AgentDeployment', name, status, namespace);
       return { resource: updated, ready: false, message: msg };
     }
 
-    const runtimeClassName =
-      deployment.spec.runtimeClassName?.trim() || this.defaultRuntimeClass;
+    const runtimeClassName = deployment.spec.runtimeClassName?.trim() || this.defaultRuntimeClass;
     const backend = this.backends.get(runtimeClassName);
     if (!backend) {
       const msg = `No DeploymentBackend registered for runtimeClassName "${runtimeClassName}"`;
@@ -470,10 +464,7 @@ export class PlatformReconciler {
         result = { resource: updated, ready: false, message: msg };
       }
     } else if (stored.kind === 'AgentDeployment') {
-      result = await this.reconcileDeployment(
-        stored.metadata.name,
-        metaNamespace(stored.metadata)
-      );
+      result = await this.reconcileDeployment(stored.metadata.name, metaNamespace(stored.metadata));
     } else {
       result = await this.reconcileRun(stored.metadata.name, metaNamespace(stored.metadata));
     }

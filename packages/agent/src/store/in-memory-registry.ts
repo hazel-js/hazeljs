@@ -2,10 +2,7 @@
  * In-memory registry — tests and Cloud API mock backends.
  */
 
-import {
-  assertValidMarketplacePackage,
-  type MarketplaceAgentPackage,
-} from '../dna/agent-dna';
+import { assertValidMarketplacePackage, type MarketplaceAgentPackage } from '../dna/agent-dna';
 import type { PackageSummary } from './local-fs-registry';
 import type { AgentPackageRegistry, RegistryDoctorReport } from './registry';
 
@@ -31,9 +28,9 @@ export class InMemoryAgentPackageRegistry implements AgentPackageRegistry {
     }
     const resolved =
       !version || version === 'latest'
-        ? [...versions.keys()].sort((a, b) =>
-            a.localeCompare(b, undefined, { numeric: true })
-          ).at(-1)!
+        ? [...versions.keys()]
+            .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
+            .at(-1)!
         : version;
     const pkg = versions.get(resolved);
     if (!pkg) {
@@ -59,8 +56,7 @@ export class InMemoryAgentPackageRegistry implements AgentPackageRegistry {
     return out
       .filter(
         (p) =>
-          p.name.toLowerCase().includes(q) ||
-          (p.description?.toLowerCase().includes(q) ?? false)
+          p.name.toLowerCase().includes(q) || (p.description?.toLowerCase().includes(q) ?? false)
       )
       .sort((a, b) => a.name.localeCompare(b.name));
   }

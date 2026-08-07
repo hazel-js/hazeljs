@@ -70,8 +70,6 @@ export interface KubernetesWorkloadClient {
   deleteDeployment(namespace: string, name: string): Promise<{ deleted: boolean }>;
 }
 
-export function isKubernetesBackendExtension(
-  value: unknown
-): value is KubernetesBackendExtension {
+export function isKubernetesBackendExtension(value: unknown): value is KubernetesBackendExtension {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }

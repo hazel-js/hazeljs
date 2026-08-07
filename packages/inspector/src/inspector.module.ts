@@ -338,7 +338,8 @@ function createInspectorHandler(
             res.writeHead(503);
             res.end(
               JSON.stringify({
-                error: 'AgentRunRepository not available. Ensure AgentModule + AgentRuntime are configured.',
+                error:
+                  'AgentRunRepository not available. Ensure AgentModule + AgentRuntime are configured.',
               })
             );
             return;
@@ -391,7 +392,9 @@ function createInspectorHandler(
             res.end(JSON.stringify({ error: `Run not found: ${runId}` }));
             return;
           }
-          const updated = await runtime.getRunRepository().updateStatus(runId, AgentRunStatus.CANCELLED);
+          const updated = await runtime
+            .getRunRepository()
+            .updateStatus(runId, AgentRunStatus.CANCELLED);
           res.writeHead(200);
           res.end(JSON.stringify({ run: updated }));
         } catch (err) {
@@ -437,7 +440,10 @@ function createInspectorHandler(
         return;
       }
 
-      if ((pathSeg === '/agents/metrics' || pathSeg === '/agents/metrics/') && req.method === 'GET') {
+      if (
+        (pathSeg === '/agents/metrics' || pathSeg === '/agents/metrics/') &&
+        req.method === 'GET'
+      ) {
         try {
           const { AgentService } = require('@hazeljs/agent');
           const container = app.getContainer() as { resolve: (t: unknown) => unknown };

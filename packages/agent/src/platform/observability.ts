@@ -27,7 +27,9 @@ export interface ResourceSummary {
   conditions?: ResourceCondition[];
 }
 
-function pickCorrelation(backend: Record<string, unknown> | undefined): Record<string, unknown> | undefined {
+function pickCorrelation(
+  backend: Record<string, unknown> | undefined
+): Record<string, unknown> | undefined {
   if (!backend) return undefined;
   const allow = [
     'dnaName',

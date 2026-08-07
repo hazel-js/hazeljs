@@ -45,9 +45,7 @@ export function createFileDurableRunLookup(
   return {
     async lookup(runId: string): Promise<DurableRunSummary> {
       let storeLabel: string | undefined;
-      let run:
-        | Awaited<ReturnType<FileAgentRunRepository['get']>>
-        | undefined;
+      let run: Awaited<ReturnType<FileAgentRunRepository['get']>> | undefined;
 
       if (options.durableDir) {
         const root = path.resolve(options.durableDir);

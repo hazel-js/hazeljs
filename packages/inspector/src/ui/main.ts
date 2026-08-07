@@ -1047,10 +1047,12 @@ async function loadAgentMetricsPanel() {
 async function loadAgentRuns() {
   const table = document.getElementById('agent-runs-table');
   if (!table) return;
-  const agentName = (document.getElementById('agent-runs-filter-agent') as HTMLInputElement | null)
-    ?.value.trim();
-  const status = (document.getElementById('agent-runs-filter-status') as HTMLInputElement | null)
-    ?.value.trim();
+  const agentName = (
+    document.getElementById('agent-runs-filter-agent') as HTMLInputElement | null
+  )?.value.trim();
+  const status = (
+    document.getElementById('agent-runs-filter-status') as HTMLInputElement | null
+  )?.value.trim();
   const qs = new URLSearchParams();
   if (agentName) qs.set('agentName', agentName);
   if (status) qs.set('status', status);

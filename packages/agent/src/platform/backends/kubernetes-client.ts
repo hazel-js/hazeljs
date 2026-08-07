@@ -1,11 +1,9 @@
 /**
- * In-memory + request-based Kubernetes workload clients for the Phase 4 spike.
+ * In-memory + request-based + kubectl-based Kubernetes workload clients.
  */
 
-import type {
-  KubernetesWorkloadClient,
-  KubernetesWorkloadObservation,
-} from './kubernetes-types';
+import { spawn } from 'child_process';
+import type { KubernetesWorkloadClient, KubernetesWorkloadObservation } from './kubernetes-types';
 
 function observationFromManifest(
   manifest: Record<string, unknown>,
@@ -17,8 +15,7 @@ function observationFromManifest(
   const name = String(metadata.name ?? '');
   const namespace = String(metadata.namespace ?? 'default');
   const replicas = typeof spec.replicas === 'number' ? spec.replicas : 1;
-  const readyReplicas =
-    typeof status.readyReplicas === 'number' ? status.readyReplicas : replicas;
+  const readyReplicas = typeof status.readyReplicas === 'number' ? status.readyReplicas : replicas;
   const template = (spec.template ?? {}) as Record<string, unknown>;
   const podSpec = (template.spec ?? {}) as Record<string, unknown>;
   const containers = Array.isArray(podSpec.containers)
@@ -57,9 +54,7 @@ export class InMemoryKubernetesWorkloadClient implements KubernetesWorkloadClien
     return `${namespace}/${name}`;
   }
 
-  async applyDeployment(
-    manifest: Record<string, unknown>
-  ): Promise<KubernetesWorkloadObservation> {
+  async applyDeployment(manifest: Record<string, unknown>): Promise<KubernetesWorkloadObservation> {
     const metadata = (manifest.metadata ?? {}) as Record<string, unknown>;
     const name = String(metadata.name ?? '');
     const namespace = String(metadata.namespace ?? 'default');
@@ -68,7 +63,8 @@ export class InMemoryKubernetesWorkloadClient implements KubernetesWorkloadClien
       ...manifest,
       metadata: {
         ...metadata,
-        uid: (existing?.metadata as { uid?: string } | undefined)?.uid ?? `uid-${namespace}-${name}`,
+        uid:
+          (existing?.metadata as { uid?: string } | undefined)?.uid ?? `uid-${namespace}-${name}`,
         generation: existing
           ? Number((existing.metadata as { generation?: number }).generation ?? 1) + 1
           : 1,
@@ -94,10 +90,7 @@ export class InMemoryKubernetesWorkloadClient implements KubernetesWorkloadClien
     return found ? observationFromManifest(found) : undefined;
   }
 
-  async deleteDeployment(
-    namespace: string,
-    name: string
-  ): Promise<{ deleted: boolean }> {
+  async deleteDeployment(namespace: string, name: string): Promise<{ deleted: boolean }> {
     return { deleted: this.store.delete(this.key(namespace, name)) };
   }
 
@@ -180,6 +173,109 @@ export function createRequestBasedKubernetesClient(
       }
     },
   };
+}
+
+export interface KubectlKubernetesClientOptions {
+  /** kubectl binary (default: kubectl) */
+  kubectl?: string;
+  /** kubeconfig path (sets --kubeconfig) */
+  kubeconfig?: string;
+  /** kubectl context */
+  context?: string;
+}
+
+function runKubectl(
+  opts: KubectlKubernetesClientOptions,
+  args: string[],
+  stdin?: string
+): Promise<{ code: number; stdout: string; stderr: string }> {
+  const bin = opts.kubectl ?? 'kubectl';
+  const full = [
+    ...(opts.kubeconfig ? ['--kubeconfig', opts.kubeconfig] : []),
+    ...(opts.context ? ['--context', opts.context] : []),
+    ...args,
+  ];
+  return new Promise((resolve, reject) => {
+    const child = spawn(bin, full, { stdio: ['pipe', 'pipe', 'pipe'] });
+    let stdout = '';
+    let stderr = '';
+    child.stdout.on('data', (d: Buffer) => {
+      stdout += d.toString('utf8');
+    });
+    child.stderr.on('data', (d: Buffer) => {
+      stderr += d.toString('utf8');
+    });
+    child.on('error', reject);
+    child.on('close', (code) => {
+      resolve({ code: code ?? 1, stdout, stderr });
+    });
+    if (stdin != null) {
+      child.stdin.write(stdin);
+    }
+    child.stdin.end();
+  });
+}
+
+/**
+ * Live-cluster client via `kubectl` (kind / minikube / real kubeconfig).
+ * Used by HAZEL_K8S_LIVE integration tests — no hard dep on client-node.
+ */
+export function createKubectlKubernetesClient(
+  options: KubectlKubernetesClientOptions = {}
+): KubernetesWorkloadClient {
+  return {
+    async applyDeployment(manifest) {
+      const result = await runKubectl(
+        options,
+        ['apply', '-f', '-', '-o', 'json'],
+        JSON.stringify(manifest)
+      );
+      if (result.code !== 0) {
+        throw new Error(`kubectl apply failed: ${result.stderr || result.stdout}`);
+      }
+      return toObservation(JSON.parse(result.stdout) as unknown, true);
+    },
+
+    async getDeployment(namespace, name) {
+      const result = await runKubectl(options, [
+        'get',
+        'deployment',
+        name,
+        '-n',
+        namespace,
+        '-o',
+        'json',
+      ]);
+      if (result.code !== 0) {
+        if (/NotFound|not found/i.test(result.stderr + result.stdout)) return undefined;
+        throw new Error(`kubectl get failed: ${result.stderr || result.stdout}`);
+      }
+      return toObservation(JSON.parse(result.stdout) as unknown, true);
+    },
+
+    async deleteDeployment(namespace, name) {
+      const result = await runKubectl(options, [
+        'delete',
+        'deployment',
+        name,
+        '-n',
+        namespace,
+        '--ignore-not-found=true',
+        '-o',
+        'name',
+      ]);
+      if (result.code !== 0) {
+        throw new Error(`kubectl delete failed: ${result.stderr || result.stdout}`);
+      }
+      return { deleted: result.stdout.trim().length > 0 };
+    },
+  };
+}
+
+/** True when live K8s integration should run (opt-in; default skip). */
+export function isHazelK8sLiveEnabled(): boolean {
+  const v = process.env.HAZEL_K8S_LIVE?.trim().toLowerCase();
+  return v === '1' || v === 'true' || v === 'yes';
 }
 
 function toObservation(data: unknown, exists: boolean): KubernetesWorkloadObservation {

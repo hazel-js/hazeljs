@@ -55,11 +55,13 @@ function writeFile(root: string, rel: string, content: string): void {
 }
 
 function sanitizeNpmName(name: string): string {
-  return name
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9-_]/g, '-')
-    .replace(/^-+|-+$/g, '') || 'my-agent';
+  return (
+    name
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9-_]/g, '-')
+      .replace(/^-+|-+$/g, '') || 'my-agent'
+  );
 }
 
 function agentDnaName(projectName: string): string {
@@ -425,9 +427,7 @@ function skillgateFiles(projectName: string): Record<string, string> {
               operationId: 'getOrder',
               tags: ['agent'],
               summary: 'Fetch an order by id',
-              parameters: [
-                { name: 'id', in: 'path', required: true, schema: { type: 'string' } },
-              ],
+              parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
               'x-hazel-skill': { readOnly: true, class: 'read' },
             },
           },
@@ -493,7 +493,9 @@ export interface ScaffoldAgentProjectResult {
   files: string[];
 }
 
-export function scaffoldAgentProject(options: ScaffoldAgentProjectOptions): ScaffoldAgentProjectResult {
+export function scaffoldAgentProject(
+  options: ScaffoldAgentProjectOptions
+): ScaffoldAgentProjectResult {
   const template = resolveAgentTemplate(options.template);
   const root = path.resolve(options.destDir);
 

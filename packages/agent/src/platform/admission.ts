@@ -113,21 +113,24 @@ export class PolicyAdmissionController implements AdmissionController {
       if (!deployDecision.allowed) {
         return {
           allowed: false,
-          reason: deployDecision.reason ?? `Deploy denied by rule ${deployDecision.ruleId ?? 'unknown'}`,
+          reason:
+            deployDecision.reason ?? `Deploy denied by rule ${deployDecision.ruleId ?? 'unknown'}`,
           decision: deployDecision,
           warnings,
         };
       }
       if (deployDecision.requiresApproval) {
         warnings.push(
-          deployDecision.reason ?? 'platform.deploy requires approval (recorded as warning in OSS admission)'
+          deployDecision.reason ??
+            'platform.deploy requires approval (recorded as warning in OSS admission)'
         );
       }
     }
 
     if (applyDecision.requiresApproval) {
       warnings.push(
-        applyDecision.reason ?? 'platform.apply requires approval (recorded as warning in OSS admission)'
+        applyDecision.reason ??
+          'platform.apply requires approval (recorded as warning in OSS admission)'
       );
     }
 

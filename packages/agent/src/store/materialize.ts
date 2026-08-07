@@ -4,10 +4,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import {
-  assertValidMarketplacePackage,
-  type MarketplaceAgentPackage,
-} from '../dna/agent-dna';
+import { assertValidMarketplacePackage, type MarketplaceAgentPackage } from '../dna/agent-dna';
 import { saveMarketplacePackage } from '../dna/marketplace';
 import { sanitizePackageName } from './package-name';
 

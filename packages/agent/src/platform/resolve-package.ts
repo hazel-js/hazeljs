@@ -6,10 +6,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import type { AgentDna, MarketplaceAgentPackage } from '../dna/agent-dna';
 import { assertValidMarketplacePackage } from '../dna/agent-dna';
-import {
-  LocalFsAgentRegistry,
-  defaultRegistryRoot,
-} from '../store/local-fs-registry';
+import { LocalFsAgentRegistry, defaultRegistryRoot } from '../store/local-fs-registry';
 import type { AgentPackageRegistry } from '../store/registry';
 import {
   projectAgentsDir,
@@ -61,10 +58,7 @@ function loadPackageFile(filePath: string): MarketplaceAgentPackage {
   return raw;
 }
 
-function tryResolveFromProject(
-  projectRoot: string,
-  ref: PackageRef
-): ResolvedPackage | undefined {
+function tryResolveFromProject(projectRoot: string, ref: PackageRef): ResolvedPackage | undefined {
   const lock = readProjectLock(projectRoot);
   const entry = lock[ref.name];
   if (!entry) {
@@ -158,9 +152,7 @@ export function createCompositePackageResolver(
     if (projectRoot) {
       const fromProject = tryResolveFromProject(projectRoot, ref);
       if (fromProject) return fromProject;
-      attempts.push(
-        `project ${path.join(projectRoot, '.hazel', 'agents')} (lock/materialized)`
-      );
+      attempts.push(`project ${path.join(projectRoot, '.hazel', 'agents')} (lock/materialized)`);
     }
 
     if (registryRoot) {

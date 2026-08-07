@@ -47,9 +47,7 @@ function deploymentDoc(overrides?: Record<string, unknown>) {
 
 describe('platform schemas', () => {
   it('parses AgentDefinition and AgentDeployment from JSON', () => {
-    const docs = parsePlatformDocuments(
-      JSON.stringify([definitionDoc(), deploymentDoc()])
-    );
+    const docs = parsePlatformDocuments(JSON.stringify([definitionDoc(), deploymentDoc()]));
     expect(docs).toHaveLength(2);
     expect(docs[0]!.kind).toBe('AgentDefinition');
     expect(docs[1]!.kind).toBe('AgentDeployment');

@@ -7,10 +7,7 @@ import {
   defaultRegistryRoot,
   type LocalFsAgentRegistryOptions,
 } from './local-fs-registry';
-import {
-  HttpAgentPackageRegistry,
-  type HttpAgentPackageRegistryOptions,
-} from './http-registry';
+import { HttpAgentPackageRegistry, type HttpAgentPackageRegistryOptions } from './http-registry';
 import { InMemoryAgentPackageRegistry } from './in-memory-registry';
 import type { AgentPackageRegistry } from './registry';
 import type { MarketplaceAgentPackage } from '../dna/agent-dna';

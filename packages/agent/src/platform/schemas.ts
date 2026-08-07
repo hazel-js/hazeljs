@@ -31,7 +31,9 @@ function isRecord(v: unknown): v is Record<string, unknown> {
 function requireString(obj: Record<string, unknown>, key: string, path: string): string {
   const v = obj[key];
   if (typeof v !== 'string' || !v.trim()) {
-    throw new PlatformValidationError(`Invalid ${path}`, [`${path}.${key} must be a non-empty string`]);
+    throw new PlatformValidationError(`Invalid ${path}`, [
+      `${path}.${key} must be a non-empty string`,
+    ]);
   }
   return v.trim();
 }
@@ -52,9 +54,7 @@ function parseMetadata(raw: unknown, path: string): PlatformResource['metadata']
     if (!isRecord(raw.labels)) {
       throw new PlatformValidationError(`Invalid ${path}.metadata.labels`);
     }
-    meta.labels = Object.fromEntries(
-      Object.entries(raw.labels).map(([k, v]) => [k, String(v)])
-    );
+    meta.labels = Object.fromEntries(Object.entries(raw.labels).map(([k, v]) => [k, String(v)]));
   }
   if (raw.annotations !== undefined) {
     if (!isRecord(raw.annotations)) {
@@ -83,7 +83,10 @@ function parsePackageRef(raw: unknown, path: string): { name: string; version?: 
   return ref;
 }
 
-function parseResourceRef(raw: unknown, path: string): {
+function parseResourceRef(
+  raw: unknown,
+  path: string
+): {
   name: string;
   namespace?: string;
   kind?: string;
@@ -144,7 +147,8 @@ function parseAgentDefinition(doc: Record<string, unknown>): AgentDefinition {
 
   const spec: AgentDefinition['spec'] = {};
   if (dna) spec.dna = dna;
-  if (hasPkg) spec.packageRef = parsePackageRef(specRaw.packageRef, 'AgentDefinition.spec.packageRef');
+  if (hasPkg)
+    spec.packageRef = parsePackageRef(specRaw.packageRef, 'AgentDefinition.spec.packageRef');
   if (specRaw.policyRefs !== undefined) {
     if (!Array.isArray(specRaw.policyRefs)) {
       throw new PlatformValidationError('Invalid AgentDefinition.spec.policyRefs');
@@ -297,9 +301,7 @@ function loadRawDocuments(text: string): unknown[] {
     if (errors.length) {
       throw new PlatformValidationError('Invalid YAML document', errors);
     }
-    return all
-      .map((d) => d.toJSON())
-      .filter((v) => v !== null && v !== undefined);
+    return all.map((d) => d.toJSON()).filter((v) => v !== null && v !== undefined);
   } catch (e) {
     if (e instanceof PlatformValidationError) throw e;
     throw new PlatformValidationError('Invalid YAML document', [

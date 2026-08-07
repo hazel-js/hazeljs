@@ -145,11 +145,7 @@ export interface DeploymentBackend {
   delete(ref: ResourceRef): Promise<BackendStatus>;
 }
 
-export function resourceKey(
-  kind: string,
-  name: string,
-  namespace = 'default'
-): string {
+export function resourceKey(kind: string, name: string, namespace = 'default'): string {
   return `${namespace}/${kind}/${name}`;
 }
 

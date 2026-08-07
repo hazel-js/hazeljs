@@ -11,17 +11,11 @@
  * Auth: Bearer token via Authorization header (HAZEL_REGISTRY_TOKEN).
  */
 
-import {
-  assertValidMarketplacePackage,
-  type MarketplaceAgentPackage,
-} from '../dna/agent-dna';
+import { assertValidMarketplacePackage, type MarketplaceAgentPackage } from '../dna/agent-dna';
 import type { PackageSummary } from './local-fs-registry';
 import type { AgentPackageRegistry, RegistryDoctorReport } from './registry';
 
-export type RegistryFetch = (
-  input: string | URL,
-  init?: RequestInit
-) => Promise<Response>;
+export type RegistryFetch = (input: string | URL, init?: RequestInit) => Promise<Response>;
 
 export interface HttpAgentPackageRegistryOptions {
   /** Base URL, e.g. https://registry.hazeljs.cloud */
@@ -119,12 +113,14 @@ export class HttpAgentPackageRegistry implements AgentPackageRegistry {
   }
 
   async list(query?: string): Promise<PackageSummary[]> {
-    const q = query?.trim()
-      ? `?q=${encodeURIComponent(query.trim())}`
-      : '';
+    const q = query?.trim() ? `?q=${encodeURIComponent(query.trim())}` : '';
     const { data } = await this.request('GET', `/v1/packages${q}`);
     if (Array.isArray(data)) return data as PackageSummary[];
-    if (data && typeof data === 'object' && Array.isArray((data as { packages?: unknown }).packages)) {
+    if (
+      data &&
+      typeof data === 'object' &&
+      Array.isArray((data as { packages?: unknown }).packages)
+    ) {
       return (data as { packages: PackageSummary[] }).packages;
     }
     return [];
@@ -169,15 +165,13 @@ export class HttpAgentPackageRegistry implements AgentPackageRegistry {
 /**
  * Build a fetch mock backed by an in-memory registry (unit tests / local Cloud stub).
  */
-export function createMemoryRegistryFetch(
-  memory: {
-    publish(pkg: MarketplaceAgentPackage): Promise<void>;
-    get(name: string, version?: string): Promise<MarketplaceAgentPackage>;
-    list(query?: string): Promise<PackageSummary[]>;
-    remove(name: string, version?: string): Promise<void>;
-    doctor(): Promise<RegistryDoctorReport>;
-  }
-): RegistryFetch {
+export function createMemoryRegistryFetch(memory: {
+  publish(pkg: MarketplaceAgentPackage): Promise<void>;
+  get(name: string, version?: string): Promise<MarketplaceAgentPackage>;
+  list(query?: string): Promise<PackageSummary[]>;
+  remove(name: string, version?: string): Promise<void>;
+  doctor(): Promise<RegistryDoctorReport>;
+}): RegistryFetch {
   return async (input: string | URL, init?: RequestInit): Promise<Response> => {
     const url = typeof input === 'string' ? input : input.href;
     const method = (init?.method ?? 'GET').toUpperCase();
@@ -208,14 +202,15 @@ export function createMemoryRegistryFetch(
         const name = decodeURIComponent(getMatch[1]!);
         const version = getMatch[2]
           ? decodeURIComponent(getMatch[2])
-          : u.searchParams.get('version') ?? undefined;
+          : (u.searchParams.get('version') ?? undefined);
         const pkg = await memory.get(name, version ?? undefined);
         return json(200, pkg);
       }
       if (method === 'DELETE' && getMatch) {
         const name = decodeURIComponent(getMatch[1]!);
-        const version =
-          getMatch[2] ? decodeURIComponent(getMatch[2]) : u.searchParams.get('version') ?? undefined;
+        const version = getMatch[2]
+          ? decodeURIComponent(getMatch[2])
+          : (u.searchParams.get('version') ?? undefined);
         await memory.remove(name, version ?? undefined);
         return json(200, { ok: true });
       }

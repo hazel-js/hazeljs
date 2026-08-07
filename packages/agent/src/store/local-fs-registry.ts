@@ -6,10 +6,7 @@
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import {
-  assertValidMarketplacePackage,
-  type MarketplaceAgentPackage,
-} from '../dna/agent-dna';
+import { assertValidMarketplacePackage, type MarketplaceAgentPackage } from '../dna/agent-dna';
 import { saveMarketplacePackage } from '../dna/marketplace';
 import { sanitizePackageName } from './package-name';
 
@@ -146,9 +143,7 @@ export class LocalFsAgentRegistry {
     if (!query?.trim()) return index.packages;
     const q = query.trim().toLowerCase();
     return index.packages.filter(
-      (p) =>
-        p.name.toLowerCase().includes(q) ||
-        (p.description?.toLowerCase().includes(q) ?? false)
+      (p) => p.name.toLowerCase().includes(q) || (p.description?.toLowerCase().includes(q) ?? false)
     );
   }
 
@@ -158,8 +153,7 @@ export class LocalFsAgentRegistry {
     if (!entry) {
       throw new Error(`Package not found in local registry: ${name}`);
     }
-    const version =
-      !rangeOrTag || rangeOrTag === 'latest' ? entry.latest : rangeOrTag;
+    const version = !rangeOrTag || rangeOrTag === 'latest' ? entry.latest : rangeOrTag;
     if (!entry.versions.includes(version)) {
       throw new Error(
         `Version ${version} not found for ${name} (have: ${entry.versions.join(', ')})`

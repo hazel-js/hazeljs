@@ -122,7 +122,9 @@ export function validateMarketplacePackage(pkg: unknown): ValidationResult {
 }
 
 /** Assert package is valid or throw with joined errors. */
-export function assertValidMarketplacePackage(pkg: unknown): asserts pkg is MarketplaceAgentPackage {
+export function assertValidMarketplacePackage(
+  pkg: unknown
+): asserts pkg is MarketplaceAgentPackage {
   const result = validateMarketplacePackage(pkg);
   if (!result.ok) {
     throw new Error(`Invalid marketplace package: ${result.errors.join('; ')}`);

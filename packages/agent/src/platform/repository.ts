@@ -51,7 +51,10 @@ export class InMemoryResourceRepository implements ResourceRepository {
     const out: PlatformResource[] = [];
     for (const resource of this.store.values()) {
       if (filter?.kind && resource.kind !== filter.kind) continue;
-      if (filter?.namespace !== undefined && metaNamespace(resource.metadata) !== filter.namespace) {
+      if (
+        filter?.namespace !== undefined &&
+        metaNamespace(resource.metadata) !== filter.namespace
+      ) {
         continue;
       }
       out.push(clone(resource));
@@ -199,10 +202,7 @@ export function serializeRepository(repo: ResourceRepository): string {
 }
 
 /** Hydrate an in-memory repository from a prior serializeRepository snapshot. */
-export function hydrateRepository(
-  repo: InMemoryResourceRepository,
-  raw: string
-): void {
+export function hydrateRepository(repo: InMemoryResourceRepository, raw: string): void {
   const parsed = JSON.parse(raw) as { items?: PlatformResource[] };
   repo.replaceAll(parsed.items ?? []);
 }

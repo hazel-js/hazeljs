@@ -4,10 +4,7 @@
 
 import type { ResolvedAgentDeployment } from '../resources';
 import { metaNamespace } from '../resources';
-import {
-  isKubernetesBackendExtension,
-  type KubernetesBackendExtension,
-} from './kubernetes-types';
+import { isKubernetesBackendExtension, type KubernetesBackendExtension } from './kubernetes-types';
 
 export const HAZEL_K8S_LABEL_MANAGED = 'agent.hazeljs.dev/managed';
 export const HAZEL_K8S_LABEL_DEFINITION = 'agent.hazeljs.dev/definition';
@@ -24,11 +21,13 @@ export interface BuiltKubernetesWorkload {
 }
 
 function sanitizeLabelValue(value: string): string {
-  return value
-    .toLowerCase()
-    .replace(/[^a-z0-9._-]/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 63) || 'x';
+  return (
+    value
+      .toLowerCase()
+      .replace(/[^a-z0-9._-]/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 63) || 'x'
+  );
 }
 
 export function readKubernetesExtension(
@@ -52,13 +51,8 @@ export function buildKubernetesDeploymentManifest(
 ): BuiltKubernetesWorkload {
   const ext = extension ?? readKubernetesExtension(input);
   const name = input.deployment.metadata.name;
-  const namespace =
-    ext.namespace?.trim() ||
-    metaNamespace(input.deployment.metadata);
-  const replicas =
-    ext.replicas ??
-    input.deployment.spec.replicas ??
-    1;
+  const namespace = ext.namespace?.trim() || metaNamespace(input.deployment.metadata);
+  const replicas = ext.replicas ?? input.deployment.spec.replicas ?? 1;
   const definitionName = input.definition.definition.metadata.name;
   const dnaName = input.definition.dna.name;
   const containerName = ext.containerName ?? 'agent';

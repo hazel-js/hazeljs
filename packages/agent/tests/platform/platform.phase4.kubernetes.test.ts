@@ -69,12 +69,12 @@ describe('platform phase 4 — kubernetes backend spike', () => {
     const meta = built.manifest.metadata as { labels: Record<string, string> };
     expect(meta.labels[HAZEL_K8S_LABEL_MANAGED]).toBe('true');
     const spec = built.manifest.spec as {
-      template: { spec: { nodeSelector?: Record<string, string>; containers: Array<{ image: string }> } };
+      template: {
+        spec: { nodeSelector?: Record<string, string>; containers: Array<{ image: string }> };
+      };
     };
     expect(spec.template.spec.nodeSelector?.workload).toBe('agents');
-    expect(spec.template.spec.containers[0]!.image).toBe(
-      'ghcr.io/hazel-js/support-agent:1.0.0'
-    );
+    expect(spec.template.spec.containers[0]!.image).toBe('ghcr.io/hazel-js/support-agent:1.0.0');
     // Core schema must not require kubernetes fields — they live under backend.kubernetes
     expect(JSON.stringify(built.manifest)).not.toMatch(/AgentDefinition/);
   });

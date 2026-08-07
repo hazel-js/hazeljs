@@ -33,8 +33,16 @@ export interface PlatformEvent {
 }
 
 export interface PlatformEventSink {
-  emit(event: Omit<PlatformEvent, 'id' | 'timestamp'> & Partial<Pick<PlatformEvent, 'id' | 'timestamp'>>): void;
-  list(filter?: { type?: PlatformEventType; kind?: string; name?: string; limit?: number }): PlatformEvent[];
+  emit(
+    event: Omit<PlatformEvent, 'id' | 'timestamp'> &
+      Partial<Pick<PlatformEvent, 'id' | 'timestamp'>>
+  ): void;
+  list(filter?: {
+    type?: PlatformEventType;
+    kind?: string;
+    name?: string;
+    limit?: number;
+  }): PlatformEvent[];
 }
 
 function newId(): string {
@@ -45,7 +53,8 @@ export class InMemoryPlatformEventSink implements PlatformEventSink {
   private readonly events: PlatformEvent[] = [];
 
   emit(
-    event: Omit<PlatformEvent, 'id' | 'timestamp'> & Partial<Pick<PlatformEvent, 'id' | 'timestamp'>>
+    event: Omit<PlatformEvent, 'id' | 'timestamp'> &
+      Partial<Pick<PlatformEvent, 'id' | 'timestamp'>>
   ): void {
     this.events.push({
       id: event.id ?? newId(),
@@ -99,7 +108,8 @@ export class FilePlatformEventSink implements PlatformEventSink {
   }
 
   emit(
-    event: Omit<PlatformEvent, 'id' | 'timestamp'> & Partial<Pick<PlatformEvent, 'id' | 'timestamp'>>
+    event: Omit<PlatformEvent, 'id' | 'timestamp'> &
+      Partial<Pick<PlatformEvent, 'id' | 'timestamp'>>
   ): void {
     const full: PlatformEvent = {
       id: event.id ?? newId(),

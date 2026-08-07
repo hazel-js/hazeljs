@@ -2,11 +2,7 @@ import { Command } from 'commander';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import {
-  listAgentTemplates,
-  scaffoldAgentProject,
-  type AgentTemplateId,
-} from './agent-templates';
+import { listAgentTemplates, scaffoldAgentProject, type AgentTemplateId } from './agent-templates';
 
 const DEFAULT_RUN_STORE = path.join('.hazel', 'agent-runs.json');
 const DEFAULT_DURABLE_DIR = path.join('.hazel', 'runs');
@@ -59,10 +55,7 @@ export function registerAgentCommand(program: Command): void {
     .option('-f, --force', 'Allow non-empty destination')
     .option('--json', 'Print machine-readable result')
     .action(
-      (
-        name: string,
-        opts: { template: string; dest: string; force?: boolean; json?: boolean }
-      ) => {
+      (name: string, opts: { template: string; dest: string; force?: boolean; json?: boolean }) => {
         try {
           const destDir = path.resolve(process.cwd(), opts.dest, name);
           const result = scaffoldAgentProject({
@@ -591,15 +584,9 @@ export function registerAgentCommand(program: Command): void {
 
   agent
     .command('apply')
-    .description(
-      'Apply declarative Agent OS platform resources (Definition / Deployment / Run)'
-    )
+    .description('Apply declarative Agent OS platform resources (Definition / Deployment / Run)')
     .requiredOption('-f, --file <path>', 'Manifest file (JSON or YAML)')
-    .option(
-      '--store <path>',
-      'Platform resource store path',
-      DEFAULT_PLATFORM_STORE
-    )
+    .option('--store <path>', 'Platform resource store path', DEFAULT_PLATFORM_STORE)
     .option('--registry <path>', 'Local package registry root for packageRef resolution')
     .option('--project <path>', 'Project root for .hazel/agents packageRef resolution', '.')
     .action(async (opts: { file: string; store: string; registry?: string; project: string }) => {
@@ -612,9 +599,7 @@ export function registerAgentCommand(program: Command): void {
         const platform = createLocalPlatform({
           storePath: path.resolve(opts.store),
           projectRoot,
-          registryRoot: opts.registry
-            ? path.resolve(opts.registry)
-            : defaultRegistryRoot(),
+          registryRoot: opts.registry ? path.resolve(opts.registry) : defaultRegistryRoot(),
         });
         const results = [];
         for (const doc of docs) {
@@ -689,9 +674,7 @@ export function registerAgentCommand(program: Command): void {
               return;
             }
             // eslint-disable-next-line no-console
-            console.log(
-              JSON.stringify(opts.summary ? summarizeResource(found) : found, null, 2)
-            );
+            console.log(JSON.stringify(opts.summary ? summarizeResource(found) : found, null, 2));
             return;
           }
           const items = platform.repo.list({
@@ -732,53 +715,51 @@ export function registerAgentCommand(program: Command): void {
     .option('--project <path>', 'Project root (re-correlate durable runs on describe)', '.')
     .option('--refresh', 'Re-reconcile before describe (refresh durable correlation)')
     .action(
-      async (
-        resource: string,
-        opts: { store: string; project: string; refresh?: boolean }
-      ) => {
-      try {
-        const { createLocalPlatform, parseResourceTypeArg } = await import('@hazeljs/agent');
-        const parsed = parseResourceTypeArg(resource);
-        if (!parsed.name) {
-          throw new Error('describe requires kind/name (e.g. agentdeployment/support)');
-        }
-        const platform = createLocalPlatform({
-          storePath: path.resolve(opts.store),
-          projectRoot: path.resolve(opts.project),
-        });
-        const ns = parsed.namespace ?? 'default';
-        if (opts.refresh) {
-          if (parsed.kind === 'AgentDeployment') {
-            await platform.reconciler.reconcileDeployment(parsed.name, ns);
-          } else if (parsed.kind === 'AgentRun') {
-            await platform.reconciler.reconcileRun(parsed.name, ns);
+      async (resource: string, opts: { store: string; project: string; refresh?: boolean }) => {
+        try {
+          const { createLocalPlatform, parseResourceTypeArg } = await import('@hazeljs/agent');
+          const parsed = parseResourceTypeArg(resource);
+          if (!parsed.name) {
+            throw new Error('describe requires kind/name (e.g. agentdeployment/support)');
           }
-        }
-        const found = platform.repo.get(parsed.kind, parsed.name, ns);
-        if (!found) {
+          const platform = createLocalPlatform({
+            storePath: path.resolve(opts.store),
+            projectRoot: path.resolve(opts.project),
+          });
+          const ns = parsed.namespace ?? 'default';
+          if (opts.refresh) {
+            if (parsed.kind === 'AgentDeployment') {
+              await platform.reconciler.reconcileDeployment(parsed.name, ns);
+            } else if (parsed.kind === 'AgentRun') {
+              await platform.reconciler.reconcileRun(parsed.name, ns);
+            }
+          }
+          const found = platform.repo.get(parsed.kind, parsed.name, ns);
+          if (!found) {
+            // eslint-disable-next-line no-console
+            console.error(`Not found: ${ns}/${parsed.kind}/${parsed.name}`);
+            process.exitCode = 1;
+            return;
+          }
+          const { summarizeResource } = await import('@hazeljs/agent');
           // eslint-disable-next-line no-console
-          console.error(`Not found: ${ns}/${parsed.kind}/${parsed.name}`);
+          console.log(
+            JSON.stringify(
+              {
+                resource: found,
+                summary: summarizeResource(found),
+              },
+              null,
+              2
+            )
+          );
+        } catch (e) {
+          // eslint-disable-next-line no-console
+          console.error(e instanceof Error ? e.message : e);
           process.exitCode = 1;
-          return;
         }
-        const { summarizeResource } = await import('@hazeljs/agent');
-        // eslint-disable-next-line no-console
-        console.log(
-          JSON.stringify(
-            {
-              resource: found,
-              summary: summarizeResource(found),
-            },
-            null,
-            2
-          )
-        );
-      } catch (e) {
-        // eslint-disable-next-line no-console
-        console.error(e instanceof Error ? e.message : e);
-        process.exitCode = 1;
       }
-    });
+    );
 
   agent
     .command('delete')
@@ -852,23 +833,24 @@ export function registerAgentCommand(program: Command): void {
           const platform = createLocalPlatform({
             storePath: path.resolve(opts.store),
             projectRoot,
-            registryRoot: opts.registry
-              ? path.resolve(opts.registry)
-              : defaultRegistryRoot(),
+            registryRoot: opts.registry ? path.resolve(opts.registry) : defaultRegistryRoot(),
             actor: 'cli',
           });
           const namespace = opts.namespace;
 
-          const printTick = (result: {
-            results: Array<{
-              resource: { kind: string; metadata: { name: string; namespace?: string } };
-              ready: boolean;
-              message?: string;
-            }>;
-            ready: number;
-            notReady: number;
-            errors: Array<{ kind: string; name: string; namespace: string; error: string }>;
-          }, tick?: number) => {
+          const printTick = (
+            result: {
+              results: Array<{
+                resource: { kind: string; metadata: { name: string; namespace?: string } };
+                ready: boolean;
+                message?: string;
+              }>;
+              ready: number;
+              notReady: number;
+              errors: Array<{ kind: string; name: string; namespace: string; error: string }>;
+            },
+            tick?: number
+          ) => {
             // eslint-disable-next-line no-console
             console.log(
               JSON.stringify(
@@ -964,4 +946,3 @@ export function registerAgentCommand(program: Command): void {
       }
     );
 }
-

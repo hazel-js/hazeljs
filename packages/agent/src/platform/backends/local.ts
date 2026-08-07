@@ -30,10 +30,7 @@ export class LocalDeploymentBackend implements DeploymentBackend {
     if (backendExt?.kubernetes != null) {
       unsupported.push('spec.backend.kubernetes (use a Kubernetes DeploymentBackend)');
     }
-    if (
-      input.deployment.spec.replicas != null &&
-      input.deployment.spec.replicas > 1
-    ) {
+    if (input.deployment.spec.replicas != null && input.deployment.spec.replicas > 1) {
       unsupported.push('replicas > 1 (local backend is single-process)');
     }
 

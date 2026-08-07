@@ -20,14 +20,8 @@ async function resolveRegistry(opts: RegistryCliOpts) {
 function registryOptions(cmd: Command): Command {
   return cmd
     .option('--registry <dir>', 'Local registry root (default: ~/.hazel/registry)')
-    .option(
-      '--remote <url>',
-      'Hosted registry base URL (Cloud Team SKU; env HAZEL_REGISTRY_URL)'
-    )
-    .option(
-      '--token <token>',
-      'Bearer token for hosted registry (env HAZEL_REGISTRY_TOKEN)'
-    );
+    .option('--remote <url>', 'Hosted registry base URL (Cloud Team SKU; env HAZEL_REGISTRY_URL)')
+    .option('--token <token>', 'Bearer token for hosted registry (env HAZEL_REGISTRY_TOKEN)');
 }
 
 async function publishAction(file: string, opts: RegistryCliOpts): Promise<void> {
@@ -52,10 +46,7 @@ async function publishAction(file: string, opts: RegistryCliOpts): Promise<void>
   );
 }
 
-async function installAction(
-  spec: string,
-  opts: RegistryCliOpts & { cwd: string }
-): Promise<void> {
+async function installAction(spec: string, opts: RegistryCliOpts & { cwd: string }): Promise<void> {
   const { loadMarketplacePackage, materializeAgentPackage, parsePackageSpec } =
     await import('@hazeljs/agent');
 
@@ -205,11 +196,7 @@ export function registerStoreCommand(program: Command): void {
       const report = await registry.doctor();
       // eslint-disable-next-line no-console
       console.log(
-        JSON.stringify(
-          { ...report, kind: registry.kind, registry: registry.location },
-          null,
-          2
-        )
+        JSON.stringify({ ...report, kind: registry.kind, registry: registry.location }, null, 2)
       );
       if (!report.ok) process.exitCode = 1;
     } catch (e) {

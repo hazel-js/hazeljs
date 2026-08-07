@@ -77,8 +77,8 @@ describe('agent templates scaffold', () => {
     const dest = path.join(tmp, 'taken');
     fs.mkdirSync(dest);
     fs.writeFileSync(path.join(dest, 'x.txt'), 'x');
-    expect(() =>
-      scaffoldAgentProject({ name: 'taken', destDir: dest, template: 'bare' })
-    ).toThrow(/not empty/);
+    expect(() => scaffoldAgentProject({ name: 'taken', destDir: dest, template: 'bare' })).toThrow(
+      /not empty/
+    );
   });
 });

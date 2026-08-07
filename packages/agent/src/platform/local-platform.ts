@@ -31,10 +31,7 @@ import {
 } from './resolve-package';
 import { createAgentPackageRegistry } from '../store/create-registry';
 import type { AgentPackageRegistry } from '../store/registry';
-import {
-  createFileDurableRunLookup,
-  type DurableRunLookup,
-} from './run-correlation';
+import { createFileDurableRunLookup, type DurableRunLookup } from './run-correlation';
 import type { AgentDeployment, DeploymentBackend } from './resources';
 import { conditionOf, metaNamespace } from './resources';
 import type { PolicyRule } from '../policies/policy.engine';
@@ -122,9 +119,7 @@ function resolveEventsSink(
   return new FilePlatformEventSink(eventsPath);
 }
 
-function resolveAdmission(
-  options: CreateLocalPlatformOptions
-): AdmissionController | undefined {
+function resolveAdmission(options: CreateLocalPlatformOptions): AdmissionController | undefined {
   if (options.admission === false) return undefined;
   if (options.admission && typeof (options.admission as AdmissionController).admit === 'function') {
     return options.admission as AdmissionController;
