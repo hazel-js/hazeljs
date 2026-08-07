@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/prisma",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Prisma ORM integration for HazelJS framework",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -49,7 +49,7 @@
   },
   "homepage": "https://hazeljs.ai",
   "peerDependencies": {
-    "@hazeljs/core": "^2.0.0"
+    "@hazeljs/core": "^2.0.1"
   },
   "gitHead": "083b94562940a86c8e0a8cd81988d04b541608ac"
 }

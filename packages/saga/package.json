@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/saga",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Saga pattern implementation for HazelJS - Orchestration and Choreography for distributed transactions",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -20,12 +20,12 @@
     "reflect-metadata": "^0.2.2"
   },
   "peerDependencies": {
-    "@hazeljs/core": "^2.0.0",
-    "@hazeljs/event-emitter": "^2.0.0"
+    "@hazeljs/core": "^2.0.1",
+    "@hazeljs/event-emitter": "^2.0.1"
   },
   "devDependencies": {
-    "@hazeljs/core": "^2.0.0",
-    "@hazeljs/event-emitter": "^2.0.0",
+    "@hazeljs/core": "^2.0.1",
+    "@hazeljs/event-emitter": "^2.0.1",
     "@types/jest": "^29.5.14",
     "@types/node": "^20.19.39",
     "@typescript-eslint/eslint-plugin": "^8.58.0",
