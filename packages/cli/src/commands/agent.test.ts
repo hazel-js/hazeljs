@@ -13,7 +13,21 @@ describe('registerAgentCommand (AOS-011 + templates)', () => {
     expect(agent).toBeDefined();
     const names = agent!.commands.map((c) => c.name());
     expect(names).toEqual(
-      expect.arrayContaining(['install', 'dna', 'run', 'logs', 'doctor', 'runs', 'new', 'templates'])
+      expect.arrayContaining([
+        'install',
+        'dna',
+        'run',
+        'logs',
+        'doctor',
+        'runs',
+        'new',
+        'templates',
+        'apply',
+        'get',
+        'describe',
+        'delete',
+        'events',
+      ])
     );
   });
 });

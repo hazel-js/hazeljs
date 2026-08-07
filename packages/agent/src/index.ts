@@ -98,3 +98,6 @@ export * from './identity/agent-identity';
 export * from './policies/policy.service';
 export * from './budget/run-budget';
 export * from './scheduler/agent-scheduler';
+
+// Agent OS Platform — declarative control plane (local-first)
+export * from './platform';

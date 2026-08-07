@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "lib": ["ES2020"],
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "resolveJsonModule": true,
+    "noEmit": true,
+    "types": ["jest", "node"],
+    "baseUrl": "..",
+    "paths": {
+      "@hazeljs/eval": ["src/testing/mocks/hazeljs-eval.ts"],
+      "@hazeljs/prompts": ["../prompts/src"],
+      "@hazeljs/rag": ["../rag/src"],
+      "@hazeljs/resilience": ["../resilience/src"]
+    }
+  },
+  "include": ["./**/*.ts", "../src/**/*.ts"],
+  "exclude": ["node_modules", "../dist"]
+}

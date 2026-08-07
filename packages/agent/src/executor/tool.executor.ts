@@ -370,8 +370,16 @@ export class ToolExecutor {
   ): Promise<unknown> {
     let timeoutId: NodeJS.Timeout | undefined;
     try {
+      // Prefer the live instance method so @Delegate patches (and other runtime
+      // replacements on tool.target[propertyKey]) are honored. tool.method is the
+      // prototype function captured at decorate time.
+      const target = tool.target as Record<string, unknown> | undefined;
+      const live =
+        target && typeof target[tool.propertyKey] === 'function'
+          ? (target[tool.propertyKey] as Function)
+          : tool.method;
       const result = await Promise.race([
-        tool.method.call(tool.target, input),
+        live.call(tool.target, input),
         new Promise((_, reject) => {
           timeoutId = setTimeout(
             () => reject(new Error(`Tool execution timeout after ${timeout}ms`)),
