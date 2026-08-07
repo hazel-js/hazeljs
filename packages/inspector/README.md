@@ -9,6 +9,7 @@ Framework-aware runtime inspector for HazelJS. Explore metadata, routes, modules
 - **DevTools UI** – Overview dashboard, search, filters, detail views, runtime stats
 - **JSON API** – Consume inspector data programmatically
 - **Agent OS timelines** – SSE live stream + JSON replay for agent execution steps
+- **Agent Runs** – Durable `AgentRunRepository` list/detail/cancel + in-process metrics/cost strip
 
 ## Installation
 
@@ -53,13 +54,18 @@ Then run your app and open:
 
 When agents are registered, Inspector exposes live debugging endpoints:
 
-| Endpoint                             | Description                                       |
-| ------------------------------------ | ------------------------------------------------- |
-| `GET /__hazel/agents/:name/stream`   | SSE stream of timeline steps while the agent runs |
-| `GET /__hazel/agents/:name/timeline` | JSON replay of recorded timeline steps            |
-| `POST /__hazel/agents/:name/run`     | Run the agent from the UI (optional input prompt) |
+| Endpoint                             | Description                                                   |
+| ------------------------------------ | ------------------------------------------------------------- |
+| `GET /__hazel/agents/:name/stream`   | SSE stream of timeline steps while the agent runs             |
+| `GET /__hazel/agents/:name/timeline` | JSON replay of recorded timeline steps                        |
+| `POST /__hazel/agents/:name/run`     | Run the agent from the UI (optional input prompt)             |
+| `GET /__hazel/runs`                  | List durable `AgentRun` records (`agentName`, `status` query) |
+| `GET /__hazel/runs/:runId`           | Run detail + timeline steps for that execution                |
+| `POST /__hazel/runs/:runId/cancel`   | Cancel in-flight + mark run cancelled                         |
+| `GET /__hazel/agents/metrics`        | In-process metrics / cost summary                             |
 
-In the Agents panel, use **Run** (executes + streams) or **Timeline** (loads history and opens the live SSE feed).
+In the Agents panel, use **Run** (executes + streams) or **Timeline** (loads history and opens the live SSE feed).  
+Open **Agent Runs** for durable repository records and the cost/metrics strip.
 
 ```bash
 # Replay last timeline

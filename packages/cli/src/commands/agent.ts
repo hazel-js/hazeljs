@@ -2,21 +2,102 @@ import { Command } from 'commander';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
+import { listAgentTemplates, scaffoldAgentProject, type AgentTemplateId } from './agent-templates';
 
 const DEFAULT_RUN_STORE = path.join('.hazel', 'agent-runs.json');
 const DEFAULT_DURABLE_DIR = path.join('.hazel', 'runs');
 const DEFAULT_TIMELINE = path.join('.hazel', 'runs', 'timeline.jsonl');
 
+const DEFAULT_PLATFORM_STORE = path.join('.hazel', 'platform', 'resources.json');
+
 /**
+ * `hazel agent new` — scaffold Agent OS / DNA templates (G2 template unification).
  * `hazel agent install <file.dna.json>` — validate / print marketplace install plan.
  * `hazel agent run` — live execute from DNA (AOS-011).
+ * `hazel agent apply|get|describe|delete|reconcile|events` — declarative platform resources (local control plane).
  * `hazel agent logs` / `doctor` — timeline + environment checks.
  * `hazel agent runs list|inspect|cancel|resume|approve` — durable store ops.
  */
 export function registerAgentCommand(program: Command): void {
   const agent = program
     .command('agent')
-    .description('Agent OS DNA / runtime / marketplace helpers');
+    .description('Agent OS DNA / runtime / marketplace / platform helpers');
+
+  agent
+    .command('templates')
+    .description('List Agent OS / DNA project templates')
+    .option('--json', 'Print JSON')
+    .action((opts: { json?: boolean }) => {
+      const templates = listAgentTemplates();
+      if (opts.json) {
+        // eslint-disable-next-line no-console
+        console.log(JSON.stringify({ ok: true, templates }, null, 2));
+        return;
+      }
+      // eslint-disable-next-line no-console
+      console.log('\nAgent OS templates (`hazel agent new <name> --template <id>`):\n');
+      for (const t of templates) {
+        // eslint-disable-next-line no-console
+        console.log(`  ${t.id.padEnd(12)} ${t.label}`);
+        // eslint-disable-next-line no-console
+        console.log(`               ${t.description}\n`);
+      }
+    });
+
+  agent
+    .command('new')
+    .description(
+      'Scaffold an Agent OS / DNA project (bare | agent-os | skillgate). DNA = contract; app tools = implementation.'
+    )
+    .argument('<name>', 'Project directory / package name')
+    .option('-t, --template <id>', 'Template: bare | agent-os | skillgate', 'agent-os')
+    .option('-d, --dest <dir>', 'Parent directory', '.')
+    .option('-f, --force', 'Allow non-empty destination')
+    .option('--json', 'Print machine-readable result')
+    .action(
+      (name: string, opts: { template: string; dest: string; force?: boolean; json?: boolean }) => {
+        try {
+          const destDir = path.resolve(process.cwd(), opts.dest, name);
+          const result = scaffoldAgentProject({
+            name,
+            destDir,
+            template: opts.template as AgentTemplateId,
+            force: opts.force,
+          });
+          const payload = {
+            ok: true,
+            action: 'agent-new',
+            ...result,
+            next: [
+              `cd ${path.relative(process.cwd(), result.path) || '.'}`,
+              result.template === 'bare'
+                ? 'npx hazel agent run dna/agent.marketplace.json "hello"'
+                : 'npm install && npm run dev',
+              'npx hazel store publish dna/agent.marketplace.json',
+            ],
+          };
+          // eslint-disable-next-line no-console
+          console.log(
+            opts.json
+              ? JSON.stringify(payload, null, 2)
+              : [
+                  `✓ Created Agent OS project (${result.template})`,
+                  `  ${result.path}`,
+                  `  files: ${result.files.length}`,
+                  '',
+                  'Next:',
+                  ...payload.next.map((l) => `  ${l}`),
+                  '',
+                  'Note: `hazel agent run` on DNA uses stub tools. Use the app (`npm run dev`) for real @Tool / Skillgate handlers.',
+                ].join('\n')
+          );
+        } catch (e) {
+          // eslint-disable-next-line no-console
+          console.error(e instanceof Error ? e.message : e);
+          process.exitCode = 1;
+        }
+      }
+    );
 
   agent
     .command('install')
@@ -36,7 +117,7 @@ export function registerAgentCommand(program: Command): void {
               agent: pkg.dna.name,
               tools: pkg.dna.tools.map((t: { name: string }) => t.name),
               hasPolicies: Boolean(pkg.dna.policies?.length),
-              note: 'Call runtime.installAgentPackage(path) in your app to hot-reload',
+              note: 'Validate only. Use hazel store install to materialize into .hazel/agents; call runtime.installAgentPackage(path) to hot-reload',
             },
             null,
             2
@@ -500,4 +581,368 @@ export function registerAgentCommand(program: Command): void {
     .action(async (runId: string, opts: { store: string; dir?: string; by: string }) => {
       await resumeAction(runId, { ...opts, approve: true });
     });
+
+  agent
+    .command('apply')
+    .description('Apply declarative Agent OS platform resources (Definition / Deployment / Run)')
+    .requiredOption('-f, --file <path>', 'Manifest file (JSON or YAML)')
+    .option('--store <path>', 'Platform resource store path', DEFAULT_PLATFORM_STORE)
+    .option('--registry <path>', 'Local package registry root for packageRef resolution')
+    .option('--project <path>', 'Project root for .hazel/agents packageRef resolution', '.')
+    .action(async (opts: { file: string; store: string; registry?: string; project: string }) => {
+      try {
+        const { createLocalPlatform, defaultRegistryRoot, parsePlatformDocuments } =
+          await import('@hazeljs/agent');
+        const text = fs.readFileSync(path.resolve(opts.file), 'utf8');
+        const docs = parsePlatformDocuments(text);
+        const projectRoot = path.resolve(opts.project);
+        const platform = createLocalPlatform({
+          storePath: path.resolve(opts.store),
+          projectRoot,
+          registryRoot: opts.registry ? path.resolve(opts.registry) : defaultRegistryRoot(),
+        });
+        const results = [];
+        for (const doc of docs) {
+          const result = await platform.reconciler.applyResource(doc);
+          results.push({
+            kind: result.resource.kind,
+            name: result.resource.metadata.name,
+            namespace: result.resource.metadata.namespace ?? 'default',
+            generation: result.resource.metadata.generation,
+            ready: result.ready,
+            message: result.message,
+            conditions: result.resource.status?.conditions,
+            resolved: result.resource.status?.backend,
+          });
+        }
+        // eslint-disable-next-line no-console
+        console.log(JSON.stringify({ applied: results.length, results }, null, 2));
+        if (results.some((r) => !r.ready)) process.exitCode = 1;
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.error(e instanceof Error ? e.message : e);
+        process.exitCode = 1;
+      }
+    });
+
+  agent
+    .command('get')
+    .description('List or get platform resources from the local store')
+    .argument('[type]', 'Resource type (e.g. agentdefinitions, agentdeployments)')
+    .argument('[name]', 'Resource name')
+    .option('--store <path>', 'Platform resource store path', DEFAULT_PLATFORM_STORE)
+    .option('-n, --namespace <ns>', 'Namespace filter', 'default')
+    .option('--all-namespaces', 'List across namespaces')
+    .option('--project <path>', 'Project root (durable run correlation)', '.')
+    .option('--summary', 'Print secret-safe summaries instead of full resources')
+    .action(
+      async (
+        type: string | undefined,
+        name: string | undefined,
+        opts: {
+          store: string;
+          namespace: string;
+          allNamespaces?: boolean;
+          project: string;
+          summary?: boolean;
+        }
+      ) => {
+        try {
+          const { createLocalPlatform, parseResourceTypeArg, summarizeResource } =
+            await import('@hazeljs/agent');
+          const platform = createLocalPlatform({
+            storePath: path.resolve(opts.store),
+            projectRoot: path.resolve(opts.project),
+            actor: 'cli',
+          });
+          let kind: string | undefined;
+          let resourceName = name;
+          if (type) {
+            const parsed = parseResourceTypeArg(name ? `${type}/${name}` : type);
+            kind = parsed.kind;
+            resourceName = parsed.name ?? name;
+            if (parsed.namespace && !opts.allNamespaces) {
+              opts.namespace = parsed.namespace;
+            }
+          }
+          if (kind && resourceName) {
+            const found = platform.repo.get(kind, resourceName, opts.namespace);
+            if (!found) {
+              // eslint-disable-next-line no-console
+              console.error(`Not found: ${opts.namespace}/${kind}/${resourceName}`);
+              process.exitCode = 1;
+              return;
+            }
+            // eslint-disable-next-line no-console
+            console.log(JSON.stringify(opts.summary ? summarizeResource(found) : found, null, 2));
+            return;
+          }
+          const items = platform.repo.list({
+            kind,
+            namespace: opts.allNamespaces ? undefined : opts.namespace,
+          });
+          // eslint-disable-next-line no-console
+          console.log(
+            JSON.stringify(
+              {
+                items: opts.summary
+                  ? items.map(summarizeResource)
+                  : items.map((r) => ({
+                      kind: r.kind,
+                      name: r.metadata.name,
+                      namespace: r.metadata.namespace ?? 'default',
+                      generation: r.metadata.generation,
+                      ready: r.status?.conditions?.find((c) => c.type === 'Ready')?.status,
+                    })),
+              },
+              null,
+              2
+            )
+          );
+        } catch (e) {
+          // eslint-disable-next-line no-console
+          console.error(e instanceof Error ? e.message : e);
+          process.exitCode = 1;
+        }
+      }
+    );
+
+  agent
+    .command('describe')
+    .description('Describe a platform resource (spec, status, conditions)')
+    .argument('<resource>', 'kind/name or namespace/kind/name')
+    .option('--store <path>', 'Platform resource store path', DEFAULT_PLATFORM_STORE)
+    .option('--project <path>', 'Project root (re-correlate durable runs on describe)', '.')
+    .option('--refresh', 'Re-reconcile before describe (refresh durable correlation)')
+    .action(
+      async (resource: string, opts: { store: string; project: string; refresh?: boolean }) => {
+        try {
+          const { createLocalPlatform, parseResourceTypeArg } = await import('@hazeljs/agent');
+          const parsed = parseResourceTypeArg(resource);
+          if (!parsed.name) {
+            throw new Error('describe requires kind/name (e.g. agentdeployment/support)');
+          }
+          const platform = createLocalPlatform({
+            storePath: path.resolve(opts.store),
+            projectRoot: path.resolve(opts.project),
+          });
+          const ns = parsed.namespace ?? 'default';
+          if (opts.refresh) {
+            if (parsed.kind === 'AgentDeployment') {
+              await platform.reconciler.reconcileDeployment(parsed.name, ns);
+            } else if (parsed.kind === 'AgentRun') {
+              await platform.reconciler.reconcileRun(parsed.name, ns);
+            }
+          }
+          const found = platform.repo.get(parsed.kind, parsed.name, ns);
+          if (!found) {
+            // eslint-disable-next-line no-console
+            console.error(`Not found: ${ns}/${parsed.kind}/${parsed.name}`);
+            process.exitCode = 1;
+            return;
+          }
+          const { summarizeResource } = await import('@hazeljs/agent');
+          // eslint-disable-next-line no-console
+          console.log(
+            JSON.stringify(
+              {
+                resource: found,
+                summary: summarizeResource(found),
+              },
+              null,
+              2
+            )
+          );
+        } catch (e) {
+          // eslint-disable-next-line no-console
+          console.error(e instanceof Error ? e.message : e);
+          process.exitCode = 1;
+        }
+      }
+    );
+
+  agent
+    .command('delete')
+    .description('Delete a platform resource (deployments clean up the local backend)')
+    .argument('<resource>', 'kind/name or namespace/kind/name')
+    .option('--store <path>', 'Platform resource store path', DEFAULT_PLATFORM_STORE)
+    .action(async (resource: string, opts: { store: string }) => {
+      try {
+        const { createLocalPlatform, parseResourceTypeArg } = await import('@hazeljs/agent');
+        const parsed = parseResourceTypeArg(resource);
+        if (!parsed.name) {
+          throw new Error('delete requires kind/name (e.g. agentdeployment/support)');
+        }
+        const platform = createLocalPlatform({
+          storePath: path.resolve(opts.store),
+          projectRoot: process.cwd(),
+        });
+        const result = await platform.reconciler.deleteResource({
+          kind: parsed.kind,
+          name: parsed.name,
+          namespace: parsed.namespace ?? 'default',
+        });
+        // FileResourceRepository auto-persists; keep save() for compatibility
+        platform.save();
+        // eslint-disable-next-line no-console
+        console.log(
+          JSON.stringify(
+            {
+              deleted: result.deleted,
+              kind: parsed.kind,
+              name: parsed.name,
+              namespace: parsed.namespace ?? 'default',
+              backendMessage: result.backendMessage,
+            },
+            null,
+            2
+          )
+        );
+        if (!result.deleted) process.exitCode = 1;
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.error(e instanceof Error ? e.message : e);
+        process.exitCode = 1;
+      }
+    });
+
+  agent
+    .command('reconcile')
+    .description(
+      'Reconcile all AgentDeployments / AgentRuns in the local platform store (control-plane loop)'
+    )
+    .option('--store <path>', 'Platform resource store path', DEFAULT_PLATFORM_STORE)
+    .option('--project <path>', 'Project root for packageRef / durable run correlation', '.')
+    .option('--registry <path>', 'Local package registry root for packageRef resolution')
+    .option('-n, --namespace <ns>', 'Limit to one namespace')
+    .option('--watch', 'Keep reconciling on an interval until interrupted')
+    .option('--interval <seconds>', 'Watch interval in seconds (default 5)', '5')
+    .action(
+      async (opts: {
+        store: string;
+        project: string;
+        registry?: string;
+        namespace?: string;
+        watch?: boolean;
+        interval: string;
+      }) => {
+        try {
+          const { createLocalPlatform, defaultRegistryRoot, watchLocalPlatform } =
+            await import('@hazeljs/agent');
+          const projectRoot = path.resolve(opts.project);
+          const platform = createLocalPlatform({
+            storePath: path.resolve(opts.store),
+            projectRoot,
+            registryRoot: opts.registry ? path.resolve(opts.registry) : defaultRegistryRoot(),
+            actor: 'cli',
+          });
+          const namespace = opts.namespace;
+
+          const printTick = (
+            result: {
+              results: Array<{
+                resource: { kind: string; metadata: { name: string; namespace?: string } };
+                ready: boolean;
+                message?: string;
+              }>;
+              ready: number;
+              notReady: number;
+              errors: Array<{ kind: string; name: string; namespace: string; error: string }>;
+            },
+            tick?: number
+          ) => {
+            // eslint-disable-next-line no-console
+            console.log(
+              JSON.stringify(
+                {
+                  tick: tick ?? 1,
+                  ready: result.ready,
+                  notReady: result.notReady,
+                  errors: result.errors,
+                  items: result.results.map((r) => ({
+                    kind: r.resource.kind,
+                    name: r.resource.metadata.name,
+                    namespace: r.resource.metadata.namespace ?? 'default',
+                    ready: r.ready,
+                    message: r.message,
+                  })),
+                },
+                null,
+                2
+              )
+            );
+          };
+
+          if (!opts.watch) {
+            const result = await platform.reconcileAll({ namespace });
+            printTick(result);
+            if (result.notReady > 0 || result.errors.length > 0) process.exitCode = 1;
+            return;
+          }
+
+          const seconds = Math.max(1, Number(opts.interval) || 5);
+          const ac = new AbortController();
+          const onSig = () => ac.abort();
+          process.on('SIGINT', onSig);
+          process.on('SIGTERM', onSig);
+          // eslint-disable-next-line no-console
+          console.error(`Watching every ${seconds}s (Ctrl+C to stop)…`);
+          await watchLocalPlatform(platform, {
+            namespace,
+            intervalMs: seconds * 1000,
+            signal: ac.signal,
+            onTick: async (result, tick) => {
+              printTick(result, tick);
+            },
+          });
+          process.off('SIGINT', onSig);
+          process.off('SIGTERM', onSig);
+        } catch (e) {
+          // eslint-disable-next-line no-console
+          console.error(e instanceof Error ? e.message : e);
+          process.exitCode = 1;
+        }
+      }
+    );
+
+  agent
+    .command('events')
+    .description('List platform control-plane events (audit log; no secrets)')
+    .option('--store <path>', 'Platform resource store path', DEFAULT_PLATFORM_STORE)
+    .option('--events <path>', 'Events JSONL path (default: beside store)')
+    .option('--type <type>', 'Filter by event type')
+    .option('--kind <kind>', 'Filter by resource kind')
+    .option('--limit <n>', 'Max events (most recent)', '50')
+    .action(
+      async (opts: {
+        store: string;
+        events?: string;
+        type?: string;
+        kind?: string;
+        limit: string;
+      }) => {
+        try {
+          const { createLocalPlatform } = await import('@hazeljs/agent');
+          const storePath = path.resolve(opts.store);
+          const platform = createLocalPlatform({
+            storePath,
+            eventsPath: opts.events
+              ? path.resolve(opts.events)
+              : path.join(path.dirname(storePath), 'events.jsonl'),
+            actor: 'cli',
+          });
+          const items = platform.events.list({
+            type: opts.type as never,
+            kind: opts.kind,
+            limit: Number(opts.limit) || 50,
+          });
+          // eslint-disable-next-line no-console
+          console.log(JSON.stringify({ items }, null, 2));
+        } catch (e) {
+          // eslint-disable-next-line no-console
+          console.error(e instanceof Error ? e.message : e);
+          process.exitCode = 1;
+        }
+      }
+    );
 }

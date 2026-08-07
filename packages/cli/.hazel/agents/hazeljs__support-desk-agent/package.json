@@ -1,0 +1,49 @@
+{
+  "name": "@hazeljs/support-desk-agent",
+  "version": "1.0.0",
+  "description": "Nordhelm Commerce customer support agent. Looks up orders, tracks shipments, and processes refunds with human approval.",
+  "dna": {
+    "format": "hazeljs.agent.dna",
+    "version": "1.0.0",
+    "name": "support-desk",
+    "description": "Nordhelm Commerce customer support agent. Looks up orders, tracks shipments, and processes refunds with human approval.",
+    "systemPrompt": "You are the Nordhelm Commerce support desk agent.\nBe concise, concrete, and helpful. Always use tools for order facts — never invent tracking numbers or refund IDs.\nWhen a customer wants a refund, look up the order first, then call processRefund.\nEnd with a clear next step for the customer.",
+    "tools": [
+      {
+        "name": "lookupOrder",
+        "description": "Look up order"
+      },
+      {
+        "name": "trackShipment",
+        "description": "Track shipment"
+      },
+      {
+        "name": "processRefund",
+        "description": "Process refund",
+        "requiresApproval": true
+      }
+    ],
+    "policies": [
+      {
+        "id": "refund-needs-approval",
+        "tool": "processRefund",
+        "effect": "require_approval",
+        "priority": 20
+      }
+    ],
+    "contracts": [
+      {
+        "name": "support-desk-slo",
+        "maxLatencyMs": 30000,
+        "fallbackAgent": "safe-desk"
+      }
+    ],
+    "exportedAt": "2026-07-25T18:10:28.995Z"
+  },
+  "readme": "Nordhelm Commerce support desk agent",
+  "keywords": [
+    "support",
+    "ecommerce",
+    "agent-os"
+  ]
+}

@@ -991,6 +991,143 @@ async function runAgent(name: string) {
   }
 }
 
+function renderRunTimelineSteps(steps: Record<string, unknown>[]) {
+  const el = document.getElementById('agent-run-timeline');
+  if (!el) return;
+  if (!steps.length) {
+    el.innerHTML = '<p class="muted">No timeline steps for this run.</p>';
+    return;
+  }
+  el.innerHTML = steps
+    .map((s) => {
+      const type = escapeHtml(String(s.type ?? ''));
+      const state = s.state ? `<span class="badge">${escapeHtml(String(s.state))}</span>` : '';
+      const dur =
+        s.durationMs != null
+          ? `<span class="muted">${escapeHtml(String(s.durationMs))}ms</span>`
+          : '';
+      const cost =
+        s.cost != null ? `<span class="muted">$${escapeHtml(String(s.cost))}</span>` : '';
+      return `<div class="timeline-step"><div class="timeline-step-head"><strong>${type}</strong> ${state} ${dur} ${cost}</div></div>`;
+    })
+    .join('');
+}
+
+async function loadAgentMetricsPanel() {
+  const el = document.getElementById('agent-runs-cost');
+  if (!el) return;
+  try {
+    const res = await fetch(`${BASE}/agents/metrics`);
+    const data = await res.json();
+    if (!res.ok) {
+      el.textContent = data.error ?? 'Metrics unavailable';
+      return;
+    }
+    const m = (data.metrics ?? {}) as Record<string, unknown>;
+    const exec = (m.executions ?? {}) as Record<string, unknown>;
+    const perf = (m.performance ?? {}) as Record<string, unknown>;
+    const llm = (m.llm ?? {}) as Record<string, unknown>;
+    el.innerHTML = [
+      `<strong>Cost / metrics</strong>`,
+      exec.total != null ? `executions: ${escapeHtml(String(exec.total))}` : '',
+      exec.successRate != null ? `success: ${escapeHtml(String(exec.successRate))}` : '',
+      perf.averageDuration != null
+        ? `avg latency: ${escapeHtml(String(perf.averageDuration))}ms`
+        : '',
+      llm.totalTokens != null ? `tokens: ${escapeHtml(String(llm.totalTokens))}` : '',
+      data.summary ? `<span class="muted">${escapeHtml(String(data.summary))}</span>` : '',
+    ]
+      .filter(Boolean)
+      .join(' · ');
+  } catch (e) {
+    el.textContent = String(e);
+  }
+}
+
+async function loadAgentRuns() {
+  const table = document.getElementById('agent-runs-table');
+  if (!table) return;
+  const agentName = (
+    document.getElementById('agent-runs-filter-agent') as HTMLInputElement | null
+  )?.value.trim();
+  const status = (
+    document.getElementById('agent-runs-filter-status') as HTMLInputElement | null
+  )?.value.trim();
+  const qs = new URLSearchParams();
+  if (agentName) qs.set('agentName', agentName);
+  if (status) qs.set('status', status);
+  table.innerHTML = '<tr><td class="muted">Loading runs…</td></tr>';
+  await loadAgentMetricsPanel();
+  try {
+    const res = await fetch(`${BASE}/runs${qs.toString() ? `?${qs}` : ''}`);
+    const data = await res.json();
+    if (!res.ok) {
+      table.innerHTML = `<tr><td class="muted">${escapeHtml(data.error ?? 'Failed')}</td></tr>`;
+      return;
+    }
+    const runs = (data.runs ?? []) as Record<string, unknown>[];
+    if (!runs.length) {
+      table.innerHTML =
+        '<tr><td class="muted">No AgentRun records. Execute an agent with a durable run store configured.</td></tr>';
+      return;
+    }
+    table.innerHTML = `<thead><tr><th>id</th><th>agent</th><th>status</th><th>updated</th><th></th></tr></thead><tbody>${runs
+      .map((r) => {
+        const id = String(r.id ?? '');
+        return `<tr class="agent-run-row" data-id="${escapeHtml(id)}" style="cursor:pointer">
+          <td><code>${escapeHtml(id.slice(0, 8))}…</code></td>
+          <td>${escapeHtml(String(r.agentName ?? ''))}</td>
+          <td><span class="badge">${escapeHtml(String(r.status ?? ''))}</span></td>
+          <td class="muted">${escapeHtml(String(r.updatedAt ?? ''))}</td>
+          <td><button type="button" class="btn btn-sm cancel-run" data-id="${escapeHtml(id)}">Cancel</button></td>
+        </tr>`;
+      })
+      .join('')}</tbody>`;
+    table.querySelectorAll('.agent-run-row').forEach((row) => {
+      row.addEventListener('click', (e) => {
+        if ((e.target as HTMLElement).closest('.cancel-run')) return;
+        const id = (row as HTMLElement).dataset.id ?? '';
+        void openAgentRunDetail(id);
+      });
+    });
+    table.querySelectorAll('.cancel-run').forEach((btn) => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const id = (btn as HTMLElement).dataset.id ?? '';
+        await fetch(`${BASE}/runs/${encodeURIComponent(id)}/cancel`, { method: 'POST' });
+        await loadAgentRuns();
+      });
+    });
+  } catch (e) {
+    table.innerHTML = `<tr><td class="muted">${escapeHtml(String(e))}</td></tr>`;
+  }
+}
+
+async function openAgentRunDetail(runId: string) {
+  const detail = document.getElementById('agent-run-detail');
+  const timeline = document.getElementById('agent-run-timeline');
+  if (detail) detail.innerHTML = '<p class="muted">Loading…</p>';
+  if (timeline) timeline.innerHTML = '';
+  try {
+    const res = await fetch(`${BASE}/runs/${encodeURIComponent(runId)}`);
+    const data = await res.json();
+    if (!res.ok) {
+      if (detail) detail.innerHTML = `<p class="muted">${escapeHtml(data.error ?? 'Failed')}</p>`;
+      return;
+    }
+    if (detail) {
+      detail.innerHTML = `<pre class="detail-json">${escapeHtml(JSON.stringify(data.run, null, 2))}</pre>`;
+    }
+    renderRunTimelineSteps((data.steps ?? []) as Record<string, unknown>[]);
+  } catch (e) {
+    if (detail) detail.innerHTML = `<p class="muted">${escapeHtml(String(e))}</p>`;
+  }
+}
+
+document.getElementById('agent-runs-refresh')?.addEventListener('click', () => {
+  void loadAgentRuns();
+});
+
 function openPromptPlayground(key: string) {
   const modal = document.getElementById('prompt-playground-modal')!;
   const keyInput = document.getElementById('playground-key') as HTMLInputElement;
@@ -1374,6 +1511,9 @@ function navigateToTab(tab: string) {
     const params = new URLSearchParams(window.location.search);
     params.set('tab', tab);
     window.history.replaceState({}, '', `${window.location.pathname}?${params}`);
+    if (tab === 'agent-runs') {
+      void loadAgentRuns();
+    }
   }
 }
 

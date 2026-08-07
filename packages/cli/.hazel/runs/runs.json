@@ -1,0 +1,19 @@
+[
+  {
+    "id": "8a280132-77a9-473f-b44c-c37103cf47ad",
+    "agentName": "support-desk",
+    "agentVersion": "1.0.0",
+    "status": "completed",
+    "input": "hello",
+    "rootRunId": "8a280132-77a9-473f-b44c-c37103cf47ad",
+    "attempt": 1,
+    "createdAt": "2026-08-06T10:29:11.717Z",
+    "updatedAt": "2026-08-06T10:29:11.720Z",
+    "metadata": {
+      "capabilities": []
+    },
+    "startedAt": "2026-08-06T10:29:11.718Z",
+    "completedAt": "2026-08-06T10:29:11.720Z",
+    "output": "No OPENAI_API_KEY — mock reply. Pass --mock to silence this, or set a key."
+  }
+]

@@ -60,7 +60,7 @@ import { identityFromAgentConfig, type AgentIdentity } from '../identity/agent-i
 import { PolicyService } from '../policies/policy.service';
 import { BudgetExceededError, type RunBudget } from '../budget/run-budget';
 import { InMemoryAgentScheduler, type AgentScheduler } from '../scheduler/agent-scheduler';
-import { withAgentSpan } from '../utils/agent-tracing';
+import { withAgentSpan, setAgentSpanAttributes } from '../utils/agent-tracing';
 import { InMemoryCheckpointService, type CheckpointService } from '../run/checkpoint.service';
 import type { AgentRun } from '../run/agent-run.types';
 import {
@@ -532,6 +532,13 @@ export class AgentRuntime {
 
           success = result.state === AgentState.COMPLETED;
           const duration = Date.now() - startTime;
+
+          setAgentSpanAttributes({
+            'agent.run_id': result.executionId,
+            'agent.execution_id': result.executionId,
+            'agent.state': String(result.state),
+            'agent.duration_ms': duration,
+          });
 
           // Record metrics
           if (this.metrics) {

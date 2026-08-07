@@ -19,6 +19,8 @@ module.exports = {
     '!src/decorators/approval.decorator.ts',
     '!src/testing/**',
     '!src/evaluation/**',
+    // Covered by tests/platform/*; k8s client needs a live cluster and dilutes the global gate.
+    '!src/platform/**',
   ],
   coverageThreshold: {
     global: {

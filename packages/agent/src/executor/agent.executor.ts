@@ -106,6 +106,7 @@ export class AgentExecutor {
       {
         'agent.name': context.agentId,
         'agent.execution_id': context.executionId,
+        'agent.run_id': context.executionId,
         'agent.session_id': context.sessionId,
       },
       () => this.executeInternal(context, maxSteps, options),
@@ -892,11 +893,21 @@ export class AgentExecutor {
   ): ReturnType<NonNullable<LLMProvider['chat']>> {
     const response = await withAgentSpan(
       'agent.llm',
-      { 'agent.name': context.agentId, 'agent.execution_id': context.executionId },
+      {
+        'agent.name': context.agentId,
+        'agent.execution_id': context.executionId,
+        'agent.run_id': context.executionId,
+      },
       () => this.llmProvider!.chat(request),
       this.observabilityProvider
     );
-    trackLlmCost(this.observabilityProvider, undefined, response.usage);
+    const model =
+      this.budgetModelId ??
+      (typeof (request as { model?: unknown }).model === 'string'
+        ? (request as { model: string }).model
+        : undefined) ??
+      'unknown';
+    trackLlmCost(this.observabilityProvider, model, response.usage);
     try {
       this.budgetTracker?.recordLlmUsage(response.usage, this.budgetModelId);
     } catch (err) {

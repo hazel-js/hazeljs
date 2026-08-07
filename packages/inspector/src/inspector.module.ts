@@ -319,6 +319,157 @@ function createInspectorHandler(
         res.end(JSON.stringify({ entries: agents }));
         return;
       }
+
+      // Agent OS durable runs (AgentRunRepository)
+      if ((pathSeg === '/runs' || pathSeg === '/runs/') && req.method === 'GET') {
+        try {
+          const { AgentService } = require('@hazeljs/agent');
+          const container = app.getContainer() as { resolve: (t: unknown) => unknown };
+          const svc = container.resolve(AgentService) as {
+            getRuntime?: () => {
+              getRunRepository: () => {
+                list: (f?: { agentName?: string; status?: string }) => Promise<unknown[]>;
+              };
+              getMetrics?: () => unknown;
+            };
+          };
+          const runtime = svc?.getRuntime?.();
+          if (!runtime?.getRunRepository) {
+            res.writeHead(503);
+            res.end(
+              JSON.stringify({
+                error:
+                  'AgentRunRepository not available. Ensure AgentModule + AgentRuntime are configured.',
+              })
+            );
+            return;
+          }
+          const url = new URL(req.url ?? '/', 'http://localhost');
+          const agentName = url.searchParams.get('agentName') ?? undefined;
+          const status = url.searchParams.get('status') ?? undefined;
+          const runs = await runtime.getRunRepository().list(
+            agentName || status
+              ? {
+                  ...(agentName ? { agentName } : {}),
+                  ...(status ? { status: status as never } : {}),
+                }
+              : undefined
+          );
+          res.writeHead(200);
+          res.end(JSON.stringify({ runs }));
+        } catch (err) {
+          res.writeHead(500);
+          res.end(JSON.stringify({ error: String(err) }));
+        }
+        return;
+      }
+
+      const runCancelMatch = pathSeg.match(/^\/runs\/([^/]+)\/cancel\/?$/);
+      if (runCancelMatch && req.method === 'POST') {
+        const runId = decodeURIComponent(runCancelMatch[1]);
+        try {
+          const { AgentService, AgentRunStatus } = require('@hazeljs/agent');
+          const container = app.getContainer() as { resolve: (t: unknown) => unknown };
+          const svc = container.resolve(AgentService) as {
+            getRuntime?: () => {
+              cancel?: (id: string) => void;
+              getRunRepository: () => {
+                get: (id: string) => Promise<{ id: string; status: string } | undefined>;
+                updateStatus: (id: string, status: string) => Promise<unknown>;
+              };
+            };
+          };
+          const runtime = svc?.getRuntime?.();
+          if (!runtime?.getRunRepository) {
+            res.writeHead(503);
+            res.end(JSON.stringify({ error: 'AgentRunRepository not available' }));
+            return;
+          }
+          runtime.cancel?.(runId);
+          const existing = await runtime.getRunRepository().get(runId);
+          if (!existing) {
+            res.writeHead(404);
+            res.end(JSON.stringify({ error: `Run not found: ${runId}` }));
+            return;
+          }
+          const updated = await runtime
+            .getRunRepository()
+            .updateStatus(runId, AgentRunStatus.CANCELLED);
+          res.writeHead(200);
+          res.end(JSON.stringify({ run: updated }));
+        } catch (err) {
+          res.writeHead(500);
+          res.end(JSON.stringify({ error: String(err) }));
+        }
+        return;
+      }
+
+      const runMatch = pathSeg.match(/^\/runs\/([^/]+)\/?$/);
+      if (runMatch && req.method === 'GET') {
+        const runId = decodeURIComponent(runMatch[1]);
+        try {
+          const { AgentService } = require('@hazeljs/agent');
+          const container = app.getContainer() as { resolve: (t: unknown) => unknown };
+          const svc = container.resolve(AgentService) as {
+            getRuntime?: () => {
+              getRunRepository: () => {
+                get: (id: string) => Promise<unknown>;
+              };
+            };
+            getTimeline?: (f: { executionId?: string }) => unknown[];
+          };
+          const runtime = svc?.getRuntime?.();
+          if (!runtime?.getRunRepository) {
+            res.writeHead(503);
+            res.end(JSON.stringify({ error: 'AgentRunRepository not available' }));
+            return;
+          }
+          const run = await runtime.getRunRepository().get(runId);
+          if (!run) {
+            res.writeHead(404);
+            res.end(JSON.stringify({ error: `Run not found: ${runId}` }));
+            return;
+          }
+          const steps = svc.getTimeline?.({ executionId: runId }) ?? [];
+          res.writeHead(200);
+          res.end(JSON.stringify({ run, steps }));
+        } catch (err) {
+          res.writeHead(500);
+          res.end(JSON.stringify({ error: String(err) }));
+        }
+        return;
+      }
+
+      if (
+        (pathSeg === '/agents/metrics' || pathSeg === '/agents/metrics/') &&
+        req.method === 'GET'
+      ) {
+        try {
+          const { AgentService } = require('@hazeljs/agent');
+          const container = app.getContainer() as { resolve: (t: unknown) => unknown };
+          const svc = container.resolve(AgentService) as {
+            getRuntime?: () => { getMetrics?: () => unknown; getMetricsSummary?: () => string };
+          };
+          const runtime = svc?.getRuntime?.();
+          if (!runtime) {
+            res.writeHead(503);
+            res.end(JSON.stringify({ error: 'AgentRuntime not available' }));
+            return;
+          }
+          res.writeHead(200);
+          res.end(
+            JSON.stringify({
+              metrics: runtime.getMetrics?.() ?? null,
+              summary: runtime.getMetricsSummary?.() ?? null,
+            })
+          );
+        } catch (err) {
+          res.writeHead(500);
+          res.end(JSON.stringify({ error: String(err) }));
+        }
+        return;
+      }
+
       const agentRunMatch = pathSeg.match(/^\/agents\/([^/]+)\/run\/?$/);
       if (agentRunMatch && req.method === 'POST') {
         const agentName = decodeURIComponent(agentRunMatch[1]);
@@ -614,8 +765,12 @@ function createInspectorHandler(
               '/queues',
               '/websocket',
               '/agents',
+              '/agents/metrics',
               '/agents/:name/stream',
               '/agents/:name/timeline',
+              '/runs',
+              '/runs/:runId',
+              '/runs/:runId/cancel',
               '/rag',
               '/prompts',
               '/aifunctions',

@@ -56,3 +56,36 @@ jobs:
       - name: Run security audit
         run: npm audit --audit-level=high
         continue-on-error: true
+
+  # Opt-in live Kubernetes integration for Agent OS platform backend (kind).
+  # Unit suite skips these tests unless HAZEL_K8S_LIVE=1.
+  k8s-platform-live:
+    runs-on: ubuntu-latest
+    needs: []
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build @hazeljs/agent
+        run: npm run build --workspace=@hazeljs/agent
+
+      - name: Create kind cluster
+        uses: helm/kind-action@v1.10.0
+        with:
+          cluster_name: hazel-platform
+
+      - name: Live platform Kubernetes tests
+        working-directory: packages/agent
+        env:
+          HAZEL_K8S_LIVE: '1'
+          HAZEL_K8S_NAMESPACE: hazel-platform-ci
+          HAZEL_K8S_IMAGE: registry.k8s.io/pause:3.9
+        run: npx jest --runInBand --testPathPattern=platform.kubernetes.live --coverage=false

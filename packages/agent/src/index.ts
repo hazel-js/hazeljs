@@ -59,6 +59,7 @@ export * from './dna/hot-reload';
 export * from './dna/marketplace';
 export * from './dna/bootstrap-from-dna';
 export * from './llm/http-llm.provider';
+export * from './store';
 export * from './knowledge/knowledge-freshness';
 export * from './memory-graph/graphrag-bridge';
 export * from './timeline/timeline.store';
@@ -97,3 +98,6 @@ export * from './identity/agent-identity';
 export * from './policies/policy.service';
 export * from './budget/run-budget';
 export * from './scheduler/agent-scheduler';
+
+// Agent OS Platform — declarative control plane (local-first)
+export * from './platform';
