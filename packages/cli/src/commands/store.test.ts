@@ -70,10 +70,8 @@ describe('registerStoreCommand (G2 Package+Store)', () => {
   });
 
   it('publishes and installs real starter support-desk.marketplace.json', async () => {
-    const pkgFile = path.resolve(
-      __dirname,
-      '../../../../../hazeljs-agent-os-starter/dna/support-desk.marketplace.json'
-    );
+    // Fixture is vendored in-package so CI (hazeljs repo only) does not need sibling starters.
+    const pkgFile = path.resolve(__dirname, '../../fixtures/support-desk.marketplace.json');
     expect(fs.existsSync(pkgFile)).toBe(true);
 
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'hazel-store-starter-'));
