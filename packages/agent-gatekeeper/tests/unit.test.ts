@@ -296,12 +296,14 @@ describe('audit and metrics', () => {
 
 describe('approval store bridge', () => {
   it('creates approval via store provider', async () => {
+    const records = new Map<string, unknown>();
     const store = {
-      records: [] as unknown[],
-      create(r: unknown) {
-        this.records.push(r);
+      create(r: { requestId: string }) {
+        records.set(r.requestId, r);
       },
-      get: () => undefined,
+      get(id: string) {
+        return records.get(id);
+      },
       approve: () => true,
       reject: () => true,
     };
@@ -324,7 +326,8 @@ describe('approval store bridge', () => {
       status: 'pending',
     });
     expect(req.approvalId).toBe('apr-1');
-    expect(store.records).toHaveLength(1);
+    expect(records.size).toBe(1);
+    expect((await provider.get('apr-1'))?.toolName).toBe('t');
   });
 });
 

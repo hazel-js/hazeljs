@@ -138,7 +138,46 @@ export function buildApprovalRequest(
   };
 }
 
-/** Bridge to @hazeljs/agent IApprovalStore when agent peer is available. */
+const GATEKEEPER_REQUEST_KEY = 'gatekeeperRequest';
+
+interface SerializedApprovalRequest extends Omit<ApprovalRequest, 'createdAt' | 'expiresAt'> {
+  createdAt: string;
+  expiresAt: string;
+}
+
+function serializeApproval(request: ApprovalRequest): SerializedApprovalRequest {
+  return {
+    ...request,
+    createdAt: request.createdAt.toISOString(),
+    expiresAt: request.expiresAt.toISOString(),
+  };
+}
+
+function deserializeApproval(raw: unknown): ApprovalRequest | undefined {
+  if (!raw || typeof raw !== 'object') return undefined;
+  const parsed = raw as Partial<SerializedApprovalRequest>;
+  if (typeof parsed.approvalId !== 'string' || typeof parsed.invocationFingerprint !== 'string') {
+    return undefined;
+  }
+  return {
+    ...(parsed as SerializedApprovalRequest),
+    createdAt: new Date(parsed.createdAt ?? Date.now()),
+    expiresAt: new Date(parsed.expiresAt ?? Date.now()),
+  };
+}
+
+function applyExpiry(request: ApprovalRequest, clock: Clock): ApprovalRequest {
+  if (request.status === 'pending' && request.expiresAt < clock.now()) {
+    return { ...request, status: 'expired' };
+  }
+  return request;
+}
+
+/**
+ * Durable bridge to @hazeljs/agent IApprovalStore (RedisApprovalStore, SQL, …).
+ * The full Gatekeeper approval record is stored in `metadata.gatekeeperRequest`
+ * so get/consume work on any replica — not only the process that created it.
+ */
 export function createApprovalStoreProvider(
   store: {
     create(request: unknown): Promise<void> | void;
@@ -148,41 +187,87 @@ export function createApprovalStoreProvider(
   },
   clock: Clock = { now: () => new Date() }
 ): ApprovalProvider {
-  const memory = new InMemoryApprovalProvider({ clock });
+  const toStoreRecord = (request: ApprovalRequest): Record<string, unknown> => ({
+    requestId: request.approvalId,
+    executionId: request.invocationId,
+    toolName: request.toolName,
+    agentId: request.agentId,
+    input: request.argumentSummary,
+    reason: request.reason,
+    requestedAt: request.createdAt,
+    expiresAt: request.expiresAt,
+    status: request.status === 'consumed' ? 'approved' : request.status,
+    metadata: { [GATEKEEPER_REQUEST_KEY]: serializeApproval(request) },
+  });
+
+  const persist = async (request: ApprovalRequest): Promise<ApprovalRequest> => {
+    const stored = safeClone(request);
+    await store.create(toStoreRecord(stored));
+    return stored;
+  };
+
+  const load = async (approvalId: string): Promise<ApprovalRequest | undefined> => {
+    const raw = await store.get(approvalId);
+    if (!raw || typeof raw !== 'object') return undefined;
+    const record = raw as { metadata?: Record<string, unknown> };
+    const fromMeta = deserializeApproval(record.metadata?.[GATEKEEPER_REQUEST_KEY]);
+    if (!fromMeta) return undefined;
+    const expired = applyExpiry(fromMeta, clock);
+    if (expired.status !== fromMeta.status) {
+      await persist(expired);
+    }
+    return safeClone(expired);
+  };
+
   return {
-    async create(request): Promise<ApprovalRequest> {
-      await store.create({
-        requestId: request.approvalId,
-        executionId: request.invocationId,
-        toolName: request.toolName,
-        agentId: request.agentId,
-        input: request.argumentSummary,
-        reason: request.reason,
-        requestedAt: request.createdAt,
-        expiresAt: request.expiresAt,
-        status: 'pending',
-        metadata: {
-          policyIds: request.policyIds,
-          fingerprint: request.invocationFingerprint,
-        },
-      });
-      return memory.create(request);
-    },
-    get: (id): Promise<ApprovalRequest | undefined> => memory.get(id),
-    resolve: (id, status, resolvedBy): Promise<ApprovalRequest | undefined> => {
+    create: (request): Promise<ApprovalRequest> => persist(request),
+    get: (id): Promise<ApprovalRequest | undefined> => load(id),
+    async resolve(
+      id: string,
+      status: 'approved' | 'rejected',
+      resolvedBy?: string
+    ): Promise<ApprovalRequest | undefined> {
+      const current = await load(id);
       if (status === 'approved') {
-        void store.approve(id, resolvedBy ?? 'gatekeeper');
+        await store.approve(id, resolvedBy ?? 'gatekeeper');
       } else {
-        void store.reject(id);
+        await store.reject(id);
       }
-      return memory.resolve(id, status, resolvedBy);
+      if (!current) return undefined;
+      if (current.status !== 'pending') return current;
+      current.status = status;
+      return persist(current);
     },
-    consume: (id, fingerprint): ReturnType<ApprovalProvider['consume']> =>
-      memory.consume(id, fingerprint),
+    async consume(
+      id: string,
+      fingerprint: string
+    ): Promise<{ valid: boolean; request?: ApprovalRequest; reason?: string }> {
+      const req = await load(id);
+      if (!req) return { valid: false, reason: 'Approval not found' };
+      if (req.status === 'expired' || req.expiresAt < clock.now()) {
+        return { valid: false, reason: 'Approval expired' };
+      }
+      if (req.status === 'rejected') return { valid: false, reason: 'Approval rejected' };
+      if (req.status === 'consumed') return { valid: false, reason: 'Approval already consumed' };
+      if (req.status !== 'approved') return { valid: false, reason: 'Approval not granted' };
+      if (req.invocationFingerprint !== fingerprint) {
+        return { valid: false, reason: 'Approval fingerprint mismatch — arguments changed' };
+      }
+      req.status = 'consumed';
+      const stored = await persist(req);
+      return { valid: true, request: stored };
+    },
   };
 }
 
-/** Bridge to @hazeljs/agent HumanTaskService for durable HITL resume. */
+/**
+ * Durable bridge to @hazeljs/agent HumanTaskService (file/SQL HITL).
+ * The Gatekeeper record lives in `payload.gatekeeperRequest` so another replica
+ * can get/resolve after the creating process is gone.
+ *
+ * Consume is validated from the shared task record. For atomic consume across
+ * replicas, use `createRedisApprovalProvider`.
+ */
 export function createHumanTaskProvider(
   humanTasks: {
     create(input: {
@@ -193,7 +278,14 @@ export function createHumanTaskProvider(
       payload?: unknown;
       metadata?: unknown;
     }): Promise<{ id: string }>;
-    get(id: string): Promise<{ status?: string } | undefined>;
+    get(id: string): Promise<
+      | {
+          status?: string;
+          payload?: unknown;
+          metadata?: unknown;
+        }
+      | undefined
+    >;
     resolve(
       id: string,
       decision: 'approved' | 'rejected' | 'expired',
@@ -202,32 +294,69 @@ export function createHumanTaskProvider(
   },
   clock: Clock = { now: () => new Date() }
 ): ApprovalProvider {
-  const memory = new InMemoryApprovalProvider({ clock });
+  const load = async (approvalId: string): Promise<ApprovalRequest | undefined> => {
+    const task = await humanTasks.get(approvalId);
+    if (!task) return undefined;
+    const payload =
+      task.payload && typeof task.payload === 'object'
+        ? (task.payload as Record<string, unknown>)
+        : {};
+    const fromPayload = deserializeApproval(payload[GATEKEEPER_REQUEST_KEY]);
+    if (!fromPayload) return undefined;
+    const mapped: ApprovalRequest = applyExpiry(fromPayload, clock);
+    if (task.status === 'approved' && mapped.status === 'pending') mapped.status = 'approved';
+    if (task.status === 'rejected') mapped.status = 'rejected';
+    if (task.status === 'expired') mapped.status = 'expired';
+    return safeClone(mapped);
+  };
+
   return {
     async create(request): Promise<ApprovalRequest> {
+      const stored = safeClone(request);
       await humanTasks.create({
-        id: request.approvalId,
-        runId: request.runId,
+        id: stored.approvalId,
+        runId: stored.runId,
         type: 'tool_approval',
-        toolName: request.toolName,
+        toolName: stored.toolName,
         payload: {
-          argumentSummary: request.argumentSummary,
-          reason: request.reason,
+          argumentSummary: stored.argumentSummary,
+          reason: stored.reason,
+          [GATEKEEPER_REQUEST_KEY]: serializeApproval(stored),
         },
         metadata: {
-          policyIds: request.policyIds,
-          fingerprint: request.invocationFingerprint,
+          policyIds: stored.policyIds,
+          fingerprint: stored.invocationFingerprint,
         },
       });
-      return memory.create(request);
+      return stored;
     },
-    get: (id): Promise<ApprovalRequest | undefined> => memory.get(id),
-    resolve: async (id, status, resolvedBy): Promise<ApprovalRequest | undefined> => {
+    get: (id): Promise<ApprovalRequest | undefined> => load(id),
+    async resolve(
+      id: string,
+      status: 'approved' | 'rejected',
+      resolvedBy?: string
+    ): Promise<ApprovalRequest | undefined> {
       await humanTasks.resolve(id, status, resolvedBy);
-      return memory.resolve(id, status, resolvedBy);
+      return load(id);
     },
-    consume: (id, fingerprint): ReturnType<ApprovalProvider['consume']> =>
-      memory.consume(id, fingerprint),
+    async consume(
+      id: string,
+      fingerprint: string
+    ): Promise<{ valid: boolean; request?: ApprovalRequest; reason?: string }> {
+      const req = await load(id);
+      if (!req) return { valid: false, reason: 'Approval not found' };
+      if (req.status === 'expired' || req.expiresAt < clock.now()) {
+        return { valid: false, reason: 'Approval expired' };
+      }
+      if (req.status === 'rejected') return { valid: false, reason: 'Approval rejected' };
+      if (req.status === 'consumed') return { valid: false, reason: 'Approval already consumed' };
+      if (req.status !== 'approved') return { valid: false, reason: 'Approval not granted' };
+      if (req.invocationFingerprint !== fingerprint) {
+        return { valid: false, reason: 'Approval fingerprint mismatch — arguments changed' };
+      }
+      req.status = 'consumed';
+      return { valid: true, request: safeClone(req) };
+    },
   };
 }
 

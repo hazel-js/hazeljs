@@ -30,7 +30,7 @@ npm install @hazeljs/agent-gatekeeper
 ## Quick Start
 
 ```typescript
-import { AgentGatekeeper, fromFunction, InMemoryAuditSink } from '@hazeljs/agent-gatekeeper';
+import { AgentGatekeeper, fromFunction, ConsoleAuditSink } from '@hazeljs/agent-gatekeeper';
 
 const refundPolicy = {
   id: 'refund-agent-stripe-policy',
@@ -51,7 +51,7 @@ const gatekeeper = new AgentGatekeeper({
   mode: 'enforce',
   defaultDecision: 'deny',
   policies: [refundPolicy],
-  auditSink: new InMemoryAuditSink(),
+  auditSink: new ConsoleAuditSink(), // JSON logs — ship to your aggregator
 });
 
 const tool = fromFunction('stripe.refund', async (input) => ({ refunded: input.amount }), {
@@ -90,6 +90,76 @@ const explanation = await gatekeeper.simulate(context); // never executes, never
 
 Mode selection is explicit. Gatekeeper never silently falls back from `enforce` to `audit`.
 
+## Production (horizontal scale)
+
+`InMemoryAuditSink` and `InMemoryApprovalProvider` are **single-process**. Each replica has its own RAM. They are for tests and local demos — not a fleet.
+
+Authorization itself is stateless: the same policies + trusted `ToolInvocationContext` produce the same decision on every instance. What must be shared is **audit** and **approvals**.
+
+### Audit
+
+Use a sink that writes to a shared backend. `createAuditTransportSink` awaits the transport so `enforce` mode can fail closed.
+
+```ts
+import { KafkaAuditTransport } from '@hazeljs/audit';
+import {
+  AgentGatekeeper,
+  CompositeAuditSink,
+  ConsoleAuditSink,
+  createAuditTransportSink,
+  createOtelAuditSink,
+  createRedisApprovalProvider,
+} from '@hazeljs/agent-gatekeeper';
+import { trace } from '@opentelemetry/api';
+
+const auditSink = new CompositeAuditSink([
+  new ConsoleAuditSink(),
+  createAuditTransportSink(
+    new KafkaAuditTransport({
+      sender: kafkaProducer,
+      topic: 'hazel.gatekeeper.audit',
+      key: (event) => String(event.resourceId ?? event.actor?.id ?? ''),
+    })
+  ),
+  createOtelAuditSink({ trace }),
+]);
+
+const gatekeeper = new AgentGatekeeper({
+  mode: 'enforce',
+  defaultDecision: 'deny',
+  policies: [refundPolicy],
+  auditSink,
+  approvalProvider: createRedisApprovalProvider(redis),
+});
+```
+
+| Sink                                            | Scale                | Notes                                           |
+| ----------------------------------------------- | -------------------- | ----------------------------------------------- |
+| `InMemoryAuditSink`                             | No                   | Tests only. Lost on restart, split per replica. |
+| `ConsoleAuditSink`                              | Yes, via log shipper | Default. JSON stdout → collector.               |
+| `createAuditTransportSink(KafkaAuditTransport)` | Yes                  | Shared topic. Awaited; fail-closed.             |
+| `createOtelAuditSink`                           | Yes                  | Spans/events to the collector.                  |
+
+### Approvals
+
+If replica A requests HITL and replica B resumes the run, the approval record must live in Redis/SQL — not in process memory.
+
+| Provider                                                          | Scale                                             |
+| ----------------------------------------------------------------- | ------------------------------------------------- |
+| `InMemoryApprovalProvider`                                        | No — default for tests                            |
+| `createRedisApprovalProvider(redis)`                              | Yes — create / resolve / consume on any replica   |
+| `createApprovalStoreProvider(new RedisApprovalStore({ client }))` | Yes — via `@hazeljs/agent`                        |
+| `createHumanTaskProvider(sqlHumanTasks)`                          | Yes for get/resolve; use Redis for atomic consume |
+
+```ts
+await replicaBApproval.resolve(approvalId, 'approved', 'operator-1');
+
+await replicaAGatekeeper.execute({
+  context: { ...context, approvalToken: approvalId },
+  tool,
+});
+```
+
 ## Architecture
 
 - **Agent DNA** declares identity, capabilities, permissions, trust level, and operating limits.
@@ -122,6 +192,7 @@ Mandatory Agent OS enforcement is **not** enabled in this release.
 - [Human approval](docs/APPROVAL.md)
 - [Adapters](docs/ADAPTERS.md)
 - [Production checklist](docs/SECURITY.md)
+- [Production cluster example](examples/production-cluster.ts)
 - [Migration](docs/MIGRATION.md)
 - [@hazeljs/skillgate](https://hazeljs.ai/docs/packages/skillgate)
 - [@hazeljs/agent](https://hazeljs.ai/docs/packages/agent)

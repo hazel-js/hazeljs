@@ -36,8 +36,9 @@ await gatekeeper.execute({
 
 ## Providers
 
-- `InMemoryApprovalProvider` — tests and single-process
-- `createApprovalStoreProvider(store)` — `@hazeljs/agent` `IApprovalStore`
-- `createHumanTaskProvider(humanTasks)` — durable HITL `HumanTaskService`
+- `InMemoryApprovalProvider` — tests and single-process only. Not visible to other replicas.
+- `createRedisApprovalProvider(redis)` — **production default for horizontal scale**. Create, resolve, and consume work on any Node process sharing the same Redis.
+- `createApprovalStoreProvider(store)` — `@hazeljs/agent` `IApprovalStore` (e.g. `RedisApprovalStore`). Persists the full Gatekeeper record in `metadata.gatekeeperRequest`.
+- `createHumanTaskProvider(humanTasks)` — durable HITL `HumanTaskService` (file/SQL). Get/resolve are shared. Prefer Redis for atomic consume across replicas.
 
 `simulate()` never creates a real approval request.

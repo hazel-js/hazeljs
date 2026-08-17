@@ -1,7 +1,7 @@
 /**
  * Refund agent — amount-based approval.
  */
-import { AgentGatekeeper, fromFunction, InMemoryAuditSink } from '@hazeljs/agent-gatekeeper';
+import { AgentGatekeeper, fromFunction, ConsoleAuditSink } from '@hazeljs/agent-gatekeeper';
 
 export const refundPolicy = {
   id: 'refund-agent-stripe-policy',
@@ -29,7 +29,7 @@ export function createRefundGatekeeper(): AgentGatekeeper {
     mode: 'enforce',
     defaultDecision: 'deny',
     policies: [refundPolicy],
-    auditSink: new InMemoryAuditSink(),
+    auditSink: new ConsoleAuditSink(),
   });
 }
 

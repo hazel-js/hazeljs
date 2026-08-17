@@ -46,6 +46,11 @@ export {
   createHumanTaskProvider,
   type ApprovalProvider,
 } from './approval/provider';
+export {
+  createRedisApprovalProvider,
+  type RedisApprovalCommands,
+  type RedisApprovalProviderOptions,
+} from './approval/redis';
 
 export {
   ConsoleAuditSink,
@@ -55,9 +60,15 @@ export {
   GatekeeperMetrics,
   sanitizeContextForAudit,
   decisionEventType,
+  toHazelAuditEvent,
+  createAuditTransportSink,
+  createOtelAuditSink,
   type AuditSink,
   type GatekeeperAuditEvent,
   type GatekeeperAuditEventType,
+  type HazelAuditEvent,
+  type HazelAuditTransport,
+  type OtelApiLike,
 } from './audit/sink';
 
 export { BudgetTracker } from './budget/tracker';

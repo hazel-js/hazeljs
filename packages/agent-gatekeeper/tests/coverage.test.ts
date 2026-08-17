@@ -639,10 +639,15 @@ describe('approvals remaining states', () => {
   });
 
   it('bridges approve and reject to the backing store', async () => {
+    const records = new Map<string, unknown>();
     const calls: string[] = [];
     const store = {
-      create: () => undefined,
-      get: () => undefined,
+      create(r: { requestId: string }) {
+        records.set(r.requestId, r);
+      },
+      get(id: string) {
+        return records.get(id);
+      },
       approve: () => {
         calls.push('approve');
         return true;
@@ -677,17 +682,23 @@ describe('approvals remaining states', () => {
   });
 
   it('bridges human task service create/resolve', async () => {
-    const created: unknown[] = [];
+    const tasks = new Map<
+      string,
+      { id: string; status: string; payload?: unknown; metadata?: unknown }
+    >();
     const humanTasks = {
-      async create(input: { id?: string }) {
-        created.push(input);
-        return { id: input.id ?? 'ht-1' };
+      async create(input: { id?: string; payload?: unknown; metadata?: unknown }) {
+        const id = input.id ?? 'ht-1';
+        tasks.set(id, { id, status: 'pending', payload: input.payload, metadata: input.metadata });
+        return { id };
       },
-      async get() {
-        return { status: 'pending' };
+      async get(id: string) {
+        return tasks.get(id);
       },
-      async resolve() {
-        return { status: 'approved' };
+      async resolve(id: string, decision: string) {
+        const task = tasks.get(id);
+        if (task) task.status = decision;
+        return { status: decision };
       },
     };
     const provider = createHumanTaskProvider(humanTasks);
@@ -709,7 +720,8 @@ describe('approvals remaining states', () => {
       status: 'pending',
     });
     await provider.resolve(req.approvalId, 'approved', 'ops');
-    expect(created).toHaveLength(1);
+    expect(tasks.size).toBe(1);
+    expect((await provider.get(req.approvalId))?.status).toBe('approved');
   });
 });
 
