@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/kafka",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "Kafka module for HazelJS framework - produce, consume, and stream processing",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -48,7 +48,7 @@
   },
   "homepage": "https://hazeljs.ai",
   "peerDependencies": {
-    "@hazeljs/core": "^2.0.1"
+    "@hazeljs/core": "^2.0.2"
   },
   "gitHead": "083b94562940a86c8e0a8cd81988d04b541608ac"
 }

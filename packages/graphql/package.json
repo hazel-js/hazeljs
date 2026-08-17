@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/graphql",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "GraphQL server and client for HazelJS - decorator-based schema and typed client",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -28,7 +28,7 @@
     "typescript": "^5.9.3"
   },
   "peerDependencies": {
-    "@hazeljs/core": "^2.0.1"
+    "@hazeljs/core": "^2.0.2"
   },
   "publishConfig": {
     "access": "public"

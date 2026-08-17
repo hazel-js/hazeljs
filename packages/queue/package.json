@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/queue",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "Redis-backed job queue module for HazelJS framework using BullMQ",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -49,7 +49,7 @@
   },
   "homepage": "https://hazeljs.ai",
   "peerDependencies": {
-    "@hazeljs/core": "^2.0.1",
+    "@hazeljs/core": "^2.0.2",
     "ioredis": ">=5.0.0"
   },
   "peerDependenciesMeta": {
