@@ -34,6 +34,7 @@ export * from './context/agent.context';
 
 export * from './executor/agent.executor';
 export * from './executor/tool.executor';
+export * from './authorization/tool-authorization-gate.interface';
 
 export * from './events/event.emitter';
 

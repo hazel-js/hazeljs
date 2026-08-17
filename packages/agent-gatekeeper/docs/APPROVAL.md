@@ -1,0 +1,43 @@
+# Human approval
+
+Gatekeeper uses an `ApprovalProvider` interface rather than a workflow engine. Integrate with existing HITL (`IApprovalStore`, `HumanTaskService`) instead of duplicating it.
+
+## Request contents
+
+- Approval ID, invocation ID, run ID
+- Agent and tenant identity
+- Tool name and sanitized argument summary
+- Reason, matching policy IDs/versions
+- Creation / expiration timestamps
+- Risk classification
+- Idempotency key
+- Invocation fingerprint
+
+## States
+
+`pending` → `approved` | `rejected` | `expired` → `consumed`
+
+No execution if an approval is missing, expired, rejected, mismatched, or already consumed.
+
+## Fingerprints
+
+Tokens are scoped to `agentId + toolName + tenantId + canonical input`. Changing sensitive arguments invalidates prior approval.
+
+## Resume
+
+```ts
+await approvalProvider.resolve(approvalId, 'approved', 'operator-1');
+
+await gatekeeper.execute({
+  context: { ...context, approvalToken: approvalId },
+  tool,
+});
+```
+
+## Providers
+
+- `InMemoryApprovalProvider` — tests and single-process
+- `createApprovalStoreProvider(store)` — `@hazeljs/agent` `IApprovalStore`
+- `createHumanTaskProvider(humanTasks)` — durable HITL `HumanTaskService`
+
+`simulate()` never creates a real approval request.

@@ -34,7 +34,8 @@
     "@hazeljs/eval": "^2.0.1",
     "@hazeljs/benchmark": "^2.0.1",
     "@hazeljs/agent": "^2.0.1",
-    "@hazeljs/skillgate": "^2.0.1"
+    "@hazeljs/skillgate": "^2.0.1",
+    "@hazeljs/agent-gatekeeper": "^2.0.1"
   },
   "peerDependenciesMeta": {
     "@hazeljs/eval": {
@@ -48,6 +49,9 @@
     },
     "@hazeljs/skillgate": {
       "optional": true
+    },
+    "@hazeljs/agent-gatekeeper": {
+      "optional": true
     }
   },
   "devDependencies": {
@@ -55,16 +59,7 @@
     "@hazeljs/benchmark": "^2.0.1",
     "@hazeljs/agent": "^2.0.1",
     "@hazeljs/skillgate": "^2.0.1",
-    "@types/inquirer": "^8.2.12",
-    "@types/jest": "^29.5.14",
-    "@types/mustache": "^4.2.6",
-    "@types/node": "^20.19.39",
-    "@typescript-eslint/eslint-plugin": "^8.58.0",
-    "@typescript-eslint/parser": "^8.58.0",
-    "eslint": "^8.57.1",
-    "jest": "^29.7.0",
-    "prettier": "^3.8.1",
-    "ts-jest": "^29.4.9",
+    "@hazeljs/agent-gatekeeper": "^2.0.1",
     "typescript": "^5.9.3"
   },
   "engines": {

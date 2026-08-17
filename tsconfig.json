@@ -135,6 +135,7 @@
     { "path": "./packages/ops-agent" },
     { "path": "./packages/eval" },
     { "path": "./packages/benchmark" },
-    { "path": "./packages/testing" }
+    { "path": "./packages/testing" },
+    { "path": "./packages/agent-gatekeeper" }
   ]
 }

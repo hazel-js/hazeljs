@@ -18,7 +18,8 @@
       "@hazeljs/eval": ["../eval/src/index.ts"],
       "@hazeljs/agent": ["../agent/src/index.ts"],
       "@hazeljs/benchmark": ["../benchmark/src/index.ts"],
-      "@hazeljs/skillgate": ["../skillgate/src/index.ts"]
+      "@hazeljs/skillgate": ["../skillgate/src/index.ts"],
+      "@hazeljs/agent-gatekeeper": ["../agent-gatekeeper/src/index.ts"]
     }
   },
   "include": ["src/**/*"],
@@ -27,6 +28,7 @@
     { "path": "../eval" },
     { "path": "../agent" },
     { "path": "../benchmark" },
-    { "path": "../skillgate" }
+    { "path": "../skillgate" },
+    { "path": "../agent-gatekeeper" }
   ]
 }

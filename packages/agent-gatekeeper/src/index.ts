@@ -1,0 +1,99 @@
+/**
+ * @hazeljs/agent-gatekeeper
+ *
+ * Runtime authorization and policy-enforcement layer for HazelJS agent tool invocations.
+ * Every tool call authorized before execution.
+ */
+
+export { AgentGatekeeper } from './gatekeeper';
+export {
+  GatekeeperError,
+  GatekeeperDeniedError,
+  GatekeeperApprovalRequiredError,
+  GatekeeperValidationError,
+  GatekeeperPolicyError,
+  GatekeeperConfigurationError,
+  GatekeeperExecutionError,
+  GatekeeperErrorCodes,
+} from './errors';
+export type { GatekeeperErrorCode, GatekeeperErrorDetails } from './errors';
+
+export type {
+  ToolInvocationContext,
+  GatekeeperDecision,
+  AgentGatekeeperPolicy,
+  AgentGatekeeperOptions,
+  ProtectedTool,
+  GatekeeperMode,
+  DefaultDecision,
+  ToolClassification,
+  ToolRiskLevel,
+  ApprovalRequest,
+  ApprovalStatus,
+  GatekeeperExecuteInput,
+  GatekeeperExecuteResult,
+  GatekeeperSimulation,
+  PolicyEvaluationContext,
+  ToolExecutorGateInput,
+  ToolExecutorGateResult,
+  TimeWindow,
+} from './types';
+
+export {
+  InMemoryApprovalProvider,
+  buildApprovalRequest,
+  createApprovalStoreProvider,
+  createHumanTaskProvider,
+  type ApprovalProvider,
+} from './approval/provider';
+
+export {
+  ConsoleAuditSink,
+  InMemoryAuditSink,
+  CompositeAuditSink,
+  FailingAuditSink,
+  GatekeeperMetrics,
+  sanitizeContextForAudit,
+  decisionEventType,
+  type AuditSink,
+  type GatekeeperAuditEvent,
+  type GatekeeperAuditEventType,
+} from './audit/sink';
+
+export { BudgetTracker } from './budget/tracker';
+
+export { evaluatePolicies, buildArgumentSummary } from './policy/engine';
+export { policiesFromPolicyRules, policiesFromDna, type PolicyRuleLike } from './policy/bridge';
+export {
+  loadPoliciesFromYaml,
+  loadPoliciesFromFileSync,
+  parseYamlPolicies,
+  validatePolicies,
+  yamlEntryToPolicy,
+  type YamlPolicyDocument,
+  type YamlPolicyEntry,
+} from './policy/yaml';
+
+export {
+  fromFunction,
+  fromHazelTool,
+  fromSkillgate,
+  fromMcpTool,
+  createToolExecutorGate,
+  protectMcpInvoke,
+  type ToolExecutorContextFactory,
+} from './adapters';
+
+export {
+  safeClone,
+  redactObject,
+  stripFields,
+  matchToolPattern,
+  invocationFingerprint,
+  canonicalJson,
+  defaultClock,
+  defaultIdGenerator,
+  sanitizeErrorMessage,
+  isForbiddenKey,
+  redactValue,
+} from './security';

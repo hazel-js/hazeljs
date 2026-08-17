@@ -19,6 +19,7 @@ import { RedisApprovalStore } from '../approval/redis-approval.store';
 import { withAgentSpan } from '../utils/agent-tracing';
 import type { ObservabilityProvider } from '../types/observability.types';
 import { getApprovalMetadata } from '../decorators/approval.decorator';
+import type { ToolAuthorizationGate } from '../authorization/tool-authorization-gate.interface';
 export interface ToolExecutorOptions {
   eventEmitter?: (type: AgentEventType, data: unknown) => void;
   guardrailsService?: IGuardrailsService;
@@ -47,6 +48,11 @@ export interface ToolExecutorOptions {
   policyService?: import('../policies/policy.service').PolicyService;
   /** Agent identity for capability checks (AOS-008). */
   agentIdentity?: import('../identity/agent-identity').AgentIdentity;
+  /**
+   * Optional external authorization gate (e.g. @hazeljs/agent-gatekeeper).
+   * When set, policy engine evaluation is skipped for that invocation.
+   */
+  authorizationGate?: ToolAuthorizationGate;
 }
 
 /**
@@ -78,6 +84,10 @@ export class ToolExecutor {
   setAgentIdentity(identity: import('../identity/agent-identity').AgentIdentity | undefined): void {
     this.options.agentIdentity = identity;
     this.options.policyService?.setIdentity(identity);
+  }
+
+  setAuthorizationGate(gate: ToolAuthorizationGate | undefined): void {
+    this.options.authorizationGate = gate;
   }
 
   /**
@@ -139,6 +149,45 @@ export class ToolExecutor {
     });
 
     try {
+      if (this.options.authorizationGate) {
+        const gateResult = await this.options.authorizationGate.execute({
+          tool,
+          input,
+          agentId,
+          sessionId,
+          userId,
+          runId,
+        });
+        context.status = gateResult.success
+          ? ToolExecutionStatus.COMPLETED
+          : gateResult.pendingApproval
+            ? ToolExecutionStatus.PENDING
+            : ToolExecutionStatus.FAILED;
+        context.completedAt = new Date();
+        context.duration = gateResult.duration;
+        if (gateResult.success) {
+          this.emitEvent(AgentEventType.TOOL_EXECUTION_COMPLETED, {
+            toolName: tool.name,
+            output: gateResult.output,
+            duration: gateResult.duration,
+          });
+        } else if (gateResult.pendingApproval) {
+          this.emitEvent(AgentEventType.TOOL_APPROVAL_REQUESTED, {
+            toolName: tool.name,
+            requestId: gateResult.requestId,
+            input,
+          });
+        } else {
+          this.emitEvent(AgentEventType.TOOL_EXECUTION_FAILED, {
+            toolName: tool.name,
+            input,
+            error: gateResult.error?.message ?? 'Authorization gate denied',
+            duration: gateResult.duration,
+          });
+        }
+        return gateResult;
+      }
+
       if (this.options.policyService) {
         this.options.policyService.setIdentity(this.options.agentIdentity);
         const decision = this.options.policyService.evaluateTool(tool.name, input, tool.capability);

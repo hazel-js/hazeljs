@@ -1,0 +1,26 @@
+mode: enforce
+defaultDecision: deny
+policies:
+  - id: refund-agent-stripe-policy
+    version: "1.0.0"
+    priority: 100
+    match:
+      agents: [refund-agent]
+      tools: [stripe.refund]
+      environments: [production]
+    rules:
+      maxTransactionAmount: 100
+      enforceTenantField: tenantId
+      requireApprovalWhenFieldGt:
+        - field: amount
+          threshold: 50
+  - id: prod-deny-destructive
+    version: "1.0.0"
+    priority: 1000
+    match:
+      environments: [production]
+      classifications: [destructive]
+    rules:
+      denyWhenFieldEquals:
+        - field: confirm
+          value: true

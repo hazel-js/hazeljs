@@ -134,6 +134,11 @@ export interface AgentRuntimeConfig {
   runLeaseService?: import('../run/agent-run-lease').AgentRunLeaseService;
   /** Lease TTL in ms (default 30_000). */
   runLeaseTtlMs?: number;
+  /**
+   * Optional tool authorization gate (e.g. @hazeljs/agent-gatekeeper via createToolExecutorGate).
+   * When set, ToolExecutor delegates authorization to this gate instead of PolicyEngine.
+   */
+  authorizationGate?: import('../authorization/tool-authorization-gate.interface').ToolAuthorizationGate;
 }
 
 /**
@@ -322,6 +327,7 @@ export class AgentRuntime {
       durableSuspend: this.durableSuspend,
       onApprovalRequested: (info): Promise<void> => this.handleApprovalRequested(info),
       onApprovalResolved: (info): Promise<void> => this.handleApprovalResolved(info),
+      authorizationGate: config.authorizationGate,
     });
 
     this.agentExecutor = new AgentExecutor(

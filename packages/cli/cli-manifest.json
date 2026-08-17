@@ -944,6 +944,91 @@
       ]
     },
     {
+      "name": "gatekeeper",
+      "usage": "hazel gatekeeper <command>",
+      "description": "Agent Gatekeeper — validate, simulate, and explain tool authorization policies (never executes tools)",
+      "subcommands": [
+        {
+          "name": "validate",
+          "usage": "hazel gatekeeper validate [--config agent-gatekeeper.yaml] [--json]",
+          "description": "Validate an agent-gatekeeper.yaml policy file",
+          "options": [
+            {
+              "name": "config",
+              "type": "string",
+              "default": "agent-gatekeeper.yaml",
+              "description": "Policy config file"
+            },
+            {
+              "name": "json",
+              "type": "boolean",
+              "description": "Print raw JSON result"
+            }
+          ]
+        },
+        {
+          "name": "simulate",
+          "usage": "hazel gatekeeper simulate --agent <id> --tool <name> [--input input.json]",
+          "description": "Simulate a gatekeeper decision without executing tools or creating approvals",
+          "options": [
+            {
+              "name": "agent",
+              "type": "string",
+              "required": true,
+              "description": "Agent id"
+            },
+            {
+              "name": "tool",
+              "type": "string",
+              "required": true,
+              "description": "Tool name"
+            },
+            {
+              "name": "input",
+              "type": "string",
+              "description": "JSON input file"
+            },
+            {
+              "name": "environment",
+              "type": "string",
+              "default": "development",
+              "description": "Environment"
+            },
+            {
+              "name": "tenant",
+              "type": "string",
+              "description": "Tenant id"
+            },
+            {
+              "name": "config",
+              "type": "string",
+              "description": "Optional policy YAML file"
+            }
+          ]
+        },
+        {
+          "name": "explain",
+          "usage": "hazel gatekeeper explain <file> [--config agent-gatekeeper.yaml]",
+          "description": "Explain a saved invocation JSON file (never executes tools)",
+          "args": [
+            {
+              "name": "file",
+              "type": "string",
+              "required": true,
+              "description": "Invocation context JSON file"
+            }
+          ],
+          "options": [
+            {
+              "name": "config",
+              "type": "string",
+              "description": "Optional policy YAML file"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "name": "install",
       "usage": "hazel install <spec> [--cwd <dir>] [--registry <dir>]",
       "description": "Alias for hazel store install",

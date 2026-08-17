@@ -57,6 +57,7 @@ import { registerEvalCommand } from './commands/eval';
 import { registerBenchmarkCommand } from './commands/benchmark';
 import { registerAgentCommand } from './commands/agent';
 import { registerSkillgateCommand } from './commands/skillgate';
+import { registerGatekeeperCommand } from './commands/gatekeeper';
 import { registerStoreCommand } from './commands/store';
 
 // Read version from package.json to ensure consistency
@@ -79,6 +80,7 @@ registerEvalCommand(program);
 registerBenchmarkCommand(program);
 registerAgentCommand(program);
 registerSkillgateCommand(program);
+registerGatekeeperCommand(program);
 registerStoreCommand(program);
 
 // Generate command group (unified: hazel g <type> <name> [--path] [--dry-run] [--json], or hazel g --list)

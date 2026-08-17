@@ -268,7 +268,23 @@ const gate = Skillgate.fromOpenApi(openApiSpec, {
   invoke: { baseUrl: process.env.API_BASE_URL || 'http://127.0.0.1:3000' },
 });
 const registry = new ToolRegistry();
-gate.register(registry, 'api-concierge');
+    gate.register(registry, 'api-concierge');
+`,
+  },
+  {
+    shortName: 'agent-gatekeeper',
+    npm: '@hazeljs/agent-gatekeeper',
+    label: 'Agent Gatekeeper - tool authorization (@hazeljs/agent-gatekeeper)',
+    hint: 'import { AgentGatekeeper } from "@hazeljs/agent-gatekeeper";\n  // new AgentGatekeeper({ mode: "enforce", defaultDecision: "deny", policies })',
+    moduleImport: null,
+    moduleExpression: null,
+    setupTemplate: `import { AgentGatekeeper } from '@hazeljs/agent-gatekeeper';
+
+export const gatekeeper = new AgentGatekeeper({
+  mode: 'enforce',
+  defaultDecision: 'deny',
+  policies: [],
+});
 `,
   },
   {
