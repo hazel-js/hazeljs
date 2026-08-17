@@ -60,6 +60,8 @@
     "@hazeljs/agent": "^2.0.1",
     "@hazeljs/skillgate": "^2.0.1",
     "@hazeljs/agent-gatekeeper": "^2.0.1",
+    "@types/inquirer": "^8.2.10",
+    "@types/mustache": "^4.2.5",
     "typescript": "^5.9.3"
   },
   "engines": {
