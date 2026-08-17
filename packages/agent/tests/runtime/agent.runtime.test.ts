@@ -23,6 +23,18 @@ describe('AgentRuntime', () => {
       expect(runtime).toBeDefined();
     });
 
+    it('should wire an authorizationGate onto ToolExecutor', () => {
+      const gate = {
+        execute: jest.fn().mockResolvedValue({
+          success: true,
+          output: 'gated',
+          duration: 1,
+        }),
+      };
+      const runtime = new AgentRuntime({ authorizationGate: gate });
+      expect(runtime).toBeDefined();
+    });
+
     it('should initialize with rate limiter when configured', () => {
       const config: AgentRuntimeConfig = {
         rateLimitPerMinute: 100,

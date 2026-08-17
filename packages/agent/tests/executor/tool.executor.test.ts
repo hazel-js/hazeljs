@@ -13,7 +13,10 @@ describe('ToolExecutor', () => {
   });
 
   afterEach(() => {
-    jest.runOnlyPendingTimers();
+    for (const approval of executor.getPendingApprovals()) {
+      executor.rejectExecution(approval.requestId);
+    }
+    jest.clearAllTimers();
     jest.useRealTimers();
   });
 
@@ -386,6 +389,328 @@ describe('ToolExecutor', () => {
 
       expect(approvals.length).toBeGreaterThan(0);
       expect(approvals[0].toolName).toBe('testTool');
+    });
+  });
+
+  describe('authorizationGate', () => {
+    const gatedTool = (): ToolMetadata => ({
+      name: 'stripe.refund',
+      description: 'Refund',
+      parameters: [],
+      method: jest.fn().mockResolvedValue('should-not-run'),
+      target: {},
+      propertyKey: 'refund',
+      agentClass: class {},
+    });
+
+    it('delegates successful execution to the gate and skips the tool method', async () => {
+      const tool = gatedTool();
+      const gate = {
+        execute: jest.fn().mockResolvedValue({
+          success: true,
+          output: { refunded: 40 },
+          duration: 12,
+        }),
+      };
+      const gated = new ToolExecutor({ eventEmitter, authorizationGate: gate });
+
+      const promise = gated.execute(
+        tool,
+        { amount: 40 },
+        'refund-agent',
+        'session-1',
+        'user-1',
+        'run-1'
+      );
+      jest.runAllTimers();
+      const result = await promise;
+
+      expect(gate.execute).toHaveBeenCalledWith({
+        tool,
+        input: { amount: 40 },
+        agentId: 'refund-agent',
+        sessionId: 'session-1',
+        userId: 'user-1',
+        runId: 'run-1',
+      });
+      expect(result.success).toBe(true);
+      expect(result.output).toEqual({ refunded: 40 });
+      expect(tool.method).not.toHaveBeenCalled();
+      expect(eventEmitter).toHaveBeenCalledWith(
+        AgentEventType.TOOL_EXECUTION_COMPLETED,
+        expect.objectContaining({ output: { refunded: 40 }, duration: 12 })
+      );
+    });
+
+    it('emits approval requested when the gate returns pendingApproval', async () => {
+      const tool = gatedTool();
+      const gate = {
+        execute: jest.fn().mockResolvedValue({
+          success: false,
+          pendingApproval: true,
+          requestId: 'req-1',
+          duration: 3,
+        }),
+      };
+      const gated = new ToolExecutor({ eventEmitter, authorizationGate: gate });
+
+      const promise = gated.execute(tool, { amount: 80 }, 'refund-agent', 'session-1');
+      jest.runAllTimers();
+      const result = await promise;
+
+      expect(result.pendingApproval).toBe(true);
+      expect(result.requestId).toBe('req-1');
+      expect(eventEmitter).toHaveBeenCalledWith(
+        AgentEventType.TOOL_APPROVAL_REQUESTED,
+        expect.objectContaining({ requestId: 'req-1', toolName: 'stripe.refund' })
+      );
+    });
+
+    it('emits failure when the gate denies with an error', async () => {
+      const tool = gatedTool();
+      const gate = {
+        execute: jest.fn().mockResolvedValue({
+          success: false,
+          error: new Error('cross-tenant refund'),
+          duration: 2,
+        }),
+      };
+      const gated = new ToolExecutor({ eventEmitter, authorizationGate: gate });
+
+      const promise = gated.execute(tool, { amount: 5 }, 'refund-agent', 'session-1');
+      jest.runAllTimers();
+      const result = await promise;
+
+      expect(result.success).toBe(false);
+      expect(result.error?.message).toBe('cross-tenant refund');
+      expect(eventEmitter).toHaveBeenCalledWith(
+        AgentEventType.TOOL_EXECUTION_FAILED,
+        expect.objectContaining({ error: 'cross-tenant refund' })
+      );
+    });
+
+    it('uses a default deny message when the gate returns no error', async () => {
+      const tool = gatedTool();
+      const gate = {
+        execute: jest.fn().mockResolvedValue({
+          success: false,
+          duration: 1,
+        }),
+      };
+      const gated = new ToolExecutor({ eventEmitter, authorizationGate: gate });
+
+      const promise = gated.execute(tool, {}, 'refund-agent', 'session-1');
+      jest.runAllTimers();
+      const result = await promise;
+
+      expect(result.success).toBe(false);
+      expect(eventEmitter).toHaveBeenCalledWith(
+        AgentEventType.TOOL_EXECUTION_FAILED,
+        expect.objectContaining({ error: 'Authorization gate denied' })
+      );
+    });
+
+    it('skips PolicyEngine when a gate is set', async () => {
+      const tool = gatedTool();
+      const evaluate = jest.fn();
+      const gated = new ToolExecutor({
+        eventEmitter,
+        policyEngine: { evaluate } as never,
+        authorizationGate: {
+          execute: jest.fn().mockResolvedValue({ success: true, output: 'ok', duration: 1 }),
+        },
+      });
+
+      const promise = gated.execute(tool, {}, 'refund-agent', 'session-1');
+      jest.runAllTimers();
+      await promise;
+
+      expect(evaluate).not.toHaveBeenCalled();
+    });
+
+    it('setAuthorizationGate installs and clears the gate at runtime', async () => {
+      const tool = gatedTool();
+      const gate = {
+        execute: jest.fn().mockResolvedValue({ success: true, output: 'gated', duration: 1 }),
+      };
+
+      executor.setAuthorizationGate(gate);
+      let promise = executor.execute(tool, {}, 'agent-1', 'session-1');
+      jest.runAllTimers();
+      await expect(promise).resolves.toEqual(expect.objectContaining({ output: 'gated' }));
+      expect(tool.method).not.toHaveBeenCalled();
+
+      executor.setAuthorizationGate(undefined);
+      promise = executor.execute(tool, {}, 'agent-1', 'session-1');
+      jest.runAllTimers();
+      await expect(promise).resolves.toEqual(expect.objectContaining({ output: 'should-not-run' }));
+      expect(tool.method).toHaveBeenCalled();
+    });
+  });
+
+  describe('policy and schema gates', () => {
+    const baseTool = (overrides: Partial<ToolMetadata> = {}): ToolMetadata => ({
+      name: 'testTool',
+      description: 'Test tool',
+      parameters: [],
+      method: jest.fn().mockResolvedValue('result'),
+      target: {},
+      propertyKey: 'testTool',
+      agentClass: class {},
+      ...overrides,
+    });
+
+    it('denies when PolicyService disallows', async () => {
+      const policyService = {
+        setIdentity: jest.fn(),
+        evaluateTool: jest.fn().mockReturnValue({
+          allowed: false,
+          input: { amount: 1 },
+          reason: 'Denied by policy',
+          ruleId: 'deny-1',
+        }),
+      };
+      const exec = new ToolExecutor({ eventEmitter, policyService: policyService as never });
+      const tool = baseTool();
+
+      const promise = exec.execute(tool, { amount: 1 }, 'agent-1', 'session-1');
+      jest.runAllTimers();
+      const result = await promise;
+
+      expect(result.success).toBe(false);
+      expect(result.error?.message).toBe('Denied by policy');
+      expect(tool.method).not.toHaveBeenCalled();
+    });
+
+    it('uses a default reason when PolicyService denies without one', async () => {
+      const policyService = {
+        setIdentity: jest.fn(),
+        evaluateTool: jest.fn().mockReturnValue({
+          allowed: false,
+          input: {},
+        }),
+      };
+      const exec = new ToolExecutor({ eventEmitter, policyService: policyService as never });
+
+      const promise = exec.execute(baseTool(), {}, 'agent-1', 'session-1');
+      jest.runAllTimers();
+      const result = await promise;
+
+      expect(result.error?.message).toBe('Denied by policy');
+    });
+
+    it('requires approval when PolicyService says so', async () => {
+      const policyService = {
+        setIdentity: jest.fn(),
+        evaluateTool: jest.fn().mockReturnValue({
+          allowed: true,
+          requiresApproval: true,
+          input: {},
+        }),
+      };
+      const exec = new ToolExecutor({ eventEmitter, policyService: policyService as never });
+      const tool = baseTool();
+
+      const promise = exec.execute(tool, {}, 'agent-1', 'session-1');
+      await Promise.resolve();
+      const approvals = exec.getPendingApprovals();
+      expect(approvals.length).toBeGreaterThan(0);
+      exec.rejectExecution(approvals[0].requestId);
+      jest.advanceTimersByTime(2000);
+      await jest.runAllTimersAsync();
+      const result = await promise;
+      expect(result.success).toBe(false);
+    });
+
+    it('denies when PolicyEngine disallows', async () => {
+      const policyEngine = {
+        evaluate: jest.fn().mockReturnValue({
+          allowed: false,
+          input: {},
+          reason: 'engine deny',
+          ruleId: 'eng-1',
+        }),
+      };
+      const exec = new ToolExecutor({ eventEmitter, policyEngine: policyEngine as never });
+      const tool = baseTool();
+
+      const promise = exec.execute(tool, {}, 'agent-1', 'session-1');
+      jest.runAllTimers();
+      const result = await promise;
+
+      expect(result.success).toBe(false);
+      expect(result.error?.message).toBe('engine deny');
+      expect(tool.method).not.toHaveBeenCalled();
+    });
+
+    it('uses a default reason when PolicyEngine denies without one', async () => {
+      const policyEngine = {
+        evaluate: jest.fn().mockReturnValue({ allowed: false, input: {} }),
+      };
+      const exec = new ToolExecutor({ eventEmitter, policyEngine: policyEngine as never });
+
+      const promise = exec.execute(baseTool(), {}, 'agent-1', 'session-1');
+      jest.runAllTimers();
+      const result = await promise;
+      expect(result.error?.message).toBe('Denied by policy');
+    });
+
+    it('requires approval when PolicyEngine says so', async () => {
+      const policyEngine = {
+        evaluate: jest.fn().mockReturnValue({
+          allowed: true,
+          requiresApproval: true,
+          input: {},
+        }),
+      };
+      const exec = new ToolExecutor({ eventEmitter, policyEngine: policyEngine as never });
+
+      const promise = exec.execute(baseTool(), {}, 'agent-1', 'session-1');
+      await Promise.resolve();
+      const approvals = exec.getPendingApprovals();
+      expect(approvals.length).toBeGreaterThan(0);
+      exec.rejectExecution(approvals[0].requestId);
+      jest.advanceTimersByTime(2000);
+      await jest.runAllTimersAsync();
+      const result = await promise;
+      expect(result.success).toBe(false);
+    });
+
+    it('rejects invalid schema input', async () => {
+      const { z } = await import('zod');
+      const tool = baseTool({
+        schema: z.object({ amount: z.number() }),
+      });
+
+      const promise = executor.execute(tool, { amount: 'nope' }, 'agent-1', 'session-1');
+      jest.runAllTimers();
+      const result = await promise;
+
+      expect(result.success).toBe(false);
+      expect(result.error?.message).toContain('Input validation failed');
+      expect(tool.method).not.toHaveBeenCalled();
+    });
+
+    it('setPolicyService, setDurableSuspend, and setAgentIdentity update options', async () => {
+      const policyService = {
+        setIdentity: jest.fn(),
+        evaluateTool: jest.fn().mockReturnValue({
+          allowed: true,
+          requiresApproval: true,
+          input: {},
+        }),
+      };
+      executor.setPolicyEngine({ evaluate: jest.fn() } as never);
+      executor.setPolicyService(policyService as never);
+      executor.setAgentIdentity({ agentId: 'agent-1' } as never);
+      executor.setDurableSuspend(true);
+      expect(policyService.setIdentity).toHaveBeenCalled();
+
+      const promise = executor.execute(baseTool(), {}, 'agent-1', 'session-1');
+      await Promise.resolve();
+      const result = await promise;
+      expect(result.pendingApproval).toBe(true);
+      expect(result.success).toBe(false);
     });
   });
 
