@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/agent-gatekeeper",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Runtime authorization and policy-enforcement layer for HazelJS agent tool invocations",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
