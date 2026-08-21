@@ -124,11 +124,53 @@ export function getRedactMetadata(target: object, key: string | symbol): RedactO
 
 function applyRedact(data: unknown, options: RedactOptions): unknown {
   if (!data || typeof data !== 'object') return data;
-  const result = { ...(data as Record<string, unknown>) };
+  const result = deepCloneShallow(data as Record<string, unknown>);
   for (const field of options.fields) {
-    delete result[field];
+    const parts = field.split('.');
+    deleteNested(result, parts);
   }
   return result;
+}
+
+function deepCloneShallow(obj: Record<string, unknown>): Record<string, unknown> {
+  const result: Record<string, unknown> = { ...obj };
+  for (const [k, v] of Object.entries(result)) {
+    if (v && typeof v === 'object' && !Array.isArray(v) && !(v instanceof Date)) {
+      result[k] = deepCloneShallow(v as Record<string, unknown>);
+    }
+  }
+  return result;
+}
+
+function deleteNested(obj: Record<string, unknown>, path: string[]): void {
+  if (path.length === 1) {
+    delete obj[path[0]];
+    return;
+  }
+  const nested = obj[path[0]];
+  if (nested && typeof nested === 'object' && !Array.isArray(nested)) {
+    deleteNested(nested as Record<string, unknown>, path.slice(1));
+  }
+}
+
+function setNested(obj: Record<string, unknown>, path: string[], value: unknown): void {
+  if (path.length === 1) {
+    obj[path[0]] = value;
+    return;
+  }
+  const nested = obj[path[0]];
+  if (nested && typeof nested === 'object' && !Array.isArray(nested)) {
+    setNested(nested as Record<string, unknown>, path.slice(1), value);
+  }
+}
+
+function getNested(obj: Record<string, unknown>, path: string[]): unknown {
+  if (path.length === 1) return obj[path[0]];
+  const nested = obj[path[0]];
+  if (nested && typeof nested === 'object' && !Array.isArray(nested)) {
+    return getNested(nested as Record<string, unknown>, path.slice(1));
+  }
+  return undefined;
 }
 
 // ─── @Encrypt ────────────────────────────────────────────────────────────────
@@ -174,10 +216,11 @@ function applyEncrypt(data: unknown, options: EncryptOptions): unknown {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const crypto = require('crypto') as typeof import('crypto');
   const keyBuf = typeof options.key === 'string' ? Buffer.from(options.key, 'hex') : options.key;
-  const result = { ...(data as Record<string, unknown>) };
+  const result = deepCloneShallow(data as Record<string, unknown>);
 
   for (const field of options.fields) {
-    const val = result[field];
+    const parts = field.split('.');
+    const val = getNested(result, parts);
     if (val === undefined || val === null) continue;
 
     const iv = crypto.randomBytes(12);
@@ -188,7 +231,11 @@ function applyEncrypt(data: unknown, options: EncryptOptions): unknown {
     const encrypted = Buffer.concat([cipher.update(plaintext, 'utf8'), cipher.final()]);
     const authTag = cipher.getAuthTag();
 
-    result[field] = `${iv.toString('hex')}:${authTag.toString('hex')}:${encrypted.toString('hex')}`;
+    setNested(
+      result,
+      parts,
+      `${iv.toString('hex')}:${authTag.toString('hex')}:${encrypted.toString('hex')}`
+    );
   }
 
   return result;
@@ -213,17 +260,18 @@ function applyDecrypt(data: unknown, options: DecryptOptions): unknown {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const crypto = require('crypto') as typeof import('crypto');
   const keyBuf = typeof options.key === 'string' ? Buffer.from(options.key, 'hex') : options.key;
-  const result = { ...(data as Record<string, unknown>) };
+  const result = deepCloneShallow(data as Record<string, unknown>);
 
   for (const field of options.fields) {
-    const val = result[field];
+    const parts = field.split('.');
+    const val = getNested(result, parts);
     if (typeof val !== 'string') continue;
 
-    const parts = val.split(':');
-    if (parts.length !== 3) continue;
+    const partsEnc = val.split(':');
+    if (partsEnc.length !== 3) continue;
 
     try {
-      const [ivHex, authTagHex, ciphertextHex] = parts;
+      const [ivHex, authTagHex, ciphertextHex] = partsEnc;
       const iv = Buffer.from(ivHex, 'hex');
       const authTag = Buffer.from(authTagHex, 'hex');
       const ciphertext = Buffer.from(ciphertextHex, 'hex');
@@ -236,9 +284,9 @@ function applyDecrypt(data: unknown, options: DecryptOptions): unknown {
         'utf8'
       );
       try {
-        result[field] = JSON.parse(decrypted);
+        setNested(result, parts, JSON.parse(decrypted));
       } catch {
-        result[field] = decrypted;
+        setNested(result, parts, decrypted);
       }
     } catch {
       // Leave as-is if decryption fails

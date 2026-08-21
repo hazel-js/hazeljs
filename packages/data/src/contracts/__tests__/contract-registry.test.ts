@@ -1,5 +1,6 @@
 import { ContractRegistry } from '../contract-registry';
 import type { DataContract } from '../contract.types';
+import { Schema } from '../../schema/schema';
 
 describe('ContractRegistry', () => {
   let registry: ContractRegistry;
@@ -900,6 +901,85 @@ describe('ContractRegistry', () => {
       expect(() => {
         registry.clearOldViolations(30);
       }).not.toThrow();
+    });
+  });
+
+  describe('baseSchema and schema.validate duck-typing', () => {
+    it('validates via baseSchema and collects errors', () => {
+      const UserSchema = Schema.object({
+        id: Schema.string().min(1),
+        email: Schema.string().email(),
+      });
+      registry.register({
+        name: 'base-schema-users',
+        version: '1.0.0',
+        owner: 'platform',
+        schema: UserSchema.toJsonSchema(),
+        baseSchema: UserSchema,
+        status: 'active',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      const ok = registry.validate('base-schema-users', { id: '1', email: 'a@b.com' });
+      expect(ok.valid).toBe(true);
+
+      const bad = registry.validate('base-schema-users', [
+        { id: '', email: 'nope' },
+        { id: '2', email: 'ok@x.com' },
+      ]);
+      expect(bad.valid).toBe(false);
+      expect(bad.violations.length).toBeGreaterThan(0);
+    });
+
+    it('validates when schema field itself has validate()', () => {
+      const fakeSchema = {
+        validate: (v: unknown) => {
+          if (v && typeof v === 'object' && 'id' in (v as object)) {
+            return { success: true, data: v };
+          }
+          return { success: false, errors: [{ path: 'id', message: 'missing id' }] };
+        },
+      };
+      registry.register({
+        name: 'duck-schema',
+        version: '1.0.0',
+        owner: 'platform',
+        schema: fakeSchema as unknown as Record<string, unknown>,
+        status: 'active',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      expect(registry.validate('duck-schema', { id: 1 }).valid).toBe(true);
+      const bad = registry.validate('duck-schema', {});
+      expect(bad.valid).toBe(false);
+      expect(bad.violations[0].message).toBe('missing id');
+    });
+
+    it('compareVersions pads shorter semver parts via list ordering', () => {
+      registry.register({
+        name: 'semver-pad',
+        version: '1.0',
+        owner: 'platform',
+        schema: {},
+        status: 'active',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      registry.register({
+        name: 'semver-pad',
+        version: '1.0.1',
+        owner: 'platform',
+        schema: {},
+        status: 'active',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      const list = registry.listContracts().find((c) => c.name === 'semver-pad');
+      expect(list?.versions).toEqual(expect.arrayContaining(['1.0', '1.0.1']));
+      const diff = registry.diff('semver-pad', '1.0', '1.0.1');
+      expect(diff).toBeDefined();
     });
   });
 });

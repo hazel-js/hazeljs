@@ -224,6 +224,49 @@ describe('MetricsService', () => {
       expect(result.metrics.f1Score).toBeUndefined();
     });
 
+    it('evaluate with confusion and regression metrics', async () => {
+      @Model({ name: 'reg-model', version: '1.0.0', framework: 'custom' })
+      class RegModel {
+        @Train()
+        train() {}
+
+        @Predict()
+        async predict(input: { x: number }) {
+          return { value: input.x * 2, label: input.x > 0 ? 'pos' : 'neg' };
+        }
+      }
+
+      const registry = new ModelRegistry();
+      registry.register({
+        metadata: { name: 'reg-model', version: '1.0.0', framework: 'custom' },
+        instance: new RegModel(),
+        predictMethod: 'predict',
+      });
+      const predictor = new PredictorService(registry);
+      const svc = new MetricsService(registry, predictor);
+
+      const classResult = await svc.evaluate(
+        'reg-model',
+        [
+          { x: 1, label: 'pos' },
+          { x: -1, label: 'neg' },
+        ],
+        { metrics: ['accuracy', 'confusion'], labelKey: 'label', predictionKey: 'label' }
+      );
+      expect(classResult.confusionMatrix).toBeDefined();
+
+      const regResult = await svc.evaluate(
+        'reg-model',
+        [
+          { x: 1, label: 2 },
+          { x: 2, label: 4 },
+        ],
+        { metrics: ['mae', 'mse', 'rmse', 'r2'], labelKey: 'label', valueKey: 'value' }
+      );
+      expect(regResult.metrics.mae).toBe(0);
+      expect(regResult.metrics.r2).toBe(1);
+    });
+
     it('evaluate when modelRegistry is undefined uses version unknown', async () => {
       const registry = new ModelRegistry();
       registry.register({
@@ -546,6 +589,51 @@ describe('MetricsService', () => {
       const metrics = service.getMetrics('model', '1.0.0');
       expect(metrics?.metrics.customMetric).toBe(0.85);
       expect(metrics?.metrics.anotherMetric).toBe(0.92);
+    });
+  });
+
+  describe('ranking metrics', () => {
+    it('computeNDCG rewards ideal ranking', () => {
+      expect(service.computeNDCG([3, 2, 1])).toBeCloseTo(1, 5);
+      expect(service.computeNDCG([1, 2, 3])).toBeLessThan(1);
+      expect(service.computeNDCG([3, 2, 1], 2)).toBeCloseTo(1, 5);
+      expect(service.computeNDCG([])).toBe(0);
+    });
+
+    it('computeMAP averages precision across queries', () => {
+      expect(service.computeMAP([[1, 1, 0]])).toBeCloseTo(1, 5);
+      const map = service.computeMAP([[0, 1, 0]]);
+      expect(map).toBeCloseTo(0.5, 5);
+      expect(service.computeMAP([[]])).toBe(0);
+    });
+  });
+
+  describe('regression and calibration helpers', () => {
+    it('computeRegressionMetrics', () => {
+      expect(service.computeRegressionMetrics([], [])).toEqual({
+        mae: 0,
+        mse: 0,
+        rmse: 0,
+        r2: 0,
+      });
+      const m = service.computeRegressionMetrics([1, 2, 3], [1, 2, 3]);
+      expect(m.mae).toBe(0);
+      expect(m.r2).toBe(1);
+      const imperfect = service.computeRegressionMetrics([1, 1, 1], [2, 2, 2]);
+      expect(imperfect.r2).toBe(0);
+    });
+
+    it('computeConfusionMatrix ROC-AUC and Brier', () => {
+      const cm = service.computeConfusionMatrix(['a', 'b', 'a'], ['a', 'b', 'b']);
+      expect(cm.labels).toEqual(['a', 'b']);
+      expect(cm.matrix[0][0]).toBe(1);
+      expect(
+        service.computeROCAuc([0.1, 0.2, 0.3, 0.8, 0.9, 0.95], [0, 0, 0, 1, 1, 1])
+      ).toBeGreaterThan(0.8);
+      expect(service.computeROCAuc([0.5], [1])).toBe(0);
+      expect(service.computeBrierScore([], [])).toBe(0);
+      expect(service.computeBrierScore([0.0, 1.0], [0, 1])).toBe(0);
+      expect(service.computeBrierScore([0.5, 0.5], [0, 1])).toBeCloseTo(0.25, 5);
     });
   });
 });

@@ -243,11 +243,20 @@ function buildSchema<T>(
 
 // ─── String Schema Factory ────────────────────────────────────────────────────
 
+interface StringSchemaMeta {
+  format?: string;
+  minLength?: number;
+  maxLength?: number;
+  enum?: string[];
+  pattern?: string;
+}
+
 function createStringSchema(
   constraints: Array<(v: string) => string | null> = [],
   preprocessors: Array<(v: string) => string> = [],
   refinements: Refinement<string>[] = [],
-  asyncRefinements: AsyncRefinement<string>[] = []
+  asyncRefinements: AsyncRefinement<string>[] = [],
+  meta: StringSchemaMeta = {}
 ): StringSchema {
   const syncValidate = (value: unknown): SyncResult<string> => {
     if (typeof value !== 'string') {
@@ -262,57 +271,87 @@ function createStringSchema(
     return { success: true, data: v };
   };
 
-  const jsonSchemaFn = (): Record<string, unknown> => ({ type: 'string' });
+  const jsonSchemaFn = (): Record<string, unknown> => {
+    const js: Record<string, unknown> = { type: 'string' };
+    if (meta.format) js.format = meta.format;
+    if (meta.minLength !== undefined) js.minLength = meta.minLength;
+    if (meta.maxLength !== undefined) js.maxLength = meta.maxLength;
+    if (meta.enum) js.enum = meta.enum;
+    if (meta.pattern) js.pattern = meta.pattern;
+    return js;
+  };
 
   const base = buildSchema(syncValidate, jsonSchemaFn, refinements, asyncRefinements);
 
-  const addConstraint = (c: (v: string) => string | null): StringSchema =>
-    createStringSchema([...constraints, c], preprocessors, refinements, asyncRefinements);
+  const addConstraint = (
+    c: (v: string) => string | null,
+    metaPatch: StringSchemaMeta = {}
+  ): StringSchema =>
+    createStringSchema([...constraints, c], preprocessors, refinements, asyncRefinements, {
+      ...meta,
+      ...metaPatch,
+    });
 
   const schema: StringSchema = {
     ...base,
 
     email(): StringSchema {
-      return addConstraint((v) => {
-        const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        return re.test(v) ? null : 'Invalid email';
-      });
+      return addConstraint(
+        (v) => {
+          const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          return re.test(v) ? null : 'Invalid email';
+        },
+        { format: 'email' }
+      );
     },
 
     url(): StringSchema {
-      return addConstraint((v) => {
-        try {
-          new URL(v);
-          return null;
-        } catch {
-          return 'Invalid URL';
-        }
-      });
+      return addConstraint(
+        (v) => {
+          try {
+            new URL(v);
+            return null;
+          } catch {
+            return 'Invalid URL';
+          }
+        },
+        { format: 'uri' }
+      );
     },
 
     min(length: number): StringSchema {
-      return addConstraint((v) => (v.length >= length ? null : `Min length ${length}`));
-    },
-
-    max(length: number): StringSchema {
-      return addConstraint((v) => (v.length <= length ? null : `Max length ${length}`));
-    },
-
-    uuid(): StringSchema {
-      return addConstraint((v) => {
-        const re = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-        return re.test(v) ? null : 'Invalid UUID';
+      return addConstraint((v) => (v.length >= length ? null : `Min length ${length}`), {
+        minLength: length,
       });
     },
 
+    max(length: number): StringSchema {
+      return addConstraint((v) => (v.length <= length ? null : `Max length ${length}`), {
+        maxLength: length,
+      });
+    },
+
+    uuid(): StringSchema {
+      return addConstraint(
+        (v) => {
+          const re = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+          return re.test(v) ? null : 'Invalid UUID';
+        },
+        { format: 'uuid' }
+      );
+    },
+
     oneOf(values: string[]): StringSchema {
-      return addConstraint((v) =>
-        values.includes(v) ? null : `Must be one of: ${values.join(', ')}`
+      return addConstraint(
+        (v) => (values.includes(v) ? null : `Must be one of: ${values.join(', ')}`),
+        { enum: values }
       );
     },
 
     pattern(regex: RegExp, message = 'Invalid format'): StringSchema {
-      return addConstraint((v) => (regex.test(v) ? null : message));
+      return addConstraint((v) => (regex.test(v) ? null : message), {
+        pattern: regex.source,
+      });
     },
 
     required(): StringSchema {
@@ -324,7 +363,8 @@ function createStringSchema(
         constraints,
         [...preprocessors, (v: string): string => v.trim()],
         refinements,
-        asyncRefinements
+        asyncRefinements,
+        meta
       );
     },
 
@@ -333,30 +373,40 @@ function createStringSchema(
         constraints,
         preprocessors,
         [...refinements, { fn, message }],
-        asyncRefinements
+        asyncRefinements,
+        meta
       );
     },
 
     refineAsync(fn: (v: string) => Promise<boolean>, message: string): StringSchema {
-      return createStringSchema(constraints, preprocessors, refinements, [
-        ...asyncRefinements,
-        { fn, message },
-      ]);
+      return createStringSchema(
+        constraints,
+        preprocessors,
+        refinements,
+        [...asyncRefinements, { fn, message }],
+        meta
+      );
     },
 
     default(value: string): StringSchema {
-      const next = createStringSchema(constraints, preprocessors, refinements, asyncRefinements);
+      const next = createStringSchema(
+        constraints,
+        preprocessors,
+        refinements,
+        asyncRefinements,
+        meta
+      );
       const originalValidate = next.validate.bind(next);
       return {
         ...next,
         validate: (v: unknown) =>
           v === undefined ? { success: true, data: value } : originalValidate(v),
-        toJsonSchema: () => ({ type: 'string', default: value }),
+        toJsonSchema: () => ({ ...jsonSchemaFn(), default: value }),
       };
     },
 
     toJsonSchema(): Record<string, unknown> {
-      return { type: 'string' };
+      return jsonSchemaFn();
     },
   };
 

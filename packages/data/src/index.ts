@@ -5,7 +5,7 @@
 import 'reflect-metadata';
 
 // ─── Module ──────────────────────────────────────────────────────────────────
-export { DataModule, type DataModuleOptions } from './data.module';
+export { DataModule, type DataModuleOptions, type DataTelemetryOptions } from './data.module';
 
 // ─── Schema ──────────────────────────────────────────────────────────────────
 export { Schema } from './schema/schema';
@@ -69,6 +69,11 @@ export {
   type PipelineDefinition,
   type SerializedStep,
 } from './pipelines/pipeline.builder';
+export {
+  PipelineRunner,
+  type PipelineRunnerOptions,
+  type PipelineRunnerResult,
+} from './pipelines/pipeline.runner';
 export { StreamService } from './pipelines/stream.service';
 
 // ─── Streaming ────────────────────────────────────────────────────────────────
@@ -96,6 +101,16 @@ export {
   pick,
   omit,
   renameKeys,
+  cast,
+  parseDate,
+  fillna,
+  coalesce,
+  flatten,
+  explode,
+  hash,
+  dedupe,
+  lookupJoin,
+  type CastType,
 } from './transformers/built-in.transformers';
 export {
   QualityService,

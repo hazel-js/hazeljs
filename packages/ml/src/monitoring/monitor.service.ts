@@ -11,6 +11,8 @@ export interface MonitorConfig {
   modelName: string;
   modelVersion?: string;
   featureDrift?: Omit<DriftConfig, 'features' | 'type'>;
+  /** Feature names to monitor for drift (required when featureDrift is set) */
+  featureNames?: string[];
   predictionDrift?: boolean;
   accuracyMonitor?: {
     threshold: number;
@@ -18,6 +20,8 @@ export interface MonitorConfig {
   };
   alertWebhook?: string;
   checkIntervalMinutes?: number;
+  /** Max prediction records retained for drift windows */
+  maxWindowSize?: number;
 }
 
 export interface MonitorAlert {
@@ -32,6 +36,12 @@ export interface MonitorAlert {
 
 export type AlertHandler = (alert: MonitorAlert) => void | Promise<void>;
 
+interface PredictionRecord {
+  timestamp: Date;
+  features: Record<string, number>;
+  prediction: number | string;
+}
+
 @Service()
 export class MonitorService {
   private driftService: DriftService;
@@ -39,6 +49,7 @@ export class MonitorService {
   private alertHandlers: AlertHandler[] = [];
   private checkIntervals: Map<string, NodeJS.Timeout> = new Map();
   private accuracyHistory: Map<string, Array<{ timestamp: Date; accuracy: number }>> = new Map();
+  private predictionWindows: Map<string, PredictionRecord[]> = new Map();
 
   constructor(driftService: DriftService) {
     this.driftService = driftService;
@@ -51,14 +62,12 @@ export class MonitorService {
     const key = this.getMonitorKey(config.modelName, config.modelVersion);
     this.monitors.set(key, config);
 
-    // Set up periodic checks if interval specified
     if (config.checkIntervalMinutes && config.checkIntervalMinutes > 0) {
       const intervalMs = config.checkIntervalMinutes * 60 * 1000;
       const interval = setInterval(() => {
-        this.checkModel(config.modelName, config.modelVersion);
+        void this.checkModel(config.modelName, config.modelVersion);
       }, intervalMs);
 
-      // Clean up old interval if exists
       const oldInterval = this.checkIntervals.get(key);
       if (oldInterval) {
         clearInterval(oldInterval);
@@ -85,16 +94,10 @@ export class MonitorService {
     logger.debug(`Unregistered monitor for ${modelName}@${modelVersion ?? 'latest'}`);
   }
 
-  /**
-   * Add an alert handler
-   */
   onAlert(handler: AlertHandler): void {
     this.alertHandlers.push(handler);
   }
 
-  /**
-   * Remove an alert handler
-   */
   offAlert(handler: AlertHandler): void {
     const idx = this.alertHandlers.indexOf(handler);
     if (idx >= 0) {
@@ -103,28 +106,47 @@ export class MonitorService {
   }
 
   /**
-   * Record prediction for drift monitoring
+   * Record prediction for drift monitoring (stored in an in-memory window).
    */
   recordPrediction(
     modelName: string,
     features: Record<string, number>,
-    prediction: number | string
+    prediction: number | string,
+    modelVersion?: string
   ): void {
-    // This would store predictions for batch drift detection
-    // In a real implementation, this would write to a time-series DB
+    const key = this.getMonitorKey(modelName, modelVersion);
+    const config = this.monitors.get(key);
+    const maxWindow = config?.maxWindowSize ?? config?.featureDrift?.windowSize ?? 1000;
+    const window = this.predictionWindows.get(key) ?? [];
+    window.push({ timestamp: new Date(), features, prediction });
+    if (window.length > maxWindow) {
+      window.splice(0, window.length - maxWindow);
+    }
+    this.predictionWindows.set(key, window);
     logger.debug(`Recorded prediction for ${modelName}`, { features, prediction });
   }
 
   /**
-   * Record accuracy metric for accuracy monitoring
+   * Seed reference feature distributions from training data.
    */
+  setReferenceFeatures(
+    modelName: string,
+    features: Record<string, number[]>,
+    modelVersion?: string
+  ): void {
+    for (const [name, values] of Object.entries(features)) {
+      this.driftService.setReferenceDistribution(`${modelName}:${name}`, values);
+    }
+    const key = this.getMonitorKey(modelName, modelVersion);
+    logger.debug(`Set reference features for ${key}`, { features: Object.keys(features) });
+  }
+
   recordAccuracy(modelName: string, accuracy: number, modelVersion?: string): void {
     const key = this.getMonitorKey(modelName, modelVersion);
     const history = this.accuracyHistory.get(key) ?? [];
     history.push({ timestamp: new Date(), accuracy });
     this.accuracyHistory.set(key, history);
 
-    // Check if accuracy dropped below threshold
     const config = this.monitors.get(key);
     if (config?.accuracyMonitor) {
       const { threshold, windowSize } = config.accuracyMonitor;
@@ -146,7 +168,7 @@ export class MonitorService {
   }
 
   /**
-   * Check a model for drift and other issues
+   * Check a model for drift using recorded prediction windows.
    */
   async checkModel(modelName: string, modelVersion?: string): Promise<DriftResult[]> {
     const key = this.getMonitorKey(modelName, modelVersion);
@@ -156,17 +178,28 @@ export class MonitorService {
     }
 
     const results: DriftResult[] = [];
+    const window = this.predictionWindows.get(key) ?? [];
 
-    // Note: In a real implementation, this would fetch recent feature data
-    // from the feature store or prediction logs
-    // For now, this is a placeholder for the check structure
+    if (config.featureDrift && window.length > 0) {
+      const featureNames =
+        config.featureNames ?? (window[0] ? Object.keys(window[0].features) : []);
 
-    if (config.featureDrift) {
-      // This would be populated from actual feature data
-      const dummyFeatures: Record<string, number[]> = {};
+      const currentFeatures: Record<string, number[]> = {};
+      for (const name of featureNames) {
+        const scoped = `${modelName}:${name}`;
+        const ref =
+          this.driftService.getReferenceDistribution(scoped) ??
+          this.driftService.getReferenceDistribution(name);
+        if (ref) {
+          this.driftService.setReferenceDistribution(name, ref);
+        }
+        currentFeatures[name] = window
+          .map((r) => r.features[name])
+          .filter((v): v is number => typeof v === 'number');
+      }
 
       try {
-        const report = this.driftService.detectDriftReport(dummyFeatures, config.featureDrift);
+        const report = this.driftService.detectDriftReport(currentFeatures, config.featureDrift);
         results.push(...report.results);
 
         for (const result of report.results) {
@@ -180,6 +213,7 @@ export class MonitorService {
               message: result.message,
               details: { feature: result.feature, score: result.score, method: result.method },
             });
+            await this.postWebhook(config, result);
           }
         }
       } catch (error) {
@@ -187,48 +221,90 @@ export class MonitorService {
       }
     }
 
+    if (config.predictionDrift && window.length > 0) {
+      const preds = window.map((r) => r.prediction);
+      const mid = Math.floor(preds.length / 2);
+      if (mid > 0) {
+        const result = this.driftService.detectPredictionDrift(
+          preds.slice(0, mid) as number[] | string[],
+          preds.slice(mid) as number[] | string[]
+        );
+        results.push(result);
+        if (result.driftDetected) {
+          this.emitAlert({
+            timestamp: new Date(),
+            modelName,
+            modelVersion,
+            alertType: 'drift',
+            severity: 'warning',
+            message: result.message,
+            details: { score: result.score, method: result.method },
+          });
+          await this.postWebhook(config, result);
+        }
+      }
+    }
+
     return results;
   }
 
-  /**
-   * Get monitoring status for all registered models
-   */
   getStatus(): Array<{
     modelName: string;
     modelVersion?: string;
     isActive: boolean;
     checkInterval?: number;
+    windowSize: number;
   }> {
-    return Array.from(this.monitors.values()).map((config) => ({
+    return Array.from(this.monitors.entries()).map(([key, config]) => ({
       modelName: config.modelName,
       modelVersion: config.modelVersion,
-      isActive: this.checkIntervals.has(this.getMonitorKey(config.modelName, config.modelVersion)),
+      isActive: this.checkIntervals.has(key),
       checkInterval: config.checkIntervalMinutes,
+      windowSize: this.predictionWindows.get(key)?.length ?? 0,
     }));
   }
 
-  /**
-   * Stop all monitoring
-   */
   stop(): void {
-    for (const [key, interval] of this.checkIntervals) {
+    for (const interval of this.checkIntervals.values()) {
       clearInterval(interval);
-      this.checkIntervals.delete(key);
     }
-    logger.debug('Stopped all monitoring');
+    this.checkIntervals.clear();
   }
 
   private getMonitorKey(modelName: string, modelVersion?: string): string {
-    return modelVersion ? `${modelName}:${modelVersion}` : modelName;
+    return modelVersion ? `${modelName}@${modelVersion}` : modelName;
   }
 
-  private async emitAlert(alert: MonitorAlert): Promise<void> {
+  private emitAlert(alert: MonitorAlert): void {
     for (const handler of this.alertHandlers) {
       try {
-        await handler(alert);
-      } catch (error) {
-        logger.error('Alert handler failed:', error);
+        const result = handler(alert);
+        if (result && typeof (result as Promise<void>).then === 'function') {
+          (result as Promise<void>).catch((err) => {
+            logger.warn('Alert handler failed', err);
+          });
+        }
+      } catch (err) {
+        logger.warn('Alert handler failed', err);
       }
+    }
+  }
+
+  private async postWebhook(config: MonitorConfig, result: DriftResult): Promise<void> {
+    if (!config.alertWebhook) return;
+    try {
+      await fetch(config.alertWebhook, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          modelName: config.modelName,
+          modelVersion: config.modelVersion,
+          alert: result,
+          timestamp: new Date().toISOString(),
+        }),
+      });
+    } catch (err) {
+      logger.warn(`Webhook alert failed for ${config.modelName}:`, err);
     }
   }
 }

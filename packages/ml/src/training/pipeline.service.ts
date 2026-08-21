@@ -8,8 +8,12 @@ export interface PipelineStep {
 }
 
 /**
- * Pipeline Service - ETL pipelines for training data preparation
- * Handles data transformation before model training
+ * Pipeline Service — lightweight preprocess chains for training data only.
+ *
+ * This is **not** a replacement for `@hazeljs/data` ETL (`PipelineBuilder` /
+ * `PipelineRunner`). Use `@hazeljs/data` for source→sink production pipelines;
+ * use `PipelineService` to normalize/filter samples immediately before
+ * `TrainerService.train()`.
  */
 @Service()
 export class PipelineService {

@@ -11,6 +11,7 @@ module.exports = {
   },
   moduleNameMapper: {
     '^@hazeljs/core$': '<rootDir>/../core/src/index.ts',
+    '^@hazeljs/data$': '<rootDir>/../data/src/index.ts',
   },
   collectCoverageFrom: [
     'src/**/*.ts',
@@ -24,6 +25,9 @@ module.exports = {
     '!src/features/index.ts',
     '!src/experiments/index.ts',
     '!src/monitoring/index.ts',
+    '!src/models/index.ts',
+    '!src/algorithms/index.ts',
+    '!src/decorators/index.ts',
   ],
   coverageThreshold: {
     global: {

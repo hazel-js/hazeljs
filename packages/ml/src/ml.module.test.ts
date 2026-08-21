@@ -27,12 +27,15 @@ describe('MLModule', () => {
       expect(result.providers).toContain(TestModel);
     });
 
-    it('includes ML_MODELS and MLModelBootstrap when models provided', () => {
-      const result = MLModule.forRoot({ models: [TestModel] });
-      const mlModels = result.providers.find(
-        (p: unknown) => p && typeof p === 'object' && 'provide' in p
+    it('exports MLOps services', () => {
+      const result = MLModule.forRoot();
+      const names = result.exports.map((e: unknown) =>
+        typeof e === 'function' ? (e as { name: string }).name : e
       );
-      expect(mlModels).toBeDefined();
+      expect(names).toContain('FeatureStoreService');
+      expect(names).toContain('ExperimentService');
+      expect(names).toContain('DriftService');
+      expect(names).toContain('MonitorService');
     });
   });
 

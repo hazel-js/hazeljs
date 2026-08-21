@@ -239,4 +239,25 @@ describe('PipelineBuilder', () => {
     expect(result.ok).toBe(true);
     expect(attempts).toBe(2);
   });
+
+  it('timeoutMs success path clears timer', async () => {
+    const pipeline = builder.addTransform('fast', async (d) => d, { timeoutMs: 500 });
+    await expect(pipeline.execute({ ok: true })).resolves.toEqual({ ok: true });
+  });
+
+  it('retry exhaustion throws last error', async () => {
+    const pipeline = builder.addTransform(
+      'fail',
+      () => {
+        throw new Error('exhausted');
+      },
+      { retry: { attempts: 2, delay: 1 } }
+    );
+    await expect(pipeline.execute({})).rejects.toThrow('exhausted');
+  });
+
+  it('noop step without transform or validate returns data', async () => {
+    const pipeline = new PipelineBuilder('noop', [{ name: 'empty' }]);
+    await expect(pipeline.execute({ a: 1 })).resolves.toEqual({ a: 1 });
+  });
 });

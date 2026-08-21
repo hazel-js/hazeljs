@@ -28,6 +28,7 @@ module.exports = {
     '!src/telemetry/telemetry.ts',
     '!src/testing/index.ts',
     '!src/decorators/index.ts',
+    '!src/contracts/index.ts',
     '!src/decorators/pii.decorator.ts',
     '!src/streaming/flink/flink.job.ts',
     '!src/streaming/flink/flink.operators.ts',

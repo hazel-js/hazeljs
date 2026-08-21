@@ -3,6 +3,7 @@
  */
 
 import 'reflect-metadata';
+import type { BaseSchema } from '../schema/schema';
 
 export const DATA_CONTRACT_METADATA_KEY = Symbol('hazel:data-contract:metadata');
 
@@ -12,6 +13,8 @@ export interface DataContractOptions {
   description?: string;
   owner: string;
   schema: Record<string, unknown>;
+  /** Preferred Schema DSL for validation */
+  baseSchema?: BaseSchema;
   sla?: {
     freshness?: {
       maxDelayMinutes: number;

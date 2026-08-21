@@ -34,6 +34,10 @@ export class SchemaFaker {
   private generateFromJsonSchema(js: Record<string, unknown>): unknown {
     if (js.const !== undefined) return js.const;
 
+    if (js.enum && Array.isArray(js.enum) && js.enum.length > 0) {
+      return js.enum[Math.floor(Math.random() * js.enum.length)];
+    }
+
     if (js.oneOf) {
       const schemas = js.oneOf as Record<string, unknown>[];
       const idx = Math.floor(Math.random() * schemas.length);
@@ -70,10 +74,10 @@ export class SchemaFaker {
     return null;
   }
 
-  private genByType(type: string, _js: Record<string, unknown>): unknown {
+  private genByType(type: string, js: Record<string, unknown>): unknown {
     switch (type) {
       case 'string':
-        return this.randomString();
+        return this.genString(js);
       case 'number':
       case 'integer':
         return Math.floor(Math.random() * 1000) - 100;
@@ -88,9 +92,33 @@ export class SchemaFaker {
     }
   }
 
-  private randomString(): string {
+  private genString(js: Record<string, unknown>): string {
+    const format = js.format as string | undefined;
+    if (format === 'email') {
+      return `user${Math.floor(Math.random() * 10000)}@example.com`;
+    }
+    if (format === 'uuid') {
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+        const r = (Math.random() * 16) | 0;
+        const v = c === 'x' ? r : (r & 0x3) | 0x8;
+        return v.toString(16);
+      });
+    }
+    if (format === 'uri' || format === 'url') {
+      return `https://example.com/${this.randomString(6)}`;
+    }
+    if (js.pattern && typeof js.pattern === 'string') {
+      // Best-effort: fall back to random string if pattern is complex
+      return this.randomString(8);
+    }
+    const minLen = typeof js.minLength === 'number' ? js.minLength : 5;
+    const maxLen = typeof js.maxLength === 'number' ? js.maxLength : Math.max(minLen, 14);
+    const len = Math.floor(Math.random() * (maxLen - minLen + 1)) + minLen;
+    return this.randomString(len);
+  }
+
+  private randomString(len: number): string {
     const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
-    const len = Math.floor(Math.random() * 10) + 5;
     return Array.from({ length: len }, () => chars[Math.floor(Math.random() * chars.length)]).join(
       ''
     );

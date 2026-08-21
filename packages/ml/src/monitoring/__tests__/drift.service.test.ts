@@ -475,5 +475,29 @@ describe('DriftService', () => {
 
       expect(psi).toBeGreaterThanOrEqual(0);
     });
+
+    it('detects drift with chi2 method and concept drift', () => {
+      const ref = Array.from({ length: 40 }, (_, i) => i % 5);
+      const curr = Array.from({ length: 40 }, () => 9);
+      service.setReferenceDistribution('feat', ref);
+      const chi2 = service.detectDrift('feat', curr, { method: 'chi2', threshold: 0.1 });
+      expect(chi2.method).toBe('chi2');
+      expect(typeof chi2.score).toBe('number');
+
+      const concept = service.detectConceptDrift(
+        [
+          { prediction: 'a', label: 'a' },
+          { prediction: 'b', label: 'b' },
+          { prediction: 'a', label: 'a' },
+        ],
+        [
+          { prediction: 'a', label: 'b' },
+          { prediction: 'b', label: 'a' },
+          { prediction: 'a', label: 'b' },
+        ]
+      );
+      expect(concept.feature).toBe('concept');
+      expect(concept.method).toBe('chi2');
+    });
   });
 });

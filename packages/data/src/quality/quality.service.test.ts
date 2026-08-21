@@ -145,4 +145,49 @@ describe('QualityService', () => {
     expect(profile.totalRows).toBe(0);
     expect(profile.fields).toEqual({});
   });
+
+  it('freshness check', () => {
+    const now = new Date('2024-01-01T12:00:00Z');
+    const check = service.freshness('updatedAt', 60_000, { now });
+    expect(check([{ updatedAt: '2024-01-01T11:59:30Z' }]).passed).toBe(true);
+    expect(check([{ updatedAt: '2024-01-01T11:00:00Z' }]).passed).toBe(false);
+  });
+
+  it('freshness marks missing and invalid timestamps as stale', () => {
+    const now = new Date('2024-01-01T12:00:00Z');
+    const check = service.freshness('updatedAt', 60_000, { now });
+    expect(check([{ updatedAt: null }]).passed).toBe(false);
+    expect(check([{ updatedAt: 'not-a-date' }]).passed).toBe(false);
+    expect(check([{ updatedAt: now.getTime() - 1000 }]).passed).toBe(true);
+    expect(check([{ updatedAt: new Date(now.getTime() - 1000) }]).passed).toBe(true);
+    expect(check([null as unknown as object]).passed).toBe(true);
+  });
+
+  it('rowCount check', () => {
+    const check = service.rowCount({ min: 1, max: 2 });
+    expect(check([{ a: 1 }]).passed).toBe(true);
+    expect(check([]).passed).toBe(false);
+    expect(check([{}, {}, {}]).passed).toBe(false);
+  });
+
+  it('schemaDrift check', () => {
+    const check = service.schemaDrift(['id', 'name']);
+    expect(check([{ id: 1, name: 'a' }]).passed).toBe(true);
+    expect(check([{ id: 1 }]).passed).toBe(false);
+    expect(check([{ id: 1, name: 'a', extra: 1 }]).passed).toBe(false);
+  });
+
+  it('detectAnomaliesIQR flags outliers', () => {
+    const records = [{ v: 10 }, { v: 11 }, { v: 12 }, { v: 13 }, { v: 14 }, { v: 100 }];
+    const anomalies = service.detectAnomaliesIQR(records, ['v']);
+    expect(anomalies.some((a) => a.value === 100)).toBe(true);
+    expect(anomalies[0].method).toBe('iqr');
+  });
+
+  it('detectAnomaliesMAD flags outliers', () => {
+    const records = [{ v: 10 }, { v: 11 }, { v: 12 }, { v: 13 }, { v: 14 }, { v: 200 }];
+    const anomalies = service.detectAnomaliesMAD(records, ['v']);
+    expect(anomalies.some((a) => a.value === 200)).toBe(true);
+    expect(anomalies[0].method).toBe('mad');
+  });
 });

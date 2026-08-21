@@ -237,6 +237,53 @@ export class ContractRegistry {
   private validateSchema(contract: DataContract, data: unknown): ContractViolation[] {
     const violations: ContractViolation[] = [];
 
+    // Prefer BaseSchema.validate when provided
+    if (contract.baseSchema) {
+      const items = Array.isArray(data) ? data : [data];
+      for (let i = 0; i < items.length; i++) {
+        const result = contract.baseSchema.validate(items[i]);
+        if (!result.success) {
+          for (const err of result.errors) {
+            violations.push({
+              contractName: contract.name,
+              contractVersion: contract.version,
+              violationType: 'schema',
+              severity: 'error',
+              message: err.message,
+              details: { path: err.path, index: i },
+              timestamp: new Date(),
+            });
+          }
+        }
+      }
+      return violations;
+    }
+
+    // Duck-type: schema itself may be a BaseSchema stored in the schema field
+    const maybeSchema = contract.schema as {
+      validate?: (v: unknown) => {
+        success: boolean;
+        errors?: Array<{ path: string; message: string }>;
+      };
+    };
+    if (typeof maybeSchema.validate === 'function') {
+      const result = maybeSchema.validate(data);
+      if (!result.success && result.errors) {
+        for (const err of result.errors) {
+          violations.push({
+            contractName: contract.name,
+            contractVersion: contract.version,
+            violationType: 'schema',
+            severity: 'error',
+            message: err.message,
+            details: { path: err.path },
+            timestamp: new Date(),
+          });
+        }
+      }
+      return violations;
+    }
+
     if (typeof data !== 'object' || data === null) {
       violations.push({
         contractName: contract.name,
@@ -252,7 +299,7 @@ export class ContractRegistry {
 
     const record = data as Record<string, unknown>;
 
-    // Check required fields from schema
+    // Legacy: check required fields from plain object schema
     for (const [field, fieldSchema] of Object.entries(contract.schema)) {
       if (typeof fieldSchema === 'object' && fieldSchema !== null) {
         const schema = fieldSchema as Record<string, unknown>;

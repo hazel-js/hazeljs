@@ -99,4 +99,30 @@ describe('ModelRegistry', () => {
     expect(versions).toHaveLength(1);
     expect(versions[0].version).toBe('2.0.0');
   });
+
+  it('persists and loads artifacts', () => {
+    const dir = `/tmp/hazeljs-ml-registry-${Date.now()}`;
+    registry.configurePersistence(dir);
+    registry.register({
+      metadata: { name: 'art', version: '1.0.0', framework: 'custom' },
+      instance: {},
+    });
+    const path = registry.saveArtifact('art', '1.0.0', { weights: [1, 2] }, { accuracy: 0.9 });
+    expect(path).toContain('art');
+    expect(registry.getVersions('art')[0].path).toBe(path);
+    const loaded = registry.loadArtifact<{ weights: number[] }>('art', '1.0.0');
+    expect(loaded.artifact.weights).toEqual([1, 2]);
+    expect(loaded.metrics?.accuracy).toBe(0.9);
+
+    // save without prior register still works
+    const path2 = registry.saveArtifact('orphan', '0.1.0', { ok: true });
+    expect(registry.loadArtifact('orphan', '0.1.0').artifact).toEqual({ ok: true });
+    expect(path2).toContain('orphan');
+  });
+
+  it('throws when persistence not configured or artifact missing', () => {
+    expect(() => registry.saveArtifact('x', '1', {})).toThrow('not configured');
+    registry.configurePersistence(`/tmp/hazeljs-ml-registry-empty-${Date.now()}`);
+    expect(() => registry.loadArtifact('missing', '1.0.0')).toThrow('Artifact not found');
+  });
 });

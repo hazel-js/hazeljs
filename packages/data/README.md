@@ -9,17 +9,20 @@ Data Processing & ETL for HazelJS - pipelines, schema validation, streaming, dat
 ## Features
 
 - **Pipelines** – Declarative ETL with `@Pipeline`, `@Transform`, `@Validate` decorators
+- **PipelineRunner** – First-class `source → transform → quality → sink` loop with DLQ + telemetry
 - **Schema validation** – Fluent Schema API (string, number, boolean, date, object, array, literal, union) with `.optional()`, `.nullable()`, `.default()`, `.transform()`, `.refine()`, `Infer<T>`, `.toJsonSchema()`
 - **Pipeline options** – Conditional steps (`when`), per-step retry, timeout, dead letter queue (DLQ)
 - **PipelineBuilder** – Programmatic pipelines with `.branch()`, `.parallel()`, `.catch()`, `.toSchema()`
 - **ETL service** – Execute multi-step pipelines with `executeBatch`, `onStepComplete`
 - **Stream processing** – StreamService, StreamProcessor with tumbling/sliding/session windows and stream join
-- **Built-in transformers** – trimString, toLowerCase, toUpperCase, parseJson, stringifyJson, pick, omit, renameKeys
-- **Data quality** – QualityService with completeness, notNull, uniqueness, range, pattern, referentialIntegrity, profile(), detectAnomalies()
-- **Connectors** – DataSource/DataSink (MemorySource, MemorySink, CsvSource, HttpSource)
-- **PII decorators** – @Mask, @Redact, @Encrypt, @Decrypt for sensitive data
+- **Built-in transformers** – trim/case/JSON, pick/omit/rename, cast, parseDate, fillna, flatten, explode, hash, dedupe, lookupJoin
+- **Data quality** – completeness, notNull, uniqueness, range, pattern, referentialIntegrity, freshness, rowCount, schemaDrift; profile(); anomalies via Z-score / IQR / MAD
+- **Data contracts** – ContractRegistry with Schema-aware validation; wired into DataModule
+- **Telemetry** – spans, metrics, lineage; configure via `DataModule.forRoot({ telemetry })`
+- **Connectors** – Memory, Csv, Http, Jsonl, Postgres (parameterized queries)
+- **PII decorators** – @Mask, @Redact, @Encrypt, @Decrypt (nested field paths supported)
 - **Test utilities** – SchemaFaker, PipelineTestHarness, MockSource, MockSink
-- **Flink integration** – Optional Apache Flink deployment for distributed stream processing
+- **Flink helpers** – Optional JobManager REST client + job-graph config generation (does not compile TypeScript transforms to Flink operators)
 
 ## Installation
 
@@ -277,16 +280,40 @@ const sink = new MockSink();
 
 ## Built-in transformers
 
-| Transformer                   | Description                       |
-| ----------------------------- | --------------------------------- |
-| `trimString`                  | Trim whitespace from strings      |
-| `toLowerCase` / `toUpperCase` | Case conversion                   |
-| `parseJson` / `stringifyJson` | JSON parsing and serialization    |
-| `pick`                        | Select specific keys from objects |
-| `omit`                        | Remove specific keys from objects |
-| `renameKeys`                  | Rename object keys                |
+| Transformer                    | Description                               |
+| ------------------------------ | ----------------------------------------- |
+| `trimString`                   | Trim whitespace from strings              |
+| `toLowerCase` / `toUpperCase`  | Case conversion                           |
+| `parseJson` / `stringifyJson`  | JSON parsing and serialization            |
+| `pick` / `omit` / `renameKeys` | Object key helpers                        |
+| `cast`                         | Cast fields to string/number/boolean/date |
+| `parseDate`                    | Parse date fields                         |
+| `fillna` / `coalesce`          | Fill null/undefined defaults              |
+| `flatten`                      | Flatten nested objects                    |
+| `explode`                      | Explode array field into rows             |
+| `hash`                         | SHA-256 hash fields                       |
+| `dedupe`                       | Deduplicate record arrays by keys         |
+| `lookupJoin`                   | Enrich from Map / lookup table            |
+
+## PipelineRunner (source → sink)
+
+```typescript
+import { PipelineRunner, MemorySource, MemorySink, cast, fillna } from '@hazeljs/data';
+
+const runner = new PipelineRunner(etlService, qualityService);
+const result = await runner.run({
+  source: new MemorySource(rawRows),
+  sink: new MemorySink(),
+  transform: (row) => fillna({ status: 'unknown' })(cast({ amount: 'number' })(row)),
+  qualityDataset: 'orders',
+  pipelineName: 'orders-etl',
+});
+```
 
 ## Flink configuration (optional)
+
+Flink support is a **JobManager REST client** plus job-graph / config generation for manual JAR deployment.
+It does **not** compile `@Transform` methods into Flink operators.
 
 ```typescript
 DataModule.forRoot({
@@ -294,6 +321,7 @@ DataModule.forRoot({
     url: process.env.FLINK_REST_URL ?? 'http://localhost:8081',
     timeout: 30000,
   },
+  telemetry: { enabled: true, serviceName: 'orders', lineage: true },
 });
 ```
 

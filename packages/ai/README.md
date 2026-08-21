@@ -715,7 +715,7 @@ await ai.chat('Hello');
 ```typescript
 // Before
 import { ChatService } from '@hazeljs/ai';
-import { MLService } from '@hazeljs/ml';
+import { TrainerService, PredictorService } from '@hazeljs/ml';
 import { AgentService } from '@hazeljs/agent';
 
 // After

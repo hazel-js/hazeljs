@@ -258,6 +258,29 @@ describe('ETLService timeout and retry fixed', () => {
     expect(pipeline.attempts).toBe(2);
   });
 
+  it('completes within timeoutMs (success path)', async () => {
+    @Pipeline('fast-timeout')
+    class FastTimeout {
+      @Transform({ step: 1, name: 'fast', timeoutMs: 500 })
+      async fast() {
+        return { ok: true };
+      }
+    }
+    const result = await etlService.execute<{ ok: boolean }>(new FastTimeout(), {});
+    expect(result.ok).toBe(true);
+  });
+
+  it('throws last error when all retries fail', async () => {
+    @Pipeline('always-fail-retry')
+    class AlwaysFail {
+      @Transform({ step: 1, name: 'fail', retry: { attempts: 2, delay: 1, backoff: 'fixed' } })
+      fail() {
+        throw new Error('always');
+      }
+    }
+    await expect(etlService.execute(new AlwaysFail(), {})).rejects.toThrow('always');
+  });
+
   it('emit catches handler errors', async () => {
     const pipeline = new TestPipeline();
     etlService.onStepComplete(() => {

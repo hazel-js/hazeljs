@@ -18,6 +18,15 @@ export class DriftService {
     logger.debug(`Set reference distribution for ${featureName} (${values.length} samples)`);
   }
 
+  getReferenceDistribution(featureName: string): number[] | undefined {
+    const values = this.referenceDistributions.get(featureName);
+    return values ? [...values] : undefined;
+  }
+
+  hasReferenceDistribution(featureName: string): boolean {
+    return this.referenceDistributions.has(featureName);
+  }
+
   /**
    * Calculate distribution statistics
    */
@@ -260,6 +269,31 @@ export class DriftService {
         driftDetected = score > config.threshold;
         break;
       }
+      case 'chi2': {
+        // Bin numeric values then run chi-square on category counts
+        const bins = 10;
+        const all = [...referenceValues, ...currentValues];
+        const min = Math.min(...all);
+        const max = Math.max(...all);
+        const width = (max - min) / bins || 1;
+        const toCounts = (vals: number[]): Record<string, number> => {
+          const counts: Record<string, number> = {};
+          for (const v of vals) {
+            const bin = Math.min(bins - 1, Math.floor((v - min) / width));
+            const key = `bin${bin}`;
+            counts[key] = (counts[key] ?? 0) + 1;
+          }
+          return counts;
+        };
+        const { chi2, pValue: p } = this.calculateChiSquare(
+          toCounts(referenceValues),
+          toCounts(currentValues)
+        );
+        score = chi2 / bins;
+        pValue = p;
+        driftDetected = p < 0.05 || score > config.threshold;
+        break;
+      }
       default:
         throw new Error(`Unsupported drift detection method: ${config.method}`);
     }
@@ -383,6 +417,45 @@ export class DriftService {
       message: driftDetected
         ? `Prediction drift detected: chi2=${score.toFixed(4)}, p=${pValue?.toFixed(4)}`
         : `No prediction drift detected: chi2=${score.toFixed(4)}`,
+      timestamp: new Date(),
+    };
+  }
+
+  /**
+   * Detect concept drift via shift in the joint (prediction, label) distribution.
+   * This is a batch chi-square check, not a streaming detector (ADWIN/Page-Hinkley).
+   */
+  detectConceptDrift(
+    referencePairs: Array<{ prediction: string; label: string }>,
+    currentPairs: Array<{ prediction: string; label: string }>,
+    threshold = 0.05
+  ): DriftResult {
+    const toCounts = (
+      pairs: Array<{ prediction: string; label: string }>
+    ): Record<string, number> => {
+      const counts: Record<string, number> = {};
+      for (const p of pairs) {
+        const key = `${p.prediction}|${p.label}`;
+        counts[key] = (counts[key] ?? 0) + 1;
+      }
+      return counts;
+    };
+    const { chi2, pValue } = this.calculateChiSquare(
+      toCounts(referencePairs),
+      toCounts(currentPairs)
+    );
+    const score = chi2 / Math.max(1, Object.keys(toCounts(referencePairs)).length);
+    const driftDetected = pValue < threshold;
+    return {
+      feature: 'concept',
+      driftDetected,
+      score,
+      threshold,
+      method: 'chi2',
+      pValue,
+      message: driftDetected
+        ? `Concept drift detected: chi2=${score.toFixed(4)}, p=${pValue.toFixed(4)}`
+        : `No concept drift detected: chi2=${score.toFixed(4)}`,
       timestamp: new Date(),
     };
   }

@@ -13,6 +13,14 @@ describe('TransformerService', () => {
     expect(result).toBe(10);
   });
 
+  it('has and list reflect registered transforms', () => {
+    expect(service.has('trimString')).toBe(true);
+    expect(service.has('missing')).toBe(false);
+    expect(service.list()).toEqual(
+      expect.arrayContaining(['trimString', 'toLowerCase', 'parseJson'])
+    );
+  });
+
   it('throws for unregistered transform', async () => {
     await expect(service.apply('missing', 1)).rejects.toThrow('Transform not found: missing');
   });

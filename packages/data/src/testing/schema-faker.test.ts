@@ -108,4 +108,37 @@ describe('SchemaFaker', () => {
     const value = SchemaFaker.generate(schema);
     expect(value).toHaveProperty('required');
   });
+
+  it('generates email uuid uri and patterned strings', () => {
+    const email = SchemaFaker.generate(Schema.string().email());
+    expect(email).toMatch(/@example\.com$/);
+    const uuid = SchemaFaker.generate(Schema.string().uuid());
+    expect(uuid).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
+    const uri = SchemaFaker.generate(Schema.string().url());
+    expect(uri).toMatch(/^https:\/\/example\.com\//);
+    const patterned = SchemaFaker.generate(Schema.string().pattern(/^[A-Z]+$/));
+    expect(typeof patterned).toBe('string');
+  });
+
+  it('generates enum oneOf and respects min/max length', () => {
+    const enumed = SchemaFaker.generate(Schema.string().oneOf(['x', 'y']));
+    expect(['x', 'y']).toContain(enumed);
+    const sized = SchemaFaker.generate(Schema.string().min(3).max(3));
+    expect(sized).toHaveLength(3);
+  });
+
+  it('covers genByType object/array/default via json-schema shapes', () => {
+    const faker = new SchemaFaker();
+    const gen = (js: Record<string, unknown>) =>
+      (
+        faker as unknown as { generateFromJsonSchema: (j: Record<string, unknown>) => unknown }
+      ).generateFromJsonSchema(js);
+
+    expect(gen({ type: 'object' })).toEqual({});
+    expect(gen({ type: 'array' })).toEqual([]);
+    expect(gen({ type: 'unknown-type' })).toBeNull();
+    expect(gen({})).toBeNull();
+    expect(gen({ enum: ['a', 'b'] })).toMatch(/a|b/);
+    expect(gen({ const: 42 })).toBe(42);
+  });
 });

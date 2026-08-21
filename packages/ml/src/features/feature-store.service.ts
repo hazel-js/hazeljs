@@ -162,11 +162,13 @@ export class FeatureStoreService {
   }
 
   /**
-   * Materialize a feature view - compute and store features
+   * Materialize a feature view — compute and store features.
+   * If `view.source.config.dataSource` is set (e.g. a `@hazeljs/data` DataSource),
+   * entity rows are streamed from it; otherwise `entityIds` are used as-is.
    */
   async materialize(
     viewName: string,
-    entityIds: string[],
+    entityIds: string[] = [],
     options: { toOnline?: boolean; toOffline?: boolean } = {}
   ): Promise<void> {
     const view = this.views.get(viewName);
@@ -174,9 +176,41 @@ export class FeatureStoreService {
       throw new Error(`Feature view not found: ${viewName}`);
     }
 
-    const _featureNames = view.features.map((f) => f.name);
+    const ids = [...entityIds];
+    const source = view.source?.config?.dataSource;
+    const entityIdField = view.source?.config?.entityIdField ?? 'entityId';
 
-    for (const entityId of entityIds) {
+    if (source) {
+      if (source.open) await source.open();
+      try {
+        for await (const row of source.read()) {
+          if (row && typeof row === 'object') {
+            const id = String((row as Record<string, unknown>)[entityIdField] ?? '');
+            if (id) ids.push(id);
+            const features: Record<string, unknown> = {};
+            for (const feature of view.features) {
+              if (feature.transform) {
+                features[feature.name] = feature.transform(row);
+              } else if (feature.name in (row as object)) {
+                features[feature.name] = (row as Record<string, unknown>)[feature.name];
+              }
+            }
+            if (options.toOnline && this.onlineStore) {
+              await this.pushOnlineFeatures(id, features);
+            }
+            if (options.toOffline && this.offlineStore) {
+              await this.writeOfflineFeatures(id, features);
+            }
+          }
+        }
+      } finally {
+        if (source.close) await source.close();
+      }
+      logger.debug(`Materialized ${viewName} from dataSource (${ids.length} entities)`);
+      return;
+    }
+
+    for (const entityId of ids) {
       const features: Record<string, unknown> = {};
 
       for (const feature of view.features) {
@@ -194,7 +228,7 @@ export class FeatureStoreService {
       }
     }
 
-    logger.debug(`Materialized ${viewName} for ${entityIds.length} entities`);
+    logger.debug(`Materialized ${viewName} for ${ids.length} entities`);
   }
 
   /**

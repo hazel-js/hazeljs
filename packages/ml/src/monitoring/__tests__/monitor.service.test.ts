@@ -352,6 +352,29 @@ describe('MonitorService', () => {
       // Alert may or may not be called depending on drift detection
       expect(handler).toHaveBeenCalledTimes(0);
     });
+
+    it('checks drift from recorded prediction windows', async () => {
+      const handler = jest.fn();
+      service.onAlert(handler);
+
+      service.registerModel({
+        modelName: 'win-model',
+        featureNames: ['age'],
+        featureDrift: { method: 'psi', threshold: 0.01, windowSize: 50 },
+        predictionDrift: true,
+        maxWindowSize: 5,
+      });
+      service.setReferenceFeatures('win-model', {
+        age: Array.from({ length: 30 }, (_, i) => i),
+      });
+
+      for (let i = 0; i < 6; i++) {
+        service.recordPrediction('win-model', { age: 100 + i }, i < 3 ? 'a' : 'z');
+      }
+
+      const results = await service.checkModel('win-model');
+      expect(results.length).toBeGreaterThan(0);
+    });
   });
 
   describe('getStatus', () => {

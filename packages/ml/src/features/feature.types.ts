@@ -53,7 +53,19 @@ export interface FeatureDefinition {
 
 export interface FeatureSource {
   type: 'batch' | 'stream' | 'request';
-  config: Record<string, unknown>;
+  config: Record<string, unknown> & {
+    /**
+     * Optional DataSource-like reader from @hazeljs/data (or any object with read()).
+     * When present, FeatureStoreService.materialize will stream entity rows from it.
+     */
+    dataSource?: {
+      open?: () => Promise<void>;
+      close?: () => Promise<void>;
+      read: () => AsyncGenerator<unknown> | AsyncIterable<unknown>;
+    };
+    /** Field on each source row used as entity id (default: 'entityId') */
+    entityIdField?: string;
+  };
 }
 
 export interface FeatureQuery {

@@ -1,6 +1,9 @@
 import { ModelRegistry } from '../registry/model.registry';
 import { TrainerService } from './trainer.service';
+import { PipelineService } from './pipeline.service';
+import { ExperimentService } from '../experiments/experiment.service';
 import { Model, Train, Predict } from '../decorators';
+import { Experiment } from '../experiments/experiment.decorator';
 
 describe('TrainerService', () => {
   let registry: ModelRegistry;
@@ -153,5 +156,78 @@ describe('TrainerService', () => {
     const instance = new NoDecoratorModel();
     const method = trainer.discoverTrainMethod(instance);
     expect(method).toBeUndefined();
+  });
+
+  it('runs named pipeline and auto-logs experiment metrics', async () => {
+    const pipeline = new PipelineService();
+    pipeline.registerPipeline('prep', [
+      {
+        name: 'tag',
+        transform: (d) => ({ ...(d as object), prepared: true }),
+      },
+    ]);
+    const experiments = new ExperimentService();
+    experiments.configure({ storage: 'memory' });
+    const wired = new TrainerService(registry, pipeline, experiments);
+
+    @Experiment({
+      name: 'exp-model',
+      autoLogParams: true,
+      autoLogMetrics: true,
+      tags: ['t'],
+    })
+    @Model({ name: 'exp-model', version: '1.0.0', framework: 'custom' })
+    class ExpModel {
+      @Train({ pipeline: 'prep', batchSize: 8, epochs: 2 })
+      async train(data: { prepared?: boolean }) {
+        expect(data.prepared).toBe(true);
+        return { accuracy: 0.88, loss: 0.12, metrics: { f1: 0.8 }, modelPath: '/tmp/m.json' };
+      }
+
+      @Predict()
+      predict() {
+        return {};
+      }
+    }
+
+    const instance = new ExpModel();
+    registry.register({
+      metadata: { name: 'exp-model', version: '1.0.0', framework: 'custom' },
+      instance,
+      trainMethod: 'train',
+      predictMethod: 'predict',
+    });
+
+    const result = await wired.train('exp-model', { samples: [] });
+    expect(result.accuracy).toBe(0.88);
+    expect(registry.getVersions('exp-model')[0].path).toBe('/tmp/m.json');
+    expect(experiments.listExperiments().some((e) => e.name === 'exp-model')).toBe(true);
+  });
+
+  it('ends experiment run as failed on train error', async () => {
+    const experiments = new ExperimentService();
+    experiments.configure({ storage: 'memory' });
+    const wired = new TrainerService(registry, undefined, experiments);
+
+    @Experiment({ name: 'fail-exp', autoLogMetrics: true })
+    @Model({ name: 'fail-exp', version: '1.0.0', framework: 'custom' })
+    class FailModel {
+      @Train()
+      async train() {
+        throw new Error('boom');
+      }
+
+      @Predict()
+      predict() {}
+    }
+
+    registry.register({
+      metadata: { name: 'fail-exp', version: '1.0.0', framework: 'custom' },
+      instance: new FailModel(),
+      trainMethod: 'train',
+      predictMethod: 'predict',
+    });
+
+    await expect(wired.train('fail-exp', {})).rejects.toThrow('boom');
   });
 });

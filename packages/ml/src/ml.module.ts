@@ -5,18 +5,30 @@ import { PipelineService } from './training/pipeline.service';
 import { PredictorService } from './inference/predictor.service';
 import { BatchService } from './inference/batch.service';
 import { MetricsService } from './evaluation/metrics.service';
+import { FeatureStoreService } from './features/feature-store.service';
+import { ExperimentService } from './experiments/experiment.service';
+import { DriftService } from './monitoring/drift.service';
+import { MonitorService } from './monitoring/monitor.service';
 import { getModelMetadata } from './decorators';
 import type { RegisteredModel } from './registry/model.registry';
+import type { FeatureStoreConfig } from './features/feature.types';
+import type { ExperimentConfig } from './experiments/experiment.types';
 
 export const ML_MODELS = Symbol('hazel:ml:models');
+export const ML_FEATURE_STORE_CONFIG = Symbol('hazel:ml:feature-store-config');
+export const ML_EXPERIMENT_CONFIG = Symbol('hazel:ml:experiment-config');
+export const ML_ARTIFACT_DIR = Symbol('hazel:ml:artifact-dir');
 
 export interface MLModuleOptions {
   models?: Type<unknown>[];
+  featureStore?: FeatureStoreConfig;
+  experiments?: ExperimentConfig;
+  /** Directory for model artifact JSON persistence */
+  artifactDir?: string;
 }
 
 /**
  * Bootstrap that registers models with the registry when instantiated.
- * Added as a provider when using MLModule.forRoot({ models: [...] }).
  */
 @Injectable()
 class MLModelBootstrap {
@@ -46,35 +58,58 @@ class MLModelBootstrap {
   }
 }
 
+@Injectable()
+class MLConfigBootstrap {
+  constructor(
+    private readonly featureStore: FeatureStoreService,
+    private readonly experimentService: ExperimentService,
+    private readonly modelRegistry: ModelRegistry,
+    @Inject(ML_FEATURE_STORE_CONFIG) featureConfig: FeatureStoreConfig | null,
+    @Inject(ML_EXPERIMENT_CONFIG) experimentConfig: ExperimentConfig | null,
+    @Inject(ML_ARTIFACT_DIR) artifactDir: string | null
+  ) {
+    if (featureConfig) {
+      this.featureStore.configure(featureConfig);
+    }
+    if (experimentConfig) {
+      this.experimentService.configure(experimentConfig);
+    }
+    if (artifactDir) {
+      this.modelRegistry.configurePersistence(artifactDir);
+    }
+  }
+}
+
+const CORE_PROVIDERS = [
+  ModelRegistry,
+  PipelineService,
+  TrainerService,
+  PredictorService,
+  BatchService,
+  MetricsService,
+  FeatureStoreService,
+  ExperimentService,
+  DriftService,
+  MonitorService,
+];
+
 @HazelModule({
-  providers: [
-    ModelRegistry,
-    TrainerService,
-    PipelineService,
-    PredictorService,
-    BatchService,
-    MetricsService,
-  ],
-  exports: [
-    ModelRegistry,
-    TrainerService,
-    PipelineService,
-    PredictorService,
-    BatchService,
-    MetricsService,
-  ],
+  providers: [...CORE_PROVIDERS],
+  exports: [...CORE_PROVIDERS],
 })
 export class MLModule {
   private static options: MLModuleOptions = {};
 
   /**
-   * Configure MLModule with models to register
+   * Configure MLModule with models and optional MLOps services.
    *
    * @example
    * ```typescript
    * imports: [
    *   MLModule.forRoot({
-   *     models: [SentimentModel],
+   *     models: [TextNaiveBayesModel, IsolationForestModel],
+   *     artifactDir: './models',
+   *     experiments: { storage: 'memory' },
    *   }),
    * ]
    * ```
@@ -88,28 +123,20 @@ export class MLModule {
 
     const models = options.models || [];
     const providers: unknown[] = [
-      ModelRegistry,
-      TrainerService,
-      PipelineService,
-      PredictorService,
-      BatchService,
-      MetricsService,
+      ...CORE_PROVIDERS,
       ...models,
       { provide: ML_MODELS, useValue: models },
+      { provide: ML_FEATURE_STORE_CONFIG, useValue: options.featureStore ?? null },
+      { provide: ML_EXPERIMENT_CONFIG, useValue: options.experiments ?? null },
+      { provide: ML_ARTIFACT_DIR, useValue: options.artifactDir ?? null },
       MLModelBootstrap,
+      MLConfigBootstrap,
     ];
 
     return {
       module: MLModule,
       providers,
-      exports: [
-        ModelRegistry,
-        TrainerService,
-        PipelineService,
-        PredictorService,
-        BatchService,
-        MetricsService,
-      ],
+      exports: [...CORE_PROVIDERS],
     };
   }
 

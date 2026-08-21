@@ -23,7 +23,11 @@ export {
 } from './decorators';
 
 // Registry
-export { ModelRegistry, type RegisteredModel } from './registry/model.registry';
+export {
+  ModelRegistry,
+  type RegisteredModel,
+  type ArtifactPayload,
+} from './registry/model.registry';
 
 // Services
 export { TrainerService } from './training/trainer.service';
@@ -36,10 +40,61 @@ export {
   type EvaluationResult,
   type EvaluateOptions,
   type EvaluateMetric,
+  type ConfusionMatrix,
 } from './evaluation/metrics.service';
+
+// Algorithms (pure TypeScript)
+export {
+  TfidfVectorizer,
+  cosineSimilarity,
+  NaiveBayesClassifier,
+  LogisticRegression,
+  IsolationForest,
+  CosineKnn,
+  ItemItemCF,
+  jaroSimilarity,
+  jaroWinkler,
+  EntityResolver,
+  HoltWinters,
+  KMeans,
+  DecisionTreeClassifier,
+  type TfidfModel,
+  type NaiveBayesModel,
+  type LogisticRegressionModel,
+  type IsolationForestModel as IsolationForestAlgoModel,
+  type CosineKnnModel as CosineKnnAlgoModel,
+  type ItemCFModel,
+  type Neighbor,
+  type MatchCandidate,
+  type EntityResolverModel as EntityResolverAlgoModel,
+  type HoltWintersModel as HoltWintersAlgoModel,
+  type KMeansModel as KMeansAlgoModel,
+  type DecisionTreeModel as DecisionTreeAlgoModel,
+  type TreeNode,
+} from './algorithms';
+
+// Built-in @Model wrappers
+export {
+  TextNaiveBayesModel,
+  TextLogisticRegressionModel,
+  IsolationForestModel,
+  CosineKnnModel,
+  ItemItemCFModel,
+  EntityResolverModel,
+  HoltWintersModel,
+  KMeansModel,
+  DecisionTreeModel,
+} from './models';
 
 // Model registration helper
 export { registerMLModel } from './ml-model.base';
+
+// Training data helpers (optional @hazeljs/data peer)
+export {
+  prepareTrainingData,
+  type PrepareTrainingDataOptions,
+  type PreparedTrainingData,
+} from './training/prepare-training-data';
 
 // Re-export Injectable from core for convenience
 export { Injectable } from '@hazeljs/core';

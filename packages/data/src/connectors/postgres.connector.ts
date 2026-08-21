@@ -6,9 +6,16 @@ export interface PostgresSourceOptions {
   database: string;
   user: string;
   password: string;
+  /** Table name — must match /^[a-zA-Z_][a-zA-Z0-9_]*(\.[a-zA-Z_][a-zA-Z0-9_]*)?$/ */
   table: string;
   columns?: string[];
+  /**
+   * WHERE clause with $1,$2 placeholders. Use with `params`.
+   * Example: where: 'status = $1 AND age > $2', params: ['active', 18]
+   */
   where?: string;
+  /** Bind parameters for the where clause */
+  params?: unknown[];
   orderBy?: string;
   batchSize?: number;
   name?: string;
@@ -56,6 +63,40 @@ interface PgClient {
   release(): void;
 }
 
+function quoteIdent(ident: string): string {
+  // Allow schema.table
+  if (!/^[a-zA-Z_][a-zA-Z0-9_]*(\.[a-zA-Z_][a-zA-Z0-9_]*)?$/.test(ident)) {
+    throw new Error(`Invalid SQL identifier: ${ident}`);
+  }
+  return ident
+    .split('.')
+    .map((part) => `"${part}"`)
+    .join('.');
+}
+
+function quoteColumnList(columns: string[]): string {
+  return columns
+    .map((c) => {
+      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(c)) {
+        throw new Error(`Invalid column name: ${c}`);
+      }
+      return `"${c}"`;
+    })
+    .join(', ');
+}
+
+function sanitizeOrderBy(orderBy: string): string {
+  // Allow: col, col ASC, col DESC, a, b DESC
+  if (
+    !/^[a-zA-Z_][a-zA-Z0-9_]*(\s+(ASC|DESC))?(\s*,\s*[a-zA-Z_][a-zA-Z0-9_]*(\s+(ASC|DESC))?)*$/i.test(
+      orderBy.trim()
+    )
+  ) {
+    throw new Error(`Invalid ORDER BY clause: ${orderBy}`);
+  }
+  return orderBy.trim();
+}
+
 export class PostgresSource implements DataSource<Record<string, unknown>> {
   readonly name: string;
   private readonly options: PostgresSourceOptions;
@@ -64,6 +105,8 @@ export class PostgresSource implements DataSource<Record<string, unknown>> {
   constructor(options: PostgresSourceOptions) {
     this.name = options.name ?? `postgres:${options.database}.${options.table}`;
     this.options = { batchSize: 1000, ...options };
+    // Validate table early
+    quoteIdent(this.options.table);
   }
 
   private async ensurePool(): Promise<void> {
@@ -120,20 +163,23 @@ export class PostgresSource implements DataSource<Record<string, unknown>> {
     await this.ensurePool();
     if (!this.pool) throw new Error('Failed to initialize pool');
 
-    const columns = this.options.columns ? this.options.columns.join(', ') : '*';
-    let query = `SELECT ${columns} FROM ${this.options.table}`;
+    const table = quoteIdent(this.options.table);
+    const columns = this.options.columns ? quoteColumnList(this.options.columns) : '*';
+    let query = `SELECT ${columns} FROM ${table}`;
+    const params = this.options.params ?? [];
 
     if (this.options.where) {
+      // where must use $N placeholders — never interpolate user values
       query += ` WHERE ${this.options.where}`;
     }
 
     if (this.options.orderBy) {
-      query += ` ORDER BY ${this.options.orderBy}`;
+      query += ` ORDER BY ${sanitizeOrderBy(this.options.orderBy)}`;
     }
 
     const client = await this.pool.connect();
     try {
-      const result = await client.query(query);
+      const result = await client.query(query, params);
       for (const row of result.rows) {
         yield row as Record<string, unknown>;
       }
@@ -186,6 +232,8 @@ export class PostgresSink implements DataSink<Record<string, unknown>> {
   constructor(options: PostgresSinkOptions) {
     this.name = options.name ?? `postgres:${options.database}.${options.table}`;
     this.options = { batchSize: 100, ...options };
+    quoteIdent(this.options.table);
+    quoteColumnList(this.options.columns);
   }
 
   private async ensurePool(): Promise<void> {
@@ -244,20 +292,23 @@ export class PostgresSink implements DataSink<Record<string, unknown>> {
     const client = await this.pool.connect();
     try {
       const columns = this.options.columns;
-      const columnList = columns.join(', ');
+      const table = quoteIdent(this.options.table);
+      const columnList = quoteColumnList(columns);
       const placeholders = columns.map((_, i) => `$${i + 1}`).join(', ');
 
       if (this.options.conflictColumn) {
-        // Upsert (INSERT ... ON CONFLICT DO UPDATE)
+        if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(this.options.conflictColumn)) {
+          throw new Error(`Invalid conflict column: ${this.options.conflictColumn}`);
+        }
         const updates = columns
           .filter((c) => c !== this.options.conflictColumn)
-          .map((c) => `${c} = EXCLUDED.${c}`)
+          .map((c) => `"${c}" = EXCLUDED."${c}"`)
           .join(', ');
 
         const query = `
-          INSERT INTO ${this.options.table} (${columnList})
+          INSERT INTO ${table} (${columnList})
           VALUES (${placeholders})
-          ON CONFLICT (${this.options.conflictColumn})
+          ON CONFLICT ("${this.options.conflictColumn}")
           DO UPDATE SET ${updates}
         `;
 
@@ -266,8 +317,7 @@ export class PostgresSink implements DataSink<Record<string, unknown>> {
           await client.query(query, values);
         }
       } else {
-        // Plain insert
-        const query = `INSERT INTO ${this.options.table} (${columnList}) VALUES (${placeholders})`;
+        const query = `INSERT INTO ${table} (${columnList}) VALUES (${placeholders})`;
 
         for (const record of this.buffer) {
           const values = columns.map((col) => record[col] ?? null);

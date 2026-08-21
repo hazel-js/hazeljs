@@ -1,19 +1,47 @@
 import { Service } from '@hazeljs/core';
 import logger from '@hazeljs/core';
+import {
+  trimString,
+  toLowerCase,
+  toUpperCase,
+  parseJson,
+  stringifyJson,
+} from './built-in.transformers';
 
 export type TransformFn<T = unknown, R = unknown> = (input: T) => R | Promise<R>;
 
 /**
  * Transformer Service - Data transformations
- * Provides utilities for common data transformation patterns
+ * Provides utilities for common data transformation patterns.
+ * Built-in scalar transformers are auto-registered on construction.
  */
 @Service()
 export class TransformerService {
   private transforms: Map<string, TransformFn> = new Map();
 
+  constructor() {
+    this.registerBuiltIns();
+  }
+
+  private registerBuiltIns(): void {
+    this.register('trimString', trimString);
+    this.register('toLowerCase', toLowerCase);
+    this.register('toUpperCase', toUpperCase);
+    this.register('parseJson', parseJson);
+    this.register('stringifyJson', stringifyJson);
+  }
+
   register(name: string, fn: TransformFn): void {
     this.transforms.set(name, fn);
     logger.debug(`Registered transform: ${name}`);
+  }
+
+  has(name: string): boolean {
+    return this.transforms.has(name);
+  }
+
+  list(): string[] {
+    return Array.from(this.transforms.keys());
   }
 
   async apply<T, R>(name: string, input: T): Promise<R> {

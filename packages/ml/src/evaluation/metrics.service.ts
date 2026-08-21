@@ -10,23 +10,52 @@ export interface ModelMetrics {
   recall?: number;
   f1Score?: number;
   loss?: number;
+  mae?: number;
+  mse?: number;
+  rmse?: number;
+  r2?: number;
+  auc?: number;
+  brier?: number;
+  ndcg?: number;
+  map?: number;
   [key: string]: number | undefined;
+}
+
+export interface ConfusionMatrix {
+  labels: string[];
+  matrix: number[][];
 }
 
 export interface EvaluationResult {
   modelName: string;
   version: string;
   metrics: ModelMetrics;
+  confusionMatrix?: ConfusionMatrix;
   evaluatedAt: Date;
 }
 
-export type EvaluateMetric = 'accuracy' | 'f1' | 'precision' | 'recall';
+export type EvaluateMetric =
+  | 'accuracy'
+  | 'f1'
+  | 'precision'
+  | 'recall'
+  | 'mae'
+  | 'mse'
+  | 'rmse'
+  | 'r2'
+  | 'auc'
+  | 'brier'
+  | 'confusion'
+  | 'ndcg'
+  | 'map';
 
 export interface EvaluateOptions {
   metrics?: EvaluateMetric[];
   labelKey?: string;
   predictionKey?: string;
   version?: string;
+  /** For regression: key of predicted numeric value */
+  valueKey?: string;
 }
 
 /**
@@ -83,13 +112,121 @@ export class MetricsService {
     return { a, b, winner };
   }
 
+  /** Compute regression metrics from actual vs predicted values. */
+  computeRegressionMetrics(
+    actual: number[],
+    predicted: number[]
+  ): { mae: number; mse: number; rmse: number; r2: number } {
+    const n = actual.length;
+    if (n === 0) return { mae: 0, mse: 0, rmse: 0, r2: 0 };
+    let abs = 0;
+    let sq = 0;
+    for (let i = 0; i < n; i++) {
+      const e = predicted[i] - actual[i];
+      abs += Math.abs(e);
+      sq += e * e;
+    }
+    const mae = abs / n;
+    const mse = sq / n;
+    const rmse = Math.sqrt(mse);
+    const mean = actual.reduce((a, b) => a + b, 0) / n;
+    const ssTot = actual.reduce((s, v) => s + (v - mean) ** 2, 0);
+    const r2 = ssTot === 0 ? 0 : 1 - sq / ssTot;
+    return { mae, mse, rmse, r2 };
+  }
+
+  /** Build a confusion matrix. */
+  computeConfusionMatrix(labels: string[], predicted: string[]): ConfusionMatrix {
+    const classes = [...new Set([...labels, ...predicted])].filter(Boolean).sort();
+    const index = new Map(classes.map((c, i) => [c, i]));
+    const matrix = classes.map(() => classes.map(() => 0));
+    for (let i = 0; i < labels.length; i++) {
+      const r = index.get(labels[i]);
+      const c = index.get(predicted[i]);
+      if (r !== undefined && c !== undefined) matrix[r][c]++;
+    }
+    return { labels: classes, matrix };
+  }
+
+  /**
+   * Binary ROC-AUC via Mann–Whitney / trapezoid approximation.
+   * @param scores predicted probabilities for the positive class
+   * @param labels 0/1 or false/true
+   */
+  computeROCAuc(scores: number[], labels: number[]): number {
+    const pairs = scores.map((s, i) => ({ s, y: labels[i] })).sort((a, b) => b.s - a.s);
+    let tp = 0;
+    let fp = 0;
+    const P = labels.filter((y) => y === 1).length;
+    const N = labels.length - P;
+    if (P === 0 || N === 0) return 0;
+    let prevTpr = 0;
+    let prevFpr = 0;
+    let auc = 0;
+    let i = 0;
+    while (i < pairs.length) {
+      const threshold = pairs[i].s;
+      while (i < pairs.length && pairs[i].s === threshold) {
+        if (pairs[i].y === 1) tp++;
+        else fp++;
+        i++;
+      }
+      const tpr = tp / P;
+      const fpr = fp / N;
+      auc += ((fpr - prevFpr) * (tpr + prevTpr)) / 2;
+      prevTpr = tpr;
+      prevFpr = fpr;
+    }
+    return auc;
+  }
+
+  /** Brier score for binary probabilities. */
+  computeBrierScore(probs: number[], labels: number[]): number {
+    if (probs.length === 0) return 0;
+    let sum = 0;
+    for (let i = 0; i < probs.length; i++) {
+      sum += (probs[i] - labels[i]) ** 2;
+    }
+    return sum / probs.length;
+  }
+
+  /**
+   * Normalized Discounted Cumulative Gain at k.
+   * @param relevances graded relevance scores in rank order (highest rank first)
+   */
+  computeNDCG(relevances: number[], k?: number): number {
+    const rel = k !== undefined ? relevances.slice(0, k) : relevances;
+    if (rel.length === 0) return 0;
+    const dcg = rel.reduce((sum, r, i) => sum + r / Math.log2(i + 2), 0);
+    const ideal = [...rel].sort((a, b) => b - a);
+    const idcg = ideal.reduce((sum, r, i) => sum + r / Math.log2(i + 2), 0);
+    return idcg === 0 ? 0 : dcg / idcg;
+  }
+
+  /**
+   * Mean Average Precision for a set of binary relevance lists (1=relevant).
+   * Each list is ranked relevance for one query.
+   */
+  computeMAP(relevanceLists: number[][]): number {
+    if (relevanceLists.length === 0) return 0;
+    let sum = 0;
+    for (const rels of relevanceLists) {
+      let hits = 0;
+      let precisionSum = 0;
+      for (let i = 0; i < rels.length; i++) {
+        if (rels[i] > 0) {
+          hits++;
+          precisionSum += hits / (i + 1);
+        }
+      }
+      const totalRelevant = rels.filter((r) => r > 0).length;
+      sum += totalRelevant === 0 ? 0 : precisionSum / totalRelevant;
+    }
+    return sum / relevanceLists.length;
+  }
+
   /**
    * Evaluate model on test data by running predictions and computing metrics.
-   * Requires PredictorService to be injected.
-   *
-   * @param modelName - Registered model name
-   * @param testData - Array of samples. Each sample must contain the model input and a label key.
-   * @param options - labelKey (default: 'label'), predictionKey (tries 'label'|'sentiment'|'class'), metrics, version
    */
   async evaluate(
     modelName: string,
@@ -107,6 +244,7 @@ export class MetricsService {
       labelKey = 'label',
       predictionKey,
       version,
+      valueKey,
     } = options;
 
     if (testData.length === 0) {
@@ -124,6 +262,8 @@ export class MetricsService {
     const predictedLabels = predictions.map((p) => this.extractPredictedLabel(p, predictionKey));
 
     const computed: ModelMetrics = {};
+    let confusionMatrix: ConfusionMatrix | undefined;
+
     if (requestedMetrics.includes('accuracy')) {
       computed.accuracy = this.computeAccuracy(labels, predictedLabels);
     }
@@ -137,6 +277,27 @@ export class MetricsService {
       if (requestedMetrics.includes('recall')) computed.recall = recall;
       if (requestedMetrics.includes('f1')) computed.f1Score = f1Score;
     }
+    if (requestedMetrics.includes('confusion')) {
+      confusionMatrix = this.computeConfusionMatrix(labels, predictedLabels);
+    }
+
+    const regressionRequested = (['mae', 'mse', 'rmse', 'r2'] as EvaluateMetric[]).some((m) =>
+      requestedMetrics.includes(m)
+    );
+    if (regressionRequested) {
+      const actual = testData.map((s) => Number(s[labelKey]));
+      const predicted = predictions.map((p) => {
+        if (valueKey && p[valueKey] !== undefined) return Number(p[valueKey]);
+        if (p.value !== undefined) return Number(p.value);
+        if (p.prediction !== undefined) return Number(p.prediction);
+        return Number(Object.values(p)[0]);
+      });
+      const reg = this.computeRegressionMetrics(actual, predicted);
+      if (requestedMetrics.includes('mae')) computed.mae = reg.mae;
+      if (requestedMetrics.includes('mse')) computed.mse = reg.mse;
+      if (requestedMetrics.includes('rmse')) computed.rmse = reg.rmse;
+      if (requestedMetrics.includes('r2')) computed.r2 = reg.r2;
+    }
 
     const model = this.modelRegistry?.get(modelName, version);
     const modelVersion = model?.metadata.version ?? version ?? 'unknown';
@@ -145,6 +306,7 @@ export class MetricsService {
       modelName,
       version: modelVersion,
       metrics: computed,
+      confusionMatrix,
       evaluatedAt: new Date(),
     };
 

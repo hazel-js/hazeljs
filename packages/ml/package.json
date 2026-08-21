@@ -24,7 +24,13 @@
     "typescript": "^5.9.3"
   },
   "peerDependencies": {
-    "@hazeljs/core": "^2.0.2"
+    "@hazeljs/core": "^2.0.2",
+    "@hazeljs/data": "^2.0.2"
+  },
+  "peerDependenciesMeta": {
+    "@hazeljs/data": {
+      "optional": true
+    }
   },
   "publishConfig": {
     "access": "public"

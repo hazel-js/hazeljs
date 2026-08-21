@@ -4,6 +4,10 @@
 
 export type DriftType = 'data' | 'prediction' | 'concept';
 
+/**
+ * Note: `concept` drift is detected via prediction-label joint shift
+ * (see DriftService.detectConceptDrift), not via a streaming detector like ADWIN.
+ */
 export interface DriftConfig {
   type: DriftType;
   features: string[];

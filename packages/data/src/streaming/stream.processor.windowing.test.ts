@@ -75,4 +75,52 @@ describe('StreamProcessor windowing', () => {
     expect(results).toHaveLength(1);
     expect(results[0]).toEqual({ name: 'Alice', score: 100 });
   });
+
+  it('slidingWindow drops items outside the window', async () => {
+    const source = itemsWithTs([
+      { value: 1, timestamp: 0 },
+      { value: 2, timestamp: 10 },
+      { value: 3, timestamp: 1000 },
+    ]);
+    const batches: number[][] = [];
+    for await (const batch of processor.slidingWindow(source, 50, 50)) {
+      batches.push(batch.items as number[]);
+    }
+    expect(batches.flat()).toContain(3);
+  });
+
+  it('sessionWindow uses default timestamp extractor', async () => {
+    const source = (async function* () {
+      yield 1;
+      yield 2;
+    })();
+    const batches: number[][] = [];
+    for await (const batch of processor.sessionWindow(source, 60_000)) {
+      batches.push(batch.items);
+    }
+    expect(batches.flat()).toEqual([1, 2]);
+  });
+
+  it('joinStreams buffers unmatched right items', async () => {
+    const left = (async function* () {
+      yield { id: 'a' };
+    })();
+    const right = (async function* () {
+      yield { id: 'b' };
+      await new Promise((r) => setTimeout(r, 5));
+      yield { id: 'c' };
+    })();
+    const results: unknown[] = [];
+    for await (const r of processor.joinStreams(
+      left,
+      right,
+      (l) => (l as { id: string }).id,
+      (r) => (r as { id: string }).id,
+      (l, r) => ({ l, r }),
+      1
+    )) {
+      results.push(r);
+    }
+    expect(results).toHaveLength(0);
+  });
 });

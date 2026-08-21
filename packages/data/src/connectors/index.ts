@@ -4,3 +4,7 @@ export type { CsvSourceOptions, CsvSinkOptions } from './csv.connector';
 export { HttpSource, HttpSink } from './http.connector';
 export type { HttpSourceOptions, HttpSinkOptions } from './http.connector';
 export { MemorySource, MemorySink } from './memory.connector';
+export { JsonlSource, JsonlSink } from './jsonl.connector';
+export type { JsonlSourceOptions, JsonlSinkOptions } from './jsonl.connector';
+export { PostgresSource, PostgresSink } from './postgres.connector';
+export type { PostgresSourceOptions, PostgresSinkOptions } from './postgres.connector';

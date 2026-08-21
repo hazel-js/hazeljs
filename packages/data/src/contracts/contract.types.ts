@@ -2,6 +2,8 @@
  * @hazeljs/data - Data Contract Types
  */
 
+import type { BaseSchema } from '../schema/schema';
+
 export type ContractStatus = 'active' | 'deprecated' | 'breaking';
 
 export interface DataContract {
@@ -9,7 +11,10 @@ export interface DataContract {
   version: string;
   description?: string;
   owner: string;
+  /** Plain object schema (legacy) or JSON-schema-like description */
   schema: Record<string, unknown>;
+  /** Preferred: full Schema DSL validation via BaseSchema.validate */
+  baseSchema?: BaseSchema;
   sla?: DataContractSLA;
   consumers?: string[];
   producers?: string[];
