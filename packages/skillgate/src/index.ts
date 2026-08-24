@@ -12,7 +12,8 @@ export {
   isAgentSkill,
   toXHazelSkill,
 } from './agent-skill.decorator';
-export { parseOpenApiOperations } from './parse-openapi';
+export { parseOpenApiOperations, normalizeOpenApiPaths } from './parse-openapi';
+export { formatSkillgateReport } from './format-report';
 export { matchesInclude, isDenied, DEFAULT_OPT_IN_TAGS } from './filter';
 export {
   classifyOperation,

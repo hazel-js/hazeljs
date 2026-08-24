@@ -184,6 +184,29 @@ These commands never execute tools.
 
 Wrap existing tools with `fromFunction` / `fromHazelTool` / `fromSkillgate` / `protectMcpInvoke`. Optionally pass `authorizationGate` to `AgentRuntime` / `ToolExecutor` via `createToolExecutorGate`. Existing PolicyEngine paths stay unchanged when the gate is unset.
 
+### App setup (recommended)
+
+```typescript
+import {
+  createAgentGatekeeperBundle,
+  bindGatekeeper,
+  formatGatekeeperBootLine,
+} from '@hazeljs/agent-gatekeeper';
+
+const bundle = createAgentGatekeeperBundle({
+  policies,
+  humanTasks: durable.humanTaskService, // Redis via GATEKEEPER_REDIS_URL if set
+  tenantId: 'acme',
+  environment: 'production',
+});
+
+runtime.authorizationGate = bundle.authorizationGate; // or AgentRuntimeConfig.authorizationGate
+bindGatekeeper(runtime, bundle);
+console.log(formatGatekeeperBootLine(bundle, { tenantId: 'acme' }));
+```
+
+`createAgentGatekeeperBundle` wires approvals (Redis → HumanTask → memory), console/OTEL audit, and a ToolExecutor gate that resumes from approved HumanTasks.
+
 Mandatory Agent OS enforcement is **not** enabled in this release.
 
 ## Related

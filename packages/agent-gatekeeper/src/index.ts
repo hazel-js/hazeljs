@@ -74,7 +74,12 @@ export {
 export { BudgetTracker } from './budget/tracker';
 
 export { evaluatePolicies, buildArgumentSummary } from './policy/engine';
-export { policiesFromPolicyRules, policiesFromDna, type PolicyRuleLike } from './policy/bridge';
+export {
+  policiesFromPolicyRules,
+  policiesFromDna,
+  mergeDnaPolicies,
+  type PolicyRuleLike,
+} from './policy/bridge';
 export {
   loadPoliciesFromYaml,
   loadPoliciesFromFileSync,
@@ -92,7 +97,11 @@ export {
   fromMcpTool,
   createToolExecutorGate,
   protectMcpInvoke,
+  protectMcpRegistry,
   type ToolExecutorContextFactory,
+  type CreateToolExecutorGateOptions,
+  type McpRegistryLike,
+  type ProtectMcpRegistryOptions,
 } from './adapters';
 
 export {
@@ -108,3 +117,28 @@ export {
   isForbiddenKey,
   redactValue,
 } from './security';
+
+export {
+  resolveAuditSink,
+  tryCreateRedisApprovalProvider,
+  findApprovedHumanTaskToken,
+  resolveLiveToolMethod,
+  shortToolName,
+  bindGatekeeper,
+  createAgentGatekeeperBundle,
+  formatGatekeeperBootLine,
+  gatekeeperFor,
+  getBoundGatekeeper,
+  resumeGatekeeperDecision,
+  wireDemoHitlAutoApprove,
+  type ResolveAuditSinkOptions,
+  type RedisApprovalFromEnvOptions,
+  type HumanTaskLookup,
+  type AgentGatekeeperBundle,
+  type CreateAgentGatekeeperBundleOptions,
+  type GatekeeperApprovalBackend,
+  type HumanTaskServiceLike,
+  type GatekeeperHitlDecision,
+  type GatekeeperResumeRuntime,
+  type WireDemoHitlAutoApproveOptions,
+} from './setup';

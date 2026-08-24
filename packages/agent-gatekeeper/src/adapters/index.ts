@@ -14,6 +14,12 @@ import type {
 import type { AgentGatekeeper } from '../gatekeeper';
 import { defaultClock, defaultIdGenerator } from '../security';
 import { GatekeeperApprovalRequiredError } from '../errors';
+import {
+  findApprovedHumanTaskToken,
+  resolveLiveToolMethod,
+  shortToolName,
+  type HumanTaskLookup,
+} from '../setup/human-task-resume';
 
 export function fromFunction<TInput, TOutput>(
   name: string,
@@ -125,37 +131,70 @@ export function fromMcpTool<TInput = Record<string, unknown>, TOutput = unknown>
 }
 
 export interface ToolExecutorContextFactory {
-  (input: ToolExecutorGateInput): ToolInvocationContext;
+  (input: ToolExecutorGateInput): ToolInvocationContext | Promise<ToolInvocationContext>;
+}
+
+export interface CreateToolExecutorGateOptions {
+  contextFactory?: ToolExecutorContextFactory;
+  /** Resume path: look up approved HumanTask and pass approvalToken. */
+  humanTasks?: HumanTaskLookup;
+  defaultTenantId?: string;
+  defaultEnvironment?: string;
+}
+
+function isContextFactory(
+  value: ToolExecutorContextFactory | CreateToolExecutorGateOptions | undefined
+): value is ToolExecutorContextFactory {
+  return typeof value === 'function';
 }
 
 export function createToolExecutorGate(
   gatekeeper: AgentGatekeeper,
-  contextFactory?: ToolExecutorContextFactory
+  contextFactoryOrOptions?: ToolExecutorContextFactory | CreateToolExecutorGateOptions
 ): {
   execute(input: ToolExecutorGateInput): Promise<ToolExecutorGateResult>;
 } {
-  const defaultFactory: ToolExecutorContextFactory = (input) => ({
-    invocationId: defaultIdGenerator()(),
-    runId: input.runId ?? `run-${input.sessionId}`,
-    agentId: input.agentId,
-    agentVersion: input.agentVersion,
-    tenantId: input.tenantId,
-    delegatedUserId: input.userId,
-    sessionId: input.sessionId,
-    toolName: input.tool.name,
-    input: input.input,
-    environment: input.environment ?? 'development',
-    timestamp: defaultClock().now(),
-    capabilities: input.capabilities,
-  });
+  const options: CreateToolExecutorGateOptions = isContextFactory(contextFactoryOrOptions)
+    ? { contextFactory: contextFactoryOrOptions }
+    : (contextFactoryOrOptions ?? {});
 
-  const factory = contextFactory ?? defaultFactory;
+  const defaultFactory: ToolExecutorContextFactory = async (input) => {
+    const toolName = shortToolName(input.tool.name);
+    const runId = input.runId ?? `run-${input.sessionId}`;
+    const tenantId = input.tenantId ?? options.defaultTenantId;
+    const approvalToken = await findApprovedHumanTaskToken(options.humanTasks, {
+      runId,
+      agentId: input.agentId,
+      toolName,
+      args: input.input,
+      tenantId,
+    });
+
+    return {
+      invocationId: defaultIdGenerator()(),
+      runId,
+      agentId: input.agentId,
+      agentVersion: input.agentVersion,
+      tenantId,
+      delegatedUserId: input.userId,
+      sessionId: input.sessionId,
+      toolName,
+      input: input.input,
+      environment: input.environment ?? options.defaultEnvironment ?? 'development',
+      timestamp: defaultClock().now(),
+      capabilities: input.capabilities,
+      approvalToken,
+    };
+  };
+
+  const factory = options.contextFactory ?? defaultFactory;
 
   return {
     async execute(input: ToolExecutorGateInput): Promise<ToolExecutorGateResult> {
       const start = Date.now();
-      const context = factory(input);
-      const tool = fromHazelTool(input.tool);
+      const context = await factory(input);
+      const liveMethod = resolveLiveToolMethod(input.tool);
+      const tool = fromHazelTool({ ...input.tool, method: liveMethod });
 
       try {
         const result = await gatekeeper.execute({ context, tool });
@@ -174,7 +213,7 @@ export function createToolExecutorGate(
             metadata: {
               toolName: input.tool.name,
               input: input.input,
-              runId: input.runId,
+              runId: input.runId ?? context.runId,
             },
           };
         }
@@ -208,4 +247,61 @@ export function protectMcpInvoke<TInput extends Record<string, unknown>, TOutput
     });
     return result.output as TOutput;
   };
+}
+
+export interface McpRegistryLike {
+  getAllTools(): Array<{
+    name: string;
+    target: object;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
+    method: Function;
+  }>;
+}
+
+export interface ProtectMcpRegistryOptions {
+  agentId?: string;
+  tenantId?: string;
+  environment?: string;
+}
+
+/**
+ * Wrap every tool on an MCP registry so tools/call goes through Gatekeeper.
+ * Default MCP invoke bypasses AgentRuntime ToolExecutor.
+ */
+export function protectMcpRegistry(
+  registry: McpRegistryLike,
+  gatekeeper: AgentGatekeeper,
+  options: ProtectMcpRegistryOptions = {}
+): void {
+  const originals = new Map<string, { target: object; method: (...args: unknown[]) => unknown }>();
+
+  for (const tool of registry.getAllTools()) {
+    originals.set(tool.name, {
+      target: tool.target,
+      method: tool.method as (...args: unknown[]) => unknown,
+    });
+  }
+
+  const invoke = protectMcpInvoke(
+    async (toolName, input) => {
+      const orig = originals.get(toolName);
+      if (!orig) throw new Error(`Tool not found: ${toolName}`);
+      return orig.method.call(orig.target, input);
+    },
+    gatekeeper,
+    (toolName, input) => ({
+      invocationId: `mcp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      runId: `mcp-${toolName}`,
+      agentId: options.agentId ?? 'mcp',
+      tenantId: options.tenantId,
+      toolName,
+      input,
+      environment: options.environment ?? 'development',
+      timestamp: new Date(),
+    })
+  );
+
+  for (const tool of registry.getAllTools()) {
+    tool.method = (input: Record<string, unknown>) => invoke(tool.name, input);
+  }
 }

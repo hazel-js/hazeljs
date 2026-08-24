@@ -139,6 +139,11 @@ export interface AgentRuntimeConfig {
    * When set, ToolExecutor delegates authorization to this gate instead of PolicyEngine.
    */
   authorizationGate?: import('../authorization/tool-authorization-gate.interface').ToolAuthorizationGate;
+  /**
+   * Optional tool effect gate (e.g. @hazeljs/agent-vm EffectGate).
+   * Enforces effect lattice rules and journals reversible tool outputs.
+   */
+  effectGate?: import('../effects/tool-effect-gate.interface').IToolEffectGate;
 }
 
 /**
@@ -328,6 +333,7 @@ export class AgentRuntime {
       onApprovalRequested: (info): Promise<void> => this.handleApprovalRequested(info),
       onApprovalResolved: (info): Promise<void> => this.handleApprovalResolved(info),
       authorizationGate: config.authorizationGate,
+      effectGate: config.effectGate,
     });
 
     this.agentExecutor = new AgentExecutor(
@@ -1514,6 +1520,21 @@ export class AgentRuntime {
     return this.governanceGate;
   }
 
+  /** Shared execution state — used by @hazeljs/agent-vm BranchStateManager. */
+  getStateManager(): IAgentStateManager {
+    return this.stateManager;
+  }
+
+  /** Registered agent instance (for compensation handlers). */
+  getAgentInstance(agentName: string): unknown | undefined {
+    return this.agentRegistry.getInstance(agentName);
+  }
+
+  /** Wire or replace the tool effect gate (@hazeljs/agent-vm). */
+  setEffectGate(gate: import('../effects/tool-effect-gate.interface').IToolEffectGate | undefined): void {
+    this.toolExecutor.setEffectGate(gate);
+  }
+
   /** Hot-reload agent DNA (system prompt, model, policies, dynamic tools) without restart. */
   hotReloadDna(dna: string | AgentDna): HotReloadResult {
     return hotReloadAgentDna(
@@ -1641,6 +1662,11 @@ export class AgentRuntime {
    */
   getAgentTools(agentName: string): import('../types/tool.types').ToolMetadata[] {
     return this.toolRegistry.getAgentTools(agentName);
+  }
+
+  /** Same registry Skillgate / dynamic tools register into. */
+  getToolRegistry(): import('../registry/tool.registry').ToolRegistry {
+    return this.toolRegistry;
   }
 
   /**
