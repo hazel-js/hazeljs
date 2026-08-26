@@ -87,6 +87,12 @@ export class FileHumanTaskService implements HumanTaskService {
       .map((t) => ({ ...t }));
   }
 
+  async listPending(): Promise<HumanTask[]> {
+    return Array.from(this.readAll().values())
+      .filter((t) => t.status === 'pending')
+      .map((t) => ({ ...t }));
+  }
+
   async resolve(
     id: string,
     decision: 'approved' | 'rejected' | 'expired',

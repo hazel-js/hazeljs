@@ -35,6 +35,7 @@ export * from './context/agent.context';
 export * from './executor/agent.executor';
 export * from './executor/tool.executor';
 export * from './authorization/tool-authorization-gate.interface';
+export * from './effects/tool-effect-gate.interface';
 
 export * from './events/event.emitter';
 
@@ -59,6 +60,7 @@ export * from './dna/agent-dna';
 export * from './dna/hot-reload';
 export * from './dna/marketplace';
 export * from './dna/bootstrap-from-dna';
+export * from './dna/apply-dna-overlays';
 export * from './llm/http-llm.provider';
 export * from './store';
 export * from './knowledge/knowledge-freshness';
@@ -102,3 +104,5 @@ export * from './scheduler/agent-scheduler';
 
 // Agent OS Platform — declarative control plane (local-first)
 export * from './platform';
+
+export * from './os';

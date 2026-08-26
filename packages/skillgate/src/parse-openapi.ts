@@ -26,6 +26,21 @@ function isOperation(value: unknown): value is OpenApiOperation {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
+/**
+ * Convert Express-style `:id` paths to OpenAPI `{id}`.
+ * Hazel swagger often emits colon params; Skillgate invokers expect braces.
+ */
+export function normalizeOpenApiPaths(spec: OpenApiLike): OpenApiLike {
+  const paths = spec.paths ?? {};
+  const next: NonNullable<OpenApiLike['paths']> = {};
+  for (const [p, item] of Object.entries(paths)) {
+    const openApiPath = p.replace(/:([A-Za-z_][A-Za-z0-9_]*)/g, '{$1}');
+    next[openApiPath] = item;
+  }
+  spec.paths = next;
+  return spec;
+}
+
 /** Convert an OpenAPI-like document into parsed operations (no filtering). */
 export function parseOpenApiOperations(spec: OpenApiLike): ParsedOperation[] {
   const baseUrl = spec.servers?.[0]?.url;

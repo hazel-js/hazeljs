@@ -58,8 +58,16 @@ export function createAgentClassFromDna(dna: AgentDna): new () => unknown {
   const caps = dna.metadata?.capabilities;
   Agent({
     name: dna.name,
-    description: dna.description ?? dna.name,
-    systemPrompt: dna.systemPrompt ?? `You are ${dna.name}, a HazelJS agent.`,
+    description: dna.description ?? dna.identity?.description ?? dna.name,
+    systemPrompt:
+      dna.systemPrompt ??
+      (dna.mission?.goal
+        ? `You are ${dna.identity?.role ?? dna.name}. Mission: ${dna.mission.goal}${
+            dna.mission.instructions?.length
+              ? `\nInstructions:\n${dna.mission.instructions.map((i) => `- ${i}`).join('\n')}`
+              : ''
+          }`
+        : `You are ${dna.name}, a HazelJS agent.`),
     model: dna.model,
     version: dna.version,
     capabilities: Array.isArray(caps) ? (caps as string[]) : undefined,

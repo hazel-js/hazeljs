@@ -8,7 +8,7 @@
     "noEmit": true,
     "types": ["jest", "node"],
     "paths": {
-      "@hazeljs/eval": ["src/testing/mocks/hazeljs-eval.ts"],
+      "@hazeljs/eval": ["./src/testing/mocks/hazeljs-eval.ts"],
       "@hazeljs/prompts": ["../prompts/src"],
       "@hazeljs/rag": ["../rag/src"],
       "@hazeljs/resilience": ["../resilience/src"]

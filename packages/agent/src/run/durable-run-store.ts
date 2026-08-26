@@ -60,3 +60,47 @@ export function createSqlDurableRunStore(client: PrismaAgentRunClientLike): Dura
     a2aTaskStore: new SqlA2ATaskStore(client),
   };
 }
+
+export interface CreateDurableRunStoreFromEnvOptions {
+  env?: NodeJS.ProcessEnv;
+  cwd?: string;
+  prismaClient?: PrismaAgentRunClientLike;
+  /** Override Prisma loading (tests). Default: `new (require('@prisma/client').PrismaClient)()`. */
+  loadPrismaClient?: () => PrismaAgentRunClientLike;
+}
+
+export function durableRunStoreBackendFromEnv(
+  env: NodeJS.ProcessEnv = process.env
+): DurableRunStoreBackend {
+  const raw = (env.AGENT_OS_DURABLE_BACKEND ?? 'file').trim().toLowerCase();
+  return raw === 'sql' ? 'sql' : 'file';
+}
+
+/**
+ * File store under `AGENT_OS_DURABLE_DIR` (default `.hazel/runs`), or SQL when
+ * `AGENT_OS_DURABLE_BACKEND=sql`.
+ */
+export function createDurableRunStoreFromEnv(
+  options: CreateDurableRunStoreFromEnvOptions = {}
+): DurableRunStore {
+  const env = options.env ?? process.env;
+  const cwd = options.cwd ?? process.cwd();
+
+  if (durableRunStoreBackendFromEnv(env) === 'sql') {
+    const client =
+      options.prismaClient ?? options.loadPrismaClient?.() ?? loadDefaultPrismaClient();
+    return createSqlDurableRunStore(client);
+  }
+
+  const dir = env.AGENT_OS_DURABLE_DIR?.trim() || path.join(cwd, '.hazel', 'runs');
+  return createDurableRunStore(dir);
+}
+
+function loadDefaultPrismaClient(): PrismaAgentRunClientLike {
+  // Lazy so file-backend apps never need a generated Prisma client.
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { PrismaClient } = require('@prisma/client') as {
+    PrismaClient: new () => PrismaAgentRunClientLike;
+  };
+  return new PrismaClient();
+}

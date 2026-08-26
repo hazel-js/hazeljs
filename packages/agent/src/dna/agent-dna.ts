@@ -9,6 +9,46 @@ export interface AgentDnaTool {
   requiresApproval?: boolean;
 }
 
+export type AgentAutonomy = 'low' | 'medium' | 'high';
+
+export type AgentScheduleKind = 'always' | 'hourly' | 'daily' | 'event' | 'manual';
+
+export interface AgentDnaIdentity {
+  name?: string;
+  role?: string;
+  description?: string;
+}
+
+export interface AgentDnaMission {
+  goal: string;
+  instructions?: string[];
+}
+
+export interface AgentDnaModel {
+  provider?: string;
+  model?: string;
+  temperature?: number;
+}
+
+export interface AgentDnaMemory {
+  enabled: boolean;
+  strategy?: string;
+}
+
+export interface AgentDnaSlo {
+  successRate?: number;
+  maxResponseTimeMs?: number;
+  maxCostPerRun?: number;
+}
+
+export interface AgentDnaSchedule {
+  kind: AgentScheduleKind;
+  /** Cron expression or `HH:mm` for daily. */
+  cron?: string;
+  event?: string;
+  timezone?: string;
+}
+
 export interface AgentDna {
   format: 'hazeljs.agent.dna';
   version: string;
@@ -21,6 +61,16 @@ export interface AgentDna {
   contracts?: unknown[];
   metadata?: Record<string, unknown>;
   exportedAt: string;
+  /** Who the agent is (optional; falls back to name/description). */
+  identity?: AgentDnaIdentity;
+  /** What the agent should accomplish (optional; maps to systemPrompt when absent). */
+  mission?: AgentDnaMission;
+  /** Structured model selection (optional; `model` string remains canonical). */
+  modelConfig?: AgentDnaModel;
+  autonomy?: AgentAutonomy;
+  memory?: AgentDnaMemory;
+  slo?: AgentDnaSlo;
+  schedule?: AgentDnaSchedule;
 }
 
 export interface MarketplaceAgentPackage {
@@ -42,19 +92,36 @@ export function exportAgentDna(input: {
   contracts?: unknown[];
   metadata?: Record<string, unknown>;
   version?: string;
+  identity?: AgentDnaIdentity;
+  mission?: AgentDnaMission;
+  modelConfig?: AgentDnaModel;
+  autonomy?: AgentAutonomy;
+  memory?: AgentDnaMemory;
+  slo?: AgentDnaSlo;
+  schedule?: AgentDnaSchedule;
 }): AgentDna {
+  const missionGoal = input.mission?.goal;
   return {
     format: 'hazeljs.agent.dna',
     version: input.version ?? '1.0.0',
     name: input.name,
-    description: input.description,
-    systemPrompt: input.systemPrompt,
-    model: input.model,
+    description: input.description ?? input.identity?.description,
+    systemPrompt:
+      input.systemPrompt ??
+      (missionGoal ? `You are ${input.name}. Mission: ${missionGoal}` : undefined),
+    model: input.model ?? input.modelConfig?.model,
     tools: input.tools ?? [],
     policies: input.policies,
     contracts: input.contracts,
     metadata: input.metadata,
     exportedAt: new Date().toISOString(),
+    identity: input.identity,
+    mission: input.mission,
+    modelConfig: input.modelConfig,
+    autonomy: input.autonomy,
+    memory: input.memory,
+    slo: input.slo,
+    schedule: input.schedule,
   };
 }
 

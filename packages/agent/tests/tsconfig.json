@@ -13,12 +13,11 @@
     "resolveJsonModule": true,
     "noEmit": true,
     "types": ["jest", "node"],
-    "baseUrl": "..",
     "paths": {
-      "@hazeljs/eval": ["src/testing/mocks/hazeljs-eval.ts"],
-      "@hazeljs/prompts": ["../prompts/src"],
-      "@hazeljs/rag": ["../rag/src"],
-      "@hazeljs/resilience": ["../resilience/src"]
+      "@hazeljs/eval": ["../src/testing/mocks/hazeljs-eval.ts"],
+      "@hazeljs/prompts": ["../../prompts/src"],
+      "@hazeljs/rag": ["../../rag/src"],
+      "@hazeljs/resilience": ["../../resilience/src"]
     }
   },
   "include": ["./**/*.ts", "../src/**/*.ts"],

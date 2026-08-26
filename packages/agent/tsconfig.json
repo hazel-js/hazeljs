@@ -9,7 +9,6 @@
     "sourceMap": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "baseUrl": ".",
     "paths": {
       "@hazeljs/eval": ["../eval/src/index.ts"],
       "@hazeljs/prompts": ["../prompts/src"],
@@ -21,20 +20,10 @@
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"],
   "references": [
-    {
-      "path": "../core"
-    },
-    {
-      "path": "../prompts"
-    },
-    {
-      "path": "../rag"
-    },
-    {
-      "path": "../resilience"
-    },
-    {
-      "path": "../eval"
-    }
+    { "path": "../core" },
+    { "path": "../prompts" },
+    { "path": "../rag" },
+    { "path": "../resilience" },
+    { "path": "../eval" }
   ]
 }

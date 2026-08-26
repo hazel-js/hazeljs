@@ -8,7 +8,7 @@ import { defaultSkillgateOptions } from './defaults';
 import { enrichSpecWithAgentSkills } from './enrich-agent-skills';
 import { SkillgateConfigError } from './errors';
 import { matchesInclude } from './filter';
-import { parseOpenApiOperations } from './parse-openapi';
+import { parseOpenApiOperations, normalizeOpenApiPaths } from './parse-openapi';
 import { assertSafeBaseUrl } from './ssrf';
 import type {
   GovernedSkill,
@@ -96,6 +96,7 @@ export class Skillgate {
 
   /** Build Skillgate from an OpenAPI 3 / Swagger-like document. */
   static fromOpenApi(spec: OpenApiLike, options: SkillgateOptions = {}): Skillgate {
+    const normalized = normalizeOpenApiPaths(spec);
     const opts = defaultSkillgateOptions(options);
     const warnAbove = opts.warnAbove ?? 12;
     const maxTools = opts.maxTools ?? 24;
@@ -103,7 +104,7 @@ export class Skillgate {
     const included: GovernedSkill[] = [];
     const denied: GovernedSkill[] = [];
 
-    const baseUrl = opts.invoke?.baseUrl ?? spec.servers?.[0]?.url;
+    const baseUrl = opts.invoke?.baseUrl ?? normalized.servers?.[0]?.url;
     assertSafeBaseUrl(baseUrl, opts.invoke?.ssrfProtection === true);
 
     if ((opts.include?.mode ?? 'opt-in') === 'all') {
@@ -112,7 +113,7 @@ export class Skillgate {
       );
     }
 
-    const ops = parseOpenApiOperations(spec);
+    const ops = parseOpenApiOperations(normalized);
 
     for (const op of ops) {
       if (!matchesInclude(op, opts.include)) {
@@ -211,6 +212,31 @@ export class Skillgate {
       denied: [...this.denied],
       warnings: [...this.warnings],
     };
+  }
+
+  /**
+   * Convert included skills into AgentOS `skillHandlers` map
+   * (same invokers used by `register()`).
+   */
+  toHandlers(): Record<string, ReturnType<typeof createSkillInvoker>> {
+    const headers = resolveHeaders(this.options.invoke?.headers);
+    const baseUrl = this.options.invoke?.baseUrl;
+    const handlers: Record<string, ReturnType<typeof createSkillInvoker>> = {};
+    for (const skill of this.skills) {
+      handlers[skill.name] = createSkillInvoker(toDynamicTool(skill), { baseUrl, headers });
+    }
+    return handlers;
+  }
+
+  /**
+   * Register onto an AgentRuntime that exposes `getToolRegistry()`.
+   */
+  registerOnRuntime(
+    runtime: { getToolRegistry(): ToolRegistry },
+    agentName?: string
+  ): { count: number; report: SkillgateReport } {
+    const count = this.register(runtime.getToolRegistry(), agentName);
+    return { count, report: this.report() };
   }
 
   /**

@@ -98,3 +98,19 @@ export function policiesFromDna(dna: { policies?: unknown[] }): AgentGatekeeperP
   }
   return out;
 }
+
+/**
+ * Merge DNA-derived policies into a live list (same `id` replaces; new ids append).
+ * Mutates `policies` in place for Gatekeeper bundle ownership.
+ */
+export function mergeDnaPolicies(
+  policies: AgentGatekeeperPolicy[],
+  dna: { policies?: unknown[] }
+): void {
+  const incoming = policiesFromDna(dna);
+  for (const next of incoming) {
+    const idx = policies.findIndex((p) => p.id === next.id);
+    if (idx >= 0) policies[idx] = next;
+    else policies.push(next);
+  }
+}

@@ -3,11 +3,14 @@
   "compilerOptions": {
     "outDir": "./dist",
     "rootDir": "./src",
+    "composite": true,
+    "declaration": true,
+    "declarationMap": true,
     "sourceMap": true,
-    "baseUrl": ".",
     "paths": {
       "@hazeljs/agent": ["../agent/src"]
-    }
+    },
+    "types": ["jest", "node"]
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "**/*.test.ts", "tests"],

@@ -32,6 +32,8 @@ export interface HumanTaskService {
   create(input: CreateHumanTaskInput): Promise<HumanTask>;
   get(id: string): Promise<HumanTask | undefined>;
   listByRun(runId: string): Promise<HumanTask[]>;
+  /** Pending (and optionally resolved) tasks across all runs — Approval Center. */
+  listPending?(): Promise<HumanTask[]>;
   resolve(
     id: string,
     decision: 'approved' | 'rejected' | 'expired',
@@ -68,6 +70,12 @@ export class InMemoryHumanTaskService implements HumanTaskService {
   async listByRun(runId: string): Promise<HumanTask[]> {
     return Array.from(this.tasks.values())
       .filter((t) => t.runId === runId)
+      .map((t) => ({ ...t }));
+  }
+
+  async listPending(): Promise<HumanTask[]> {
+    return Array.from(this.tasks.values())
+      .filter((t) => t.status === 'pending')
       .map((t) => ({ ...t }));
   }
 

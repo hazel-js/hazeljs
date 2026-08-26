@@ -1,0 +1,17 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "composite": false,
+    "declaration": false,
+    "declarationMap": false,
+    "rootDir": ".",
+    "noEmit": true,
+    "paths": {
+      "@hazeljs/core": ["../core/src"],
+      "@hazeljs/swagger": ["../swagger/src"],
+      "@hazeljs/mcp": ["../mcp/src"]
+    }
+  },
+  "include": ["src/**/*", "tests/**/*"],
+  "exclude": ["node_modules", "dist"]
+}

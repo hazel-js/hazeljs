@@ -4,7 +4,12 @@ module.exports = {
   roots: ['<rootDir>/src', '<rootDir>/tests'],
   testMatch: ['**/__tests__/**/*.ts', '**/?(*.)+(spec|test).ts'],
   transform: {
-    '^.+\\.ts$': 'ts-jest',
+    '^.+\\.ts$': [
+      'ts-jest',
+      {
+        tsconfig: 'tsconfig.jest.json',
+      },
+    ],
   },
   collectCoverageFrom: ['src/**/*.ts', '!src/**/*.d.ts', '!src/index.ts'],
   coverageThreshold: {
@@ -19,4 +24,8 @@ module.exports = {
   coverageReporters: ['text', 'lcov', 'clover'],
   verbose: true,
   setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
+  moduleNameMapper: {
+    // Prefer built package types/runtime so coverage does not pull agent src outside rootDir
+    '^@hazeljs/agent$': '<rootDir>/../agent/dist/index.js',
+  },
 };

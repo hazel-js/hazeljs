@@ -91,6 +91,26 @@ export async function runConfidenceLoop(deps: ConfidenceLoopDeps): Promise<Agent
   const startTime = Date.now();
 
   for (iteration = 1; iteration <= maxIterations; iteration++) {
+    if (stages.includes('observe')) {
+      await setState(deps, lastResult?.executionId, AgentState.SEARCHING_KNOWLEDGE);
+      const observation = await llmText(
+        deps.llmProvider,
+        'You observe the current situation for an autonomous agent. Output a short factual summary of what is known and what to inspect next. Do not plan yet.',
+        `Goal: ${deps.input}\nPrior critique: ${critiqueFeedback || 'none'}`
+      );
+      await deps.emit(
+        AgentEventType.LOOP_ITERATION,
+        deps.agentName,
+        lastResult?.executionId ?? '',
+        {
+          iteration,
+          maxIterations,
+          stage: 'observe',
+          plan: observation,
+        }
+      );
+    }
+
     if (stages.includes('plan')) {
       await setState(deps, lastResult?.executionId, AgentState.PLANNING);
       const planPrompt = critiqueFeedback

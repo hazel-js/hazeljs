@@ -169,7 +169,7 @@ export interface AgentMetadata extends AgentConfig {
 }
 
 /** Stages for the outer confidence loop (Agent OS Loop Engine). */
-export type AgentLoopStage = 'plan' | 'execute' | 'critique' | 'validate';
+export type AgentLoopStage = 'observe' | 'plan' | 'execute' | 'critique' | 'validate';
 
 /**
  * Outer confidence-loop options. When set, execute() runs plan→execute→critique→validate

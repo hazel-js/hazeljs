@@ -20,6 +20,7 @@ import { withAgentSpan } from '../utils/agent-tracing';
 import type { ObservabilityProvider } from '../types/observability.types';
 import { getApprovalMetadata } from '../decorators/approval.decorator';
 import type { ToolAuthorizationGate } from '../authorization/tool-authorization-gate.interface';
+import type { IToolEffectGate } from '../effects/tool-effect-gate.interface';
 export interface ToolExecutorOptions {
   eventEmitter?: (type: AgentEventType, data: unknown) => void;
   guardrailsService?: IGuardrailsService;
@@ -53,6 +54,8 @@ export interface ToolExecutorOptions {
    * When set, policy engine evaluation is skipped for that invocation.
    */
   authorizationGate?: ToolAuthorizationGate;
+  /** Effect gate for @hazeljs/agent-vm — journaling and speculation barriers. */
+  effectGate?: IToolEffectGate;
 }
 
 /**
@@ -88,6 +91,10 @@ export class ToolExecutor {
 
   setAuthorizationGate(gate: ToolAuthorizationGate | undefined): void {
     this.options.authorizationGate = gate;
+  }
+
+  setEffectGate(gate: IToolEffectGate | undefined): void {
+    this.options.effectGate = gate;
   }
 
   /**
@@ -348,9 +355,85 @@ export class ToolExecutor {
         });
       }
 
+      if (this.options.effectGate) {
+        const effectDecision = await this.options.effectGate.beforeToolExecute({
+          executionId,
+          runId: runId ?? executionId,
+          branchId: context.metadata?.branchId as string | undefined,
+          agentId,
+          sessionId,
+          userId,
+          tool,
+          input,
+        });
+
+        if (!effectDecision.allow) {
+          context.status = ToolExecutionStatus.FAILED;
+          context.completedAt = new Date();
+          context.duration = Date.now() - startTime;
+          const errorMsg =
+            effectDecision.reason ??
+            (effectDecision.barrier
+              ? 'Irreversible tool blocked in speculative branch'
+              : 'Effect gate denied tool execution');
+
+          this.emitEvent(AgentEventType.TOOL_EXECUTION_FAILED, {
+            toolName: tool.name,
+            input,
+            error: errorMsg,
+            duration: context.duration,
+          });
+
+          return {
+            success: false,
+            error: new Error(errorMsg),
+            duration: context.duration,
+            metadata: {
+              effectKind: effectDecision.effectKind,
+              barrier: effectDecision.barrier,
+              abortSpeculation: effectDecision.abortSpeculation,
+            },
+          };
+        }
+
+        if (effectDecision.deferred) {
+          context.status = ToolExecutionStatus.COMPLETED;
+          context.completedAt = new Date();
+          context.duration = Date.now() - startTime;
+
+          this.emitEvent(AgentEventType.TOOL_EXECUTION_COMPLETED, {
+            toolName: tool.name,
+            input,
+            output: effectDecision.predictedOutput,
+            duration: context.duration,
+          });
+
+          return {
+            success: true,
+            output: effectDecision.predictedOutput,
+            duration: context.duration,
+            metadata: { deferred: true, effectKind: effectDecision.effectKind },
+          };
+        }
+      }
+
       context.status = ToolExecutionStatus.EXECUTING;
 
       const result = await this.executeWithRetry(tool, input, tool.retries || 0);
+
+      if (this.options.effectGate) {
+        await this.options.effectGate.afterToolExecute({
+          executionId,
+          runId: runId ?? executionId,
+          branchId: context.metadata?.branchId as string | undefined,
+          agentId,
+          sessionId,
+          userId,
+          tool,
+          input,
+          output: result,
+        });
+      }
 
       context.status = ToolExecutionStatus.COMPLETED;
       context.completedAt = new Date();

@@ -29,6 +29,9 @@ describe('registerAgentCommand (AOS-011 + templates)', () => {
         'events',
       ])
     );
+    expect(program.commands.map((c) => c.name())).toEqual(
+      expect.arrayContaining(['agents', 'agent'])
+    );
   });
 });
 

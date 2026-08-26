@@ -11,9 +11,10 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "resolveJsonModule": true,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "composite": true,
     "declarationMap": true,
+    "ignoreDeprecations": "6.0",
     "types": ["jest", "node"]
   },
   "files": [],
@@ -136,6 +137,7 @@
     { "path": "./packages/eval" },
     { "path": "./packages/benchmark" },
     { "path": "./packages/testing" },
-    { "path": "./packages/agent-gatekeeper" }
+    { "path": "./packages/agent-gatekeeper" },
+    { "path": "./packages/agent-vm" }
   ]
 }
