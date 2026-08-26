@@ -19,6 +19,65 @@ const DEFAULT_PLATFORM_STORE = path.join('.hazel', 'platform', 'resources.json')
  * `hazel agent runs list|inspect|cancel|resume|approve` — durable store ops.
  */
 export function registerAgentCommand(program: Command): void {
+  program
+    .command('agents')
+    .description('List deployed Agent OS agents (name, status, current task)')
+    .option('--store <path>', 'Platform resource store path', DEFAULT_PLATFORM_STORE)
+    .option('--dir <path>', 'Durable store directory', DEFAULT_DURABLE_DIR)
+    .option('--project <path>', 'Project root', '.')
+    .option('--json', 'Print JSON')
+    .action(async (opts: { store: string; dir: string; project: string; json?: boolean }) => {
+      try {
+        const { AgentOS } = await import('@hazeljs/agent');
+        const projectRoot = path.resolve(opts.project);
+        const osPlane = new AgentOS({
+          projectRoot,
+          storePath: path.resolve(opts.store),
+          durableDir: path.resolve(opts.dir),
+        });
+        try {
+          await osPlane.recover();
+          const agents = await osPlane.list();
+          if (opts.json) {
+            // eslint-disable-next-line no-console
+            console.log(JSON.stringify({ agents }, null, 2));
+            return;
+          }
+          const rows = agents.map((a) => ({
+            NAME: a.name,
+            STATUS: a.status,
+            CURRENT:
+              a.occupancy.currentTask ??
+              (a.status === 'sleeping' ? (a.occupancy.nextWakeAt ?? '-') : '-'),
+          }));
+          if (!rows.length) {
+            // eslint-disable-next-line no-console
+            console.log('No agents deployed. Use Agent Office or `hazel agent apply`.');
+            return;
+          }
+          const widths = {
+            NAME: Math.max(4, ...rows.map((r) => r.NAME.length)),
+            STATUS: Math.max(6, ...rows.map((r) => r.STATUS.length)),
+            CURRENT: Math.max(7, ...rows.map((r) => r.CURRENT.length)),
+          };
+          const line = (r: { NAME: string; STATUS: string; CURRENT: string }) =>
+            `${r.NAME.padEnd(widths.NAME)}  ${r.STATUS.padEnd(widths.STATUS)}  ${r.CURRENT}`;
+          // eslint-disable-next-line no-console
+          console.log(line({ NAME: 'NAME', STATUS: 'STATUS', CURRENT: 'CURRENT' }));
+          for (const r of rows) {
+            // eslint-disable-next-line no-console
+            console.log(line(r));
+          }
+        } finally {
+          await osPlane.dispose();
+        }
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.error(e instanceof Error ? e.message : e);
+        process.exitCode = 1;
+      }
+    });
+
   const agent = program
     .command('agent')
     .description('Agent OS DNA / runtime / marketplace / platform helpers');

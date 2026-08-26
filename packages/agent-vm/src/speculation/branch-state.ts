@@ -112,9 +112,7 @@ export class BranchStateManager implements IAgentStateManager {
     userId?: string,
     metadata?: Record<string, unknown>
   ): AgentContext {
-    return this.unwrap(
-      this.parent.createContext(agentId, sessionId, input, userId, metadata)
-    );
+    return this.unwrap(this.parent.createContext(agentId, sessionId, input, userId, metadata));
   }
 
   getContext(executionId: string): AgentContext | undefined {

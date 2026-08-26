@@ -19,9 +19,7 @@ export class HeuristicScorer implements BranchScorer {
 
   score(result: BranchExecutionResult): number {
     const text =
-      typeof result.output === 'string'
-        ? result.output
-        : JSON.stringify(result.output ?? '');
+      typeof result.output === 'string' ? result.output : JSON.stringify(result.output ?? '');
     return Math.min(text.length / 100, 1);
   }
 }
@@ -37,7 +35,10 @@ export class CustomScorer implements BranchScorer {
     ) => Promise<number> | number
   ) {}
 
-  score(result: BranchExecutionResult, context?: Record<string, unknown>): Promise<number> | number {
+  score(
+    result: BranchExecutionResult,
+    context?: Record<string, unknown>
+  ): Promise<number> | number {
     return this.fn(result, context);
   }
 }

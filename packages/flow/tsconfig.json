@@ -4,8 +4,10 @@
     "outDir": "./dist",
     "rootDir": "./src",
     "composite": true,
+    "declaration": true,
     "declarationMap": true,
-    "baseUrl": "."
+    "sourceMap": true,
+    "types": ["jest", "node"]
   },
   "include": ["src/**/*", "src/generated/**/*"],
   "exclude": ["node_modules", "dist", "test"]

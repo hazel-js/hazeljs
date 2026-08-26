@@ -38,12 +38,10 @@ export function createAgentVmFromRuntime(
   options: AttachAgentVmOptions = {}
 ): AgentVmRuntimeBundle {
   const {
-    resolveAgentInstance = (agentId) => runtime.getAgentInstance(agentId),
-    resolveTool = (agentId, toolPropertyKey) => {
+    resolveAgentInstance = (agentId: string): unknown => runtime.getAgentInstance(agentId),
+    resolveTool = (agentId: string, toolPropertyKey: string): ToolMetadata | undefined => {
       const tools = runtime.getAgentTools(agentId);
-      return tools.find(
-        (t) => t.propertyKey === toolPropertyKey || t.name === toolPropertyKey
-      );
+      return tools.find((t) => t.propertyKey === toolPropertyKey || t.name === toolPropertyKey);
     },
     ...rest
   } = options;
@@ -128,7 +126,8 @@ export function attachAgentVmFromEnv(
   if (!agentVmEnabledFromEnv(env, options.enabledEnv)) return undefined;
   const barrierMode = options.barrierMode ?? agentVmBarrierModeFromEnv(env, options.barrierEnv);
   const enableStoreBuffer =
-    options.enableStoreBuffer ?? env[options.storeBufferEnv ?? 'AGENT_OS_AGENT_VM_STORE_BUFFER'] === '1';
+    options.enableStoreBuffer ??
+    env[options.storeBufferEnv ?? 'AGENT_OS_AGENT_VM_STORE_BUFFER'] === '1';
   return attachAndBindAgentVm(runtime, { ...options, barrierMode, enableStoreBuffer });
 }
 

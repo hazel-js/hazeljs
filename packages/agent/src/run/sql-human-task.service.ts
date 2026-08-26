@@ -80,6 +80,14 @@ export class SqlHumanTaskService implements HumanTaskService {
     return rows.map(fromRow);
   }
 
+  async listPending(): Promise<HumanTask[]> {
+    const rows = (await this.client.agentHumanTask.findMany({
+      where: { status: 'pending' },
+      orderBy: { createdAt: 'asc' },
+    })) as HumanTaskRow[];
+    return rows.map(fromRow);
+  }
+
   async resolve(
     id: string,
     decision: 'approved' | 'rejected' | 'expired',

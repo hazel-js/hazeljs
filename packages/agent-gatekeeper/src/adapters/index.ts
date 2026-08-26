@@ -302,6 +302,6 @@ export function protectMcpRegistry(
   );
 
   for (const tool of registry.getAllTools()) {
-    tool.method = (input: Record<string, unknown>) => invoke(tool.name, input);
+    tool.method = (input: Record<string, unknown>): Promise<unknown> => invoke(tool.name, input);
   }
 }

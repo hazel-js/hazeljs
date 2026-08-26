@@ -1,5 +1,4 @@
 import 'reflect-metadata';
-import { ToolExecutor } from '@hazeljs/agent';
 import { EffectGate } from '../gate/effect-gate';
 import { EffectJournal } from '../journal/effect-journal';
 import { Reversible } from '../effects/effect.decorator';

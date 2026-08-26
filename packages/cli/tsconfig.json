@@ -13,7 +13,6 @@
     "resolveJsonModule": true,
     "types": ["jest", "node"],
     "composite": true,
-    "baseUrl": ".",
     "paths": {
       "@hazeljs/eval": ["../eval/src/index.ts"],
       "@hazeljs/agent": ["../agent/src/index.ts"],

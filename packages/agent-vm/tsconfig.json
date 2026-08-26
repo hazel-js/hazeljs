@@ -9,7 +9,6 @@
     "sourceMap": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "baseUrl": ".",
     "paths": {
       "@hazeljs/agent": ["../agent/src/index.ts"]
     },

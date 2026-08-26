@@ -131,8 +131,12 @@ export interface SkillgateMcpOptions {
   name: string;
   version?: string;
   agentName?: string;
-  /** Reuse an existing registry; otherwise a new ToolRegistry is created. */
-  registry?: import('@hazeljs/agent').ToolRegistry;
+  /**
+   * Reuse an existing ToolRegistry; otherwise a new one is created.
+   * Typed loosely so skillgate does not pull `@hazeljs/agent` into its own `rootDir` graph.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  registry?: any;
 }
 
 export interface SkillgateReport {

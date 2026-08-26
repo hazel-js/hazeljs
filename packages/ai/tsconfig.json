@@ -6,7 +6,7 @@
     "rootDir": "./src",
     "composite": true,
     "declarationMap": true,
-    "baseUrl": ".",
+    "ignoreDeprecations": "6.0",
     "paths": {
       "@hazeljs/core": ["../core/src"],
       "@hazeljs/cache": ["../cache/src"],

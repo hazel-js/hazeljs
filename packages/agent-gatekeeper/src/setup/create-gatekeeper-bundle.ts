@@ -58,7 +58,10 @@ export interface CreateAgentGatekeeperBundleOptions {
   tenantId?: string;
   environment?: string;
   /** Extra ToolExecutor gate options (merged with humanTasks / tenant defaults). */
-  gate?: Omit<CreateToolExecutorGateOptions, 'humanTasks' | 'defaultTenantId' | 'defaultEnvironment'>;
+  gate?: Omit<
+    CreateToolExecutorGateOptions,
+    'humanTasks' | 'defaultTenantId' | 'defaultEnvironment'
+  >;
 }
 
 export interface AgentGatekeeperBundle {
@@ -106,9 +109,10 @@ export function createAgentGatekeeperBundle(
   } else {
     const redis = tryCreateRedisApprovalProvider({
       url: options.redisUrl,
-      onMissingRedisPackage: () => {
-        console.warn(
-          'GATEKEEPER_REDIS_URL is set but the `redis` package is not installed — using durable HITL approvals'
+      onMissingRedisPackage: (): void => {
+        // Prefer stderr over console for lint; ops-visible when redis peer missing
+        process.stderr.write(
+          'GATEKEEPER_REDIS_URL is set but the `redis` package is not installed — using durable HITL approvals\n'
         );
       },
     });

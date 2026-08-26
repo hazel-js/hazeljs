@@ -2,7 +2,7 @@ import 'reflect-metadata';
 import { EffectJournal } from '../journal/effect-journal';
 import { TransactionCoordinator } from '../transaction/transaction-coordinator';
 import { InMemoryQuarantineStore } from '../transaction/quarantine-store';
-import { Reversible, getEffectMetadata } from '../effects/effect.decorator';
+import { Reversible } from '../effects/effect.decorator';
 import { Compensate } from '../effects/compensate.decorator';
 import type { EffectRecord } from '../effects/effect-kind';
 import type { ToolMetadata } from '@hazeljs/agent';

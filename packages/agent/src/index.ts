@@ -104,3 +104,5 @@ export * from './scheduler/agent-scheduler';
 
 // Agent OS Platform — declarative control plane (local-first)
 export * from './platform';
+
+export * from './os';

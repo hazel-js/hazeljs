@@ -3,11 +3,14 @@
  */
 
 import type { IAgentStateManager } from '@hazeljs/agent';
-import { EffectGate } from '../gate/effect-gate';
+import { EffectGate, type EffectExecutionContext } from '../gate/effect-gate';
 import type { AgentVmEventEmitter } from '../events/vm-event.types';
 import { EffectJournal } from '../journal/effect-journal';
 import { InMemoryJournalStore } from '../journal/stores/memory-journal.store';
-import { SpeculationScheduler, type SpeculationSchedulerOptions } from '../speculation/speculation-scheduler';
+import {
+  SpeculationScheduler,
+  type SpeculationSchedulerOptions,
+} from '../speculation/speculation-scheduler';
 import { TransactionCoordinator } from '../transaction/transaction-coordinator';
 import type { ToolMetadata } from '@hazeljs/agent';
 
@@ -42,7 +45,8 @@ export function createAgentVmRuntime(options: CreateAgentVmRuntimeOptions): Agen
   const effectGate = new EffectGate({
     journal,
     emit: options.emit,
-    getExecutionContext: () => schedulerRef.current?.getExecutionContext(),
+    getExecutionContext: (): EffectExecutionContext | undefined =>
+      schedulerRef.current?.getExecutionContext(),
     barrierMode: options.barrierMode,
     enableStoreBuffer: options.enableStoreBuffer,
   });

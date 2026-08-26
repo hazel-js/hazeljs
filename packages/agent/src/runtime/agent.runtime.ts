@@ -1474,6 +1474,22 @@ export class AgentRuntime {
     this.eventEmitter.onAny(handler);
   }
 
+  offAny(handler: (event: unknown) => void): void {
+    this.eventEmitter.offAny(handler);
+  }
+
+  /**
+   * Emit a control-plane or runtime event.
+   */
+  emit(type: AgentEventType, agentId: string, executionId: string, data: unknown): void {
+    void this.eventEmitter.emit(type, agentId, executionId, data);
+  }
+
+  unregisterAgent(name: string): void {
+    this.agentRegistry.unregister(name);
+    this.toolRegistry.unregisterAgentTools(name);
+  }
+
   /**
    * Unsubscribe from events
    */
@@ -1531,7 +1547,9 @@ export class AgentRuntime {
   }
 
   /** Wire or replace the tool effect gate (@hazeljs/agent-vm). */
-  setEffectGate(gate: import('../effects/tool-effect-gate.interface').IToolEffectGate | undefined): void {
+  setEffectGate(
+    gate: import('../effects/tool-effect-gate.interface').IToolEffectGate | undefined
+  ): void {
     this.toolExecutor.setEffectGate(gate);
   }
 

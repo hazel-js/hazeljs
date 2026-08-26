@@ -4,12 +4,12 @@ Effect-typed agent execution for HazelJS — transactional runs, reversible tool
 
 ## Effect lattice
 
-| Effect | Speculation-safe | Undo |
-|--------|------------------|------|
-| `@Pure()` | Yes | N/A |
-| `@Read()` | Yes | N/A |
-| `@Reversible({ compensate })` | Yes | `@Compensate` handler |
-| `@Irreversible()` | No (barrier) | Never |
+| Effect                        | Speculation-safe | Undo                  |
+| ----------------------------- | ---------------- | --------------------- |
+| `@Pure()`                     | Yes              | N/A                   |
+| `@Read()`                     | Yes              | N/A                   |
+| `@Reversible({ compensate })` | Yes              | `@Compensate` handler |
+| `@Irreversible()`             | No (barrier)     | Never                 |
 
 Tools without an effect decorator default to **irreversible** (safe default).
 
@@ -17,13 +17,7 @@ Tools without an effect decorator default to **irreversible** (safe default).
 
 ```typescript
 import { Agent, Tool, ToolExecutor, AgentStateManager } from '@hazeljs/agent';
-import {
-  Read,
-  Reversible,
-  Compensate,
-  createAgentVmRuntime,
-  EffectKind,
-} from '@hazeljs/agent-vm';
+import { Read, Reversible, Compensate, createAgentVmRuntime, EffectKind } from '@hazeljs/agent-vm';
 
 const stateManager = new AgentStateManager();
 const vm = createAgentVmRuntime({ stateManager });
@@ -84,14 +78,26 @@ Replays `@Compensate` handlers newest-first. Failed compensations land in a quar
 ### Attach to AgentRuntime (recommended)
 
 ```typescript
-import { attachAgentVm, attachAndBindAgentVm, getBoundAgentVm } from '@hazeljs/agent-vm';
+import {
+  attachAgentVm,
+  attachAndBindAgentVm,
+  attachAgentVmFromEnv,
+  attachAgentVmStatusFromEnv,
+  formatAgentVmStatusBoot,
+  getBoundAgentVm,
+} from '@hazeljs/agent-vm';
 
-// Create stack + wire ToolExecutor.setEffectGate
 const vm = attachAgentVm(runtime, { barrierMode: 'converge' });
 
-// Or attach and keep a WeakMap lookup for status / undo APIs
 attachAndBindAgentVm(runtime);
 const later = getBoundAgentVm(runtime);
+```
+
+Opt-in from env (`AGENT_OS_AGENT_VM=1`, optional `AGENT_OS_AGENT_VM_BARRIER`, `AGENT_OS_AGENT_VM_STORE_BUFFER=1`):
+
+```typescript
+const status = attachAgentVmStatusFromEnv(runtime);
+console.log(formatAgentVmStatusBoot(status));
 ```
 
 ### Manual

@@ -69,6 +69,10 @@ export class PolicyEngine {
     this.rules.push(rule);
   }
 
+  getRules(): PolicyRule[] {
+    return [...this.rules];
+  }
+
   evaluate(toolName: string, input: Record<string, unknown>): PolicyDecision {
     const inputStr = JSON.stringify(input).toLowerCase();
     const matched = this.rules

@@ -215,6 +215,20 @@ export class Skillgate {
   }
 
   /**
+   * Convert included skills into AgentOS `skillHandlers` map
+   * (same invokers used by `register()`).
+   */
+  toHandlers(): Record<string, ReturnType<typeof createSkillInvoker>> {
+    const headers = resolveHeaders(this.options.invoke?.headers);
+    const baseUrl = this.options.invoke?.baseUrl;
+    const handlers: Record<string, ReturnType<typeof createSkillInvoker>> = {};
+    for (const skill of this.skills) {
+      handlers[skill.name] = createSkillInvoker(toDynamicTool(skill), { baseUrl, headers });
+    }
+    return handlers;
+  }
+
+  /**
    * Register onto an AgentRuntime that exposes `getToolRegistry()`.
    */
   registerOnRuntime(

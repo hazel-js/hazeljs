@@ -26,11 +26,11 @@ export function sliceBudgetAcrossBranches(
       branchIndex: i,
       budget: {
         maxCostUsd:
-          parentBudget.maxCostUsd != null
-            ? parentBudget.maxCostUsd / branchCount
-            : undefined,
+          parentBudget.maxCostUsd != null ? parentBudget.maxCostUsd / branchCount : undefined,
         maxTokens:
-          parentBudget.maxTokens != null ? Math.floor(parentBudget.maxTokens / branchCount) : undefined,
+          parentBudget.maxTokens != null
+            ? Math.floor(parentBudget.maxTokens / branchCount)
+            : undefined,
       },
     });
   }
@@ -50,5 +50,7 @@ export function selectBranchesToPrune(
   pruneThreshold = 0.15
 ): string[] {
   const minScore = leader.score * (1 - pruneThreshold);
-  return scores.filter((s) => s.branchId !== leader.branchId && s.score < minScore).map((s) => s.branchId);
+  return scores
+    .filter((s) => s.branchId !== leader.branchId && s.score < minScore)
+    .map((s) => s.branchId);
 }

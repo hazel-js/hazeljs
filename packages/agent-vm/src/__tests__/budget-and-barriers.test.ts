@@ -29,11 +29,7 @@ describe('budget-slicer', () => {
 
   it('selects branches below prune threshold', () => {
     const leader = { branchId: 'a', score: 1 };
-    const scores = [
-      leader,
-      { branchId: 'b', score: 0.5 },
-      { branchId: 'c', score: 0.1 },
-    ];
+    const scores = [leader, { branchId: 'b', score: 0.5 }, { branchId: 'c', score: 0.1 }];
     const pruned = selectBranchesToPrune(scores, leader, 0.15);
     expect(pruned).toContain('c');
   });

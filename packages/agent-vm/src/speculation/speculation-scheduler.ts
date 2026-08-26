@@ -15,7 +15,7 @@ import {
 } from './budget-slicer';
 import { BranchStateManager } from './branch-state';
 import type { BranchExecutionResult, BranchScorer } from './scorers/index';
-import { HeuristicScorer, resolveScorer } from './scorers/index';
+import { resolveScorer } from './scorers/index';
 import type { SpeculateMetadata } from './speculate.decorator';
 import type { IAgentStateManager } from '@hazeljs/agent';
 
@@ -243,4 +243,8 @@ export interface AgentVmRuntimeOptions extends SpeculationSchedulerOptions {
   emit?: AgentVmEventEmitter;
 }
 
-export { createAgentVmRuntime, type AgentVmRuntimeBundle, type CreateAgentVmRuntimeOptions } from '../runtime/create-agent-vm-runtime';
+export {
+  createAgentVmRuntime,
+  type AgentVmRuntimeBundle,
+  type CreateAgentVmRuntimeOptions,
+} from '../runtime/create-agent-vm-runtime';

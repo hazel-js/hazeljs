@@ -88,14 +88,11 @@ export function createDurableRunStoreFromEnv(
 
   if (durableRunStoreBackendFromEnv(env) === 'sql') {
     const client =
-      options.prismaClient ??
-      options.loadPrismaClient?.() ??
-      loadDefaultPrismaClient();
+      options.prismaClient ?? options.loadPrismaClient?.() ?? loadDefaultPrismaClient();
     return createSqlDurableRunStore(client);
   }
 
-  const dir =
-    env.AGENT_OS_DURABLE_DIR?.trim() || path.join(cwd, '.hazel', 'runs');
+  const dir = env.AGENT_OS_DURABLE_DIR?.trim() || path.join(cwd, '.hazel', 'runs');
   return createDurableRunStore(dir);
 }
 

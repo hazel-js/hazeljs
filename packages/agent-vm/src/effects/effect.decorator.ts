@@ -10,7 +10,8 @@ export const COMPENSATE_METADATA_KEY = Symbol('hazel:agent-vm:compensate');
 
 function defineEffect(kind: EffectKind, options?: Partial<EffectMetadata>): MethodDecorator {
   return (target, propertyKey) => {
-    const existing: EffectMetadata = Reflect.getMetadata(EFFECT_METADATA_KEY, target, propertyKey) ?? {};
+    const existing: EffectMetadata =
+      Reflect.getMetadata(EFFECT_METADATA_KEY, target, propertyKey) ?? {};
     const metadata: EffectMetadata = {
       ...existing,
       kind,

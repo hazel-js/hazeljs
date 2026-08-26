@@ -369,15 +369,36 @@ export class HazelApp {
           const { method, url, headers } = req;
           logger.debug('Incoming request:', { method, url, headers });
 
-          // Handle CORS
+          // Handle CORS (honor string | string[] | predicate — never reflect arbitrary Origin)
           if (this.corsEnabled) {
-            const origin = headers['origin'] || '*';
-            const allowedOrigin = this.corsOptions?.origin
-              ? typeof this.corsOptions.origin === 'string'
-                ? this.corsOptions.origin
-                : origin
-              : '*';
-            res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
+            const requestOrigin = typeof headers['origin'] === 'string' ? headers['origin'] : '';
+            const configured = this.corsOptions?.origin;
+            let allowOrigin: string | undefined;
+
+            if (configured === undefined || configured === '*') {
+              allowOrigin = '*';
+            } else if (typeof configured === 'string') {
+              if (!requestOrigin || configured === requestOrigin) {
+                allowOrigin = configured === '*' ? '*' : requestOrigin || configured;
+              }
+            } else if (Array.isArray(configured)) {
+              if (configured.includes('*')) {
+                allowOrigin = '*';
+              } else if (requestOrigin && configured.includes(requestOrigin)) {
+                allowOrigin = requestOrigin;
+              }
+            } else if (typeof configured === 'function') {
+              if (requestOrigin && configured(requestOrigin)) {
+                allowOrigin = requestOrigin;
+              }
+            }
+
+            if (allowOrigin) {
+              res.setHeader('Access-Control-Allow-Origin', allowOrigin);
+              if (allowOrigin !== '*') {
+                res.setHeader('Vary', 'Origin');
+              }
+            }
             res.setHeader(
               'Access-Control-Allow-Methods',
               this.corsOptions?.methods?.join(', ') || 'GET, POST, PUT, DELETE, PATCH, OPTIONS'
@@ -395,6 +416,11 @@ export class HazelApp {
 
             // Handle preflight
             if (method === 'OPTIONS') {
+              if (!allowOrigin && configured !== undefined && configured !== '*') {
+                res.writeHead(403);
+                res.end(JSON.stringify({ statusCode: 403, message: 'CORS origin not allowed' }));
+                return;
+              }
               res.writeHead(204);
               res.end();
               return;

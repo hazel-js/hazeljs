@@ -9,6 +9,7 @@ import { loadMarketplacePackage } from './marketplace';
 import type { HotReloadResult } from './hot-reload';
 import { createLocalPlatform } from '../platform/local-platform';
 import type { AgentDefinition } from '../platform/resources';
+import { logger } from '../utils/logger';
 
 export interface DnaOverlayTarget {
   getAgentMetadata(name: string): unknown;
@@ -71,7 +72,7 @@ function dnaFromMarketplaceDir(projectRoot: string): AgentDna[] {
       out.push(loadMarketplacePackage(path.join(dir, file)).dna);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      console.warn(`[dna-overlay] skip ${file}: ${msg}`);
+      logger.warn(`[dna-overlay] skip ${file}: ${msg}`);
     }
   }
   return out;
@@ -101,7 +102,7 @@ async function dnaFromPlatform(
       out.push({ definitionName: def.metadata.name, dna: resolved.dna });
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      console.warn(`[dna-overlay] skip Definition "${def.metadata.name}": ${msg}`);
+      logger.warn(`[dna-overlay] skip Definition "${def.metadata.name}": ${msg}`);
     }
   }
   return out;
@@ -114,7 +115,7 @@ function dnaFromFile(projectRoot: string, env: NodeJS.ProcessEnv): AgentDna | un
     return loadMarketplacePackage(filePath).dna;
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    console.warn(`[dna-overlay] skip file ${filePath}: ${msg}`);
+    logger.warn(`[dna-overlay] skip file ${filePath}: ${msg}`);
     return undefined;
   }
 }
@@ -138,7 +139,11 @@ export async function applyDnaOverlays(
   const skipped: string[] = [];
   const seen = new Set<string>();
 
-  const applyOne = (dna: AgentDna, source: DnaOverlayEntry['source'], definitionName?: string) => {
+  const applyOne = (
+    dna: AgentDna,
+    source: DnaOverlayEntry['source'],
+    definitionName?: string
+  ): void => {
     if (!runtime.getAgentMetadata(dna.name)) {
       skipped.push(
         `${source}${definitionName ? ':' + definitionName : ''} → agent "${dna.name}" not registered`
@@ -161,7 +166,7 @@ export async function applyDnaOverlays(
   }
 
   const fileDnas = env.AGENT_OS_DNA_OVERLAY_FILE?.trim()
-    ? (() => {
+    ? ((): AgentDna[] => {
         const one = dnaFromFile(projectRoot, env);
         return one ? [one] : [];
       })()

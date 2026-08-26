@@ -59,6 +59,15 @@ export enum AgentEventType {
   /** Child agent call started / completed */
   AGENT_CALL_STARTED = 'agent.call.started',
   AGENT_CALL_COMPLETED = 'agent.call.completed',
+
+  /** Agent OS control-plane occupancy */
+  AGENT_DEPLOYED = 'agent.deployed',
+  AGENT_PAUSED = 'agent.paused',
+  AGENT_RESUMED = 'agent.resumed',
+  AGENT_SLEEPING = 'agent.sleeping',
+  AGENT_WOKEN = 'agent.woken',
+  AGENT_TERMINATED = 'agent.terminated',
+  SLO_BREACHED = 'agent.slo.breached',
 }
 
 /**

@@ -21,11 +21,11 @@ export interface ResolveAuditSinkOptions {
   extra?: AuditSink[];
 }
 
-export function resolveAuditSink(
-  options: ResolveAuditSinkOptions = {}
-): { sink: AuditSink; backend: string } {
-  const testMode =
-    options.testMode ?? process.env.JEST_WORKER_ID !== undefined;
+export function resolveAuditSink(options: ResolveAuditSinkOptions = {}): {
+  sink: AuditSink;
+  backend: string;
+} {
+  const testMode = options.testMode ?? process.env.JEST_WORKER_ID !== undefined;
 
   if (testMode) {
     return { sink: new InMemoryAuditSink(), backend: 'memory' };
