@@ -9,8 +9,6 @@
     "sourceMap": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "moduleResolution": "bundler",
-    "ignoreDeprecations": "6.0",
     "paths": {
       "@hazeljs/eval": ["../eval/src/index.ts"],
       "@hazeljs/prompts": ["../prompts/src"],
