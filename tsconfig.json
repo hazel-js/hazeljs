@@ -11,9 +11,10 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "resolveJsonModule": true,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "composite": true,
     "declarationMap": true,
+    "ignoreDeprecations": "6.0",
     "types": ["jest", "node"]
   },
   "files": [],

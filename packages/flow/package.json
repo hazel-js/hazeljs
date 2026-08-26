@@ -44,7 +44,7 @@
     "@vitest/coverage-v8": "^2.1.9",
     "prisma": "^6.19.3",
     "tsx": "^4.21.0",
-    "typescript": "^5.9.3",
+    "typescript": "^6.0.3",
     "vitest": "^2.1.9"
   },
   "publishConfig": {

@@ -62,7 +62,7 @@
     "@hazeljs/agent-gatekeeper": "^2.0.2",
     "@types/inquirer": "^8.2.10",
     "@types/mustache": "^4.2.5",
-    "typescript": "^5.9.3"
+    "typescript": "^6.0.3"
   },
   "engines": {
     "node": ">=14.0.0"
