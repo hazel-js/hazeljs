@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/rag",
-  "version": "2.0.3",
+  "version": "2.0.4",
   "description": "Retrieval-Augmented Generation (RAG) and vector search for HazelJS framework",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -28,10 +28,10 @@
     "reflect-metadata": "^0.2.2"
   },
   "peerDependencies": {
-    "@hazeljs/ai": "^2.0.3",
-    "@hazeljs/core": "^2.0.3",
-    "@hazeljs/memory": "^2.0.3",
-    "@hazeljs/prompts": "^2.0.3",
+    "@hazeljs/ai": "^2.0.4",
+    "@hazeljs/core": "^2.0.4",
+    "@hazeljs/memory": "^2.0.4",
+    "@hazeljs/prompts": "^2.0.4",
     "@huggingface/inference": "^2.0.0",
     "@pinecone-database/pinecone": "^3.0.0",
     "@qdrant/js-client-rest": "^1.9.0",
@@ -85,8 +85,8 @@
     }
   },
   "devDependencies": {
-    "@hazeljs/memory": "^2.0.3",
-    "@hazeljs/prompts": "^2.0.3",
+    "@hazeljs/memory": "^2.0.4",
+    "@hazeljs/prompts": "^2.0.4",
     "@types/node": "^20.19.39",
     "@typescript-eslint/eslint-plugin": "^8.58.0",
     "@typescript-eslint/parser": "^8.58.0",
