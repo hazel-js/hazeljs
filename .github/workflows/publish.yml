@@ -85,6 +85,8 @@ jobs:
 
           echo "Updating all package.json files to version: $VERSION"
           node scripts/bump-version.js "$VERSION"
+          # Keep release commits Prettier-clean (JSON.stringify formatting drift)
+          npx prettier --write lerna.json package.json "packages/*/package.json" "packages/*/*/package.json" 2>/dev/null || true
 
           echo "Version update complete. Updated files:"
           git diff --name-only

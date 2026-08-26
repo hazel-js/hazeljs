@@ -75,13 +75,14 @@ for (const dir of fs.readdirSync(packagesDir)) {
 // Also update root package.json version
 updatePackageJson(rootPkgPath);
 
-// Sync lerna.json version
+// Sync lerna.json version without re-serializing (JSON.stringify expands short
+// arrays; Prettier keeps them single-line and CI format:check would fail).
 const lernaPath = path.join(__dirname, '..', 'lerna.json');
 if (fs.existsSync(lernaPath)) {
-  const lerna = JSON.parse(fs.readFileSync(lernaPath, 'utf8'));
-  if (lerna.version !== newVersion) {
-    lerna.version = newVersion;
-    fs.writeFileSync(lernaPath, JSON.stringify(lerna, null, 2) + '\n');
+  const raw = fs.readFileSync(lernaPath, 'utf8');
+  const next = raw.replace(/("version"\s*:\s*")[^"]*(")/, `$1${newVersion}$2`);
+  if (next !== raw) {
+    fs.writeFileSync(lernaPath, next);
     console.log(`  updated: lerna.json`);
   }
 }
