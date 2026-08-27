@@ -3,6 +3,8 @@
  * Injects a service client for a specific service
  */
 
+import 'reflect-metadata';
+
 type NewableFunction = new (...args: unknown[]) => unknown;
 
 const INJECT_SERVICE_CLIENT_METADATA = 'hazeljs:inject-service-client';

@@ -7,7 +7,7 @@
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
-    "types": ["jest", "node"]
+    "types": ["jest", "node", "reflect-metadata"]
   },
   "include": ["src/**/*", "src/generated/**/*"],
   "exclude": ["node_modules", "dist", "test"]

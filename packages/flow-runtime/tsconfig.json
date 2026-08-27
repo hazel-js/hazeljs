@@ -6,7 +6,7 @@
     "composite": true,
     "declarationMap": true,
     "baseUrl": ".",
-    "types": ["node"],
+    "types": ["node", "reflect-metadata"],
     "lib": ["ES2020", "DOM"],
     "paths": {
       "@hazeljs/flow": ["../flow/dist/index.d.ts"],

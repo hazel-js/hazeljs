@@ -15,7 +15,7 @@
       "@hazeljs/rag": ["../rag/src"],
       "@hazeljs/kafka": ["../kafka/src"]
     },
-    "types": ["jest", "node"]
+    "types": ["jest", "node", "reflect-metadata"]
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist"],

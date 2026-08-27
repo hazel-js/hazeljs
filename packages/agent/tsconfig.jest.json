@@ -6,7 +6,7 @@
     "declarationMap": false,
     "rootDir": ".",
     "noEmit": true,
-    "types": ["jest", "node"],
+    "types": ["jest", "node", "reflect-metadata"],
     "paths": {
       "@hazeljs/eval": ["./src/testing/mocks/hazeljs-eval.ts"],
       "@hazeljs/prompts": ["../prompts/src"],

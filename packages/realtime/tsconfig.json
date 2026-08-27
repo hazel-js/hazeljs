@@ -11,7 +11,7 @@
       "@hazeljs/core": ["../core/src"],
       "@hazeljs/websocket": ["../websocket/src"]
     },
-    "types": ["jest", "node"]
+    "types": ["jest", "node", "reflect-metadata"]
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"],

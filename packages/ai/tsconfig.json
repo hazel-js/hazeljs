@@ -12,7 +12,7 @@
       "@hazeljs/prompts": ["../prompts/src"],
       "@hazeljs/memory": ["../memory/src"]
     },
-    "types": ["jest", "node"]
+    "types": ["jest", "node", "reflect-metadata"]
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "**/node_modules/openai/src/**"],

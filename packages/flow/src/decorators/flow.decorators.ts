@@ -1,6 +1,7 @@
 /**
  * Decorator-based flow definitions
  */
+import 'reflect-metadata';
 import type {
   FlowDefinition,
   NodeDefinition,

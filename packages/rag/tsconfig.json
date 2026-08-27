@@ -14,7 +14,7 @@
       "@hazeljs/memory": ["../memory/src/index.ts"],
       "@hazeljs/memory/prisma": ["../memory/src/prisma.ts"]
     },
-    "types": ["jest", "node"]
+    "types": ["jest", "node", "reflect-metadata"]
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "src/**/*.test.ts"],

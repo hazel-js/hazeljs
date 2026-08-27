@@ -15,7 +15,7 @@
     "composite": true,
     "declarationMap": true,
     "ignoreDeprecations": "6.0",
-    "types": ["jest", "node"]
+    "types": ["jest", "node", "reflect-metadata"]
   },
   "files": [],
   "include": [],
