@@ -2,7 +2,7 @@
 
 # HazelJS
 
-**One framework. AI built in. HCEL orchestration native. No glue code.**
+**Agent OS for TypeScript backends.** Durable AI agents in the same DI/HTTP app as your APIs.
 
 [![GitHub stars](https://img.shields.io/github/stars/hazel-js/hazeljs?style=social)](https://github.com/hazel-js/hazeljs)
 [![CI](https://github.com/hazel-js/hazeljs/actions/workflows/ci.yml/badge.svg)](https://github.com/hazel-js/hazeljs/actions/workflows/ci.yml)
@@ -11,123 +11,86 @@
 [![codecov](https://codecov.io/gh/hazel-js/hazeljs/branch/main/graph/badge.svg)](https://codecov.io/gh/hazel-js/hazeljs)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 
-_Stop the glue code. Build AI backends that feel native — not bolted on._  
-**HCEL** · **AI** · **Agents** · **RAG** · **Flow** · **Prompts** — one cohesive stack.  
-Also an **[Agent OS](../AGENT_OS_ROADMAP.md)** for production agent lifecycle: loop, state, timeline, test, and observe.
+Ship agents like packages — **DNA**, **Skillgate**, crash-safe **HITL**, **Agent VM** reversible tools — without Nest + LangGraph + workers.  
+Framework packages (HCEL, RAG, workflows) are there when you need them. They are not the wedge.
 
-[Get Started](#quick-start) · [Why HazelJS?](#-why-hazeljs) · [Documentation](#-documentation) · [Starter](./hazeljs-starter-example)
+[Agent OS](https://hazeljs.ai/agent-os) · [Get Started](#quick-start) · [Docs](https://hazeljs.ai/docs) · [Meridian](https://github.com/hazel-js/hazeljs-meridian-ops)
 
 ---
 
-### 🎯 **Try it in 60 seconds** → `npx @hazeljs/cli g app my-app --template=ai-native` | [AI-Native Template](./packages/cli/@template-ai-native) | [Starter Example](./hazeljs-starter-example) | [HazelJS CSR Agent Example](https://github.com/hazel-js/hazeljs-csr-agent) | [HazelJS Flow Starter](https://github.com/hazel-js/hazeljs-flow-starter) | [HazelJS RAG Documents Starter](https://github.com/hazel-js/hazeljs-rag-documents-starter) | [HazelJS RAG Graph Starter](https://github.com/hazel-js/hazeljs-rag-graph-starter)
+### 🎯 **Try it** → clone [Meridian](https://github.com/hazel-js/hazeljs-meridian-ops) (flagship) · or `npx @hazeljs/cli g app my-app --template=ai-native` (HTTP + HCEL scaffold)
 
 </div>
 
 ---
 
-## ✨ What makes it different
+## What HazelJS is
 
-You've built APIs before. You know the drill: wire up routing, configure middleware, glue together auth, validation, logging... _again_. HazelJS is the framework we wished existed — **NestJS-style elegance** without the weight, **Express simplicity** with structure that scales, and **AI built in** from day one.
+HazelJS is a TypeScript backend whose **primary product is Agent OS**: durable AI agents inside the same app as your APIs. Package them (DNA), govern writes (Skillgate), authorize every tool (Gatekeeper), survive crashes (HITL), and undo speculative work (Agent VM).
 
-### Core
+| Audience | Story |
+| --- | --- |
+| **Backend teams putting AI in APIs** | Durable agents in your TypeScript backend — DNA, HITL, Skillgate, local apply (same DI as HTTP) |
+| **Agent platform teams** | Agent OS control plane — Store, Definitions / Deployments, reconcile; K8s optional |
 
-- 🏗️ **Modular Architecture** — Organize code into reusable modules
-- 🎯 **Decorator-based API** — Clean, intuitive, joy to write
-- 💉 **Advanced Dependency Injection** — Singleton, Transient, Request scopes
-- 🔄 **Full TypeScript** — Type-safe from the ground up
-- 🛣️ **Advanced Routing** — Wildcards, optional params, versioning
-- 🎨 **Global Middleware** — Flexible, with exclusions
+You do **not** assemble Nest + LangGraph + a worker fleet. The Agent Runtime is the kernel; Agent OS is how you ship it.
 
-### AI Stack (what makes HazelJS stand out)
+### Agent OS
 
-- ⚡ **HCEL (Hazel Composable Expression Language)** — Fluent TypeScript chaining for prompts, RAG, agents, ML, and observability with implicit context passing
-- 🤖 **[@hazeljs/ai](packages/ai)** — Multi-provider (OpenAI, Anthropic, Gemini, Cohere, Ollama), streaming, caching, type-safe outputs
-- 🧠 **[@hazeljs/agent](packages/agent)** — Stateful agents, tool calling, SupervisorAgent, human-in-the-loop, **MCP Support**, **A2A Compliance**
-- 📚 **[@hazeljs/rag](packages/rag)** — Vector search, GraphRAG, 11 loaders, Agentic RAG, Memory System
-- 🧪 **[@hazeljs/ml](packages/ml)** — Complete ML toolkit: **Feature Store**, experiment tracking, drift detection (PSC/KS/JSD/Wasserstein)
-- 🛡️ **[@hazeljs/guardrails](packages/guardrails)** — AI safety & compliance (PII redaction, toxicity detection, factuality)
-- 💾 **[@hazeljs/memory](packages/memory)** — Persistent long-term memory for contextual AI applications
-- ⚡ **[@hazeljs/flow](packages/flow)** — Durable workflows: WAIT/resume, idempotency, audit timeline
-- 📝 **[@hazeljs/prompts](packages/prompts)** — Versioned prompts, hot-swap from Redis/DB
-- 👁️ **[@hazeljs/observability](packages/observability)** — Native OTel tracing, cost monitoring, and reasoning loop debugging
+- 🧬 **DNA packages** — prompt + policy + contracts as versioned packages (DNA ≠ tool implementations)
+- 🚪 **Skillgate** — curated OpenAPI / REST → governed agent skills (reads by default, writes need approval)
+- 🛡️ **Gatekeeper** — fail-closed authorization on every tool call (not a prompt guardrail)
+- ⏸️ **Crash-safe HITL** — `durableSuspend` / `approveAndResume`; process survives restarts
+- 🌀 **Confidence loop** — plan → execute → critique → validate (`options.loop`)
+- 🖥️ **Inspector timelines** — live SSE + JSON replay at `/__hazel`
+- 🧪 **`describeAgent` CI** — latency / cost / tool-trajectory gates via `@hazeljs/testing`
+- ⚙️ **Agent VM** — `@Reversible` / `@Compensate`, speculative branches, atomic undo
 
-### Agent OS (production lifecycle)
+### Also in the stack (when you need them)
 
-HazelJS is also an **Agent Operating System** for teams that need more than a ReAct loop: confidence loops, rich execution state, Inspector timelines, and `describeAgent` CI tests via [`@hazeljs/testing`](packages/testing). See the full map in [AGENT_OS_ROADMAP.md](../AGENT_OS_ROADMAP.md).
-
-### Production-ready
-
-- 📊 **Swagger** — Auto API docs
-- 🗄️ **Prisma / TypeORM** — First-class ORM integration
-- 🔐 **JWT Auth / OAuth 2.0** — Production auth & OpenID Connect
-- 🌐 **WebSocket & SSE** — Real-time out of the box
-- ⚡ **Serverless** — Lambda & Cloud Functions adapters
-- 💾 **Multi-tier Caching** — Memory, Redis, CDN
-- 🛡️ **Resilience** — Circuit breakers, retries, and rate limiting
-- 🔄 **Distributed Systems** — Saga patterns and Distributed Locks
-- 📊 **Data & ETL** — Data quality contracts and pipeline management
+- ⚡ **HCEL** — fluent prompt → RAG → agent → ML chains (`@hazeljs/ai`)
+- 📚 **RAG / GraphRAG** — loaders, vector stores, agentic retrieval (`@hazeljs/rag`)
+- 🔁 **Flow** — durable WAIT / resume workflows (`@hazeljs/flow`)
+- 🏗️ **Core** — modules, controllers, DI, routing (`@hazeljs/core`)
 
 ---
 
 ## Quick Start
 
-_From zero to running in 60 seconds._
+### Option 1: Meridian (Agent OS flagship)
 
-### Option 1: AI-Native CLI Template (Recommended for AI Apps)
+The teaching app for DNA, Store, Skillgate, HITL, and local apply.
 
 ```bash
-# Create an AI-powered app with pre-configured agents, RAG, and PostgreSQL
-npx @hazeljs/cli g app my-app --template=ai-native
+git clone https://github.com/hazel-js/hazeljs-meridian-ops.git
+cd hazeljs-meridian-ops
+npm install
+npm run store:sync      # DNA packages + lockfile
+npm run platform:sync   # Apply Definitions / Deployments (does not restart Node)
+npm run dev             # Chat with real @Tool handlers + HITL
+```
 
-# Navigate and setup
+Docs: [Agent OS](https://hazeljs.ai/agent-os) · [Agent OS guide](https://hazeljs.ai/docs/guides/agent-os) · [Skillgate](https://hazeljs.ai/docs/guides/skillgate)
+
+### Option 2: CLI template (HTTP + HCEL / RAG scaffold)
+
+Useful for framework onboarding. **Not** a substitute for Meridian if you need DNA / Store / Skillgate / HITL.
+
+```bash
+npx @hazeljs/cli g app my-app --template=ai-native
 cd my-app
 npm install
-
-# Setup environment (copy .env.example to .env and add your OPENAI_API_KEY)
-cp .env.example .env
-
-# Start with Docker (includes PostgreSQL + Redis)
+cp .env.example .env    # add OPENAI_API_KEY
 docker-compose up -d
 npm run dev
-
-# ✨ Your AI app is live at http://localhost:3000
-# Try: curl -X POST http://localhost:3000/chat -H "Content-Type: application/json" -d '{"message": "Hello!"}'
 ```
 
-**What's included:**
+Skeleton API only: `npx @hazeljs/cli g app my-app`
 
-- 🤖 **AI Agents** with tools and memory
-- 📚 **RAG System** with PostgreSQL + pgvector
-- 🗄️ **Database Setup** (PostgreSQL, Redis)
-- 🐳 **Docker Configuration** for production
-- 📊 **Complete API** endpoints ready to use
-
-> **Template Location:** [packages/cli/@template-ai-native](./packages/cli/@template-ai-native)
-
-### Option 2: Standard CLI Template
+### Option 3: One file
 
 ```bash
-# Create a new app with the CLI
-npx @hazeljs/cli g app my-app
-
-# Navigate and start
-cd my-app
-npm install
-npm run dev
-
-# ✨ Your API is live at http://localhost:3000
-```
-
-> See [hazeljs-starter-example](./hazeljs-starter-example) for a complete starter generated with `hazel g app`
-
-### Option 2: Manual Setup (One File)
-
-```bash
-# Install
 npm install @hazeljs/core
-
-# Create your app (one file!)
-touch app.ts
 ```
 
 ```typescript
@@ -149,79 +112,18 @@ class AppModule {}
 async function bootstrap() {
   const app = new HazelApp(AppModule);
   await app.listen(3000);
-  console.log('🚀 Running at http://localhost:3000');
 }
 
 bootstrap();
 ```
 
-```bash
-# Run it
-npx ts-node app.ts
-# ✨ Done! Your API is live at http://localhost:3000
-```
+Do **not** add `reflect-metadata` to your app. `@hazeljs/core` installs and loads it.
 
-**That's it.** No config files. No boilerplate. Just code.
+---
 
-### Which Option Should I Choose?
+## Agent OS in code
 
-- **AI-Native Template** (`--template=ai-native`) - Best for AI applications, includes agents, RAG, PostgreSQL, Docker
-- **Standard CLI Template** (`hazel g app`) - Best for production APIs, includes full project structure
-- **Manual Setup** - Best for learning, prototyping, or single-file demos
-
-> 💡 **Want more?**
->
-> - AI-Native template: [packages/cli/@template-ai-native](./packages/cli/@template-ai-native)
-> - Full starter: [hazeljs-starter-example](./hazeljs-starter-example)
-> - AI features: [Full Example App](./example) with AI, RAG, Agents, and more
-
-### AI — `@AITask` decorator
-
-```typescript
-import { Controller, Post, Body } from '@hazeljs/core';
-import { AITask } from '@hazeljs/ai';
-
-@Controller({ path: '/chat' })
-class ChatController {
-  @AITask({ provider: 'openai', model: 'gpt-4', prompt: 'Respond helpfully to: {{message}}' })
-  @Post()
-  async chat(@Body() body: { message: string }) {
-    return body.message;
-  }
-}
-```
-
-### HCEL — fluent AI orchestration
-
-```typescript
-import { HazelAI } from '@hazeljs/ai';
-
-const ai = HazelAI.create({ defaultProvider: 'openai', model: 'gpt-4o' });
-
-const result = await ai.hazel
-  .prompt('Summarize this issue: {{input}}')
-  .rag('engineering-docs')
-  .agent('support-specialist')
-  .ml('sentiment')
-  .execute(userTicket);
-```
-
-**Why HCEL is easier:**
-
-- No manual output wiring between steps
-- One fluent chain instead of scattered async glue
-- Built-in context flow and observability hooks
-
-### The old way vs HazelJS
-
-| The old way                                      | HazelJS                                          |
-| ------------------------------------------------ | ------------------------------------------------ |
-| NestJS + LangChain + adapters + wiring           | One stack. AI built in.                          |
-| 3 config files, manual AI glue                   | `@AITask` decorator. Done.                       |
-| Manual orchestration between prompt/RAG/agent/ML | `ai.hazel` HCEL chain with implicit context flow |
-| Express + DIY structure + bolted-on AI           | Decorators, DI, agents — out of the box.         |
-
-### Agents — `@Agent` + `@Tool`
+### Agents — `@Agent` + `@Tool` + HITL
 
 ```typescript
 import { Agent, Tool } from '@hazeljs/agent';
@@ -230,7 +132,6 @@ import { Agent, Tool } from '@hazeljs/agent';
   name: 'support-agent',
   systemPrompt: 'You are a helpful customer support agent.',
   enableMemory: true,
-  enableRAG: true,
 })
 export class SupportAgent {
   @Tool({
@@ -243,7 +144,7 @@ export class SupportAgent {
 
   @Tool({
     description: 'Process a refund',
-    requiresApproval: true, // human-in-the-loop
+    requiresApproval: true,
     parameters: [
       { name: 'orderId', type: 'string' },
       { name: 'amount', type: 'number' },
@@ -255,214 +156,229 @@ export class SupportAgent {
 }
 ```
 
-### RAG — vector search + retrieval
+Confidence loop, contracts, and recovery:
 
 ```typescript
-import {
-  RAGPipeline,
-  MemoryVectorStore,
-  OpenAIEmbeddings,
-  RecursiveTextSplitter,
-  DirectoryLoader,
-} from '@hazeljs/rag';
+await runtime.execute('support-agent', goal, {
+  loop: { maxIterations: 8, successScore: 95 },
+  contract: { name: 'refund', outputIncludes: 'refund', maxLatencyMs: 8000 },
+  recovery: { maxRetries: 3, fallbackAgent: 'safe-agent' },
+});
+```
+
+### Skillgate — OpenAPI → governed skills
+
+```typescript
+import { Skillgate } from '@hazeljs/skillgate';
+import { ToolRegistry } from '@hazeljs/agent';
+
+const gate = Skillgate.fromOpenApi(spec, {
+  include: { tags: ['agent'] },
+  classify: { writeRequiresApproval: true },
+  invoke: { baseUrl: process.env.API_BASE_URL! },
+});
+
+const registry = new ToolRegistry();
+gate.register(registry, 'api-concierge');
+```
+
+### Agent VM — reversible tools + speculation
+
+```typescript
+import { Agent, Tool } from '@hazeljs/agent';
+import { Reversible, Compensate, createAgentVmRuntime } from '@hazeljs/agent-vm';
+
+const vm = createAgentVmRuntime({ stateManager });
+
+@Agent({ name: 'ops' })
+class OpsAgent {
+  @Tool({ name: 'hold', description: 'Hold a resource' })
+  @Reversible({ compensate: 'hold' })
+  async hold(input: { id: string }) {
+    return { holdId: `h-${input.id}` };
+  }
+
+  @Compensate('hold')
+  async releaseHold(effect: { output: { holdId: string } }) {
+    await releaseResource(effect.output.holdId);
+  }
+}
+
+await vm.coordinator.undoRun(runId); // newest-first compensation
+```
+
+### Testing — `describeAgent`
+
+```typescript
+import { describeAgent, runAgentSuite, expectTools } from '@hazeljs/testing';
+
+const suite = describeAgent('Support Agent', ({ test }) => {
+  test('Refund flow', async ({ run }) => {
+    const result = await run('I want a refund for order 123');
+    expectTools(result, ['lookupOrder']);
+  });
+});
+
+await runAgentSuite(suite, { execute: (input) => runtime.execute('support-agent', input) });
+```
+
+---
+
+## Framework layer (HCEL, RAG, Flow)
+
+Use these when you are building HTTP APIs, retrieval, or workflows alongside Agent OS — not instead of it.
+
+### HCEL — fluent AI orchestration
+
+```typescript
+import { HazelAI } from '@hazeljs/ai';
+
+const ai = HazelAI.create({ defaultProvider: 'openai', model: 'gpt-4o' });
+const result = await ai.hazel
+  .prompt('Summarize this issue: {{input}}')
+  .rag('engineering-docs')
+  .agent('support-specialist')
+  .execute(userTicket);
+```
+
+### RAG
+
+```typescript
+import { RAGPipeline, MemoryVectorStore, OpenAIEmbeddings } from '@hazeljs/rag';
 
 const embeddings = new OpenAIEmbeddings({ apiKey: process.env.OPENAI_API_KEY });
 const rag = new RAGPipeline({
   vectorStore: new MemoryVectorStore(embeddings),
   embeddingProvider: embeddings,
-  textSplitter: new RecursiveTextSplitter({ chunkSize: 800, chunkOverlap: 150 }),
   topK: 5,
 });
 await rag.initialize();
-
-const docs = await new DirectoryLoader({ dirPath: './knowledge-base', recursive: true }).load();
-await rag.addDocuments(docs);
-
-const result = await rag.query('What are the main features?', { topK: 3 });
-console.log(result.answer, result.sources);
+const result = await rag.query('What are the main features?');
 ```
-
-Or use **Agentic RAG** for self-improving retrieval: `AgenticRAGService` with query planning, reflection, and adaptive strategies out of the box.
 
 ### Flow — durable workflows
 
 ```typescript
 import { FlowEngine, Flow, Entry, Node, Edge, buildFlowDefinition } from '@hazeljs/flow';
-import type { FlowContext, NodeResult } from '@hazeljs/flow';
 
 @Flow('order-flow', '1.0.0')
 class OrderFlow {
   @Entry()
   @Node('validate')
   @Edge('charge')
-  async validate(ctx: FlowContext): Promise<NodeResult> {
-    return { status: 'ok', output: { orderId: ctx.input.orderId } };
+  async validate() {
+    return { status: 'ok', output: 1 };
   }
 
   @Node('charge')
-  @Edge('end')
-  async charge(ctx: FlowContext): Promise<NodeResult> {
+  async charge() {
     return { status: 'ok', output: { charged: true } };
   }
-
-  @Node('end')
-  async end(ctx: FlowContext): Promise<NodeResult> {
-    return { status: 'ok', output: ctx.outputs.charge };
-  }
 }
-
-const engine = new FlowEngine();
-await engine.registerDefinition(buildFlowDefinition(OrderFlow));
-const { runId } = await engine.startRun({
-  flowId: 'order-flow',
-  version: '1.0.0',
-  input: { orderId: '123' },
-});
 ```
-
-Use **@hazeljs/flow-runtime** for a REST API (start, tick, resume) or run flows programmatically. **@hazeljs/prompts** lets you version and override prompts for agents and RAG — hot-swap from Redis without restarting.
 
 ---
 
 ## Installation
 
 ```bash
-# Core (required)
+# Core (required for HTTP / DI apps)
 npm install @hazeljs/core
 
-# AI Stack (standout packages)
-npm install @hazeljs/ai @hazeljs/agent @hazeljs/rag @hazeljs/flow @hazeljs/flow-runtime @hazeljs/prompts
+# Agent OS
+npm install @hazeljs/agent @hazeljs/skillgate @hazeljs/agent-gatekeeper @hazeljs/agent-vm
+npm install @hazeljs/testing @hazeljs/eval @hazeljs/benchmark @hazeljs/inspector
 
-# Infrastructure
-npm install @hazeljs/cache @hazeljs/websocket @hazeljs/serverless
-npm install @hazeljs/discovery @hazeljs/config @hazeljs/cron @hazeljs/queue @hazeljs/pubsub
+# AI / RAG / workflows (optional)
+npm install @hazeljs/ai @hazeljs/rag @hazeljs/flow @hazeljs/prompts
 
-# Data & Auth
-npm install @hazeljs/prisma @hazeljs/auth @hazeljs/swagger
-
-# CLI (scaffolding)
+# CLI
 npm install -D @hazeljs/cli
 ```
 
----
-
-## Database Setup
-
-```bash
-npm run db:up
-# Add DATABASE_URL to .env
-npm run prisma:generate
-npm run prisma:migrate
-npm run prisma:studio   # Optional: visual DB browser
-```
+Do **not** add `reflect-metadata` to your app. `@hazeljs/core` installs and loads it. Generated apps (`hazel new` / `hazel g app`) do not list it in `package.json`.
 
 ---
 
-## 🎯 Why HazelJS?
+## Packages
 
-**Because building backend apps shouldn't feel like wrestling a framework.**
+### Agent OS
 
-|                    | HazelJS         | NestJS          | Express                 |
-| ------------------ | --------------- | --------------- | ----------------------- |
-| **Bundle size**    | Lightweight     | Heavier         | Minimal                 |
-| **Built-in AI**    | ✅ Yes          | ❌ No           | ❌ No                   |
-| **Learning curve** | Gentle          | Steep           | Easy                    |
-| **Structure**      | Decorators + DI | Decorators + DI | DIY                     |
-| **TypeScript**     | Native          | Native          | Manual                  |
-| **Boilerplate**    | Minimal         | Moderate        | None (but you write it) |
+| Package | What it does |
+| --- | --- |
+| `@hazeljs/agent` | Agent Runtime kernel — `@Agent` / `@Tool`, DNA, HITL, loop, policies, `AgentOS` facade |
+| `@hazeljs/skillgate` | OpenAPI / REST → governed skills (allowlist, classify, approval) |
+| `@hazeljs/agent-gatekeeper` | Fail-closed authorization on every tool call |
+| `@hazeljs/agent-vm` | Reversible tools, speculative branches, atomic undo |
+| `@hazeljs/testing` | `describeAgent` CI suites (latency / cost / tools) |
+| `@hazeljs/eval` | Golden datasets, RAG + trajectory metrics |
+| `@hazeljs/benchmark` | Benchmark suites + regression compare (`hazel benchmark`) |
+| `@hazeljs/inspector` | DevTools UI, agent timelines, durable run list |
+| `@hazeljs/mcp` | Expose `@Tool` handlers as an MCP server |
 
-**vs NestJS** — Same elegance, less weight. No Express/Fastify dependency. AI and RAG built in. Simpler to onboard.
+### AI & data
 
-**vs Express** — Get structure without the ceremony. Decorators, DI, validation, and testing utilities out of the box.
+| Package | What it does |
+| --- | --- |
+| `@hazeljs/ai` | Multi-provider LLMs, streaming, HCEL |
+| `@hazeljs/rag` | Vector search, GraphRAG, loaders, agentic RAG |
+| `@hazeljs/ml` | Feature store, experiments, drift detection |
+| `@hazeljs/guardrails` | PII, injection, toxicity, output validation |
+| `@hazeljs/memory` | Persistent long-term memory |
+| `@hazeljs/prompts` | Versioned prompts, hot-swap from Redis / DB |
+| `@hazeljs/flow` | Durable WAIT / resume workflows |
+| `@hazeljs/observability` | OpenTelemetry traces, cost, reasoning spans |
 
-### Why we built this
+### Framework
 
-We were tired of choosing between a heavy framework (NestJS) and a minimal one (Express), then wiring AI on top. HazelJS is the framework we wished existed: NestJS-style elegance without the weight, AI and RAG built in from day one, and no glue code. HCEL makes multi-step AI orchestration feel like normal TypeScript method chaining instead of infrastructure work. If you're building AI backends and want one cohesive stack — this is for you.
-
----
-
-## 📦 Packages
-
-### AI Stack (standout)
-
-| Package               | What it does                                                                              |
-| --------------------- | ----------------------------------------------------------------------------------------- |
-| `@hazeljs/ai`         | Multi-provider integration, streaming, caching, type-safe outputs, and HCEL orchestration |
-| `@hazeljs/agent`      | Stateful agents, tool calling, SupervisorAgent, human-in-the-loop                         |
-| `@hazeljs/rag`        | Vector search, GraphRAG, 11 loaders, Agentic RAG, Memory System                           |
-| `@hazeljs/ml`         | Complete ML toolkit, training, metrics, drift detection                                   |
-| `@hazeljs/guardrails` | AI safety, PII redaction, toxicity check, factuality                                      |
-| `@hazeljs/memory`     | Persistent long-term memory for AI context                                                |
-| `@hazeljs/flow`       | Durable workflows — WAIT/resume, idempotency, audit timeline                              |
-| `@hazeljs/prompts`    | Versioned prompts, hot-swap from Redis                                                    |
-
-### Infrastructure & Resilience
-
-| Package                     | What it does                                                       |
-| --------------------------- | ------------------------------------------------------------------ |
-| `@hazeljs/core`             | Framework core — DI, routing, middleware                           |
-| `@hazeljs/saga`             | Distributed transactions with automated rollback                   |
-| `@hazeljs/distributed-lock` | Multi-instance resource synchronization (Redis/Memory)             |
-| `@hazeljs/resilience`       | Circuit breakers, retries, and fallback logic                      |
-| `@hazeljs/data`             | ETL, data quality contracts, and pipelines                         |
-| `@hazeljs/auth`             | JWT authentication and OAuth 2.0                                   |
-| `@hazeljs/prisma`           | Prisma ORM + repository pattern                                    |
-| `@hazeljs/swagger`          | Auto OpenAPI docs                                                  |
-| `@hazeljs/cli`              | Scaffolding and code generation                                    |
-| _+ more_                    | Cache, WebSocket, Serverless, Cron, Queue, PubSub, Discovery, I18n |
+| Package | What it does |
+| --- | --- |
+| `@hazeljs/core` | DI, routing, modules, middleware |
+| `@hazeljs/cli` | `hazel new`, generators, `hazel agent` / `hazel skillgate` |
+| `@hazeljs/auth` / `@hazeljs/oauth` | JWT + OAuth |
+| `@hazeljs/prisma` / `@hazeljs/typeorm` | ORM + repositories |
+| `@hazeljs/swagger` | OpenAPI from modules |
+| _+ more_ | Cache, Queue, Cron, Kafka, PubSub, Messaging, Saga, Discovery, Gateway, Serverless |
 
 ---
 
-## 📚 Documentation
+## Why HazelJS?
 
-- **[Quick Start Guide](./QUICKSTART.md)** — Get running in 5 minutes
-- **[Troubleshooting](./TROUBLESHOOTING.md)** — Common issues
-- **[Contributing](./CONTRIBUTING.md)** — How to contribute
-- **[Examples](./example)** — Full working apps
+Competitor libraries excel at orchestration graphs. HazelJS differentiates on **shipping agents inside a real backend** and on **lifecycle OS** those libraries leave as glue.
 
-**Guides:** [DI](docs/guides/providers.md) · [Controllers](docs/guides/controllers.md) · [Guards](docs/guides/guards.md) · [Middleware](docs/guides/middleware.md) · [Saga](docs/guides/saga.md) · [Locking](docs/guides/distributed-locking.md) · [Security](docs/guides/security.md)
-
----
-
-## 🚀 What's New in v0.3.0
-
-- ✨ **Enterprise ML Layer**: `@hazeljs/ml` with model management, experiment tracking, and drift detection.
-- ✨ **AI Safety & Quality**: `@hazeljs/guardrails` for PII redaction and toxicity checks.
-- ✨ **Persistent Memory**: `@hazeljs/memory` for long-term AI state.
-- ✨ **Distributed Systems**: `@hazeljs/saga` and `@hazeljs/distributed-lock` for multi-instance consistency.
-- ✨ **Advanced RAG**: Agentic RAG strategies and GraphRAG 0.1.
-- ✨ **Data Quality**: `@hazeljs/data` for schema-based data contracts.
-- ✅ 100% backward compatible with v0.2.0.
-
-_100% backward compatible._
+| | HazelJS | Nest + LangGraph | Express + DIY |
+| --- | --- | --- | --- |
+| **Agents in the same app as APIs** | Yes | Glue | Glue |
+| **DNA packages / Store / apply** | Yes | No | No |
+| **Governed OpenAPI skills** | Skillgate | DIY | DIY |
+| **Crash-safe HITL** | Yes | Partial | DIY |
+| **Reversible / speculative tools** | Agent VM | No | DIY |
+| **CI agent suites** | `describeAgent` | DIY | DIY |
 
 ---
 
-## 🌟 Show Your Support
+## Documentation
 
-**If HazelJS saved you time, give us a star!** ⭐
+- **[hazeljs.ai](https://hazeljs.ai/docs)** — full docs
+- **[Agent OS guide](https://hazeljs.ai/docs/guides/agent-os)** — DNA, HITL, Skillgate, local apply
+- **[Quick Start](./QUICKSTART.md)** · **[Troubleshooting](./TROUBLESHOOTING.md)** · **[Contributing](./CONTRIBUTING.md)**
+- **[Meridian](https://github.com/hazel-js/hazeljs-meridian-ops)** — flagship teaching app
+- Package READMEs: [`agent`](./packages/agent) · [`skillgate`](./packages/skillgate) · [`agent-vm`](./packages/agent-vm) · [`agent-gatekeeper`](./packages/agent-gatekeeper) · [`testing`](./packages/testing)
 
-It helps us reach more developers and keeps the project growing.
+---
+
+## Show your support
+
+**If HazelJS saved you time, give us a star.** ⭐
 
 [![Star History Chart](https://api.star-history.com/svg?repos=hazel-js/hazeljs&type=Date)](https://star-history.com/#hazel-js/hazeljs&Date)
 
-### Ways to Support
-
-- ⭐ **Star the repo** - Show your support
-- 🐛 **Report bugs** - Help us improve
-- 💡 **Request features** - Share your ideas
-- 📝 **Improve docs** - Help others learn
-- 💻 **Contribute code** - Build with us
-- 🎨 **Share your project** - Inspire others
-- 💬 **Join Discord** - Connect with the community
-
-[See all contributors](./CONTRIBUTORS.md) | [Contribution Guide](./CONTRIBUTING.md)
+- ⭐ Star the repo · 🐛 [Report bugs](https://github.com/hazel-js/hazeljs/issues) · 💬 [Discord](https://discord.gg/PxNBPzvQk7)
+- [Contributing Guide](./CONTRIBUTING.md) · [Contributors](./CONTRIBUTORS.md)
 
 ---
 
-## 🤝 Contributing
-
-We'd love your help. Every star, issue, and PR matters.
+## Contributing
 
 1. Fork the repo
 2. Create a feature branch
@@ -474,17 +390,15 @@ Read our [Contributing Guide](./CONTRIBUTING.md) for details.
 
 ---
 
-## 📞 Support & Community
+## Support
 
-- 💬 **Discord**: [Join our community](https://discord.gg/PxNBPzvQk7) - Real-time help
-- 💭 **Discussions**: [GitHub Discussions](https://github.com/hazel-js/hazeljs/discussions) - Ask questions
-- 🐛 **Issues**: [Report bugs](https://github.com/hazel-js/hazeljs/issues) - Help us improve
-- 🎨 **Show & Tell**: [Share your project](https://github.com/hazel-js/hazeljs/discussions) - Get featured!
-- 🌟 **Awesome HazelJS**: [Community resources](./awesome-hazeljs) - Curated list
+- 💬 **Discord**: [Join](https://discord.gg/PxNBPzvQk7)
+- 💭 **Discussions**: [GitHub Discussions](https://github.com/hazel-js/hazeljs/discussions)
+- 🐛 **Issues**: [Report bugs](https://github.com/hazel-js/hazeljs/issues)
 
 ---
 
-## 📝 License
+## License
 
 Apache 2.0 — Free for commercial and open-source use.
 
@@ -492,18 +406,10 @@ Apache 2.0 — Free for commercial and open-source use.
 
 <div align="center">
 
----
+**Built with ❤️ for developers who ship agents in production**
 
-**Built with ❤️ for developers who ship**
+[Get Started](#quick-start) · [Meridian](https://github.com/hazel-js/hazeljs-meridian-ops) · [Join Discord](https://discord.gg/PxNBPzvQk7) · [⭐ Star on GitHub](https://github.com/hazel-js/hazeljs)
 
-### 🚀 Ready to build?
-
-[Get Started](./QUICKSTART.md) · [View Examples](./example) · [Join Discord](https://discord.gg/PxNBPzvQk7) · [⭐ Star on GitHub](https://github.com/hazel-js/hazeljs)
-
----
-
-_Building AI backends? A star helps us reach more developers like you._
-
-**HazelJS** · Making AI backends feel native, not bolted on.
+**HazelJS** · Agent OS for TypeScript backends.
 
 </div>
