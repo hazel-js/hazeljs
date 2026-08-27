@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/testing",
-  "version": "2.0.4",
+  "version": "2.0.5",
   "description": "Agent testing DSL for HazelJS Agent OS — describeAgent, CI thresholds on top of @hazeljs/eval",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -16,10 +16,10 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@hazeljs/eval": "^2.0.4"
+    "@hazeljs/eval": "^2.0.5"
   },
   "peerDependencies": {
-    "@hazeljs/agent": "^2.0.4"
+    "@hazeljs/agent": "^2.0.5"
   },
   "peerDependenciesMeta": {
     "@hazeljs/agent": {
@@ -27,7 +27,7 @@
     }
   },
   "devDependencies": {
-    "@hazeljs/agent": "^2.0.4",
+    "@hazeljs/agent": "^2.0.5",
     "@types/jest": "^29.5.14",
     "@types/node": "^20.19.39",
     "jest": "^29.7.0",

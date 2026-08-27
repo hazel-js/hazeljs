@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/benchmark",
-  "version": "2.0.4",
+  "version": "2.0.5",
   "description": "Agent OS benchmark CLI helpers — golden runs and commit comparison",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -13,7 +13,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@hazeljs/eval": "^2.0.4"
+    "@hazeljs/eval": "^2.0.5"
   },
   "devDependencies": {
     "@types/jest": "^29.5.14",
