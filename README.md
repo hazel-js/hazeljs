@@ -18,7 +18,7 @@ Framework packages (HCEL, RAG, workflows) are there when you need them. They are
 
 ---
 
-### 🎯 **Try it** → clone [Meridian](https://github.com/hazel-js/hazeljs-meridian-ops) (flagship) · or `npx @hazeljs/cli g app my-app --template=ai-native` (HTTP + HCEL scaffold)
+### 🎯 **Try it** → clone [Meridian](https://github.com/hazel-js/hazeljs-meridian-ops) · or `npx @hazeljs/cli agent new my-desk --template=agent-os`
 
 </div>
 
@@ -35,16 +35,30 @@ HazelJS is a TypeScript backend whose **primary product is Agent OS**: durable A
 
 You do **not** assemble Nest + LangGraph + a worker fleet. The Agent Runtime is the kernel; Agent OS is how you ship it.
 
-### Agent OS
+### Agent OS — ship
 
 - 🧬 **DNA packages** — prompt + policy + contracts as versioned packages (DNA ≠ tool implementations)
 - 🚪 **Skillgate** — curated OpenAPI / REST → governed agent skills (reads by default, writes need approval)
 - 🛡️ **Gatekeeper** — fail-closed authorization on every tool call (not a prompt guardrail)
 - ⏸️ **Crash-safe HITL** — `durableSuspend` / `approveAndResume`; process survives restarts
-- 🌀 **Confidence loop** — plan → execute → critique → validate (`options.loop`)
-- 🖥️ **Inspector timelines** — live SSE + JSON replay at `/__hazel`
-- 🧪 **`describeAgent` CI** — latency / cost / tool-trajectory gates via `@hazeljs/testing`
 - ⚙️ **Agent VM** — `@Reversible` / `@Compensate`, speculative branches, atomic undo
+- 🖥️ **Inspector timelines** — live SSE + JSON replay at `/__hazel`
+
+### Agent OS — run, test, improve
+
+- 🌀 **Confidence loop** — plan → execute → critique → validate (`options.loop`)
+- 📜 **Contracts + recovery** — `options.contract` / `options.recovery` (`RETRYING` / `BLOCKED`, fallback agent)
+- 🧭 **Policy engine** — allow / deny / mask / require approval on tools
+- ⏪ **Time travel** — fork a timeline, edit a step, continue (`runtime.getTimeTravel()`)
+- ♻️ **Hot-reload DNA** — `runtime.hotReloadDna()` / `hazel agent install` without restart
+- 🧪 **`describeAgent` CI** — latency / cost / tool-trajectory gates (`@hazeljs/testing`)
+- 📊 **Eval + benchmark** — golden datasets (`@hazeljs/eval`) and `hazel benchmark`
+- 💸 **Cost routing** — `options.costRoute` / `CostOptimizer`
+- 🗳️ **Consensus** — `runConsensus` (majority / weighted / unanimous)
+- 🪞 **Digital twin / canary** — `runDigitalTwin` / `shouldRunCanary`
+- 🧠 **Memory graph** — `AgentMemoryGraph` + GraphRAG bridge
+- 🔌 **MCP** — same `@Tool` handlers as an MCP server (`@hazeljs/mcp`)
+- 🤝 **A2A** — agent card + JSON-RPC (`A2AServer`, `buildAgentCard`)
 
 ### Also in the stack (when you need them)
 
@@ -52,6 +66,7 @@ You do **not** assemble Nest + LangGraph + a worker fleet. The Agent Runtime is 
 - 📚 **RAG / GraphRAG** — loaders, vector stores, agentic retrieval (`@hazeljs/rag`)
 - 🔁 **Flow** — durable WAIT / resume workflows (`@hazeljs/flow`)
 - 🏗️ **Core** — modules, controllers, DI, routing (`@hazeljs/core`)
+- 🔐 **Auth, data, realtime** — JWT / OAuth, Prisma / TypeORM, GraphQL / gRPC, queues, Kafka, WebSocket — **same app as the agents**
 
 ---
 
@@ -72,7 +87,17 @@ npm run dev             # Chat with real @Tool handlers + HITL
 
 Docs: [Agent OS](https://hazeljs.ai/agent-os) · [Agent OS guide](https://hazeljs.ai/docs/guides/agent-os) · [Skillgate](https://hazeljs.ai/docs/guides/skillgate)
 
-### Option 2: CLI template (HTTP + HCEL / RAG scaffold)
+### Option 2: Agent OS scaffold
+
+Smaller than Meridian. DNA + HITL templates — not an HTTP/HCEL demo.
+
+```bash
+npx @hazeljs/cli agent new my-desk --template=agent-os
+# templates: bare | agent-os | skillgate
+cd my-desk && npm install && npm run dev
+```
+
+### Option 3: CLI template (HTTP + HCEL / RAG scaffold)
 
 Useful for framework onboarding. **Not** a substitute for Meridian if you need DNA / Store / Skillgate / HITL.
 
@@ -87,7 +112,7 @@ npm run dev
 
 Skeleton API only: `npx @hazeljs/cli g app my-app`
 
-### Option 3: One file
+### Option 4: One file
 
 ```bash
 npm install @hazeljs/core
@@ -156,13 +181,14 @@ export class SupportAgent {
 }
 ```
 
-Confidence loop, contracts, and recovery:
+Confidence loop, contracts, recovery, and cost routing:
 
 ```typescript
 await runtime.execute('support-agent', goal, {
   loop: { maxIterations: 8, successScore: 95 },
   contract: { name: 'refund', outputIncludes: 'refund', maxLatencyMs: 8000 },
   recovery: { maxRetries: 3, fallbackAgent: 'safe-agent' },
+  costRoute: { maxCostUsd: 0.05, qualityBias: 0 },
 });
 ```
 
@@ -222,11 +248,137 @@ const suite = describeAgent('Support Agent', ({ test }) => {
 await runAgentSuite(suite, { execute: (input) => runtime.execute('support-agent', input) });
 ```
 
+### Policy, DNA reload, time travel
+
+```typescript
+import { PolicyEngine, exportAgentDna } from '@hazeljs/agent';
+
+runtime.setPolicyEngine(
+  new PolicyEngine([
+    { id: 'mask-pii', tool: '*', effect: 'mask', maskFields: ['ssn', 'email'] },
+    { id: 'refund-hitl', tool: 'processRefund', effect: 'require_approval' },
+  ]),
+);
+
+runtime.hotReloadDna(
+  exportAgentDna({
+    name: 'support-agent',
+    systemPrompt: 'Be concise. Never refund without lookup.',
+  }),
+);
+
+const tt = runtime.getTimeTravel();
+const fork = tt.fork(executionId);
+tt.edit(fork.forkId, { stepId: fork.steps[0].id, kind: 'prompt', value: 'Retry with order 123' });
+```
+
+### MCP — same `@Tool` handlers in Cursor / Claude Desktop
+
+```typescript
+import { ToolRegistry } from '@hazeljs/agent';
+import { createMcpServer } from '@hazeljs/mcp';
+
+const registry = new ToolRegistry();
+registry.registerAgentTools('support', new SupportAgent());
+
+createMcpServer({
+  name: 'hazel-support-agent',
+  version: '1.0.0',
+  toolRegistry: registry,
+}).listenStdio();
+```
+
+### A2A — agent card + JSON-RPC
+
+```typescript
+import { A2AServer, buildAgentCard } from '@hazeljs/agent';
+
+const a2a = new A2AServer(runtime, { defaultAgent: 'support-agent' });
+
+app.get('/.well-known/agent.json', (_req, res) => {
+  res.json(buildAgentCard(runtime, { url: 'https://api.example.com/a2a' }));
+});
+
+app.post('/a2a', async (req, res) => {
+  res.json(await a2a.handleRequest(req.body));
+});
+```
+
+### Consensus, canary, evolution
+
+```typescript
+import { runConsensus, runDigitalTwin, shouldRunCanary, evolveSystemPrompt } from '@hazeljs/agent';
+
+const { agreed, value } = runConsensus(
+  [
+    { agentId: 'a', value: 'refund' },
+    { agentId: 'b', value: 'refund' },
+    { agentId: 'c', value: 'deny' },
+  ],
+  'majority',
+);
+
+if (shouldRunCanary(0.1)) {
+  await runDigitalTwin({
+    runPrimary: () => runtime.execute('support-agent', goal),
+    runTwin: () => runtime.execute('support-agent-canary', goal),
+  });
+}
+
+const evolved = await evolveSystemPrompt({ currentPrompt, failures });
+```
+
+---
+
+## CLI
+
+```bash
+# Agent OS
+hazel agent new my-desk --template=agent-os   # also: bare | skillgate
+hazel agent install ./packages/support.dna.json
+hazel agent run / doctor / logs
+hazel agent runs list | inspect | cancel | resume | approve
+hazel store publish | install | list
+hazel skillgate from-openapi ./openapi.yaml
+hazel gatekeeper validate | simulate | explain
+hazel benchmark
+hazel eval
+
+# App scaffolding (framework)
+hazel g app my-api
+hazel g controller users
+hazel add @hazeljs/auth --setup
+```
+
+---
+
+## Examples & starters
+
+**Agent OS (start here)**
+
+| Repo | What you learn |
+| --- | --- |
+| [hazeljs-meridian-ops](https://github.com/hazel-js/hazeljs-meridian-ops) | Flagship — DNA, Store, Skillgate, HITL, local apply |
+| [hazeljs-skillgate-agent-starter](https://github.com/hazel-js/hazeljs-skillgate-agent-starter) | OpenAPI → governed skills + MCP |
+| [hazeljs-mcp-starter](https://github.com/hazel-js/hazeljs-mcp-starter) | `@Tool` as an MCP server |
+| [hazeljs-csr-agent](https://github.com/hazel-js/hazeljs-csr-agent) | Support agent example |
+
+**Quality, safety, workflows**
+
+| Repo | What you learn |
+| --- | --- |
+| [hazeljs-guardrails-ai-starter](https://github.com/hazel-js/hazeljs-guardrails-ai-starter) | PII, injection, toxicity |
+| [hazeljs-inspector-dashboard-example](https://github.com/hazel-js/hazeljs-inspector-dashboard-example) | Timelines at `/__hazel` |
+| [hazeljs-flow-starter](https://github.com/hazel-js/hazeljs-flow-starter) | Durable WAIT / resume flows |
+| [hazeljs-integrations](https://github.com/hazel-js/hazeljs-integrations) | Vendor kits (Shopify, …) — not in this monorepo |
+
+Vendor connectors live in **hazeljs-integrations**, so framework releases stay decoupled from SaaS API churn.
+
 ---
 
 ## Framework layer (HCEL, RAG, Flow)
 
-Use these when you are building HTTP APIs, retrieval, or workflows alongside Agent OS — not instead of it.
+Use these when you are building HTTP APIs, retrieval, or workflows **alongside** Agent OS — not instead of it.
 
 ### HCEL — fluent AI orchestration
 
@@ -277,6 +429,8 @@ class OrderFlow {
 }
 ```
 
+Agents sit next to REST, GraphQL, gRPC, auth, Prisma/TypeORM, queues, and WebSocket in the same `HazelApp`. You do not stand up a second Nest or Express process for the product API.
+
 ---
 
 ## Installation
@@ -287,7 +441,7 @@ npm install @hazeljs/core
 
 # Agent OS
 npm install @hazeljs/agent @hazeljs/skillgate @hazeljs/agent-gatekeeper @hazeljs/agent-vm
-npm install @hazeljs/testing @hazeljs/eval @hazeljs/benchmark @hazeljs/inspector
+npm install @hazeljs/testing @hazeljs/eval @hazeljs/benchmark @hazeljs/inspector @hazeljs/mcp
 
 # AI / RAG / workflows (optional)
 npm install @hazeljs/ai @hazeljs/rag @hazeljs/flow @hazeljs/prompts
@@ -296,7 +450,7 @@ npm install @hazeljs/ai @hazeljs/rag @hazeljs/flow @hazeljs/prompts
 npm install -D @hazeljs/cli
 ```
 
-Do **not** add `reflect-metadata` to your app. `@hazeljs/core` installs and loads it. Generated apps (`hazel new` / `hazel g app`) do not list it in `package.json`.
+Do **not** add `reflect-metadata` to your app. `@hazeljs/core` installs and loads it. Generated apps (`hazel new` / `hazel g app` / `hazel agent new`) do not list it in `package.json`.
 
 ---
 
@@ -306,7 +460,7 @@ Do **not** add `reflect-metadata` to your app. `@hazeljs/core` installs and load
 
 | Package | What it does |
 | --- | --- |
-| `@hazeljs/agent` | Agent Runtime kernel — `@Agent` / `@Tool`, DNA, HITL, loop, policies, `AgentOS` facade |
+| `@hazeljs/agent` | Kernel — `@Agent` / `@Tool`, DNA, HITL, loop, policy, A2A, `AgentOS` facade |
 | `@hazeljs/skillgate` | OpenAPI / REST → governed skills (allowlist, classify, approval) |
 | `@hazeljs/agent-gatekeeper` | Fail-closed authorization on every tool call |
 | `@hazeljs/agent-vm` | Reversible tools, speculative branches, atomic undo |
@@ -334,10 +488,10 @@ Do **not** add `reflect-metadata` to your app. `@hazeljs/core` installs and load
 | Package | What it does |
 | --- | --- |
 | `@hazeljs/core` | DI, routing, modules, middleware |
-| `@hazeljs/cli` | `hazel new`, generators, `hazel agent` / `hazel skillgate` |
+| `@hazeljs/cli` | `hazel agent`, Store, Skillgate, Gatekeeper, generators |
 | `@hazeljs/auth` / `@hazeljs/oauth` | JWT + OAuth |
 | `@hazeljs/prisma` / `@hazeljs/typeorm` | ORM + repositories |
-| `@hazeljs/swagger` | OpenAPI from modules |
+| `@hazeljs/swagger` / `@hazeljs/graphql` / `@hazeljs/grpc` | HTTP / GraphQL / gRPC surfaces |
 | _+ more_ | Cache, Queue, Cron, Kafka, PubSub, Messaging, Saga, Discovery, Gateway, Serverless |
 
 ---
@@ -354,6 +508,8 @@ Competitor libraries excel at orchestration graphs. HazelJS differentiates on **
 | **Crash-safe HITL** | Yes | Partial | DIY |
 | **Reversible / speculative tools** | Agent VM | No | DIY |
 | **CI agent suites** | `describeAgent` | DIY | DIY |
+| **Time travel / DNA hot-reload** | Yes | DIY | DIY |
+| **MCP + A2A from `@Tool`** | Yes | Glue | DIY |
 
 ---
 
@@ -361,9 +517,12 @@ Competitor libraries excel at orchestration graphs. HazelJS differentiates on **
 
 - **[hazeljs.ai](https://hazeljs.ai/docs)** — full docs
 - **[Agent OS guide](https://hazeljs.ai/docs/guides/agent-os)** — DNA, HITL, Skillgate, local apply
+- **[Skillgate](https://hazeljs.ai/docs/guides/skillgate)** — OpenAPI → governed skills
 - **[Quick Start](./QUICKSTART.md)** · **[Troubleshooting](./TROUBLESHOOTING.md)** · **[Contributing](./CONTRIBUTING.md)**
 - **[Meridian](https://github.com/hazel-js/hazeljs-meridian-ops)** — flagship teaching app
-- Package READMEs: [`agent`](./packages/agent) · [`skillgate`](./packages/skillgate) · [`agent-vm`](./packages/agent-vm) · [`agent-gatekeeper`](./packages/agent-gatekeeper) · [`testing`](./packages/testing)
+- Package READMEs: [`agent`](./packages/agent) · [`skillgate`](./packages/skillgate) · [`agent-vm`](./packages/agent-vm) · [`agent-gatekeeper`](./packages/agent-gatekeeper) · [`testing`](./packages/testing) · [`mcp`](./packages/mcp)
+
+Hosted DNA marketplace and fleet remain product layers. File-backed Store + local apply is what you use today.
 
 ---
 
