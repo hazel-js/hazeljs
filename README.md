@@ -28,10 +28,10 @@ Framework packages (HCEL, RAG, workflows) are there when you need them. They are
 
 HazelJS is a TypeScript backend whose **primary product is Agent OS**: durable AI agents inside the same app as your APIs. Package them (DNA), govern writes (Skillgate), authorize every tool (Gatekeeper), survive crashes (HITL), and undo speculative work (Agent VM).
 
-| Audience | Story |
-| --- | --- |
+| Audience                             | Story                                                                                           |
+| ------------------------------------ | ----------------------------------------------------------------------------------------------- |
 | **Backend teams putting AI in APIs** | Durable agents in your TypeScript backend — DNA, HITL, Skillgate, local apply (same DI as HTTP) |
-| **Agent platform teams** | Agent OS control plane — Store, Definitions / Deployments, reconcile; K8s optional |
+| **Agent platform teams**             | Agent OS control plane — Store, Definitions / Deployments, reconcile; K8s optional              |
 
 You do **not** assemble Nest + LangGraph + a worker fleet. The Agent Runtime is the kernel; Agent OS is how you ship it.
 
@@ -257,14 +257,14 @@ runtime.setPolicyEngine(
   new PolicyEngine([
     { id: 'mask-pii', tool: '*', effect: 'mask', maskFields: ['ssn', 'email'] },
     { id: 'refund-hitl', tool: 'processRefund', effect: 'require_approval' },
-  ]),
+  ])
 );
 
 runtime.hotReloadDna(
   exportAgentDna({
     name: 'support-agent',
     systemPrompt: 'Be concise. Never refund without lookup.',
-  }),
+  })
 );
 
 const tt = runtime.getTimeTravel();
@@ -315,7 +315,7 @@ const { agreed, value } = runConsensus(
     { agentId: 'b', value: 'refund' },
     { agentId: 'c', value: 'deny' },
   ],
-  'majority',
+  'majority'
 );
 
 if (shouldRunCanary(0.1)) {
@@ -356,21 +356,21 @@ hazel add @hazeljs/auth --setup
 
 **Agent OS (start here)**
 
-| Repo | What you learn |
-| --- | --- |
-| [hazeljs-meridian-ops](https://github.com/hazel-js/hazeljs-meridian-ops) | Flagship — DNA, Store, Skillgate, HITL, local apply |
-| [hazeljs-skillgate-agent-starter](https://github.com/hazel-js/hazeljs-skillgate-agent-starter) | OpenAPI → governed skills + MCP |
-| [hazeljs-mcp-starter](https://github.com/hazel-js/hazeljs-mcp-starter) | `@Tool` as an MCP server |
-| [hazeljs-csr-agent](https://github.com/hazel-js/hazeljs-csr-agent) | Support agent example |
+| Repo                                                                                           | What you learn                                      |
+| ---------------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| [hazeljs-meridian-ops](https://github.com/hazel-js/hazeljs-meridian-ops)                       | Flagship — DNA, Store, Skillgate, HITL, local apply |
+| [hazeljs-skillgate-agent-starter](https://github.com/hazel-js/hazeljs-skillgate-agent-starter) | OpenAPI → governed skills + MCP                     |
+| [hazeljs-mcp-starter](https://github.com/hazel-js/hazeljs-mcp-starter)                         | `@Tool` as an MCP server                            |
+| [hazeljs-csr-agent](https://github.com/hazel-js/hazeljs-csr-agent)                             | Support agent example                               |
 
 **Quality, safety, workflows**
 
-| Repo | What you learn |
-| --- | --- |
-| [hazeljs-guardrails-ai-starter](https://github.com/hazel-js/hazeljs-guardrails-ai-starter) | PII, injection, toxicity |
-| [hazeljs-inspector-dashboard-example](https://github.com/hazel-js/hazeljs-inspector-dashboard-example) | Timelines at `/__hazel` |
-| [hazeljs-flow-starter](https://github.com/hazel-js/hazeljs-flow-starter) | Durable WAIT / resume flows |
-| [hazeljs-integrations](https://github.com/hazel-js/hazeljs-integrations) | Vendor kits (Shopify, …) — not in this monorepo |
+| Repo                                                                                                   | What you learn                                  |
+| ------------------------------------------------------------------------------------------------------ | ----------------------------------------------- |
+| [hazeljs-guardrails-ai-starter](https://github.com/hazel-js/hazeljs-guardrails-ai-starter)             | PII, injection, toxicity                        |
+| [hazeljs-inspector-dashboard-example](https://github.com/hazel-js/hazeljs-inspector-dashboard-example) | Timelines at `/__hazel`                         |
+| [hazeljs-flow-starter](https://github.com/hazel-js/hazeljs-flow-starter)                               | Durable WAIT / resume flows                     |
+| [hazeljs-integrations](https://github.com/hazel-js/hazeljs-integrations)                               | Vendor kits (Shopify, …) — not in this monorepo |
 
 Vendor connectors live in **hazeljs-integrations**, so framework releases stay decoupled from SaaS API churn.
 
@@ -458,41 +458,41 @@ Do **not** add `reflect-metadata` to your app. `@hazeljs/core` installs and load
 
 ### Agent OS
 
-| Package | What it does |
-| --- | --- |
-| `@hazeljs/agent` | Kernel — `@Agent` / `@Tool`, DNA, HITL, loop, policy, A2A, `AgentOS` facade |
-| `@hazeljs/skillgate` | OpenAPI / REST → governed skills (allowlist, classify, approval) |
-| `@hazeljs/agent-gatekeeper` | Fail-closed authorization on every tool call |
-| `@hazeljs/agent-vm` | Reversible tools, speculative branches, atomic undo |
-| `@hazeljs/testing` | `describeAgent` CI suites (latency / cost / tools) |
-| `@hazeljs/eval` | Golden datasets, RAG + trajectory metrics |
-| `@hazeljs/benchmark` | Benchmark suites + regression compare (`hazel benchmark`) |
-| `@hazeljs/inspector` | DevTools UI, agent timelines, durable run list |
-| `@hazeljs/mcp` | Expose `@Tool` handlers as an MCP server |
+| Package                     | What it does                                                                |
+| --------------------------- | --------------------------------------------------------------------------- |
+| `@hazeljs/agent`            | Kernel — `@Agent` / `@Tool`, DNA, HITL, loop, policy, A2A, `AgentOS` facade |
+| `@hazeljs/skillgate`        | OpenAPI / REST → governed skills (allowlist, classify, approval)            |
+| `@hazeljs/agent-gatekeeper` | Fail-closed authorization on every tool call                                |
+| `@hazeljs/agent-vm`         | Reversible tools, speculative branches, atomic undo                         |
+| `@hazeljs/testing`          | `describeAgent` CI suites (latency / cost / tools)                          |
+| `@hazeljs/eval`             | Golden datasets, RAG + trajectory metrics                                   |
+| `@hazeljs/benchmark`        | Benchmark suites + regression compare (`hazel benchmark`)                   |
+| `@hazeljs/inspector`        | DevTools UI, agent timelines, durable run list                              |
+| `@hazeljs/mcp`              | Expose `@Tool` handlers as an MCP server                                    |
 
 ### AI & data
 
-| Package | What it does |
-| --- | --- |
-| `@hazeljs/ai` | Multi-provider LLMs, streaming, HCEL |
-| `@hazeljs/rag` | Vector search, GraphRAG, loaders, agentic RAG |
-| `@hazeljs/ml` | Feature store, experiments, drift detection |
-| `@hazeljs/guardrails` | PII, injection, toxicity, output validation |
-| `@hazeljs/memory` | Persistent long-term memory |
-| `@hazeljs/prompts` | Versioned prompts, hot-swap from Redis / DB |
-| `@hazeljs/flow` | Durable WAIT / resume workflows |
-| `@hazeljs/observability` | OpenTelemetry traces, cost, reasoning spans |
+| Package                  | What it does                                  |
+| ------------------------ | --------------------------------------------- |
+| `@hazeljs/ai`            | Multi-provider LLMs, streaming, HCEL          |
+| `@hazeljs/rag`           | Vector search, GraphRAG, loaders, agentic RAG |
+| `@hazeljs/ml`            | Feature store, experiments, drift detection   |
+| `@hazeljs/guardrails`    | PII, injection, toxicity, output validation   |
+| `@hazeljs/memory`        | Persistent long-term memory                   |
+| `@hazeljs/prompts`       | Versioned prompts, hot-swap from Redis / DB   |
+| `@hazeljs/flow`          | Durable WAIT / resume workflows               |
+| `@hazeljs/observability` | OpenTelemetry traces, cost, reasoning spans   |
 
 ### Framework
 
-| Package | What it does |
-| --- | --- |
-| `@hazeljs/core` | DI, routing, modules, middleware |
-| `@hazeljs/cli` | `hazel agent`, Store, Skillgate, Gatekeeper, generators |
-| `@hazeljs/auth` / `@hazeljs/oauth` | JWT + OAuth |
-| `@hazeljs/prisma` / `@hazeljs/typeorm` | ORM + repositories |
-| `@hazeljs/swagger` / `@hazeljs/graphql` / `@hazeljs/grpc` | HTTP / GraphQL / gRPC surfaces |
-| _+ more_ | Cache, Queue, Cron, Kafka, PubSub, Messaging, Saga, Discovery, Gateway, Serverless |
+| Package                                                   | What it does                                                                       |
+| --------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `@hazeljs/core`                                           | DI, routing, modules, middleware                                                   |
+| `@hazeljs/cli`                                            | `hazel agent`, Store, Skillgate, Gatekeeper, generators                            |
+| `@hazeljs/auth` / `@hazeljs/oauth`                        | JWT + OAuth                                                                        |
+| `@hazeljs/prisma` / `@hazeljs/typeorm`                    | ORM + repositories                                                                 |
+| `@hazeljs/swagger` / `@hazeljs/graphql` / `@hazeljs/grpc` | HTTP / GraphQL / gRPC surfaces                                                     |
+| _+ more_                                                  | Cache, Queue, Cron, Kafka, PubSub, Messaging, Saga, Discovery, Gateway, Serverless |
 
 ---
 
@@ -500,16 +500,16 @@ Do **not** add `reflect-metadata` to your app. `@hazeljs/core` installs and load
 
 Competitor libraries excel at orchestration graphs. HazelJS differentiates on **shipping agents inside a real backend** and on **lifecycle OS** those libraries leave as glue.
 
-| | HazelJS | Nest + LangGraph | Express + DIY |
-| --- | --- | --- | --- |
-| **Agents in the same app as APIs** | Yes | Glue | Glue |
-| **DNA packages / Store / apply** | Yes | No | No |
-| **Governed OpenAPI skills** | Skillgate | DIY | DIY |
-| **Crash-safe HITL** | Yes | Partial | DIY |
-| **Reversible / speculative tools** | Agent VM | No | DIY |
-| **CI agent suites** | `describeAgent` | DIY | DIY |
-| **Time travel / DNA hot-reload** | Yes | DIY | DIY |
-| **MCP + A2A from `@Tool`** | Yes | Glue | DIY |
+|                                    | HazelJS         | Nest + LangGraph | Express + DIY |
+| ---------------------------------- | --------------- | ---------------- | ------------- |
+| **Agents in the same app as APIs** | Yes             | Glue             | Glue          |
+| **DNA packages / Store / apply**   | Yes             | No               | No            |
+| **Governed OpenAPI skills**        | Skillgate       | DIY              | DIY           |
+| **Crash-safe HITL**                | Yes             | Partial          | DIY           |
+| **Reversible / speculative tools** | Agent VM        | No               | DIY           |
+| **CI agent suites**                | `describeAgent` | DIY              | DIY           |
+| **Time travel / DNA hot-reload**   | Yes             | DIY              | DIY           |
+| **MCP + A2A from `@Tool`**         | Yes             | Glue             | DIY           |
 
 ---
 
