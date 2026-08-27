@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import type { ResolverMetadata } from '../graphql.types';
 
 export const RESOLVER_METADATA_KEY = Symbol('graphql:resolver');

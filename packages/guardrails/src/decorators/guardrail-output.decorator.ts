@@ -2,6 +2,7 @@
  * @GuardrailOutput - Run output guardrails after method execution
  */
 
+import 'reflect-metadata';
 import { GuardrailsService } from '../guardrails.service';
 import { GuardrailViolationError } from '../errors/guardrail-violation.error';
 import type { GuardrailOutputOptions } from '../guardrails.types';

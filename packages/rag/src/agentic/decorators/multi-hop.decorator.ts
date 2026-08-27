@@ -3,6 +3,7 @@
  * Performs multi-hop reasoning across documents
  */
 
+import 'reflect-metadata';
 import { ReasoningChain, ReasoningHop, AgenticLLMProvider } from '../types';
 import { PromptRegistry } from '@hazeljs/prompts';
 import '../../prompts/agentic/multi-hop.prompt';

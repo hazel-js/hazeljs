@@ -2,6 +2,8 @@
  * @FeatureView decorator - Define a collection of related features
  */
 
+import 'reflect-metadata';
+
 export const FEATURE_VIEW_METADATA_KEY = Symbol('hazel:feature-view:metadata');
 
 export interface FeatureViewOptions {

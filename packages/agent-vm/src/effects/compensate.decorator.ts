@@ -2,6 +2,7 @@
  * @Compensate — pairs an inverse handler with a @Reversible tool.
  */
 
+import 'reflect-metadata';
 import { COMPENSATE_METADATA_KEY } from './effect.decorator';
 
 export interface CompensateMetadata {

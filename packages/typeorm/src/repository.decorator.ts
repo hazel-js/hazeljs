@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import { RepositoryOptions } from '@hazeljs/core';
 export function Repository(options: RepositoryOptions | string): ClassDecorator {
   return function (target: object): void {

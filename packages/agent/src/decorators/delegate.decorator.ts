@@ -41,6 +41,7 @@
  * You do NOT need to add @Tool separately.
  */
 
+import 'reflect-metadata';
 import {
   DelegateConfig,
   DELEGATE_METADATA_KEY,

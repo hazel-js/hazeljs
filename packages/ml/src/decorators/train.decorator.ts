@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import logger from '@hazeljs/core';
 
 const TRAIN_METADATA_KEY = 'hazel:ml:train';

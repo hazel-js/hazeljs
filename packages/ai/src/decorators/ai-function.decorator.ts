@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import { AIFunctionOptions } from '../ai-enhanced.types';
 import logger from '@hazeljs/core';
 

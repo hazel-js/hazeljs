@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import { Injectable, type CanActivate, type ExecutionContext, type Type } from '@hazeljs/core';
 import { FeatureToggleService } from './feature-toggle.service';
 

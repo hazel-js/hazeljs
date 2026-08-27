@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import { WebSocketGatewayOptions } from '../websocket.types';
 import logger from '@hazeljs/core';
 

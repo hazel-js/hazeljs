@@ -1,3 +1,5 @@
+import 'reflect-metadata';
+
 const APPROVAL_KEY = Symbol('hazel:agent:approval');
 
 export interface ApprovalOptions {

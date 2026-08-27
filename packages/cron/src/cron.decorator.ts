@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import { CronOptions } from './cron.types';
 
 /**

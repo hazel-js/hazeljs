@@ -1,3 +1,5 @@
+import 'reflect-metadata';
+
 const INJECT_METADATA_KEY = 'hazel:inject';
 
 /**

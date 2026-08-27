@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import { CacheWriteOptions } from '../cache.types';
 import logger from '@hazeljs/core';
 

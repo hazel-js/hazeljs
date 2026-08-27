@@ -1,6 +1,7 @@
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
+  setupFiles: ['reflect-metadata'],
   moduleFileExtensions: ['ts', 'js', 'json', 'node'],
   roots: ['<rootDir>/src'],
   testRegex: '.*\\.(test|spec)\\.ts$',

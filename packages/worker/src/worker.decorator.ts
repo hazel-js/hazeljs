@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import type { WorkerTaskOptions } from './worker.types';
 
 /**

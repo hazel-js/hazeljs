@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import logger from '@hazeljs/core';
 
 /**

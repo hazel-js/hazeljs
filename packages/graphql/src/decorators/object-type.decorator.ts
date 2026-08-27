@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import type { ObjectTypeMetadata } from '../graphql.types';
 
 export const OBJECT_TYPE_METADATA_KEY = Symbol('graphql:object-type');

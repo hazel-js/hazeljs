@@ -2,6 +2,8 @@
  * @Audit - Mark a handler or method as audited with custom action/resource
  */
 
+import 'reflect-metadata';
+
 const AUDIT_METADATA_KEY = 'hazel:audit';
 
 export interface AuditDecoratorOptions {

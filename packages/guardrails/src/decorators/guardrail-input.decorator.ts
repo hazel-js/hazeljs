@@ -2,6 +2,7 @@
  * @GuardrailInput - Run input guardrails before method execution
  */
 
+import 'reflect-metadata';
 import { GuardrailsService } from '../guardrails.service';
 import { GuardrailViolationError } from '../errors/guardrail-violation.error';
 import type { GuardrailInputOptions } from '../guardrails.types';

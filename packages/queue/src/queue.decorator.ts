@@ -1,6 +1,8 @@
 /**
  * Metadata key for queue processors
  */
+import 'reflect-metadata';
+
 export const QUEUE_PROCESSOR_METADATA_KEY = Symbol('queue:processors');
 
 /**

@@ -3,6 +3,7 @@
  * Declarative API for defining gateway routes and policies.
  */
 
+import 'reflect-metadata';
 import {
   GatewayConfig,
   RouteConfig,

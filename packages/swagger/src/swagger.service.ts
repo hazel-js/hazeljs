@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import { Service } from '@hazeljs/core';
 import type {
   SwaggerBuildOptions,

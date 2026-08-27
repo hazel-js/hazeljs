@@ -10,6 +10,8 @@
  * @Decrypt — decrypts previously encrypted values
  */
 
+import 'reflect-metadata';
+
 const MASK_METADATA_KEY = 'hazel:data:pii:mask';
 const REDACT_METADATA_KEY = 'hazel:data:pii:redact';
 const ENCRYPT_METADATA_KEY = 'hazel:data:pii:encrypt';

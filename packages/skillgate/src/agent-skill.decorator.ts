@@ -3,6 +3,7 @@
  * Emits metadata consumable by Skillgate and (later) swagger `x-hazel-skill`.
  */
 
+import 'reflect-metadata';
 import type { AgentSkillConfig, XHazelSkill } from './types';
 
 const AGENT_SKILL_KEY = Symbol('hazel:agent-skill');

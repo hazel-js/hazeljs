@@ -3,6 +3,8 @@
  * Configure RAG at module level
  */
 
+import 'reflect-metadata';
+
 type NewableFunction = new (...args: unknown[]) => unknown;
 
 export interface RAGModuleOptions {

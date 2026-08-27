@@ -3,6 +3,7 @@
  * Automatically selects the best retrieval strategy
  */
 
+import 'reflect-metadata';
 import { AdaptiveStrategyResult, AgenticLLMProvider } from '../types';
 import { RetrievalStrategy } from '../../types';
 import { PromptRegistry } from '@hazeljs/prompts';

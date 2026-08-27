@@ -2,6 +2,7 @@
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
+  setupFiles: ['reflect-metadata'],
   testMatch: ['**/src/__tests__/**/*.test.ts'],
   moduleNameMapper: {
     '^@hazeljs/prompts$': '<rootDir>/../prompts/src/index.ts',

@@ -3,6 +3,7 @@
  * Self-corrects retrieval errors with fallback mechanisms
  */
 
+import 'reflect-metadata';
 import { CorrectiveRAGResult, Correction, AgenticLLMProvider } from '../types';
 import { PromptRegistry } from '@hazeljs/prompts';
 import '../../prompts/agentic/corrective-rag.prompt';

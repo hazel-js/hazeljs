@@ -3,6 +3,7 @@
  * Marks a class as an Agent with configuration
  */
 
+import 'reflect-metadata';
 import { AgentConfig, AgentMetadata } from '../types/agent.types';
 
 type NewableFunction = new (...args: unknown[]) => unknown;

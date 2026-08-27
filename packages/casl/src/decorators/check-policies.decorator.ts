@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import type { AnyAbility } from '@casl/ability';
 import type { AnyPolicyHandler } from '../types';
 import { PoliciesGuard } from '../policy.guard';

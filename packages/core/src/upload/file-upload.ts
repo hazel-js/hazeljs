@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import { IncomingMessage } from 'http';
 import { Request } from '../types';
 import logger from '../logger';

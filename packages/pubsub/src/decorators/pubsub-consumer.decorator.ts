@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import { PubSubConsumerOptions } from '../pubsub.types';
 import logger from '@hazeljs/core';
 

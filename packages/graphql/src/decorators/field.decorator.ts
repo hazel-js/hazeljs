@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import type { FieldMetadata } from '../graphql.types';
 
 export const FIELD_METADATA_KEY = Symbol('graphql:field');

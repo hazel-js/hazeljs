@@ -3,6 +3,7 @@
  * Automatically decomposes complex queries into sub-queries
  */
 
+import 'reflect-metadata';
 import { QueryPlan, SubQuery, AgenticLLMProvider } from '../types';
 import { PromptRegistry } from '@hazeljs/prompts';
 import '../../prompts/agentic/query-planner.prompt';

@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import { Request, Response } from '../types';
 
 /**

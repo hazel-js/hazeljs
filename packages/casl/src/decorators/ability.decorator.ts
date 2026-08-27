@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import type { RequestContext, Container } from '@hazeljs/core';
 import { CaslService } from '../casl.service';
 

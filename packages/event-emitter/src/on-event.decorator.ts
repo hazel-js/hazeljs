@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import { OnEventOptions } from './event-emitter.types';
 
 /**
