@@ -3,7 +3,6 @@
  * Uses @Realtime decorator, extends WebSocketGateway, proxies to OpenAI Realtime API
  */
 
-import 'reflect-metadata';
 import { Server as HttpServer } from 'http';
 import type { WebSocketServer } from 'ws';
 import { WebSocketGateway, Realtime, getRealtimeMetadata } from '@hazeljs/websocket';

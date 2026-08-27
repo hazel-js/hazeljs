@@ -1,4 +1,3 @@
-import 'reflect-metadata';
 import { GuardrailInput, getGuardrailInputMetadata } from './guardrail-input.decorator';
 import { GuardrailsService } from '../guardrails.service';
 import { GuardrailViolationError } from '../errors/guardrail-violation.error';

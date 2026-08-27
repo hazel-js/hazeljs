@@ -1,5 +1,3 @@
-import 'reflect-metadata';
-
 /**
  * Metadata key for queue processors
  */

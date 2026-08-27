@@ -2,8 +2,6 @@
  * @Speculate — fork K reasoning branches with commit/rollback semantics.
  */
 
-import 'reflect-metadata';
-
 export const SPECULATE_METADATA_KEY = Symbol('hazel:agent-vm:speculate');
 
 export type SpeculateScorer = 'heuristic' | 'llm-judge' | 'custom';

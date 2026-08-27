@@ -1,4 +1,3 @@
-import 'reflect-metadata';
 import { Pipeline, getPipelineMetadata, hasPipelineMetadata } from './pipeline.decorator';
 import { Transform, getTransformMetadata } from './transform.decorator';
 import { Validate, getValidateMetadata } from './validate.decorator';

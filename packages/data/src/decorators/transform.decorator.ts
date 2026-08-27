@@ -1,4 +1,3 @@
-import 'reflect-metadata';
 import logger from '@hazeljs/core';
 import type { PipelineStepMetadata, RetryConfig, DLQConfig } from '../data.types';
 

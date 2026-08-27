@@ -3,7 +3,6 @@
  * Optional: requires @hazeljs/event-emitter to be installed
  */
 
-import 'reflect-metadata';
 import type { InspectorEntry, EventInspectorEntry, HazelInspectorPlugin } from '../contracts/types';
 
 function createId(...parts: string[]): string {

@@ -1,5 +1,3 @@
-import 'reflect-metadata';
-
 /**
  * PII-safety decorators for pipeline methods.
  *

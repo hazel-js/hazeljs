@@ -3,7 +3,6 @@
  * Optional: requires @hazeljs/websocket to be installed
  */
 
-import 'reflect-metadata';
 import type {
   InspectorEntry,
   WebSocketInspectorEntry,

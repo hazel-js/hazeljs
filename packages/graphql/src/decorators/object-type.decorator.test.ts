@@ -1,4 +1,3 @@
-import 'reflect-metadata';
 import { ObjectType, getObjectTypeMetadata } from './object-type.decorator';
 
 describe('ObjectType decorator', () => {

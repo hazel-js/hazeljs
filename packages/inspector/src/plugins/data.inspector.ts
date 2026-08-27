@@ -3,7 +3,6 @@
  * Optional: requires @hazeljs/data to be installed
  */
 
-import 'reflect-metadata';
 import type {
   InspectorEntry,
   DataPipelineInspectorEntry,

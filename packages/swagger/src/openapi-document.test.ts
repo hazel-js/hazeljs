@@ -1,4 +1,3 @@
-import 'reflect-metadata';
 import { createOpenApiDocument } from './index';
 import { Controller, Get, HazelModule } from '@hazeljs/core';
 

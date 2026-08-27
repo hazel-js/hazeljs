@@ -1,4 +1,3 @@
-import 'reflect-metadata';
 import { ModelMetadata } from '../ml.types';
 import logger from '@hazeljs/core';
 

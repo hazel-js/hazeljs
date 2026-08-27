@@ -3,7 +3,6 @@
  * Optional: requires @hazeljs/ai to be installed
  */
 
-import 'reflect-metadata';
 import type {
   InspectorEntry,
   AIFunctionInspectorEntry,

@@ -1,4 +1,3 @@
-import 'reflect-metadata';
 import logger from '@hazeljs/core';
 
 const PIPELINE_METADATA_KEY = 'hazel:data:pipeline';

@@ -3,7 +3,6 @@
  * Uses @hazeljs/core utilities: collectControllersFromModule, collectModulesFromModule, getModuleMetadata
  */
 
-import 'reflect-metadata';
 import {
   collectControllersFromModule,
   collectModulesFromModule,

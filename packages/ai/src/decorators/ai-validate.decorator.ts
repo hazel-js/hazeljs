@@ -1,4 +1,3 @@
-import 'reflect-metadata';
 import { AIValidationOptions } from '../ai-enhanced.types';
 import logger from '@hazeljs/core';
 

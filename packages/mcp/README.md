@@ -32,7 +32,7 @@ npm install @hazeljs/agent
 
 - **Node.js 20+**
 - **TypeScript 5+** with `experimentalDecorators: true` in your `tsconfig.json` (only when using `@Tool()` decorators)
-- **No `reflect-metadata` import in your application code.** `@hazeljs/agent` declares it as a regular dependency and loads it automatically; importing it again from your code is unnecessary. In standalone mode (without `@hazeljs/agent`), `reflect-metadata` is not used at all.
+- **No `reflect-metadata` import in your application code.** `@hazeljs/core` loads it automatically; do not install or import it. In standalone mode (without `@hazeljs/agent` / `@hazeljs/core`), `reflect-metadata` is not used at all.
 - **No `emitDecoratorMetadata` required.** `@Tool()` does not rely on TypeScript's design-time type metadata.
 
 ---
@@ -41,7 +41,7 @@ npm install @hazeljs/agent
 
 ### 1. Define tools on an agent class
 
-> You do **not** need to import `reflect-metadata` yourself. `@hazeljs/agent` lists it as a regular dependency and every decorator module loads it as a side-effect import, so it is already initialized by the time your `@Tool()` runs. Just enable `experimentalDecorators` in your `tsconfig.json`.
+> You do **not** need to import `reflect-metadata` yourself. `@hazeljs/core` loads it automatically, so it is already initialized by the time your `@Tool()` runs. Just enable `experimentalDecorators` in your `tsconfig.json`.
 
 ```typescript
 import { Tool } from '@hazeljs/agent';

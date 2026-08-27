@@ -3,7 +3,6 @@
  * Optional: requires @hazeljs/queue to be installed
  */
 
-import 'reflect-metadata';
 import type { InspectorEntry, QueueInspectorEntry, HazelInspectorPlugin } from '../contracts/types';
 
 function createId(...parts: string[]): string {

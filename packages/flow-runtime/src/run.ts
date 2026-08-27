@@ -2,7 +2,6 @@
  * Programmatic API to run the flow runtime with custom flows.
  * Use this from apps (e.g. hazeljs-flow-example) instead of reimplementing the server.
  */
-import 'reflect-metadata';
 import type { FlowDefinition } from '@hazeljs/flow';
 import type { FlowEngine } from '@hazeljs/flow';
 import { createFlowEngine } from './engine.js';

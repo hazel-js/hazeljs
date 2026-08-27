@@ -1,5 +1,4 @@
 /// <reference types="jest" />
-import 'reflect-metadata';
 import { createFeatureToggleGuard } from '../feature-toggle.guard';
 import { FeatureToggle } from '../feature-toggle.decorator';
 import { FeatureToggleService } from '../feature-toggle.service';

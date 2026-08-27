@@ -1,7 +1,6 @@
 /**
  * Integration test: HazelApp DI lifecycle across core modules.
  */
-import 'reflect-metadata';
 import { HazelApp, HazelModule, Injectable } from '@hazeljs/core';
 import { ConfigModule } from '@hazeljs/config';
 import { ConfigService } from '@hazeljs/config';

@@ -67,6 +67,12 @@ describe('agent templates scaffold', () => {
     expect(fs.existsSync(path.join(dest, 'src/support.agent.ts'))).toBe(true);
     expect(fs.existsSync(path.join(dest, 'src/main.ts'))).toBe(true);
     expect(fs.existsSync(path.join(dest, 'dna/agent.marketplace.json'))).toBe(true);
+    const pkg = JSON.parse(fs.readFileSync(path.join(dest, 'package.json'), 'utf8'));
+    expect(pkg.dependencies['reflect-metadata']).toBeUndefined();
+    const main = fs.readFileSync(path.join(dest, 'src/main.ts'), 'utf8');
+    const agent = fs.readFileSync(path.join(dest, 'src/support.agent.ts'), 'utf8');
+    expect(main).not.toMatch(/reflect-metadata/);
+    expect(agent).not.toMatch(/reflect-metadata/);
   });
 
   it('scaffolds skillgate with openapi sample', () => {

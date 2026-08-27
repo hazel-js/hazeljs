@@ -1,3 +1,5 @@
+import '@hazeljs/core';
+
 export * from './interfaces';
 export * from './orchestrator';
 export * from './saga.decorator';

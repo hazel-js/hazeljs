@@ -2,7 +2,6 @@
  * @DataContract decorator - Define a data contract for a pipeline or dataset
  */
 
-import 'reflect-metadata';
 import type { BaseSchema } from '../schema/schema';
 
 export const DATA_CONTRACT_METADATA_KEY = Symbol('hazel:data-contract:metadata');

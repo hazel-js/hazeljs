@@ -17,9 +17,6 @@
     "format": "prettier --write \"src/**/*.ts\"",
     "clean": "rm -rf dist"
   },
-  "dependencies": {
-    "reflect-metadata": "^0.2.2"
-  },
   "peerDependencies": {
     "@hazeljs/core": "^2.0.4"
   },

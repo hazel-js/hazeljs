@@ -1,4 +1,3 @@
-import 'reflect-metadata';
 import { AgentStateManager } from '@hazeljs/agent';
 import { EffectGate } from '../gate/effect-gate';
 import { EffectJournal } from '../journal/effect-journal';

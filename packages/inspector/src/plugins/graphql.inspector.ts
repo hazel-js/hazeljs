@@ -3,7 +3,6 @@
  * Optional: requires @hazeljs/graphql to be installed
  */
 
-import 'reflect-metadata';
 import type {
   InspectorEntry,
   GraphQLInspectorEntry,

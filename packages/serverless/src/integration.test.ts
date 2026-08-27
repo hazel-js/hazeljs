@@ -2,7 +2,6 @@
  * Integration tests: real HazelJS app through Lambda and Cloud Function adapters.
  * No mocks of @hazeljs/core — uses real HazelApp, router, and controllers.
  */
-import 'reflect-metadata';
 import { Controller, Get, Post, Body, Param, HazelModule } from '@hazeljs/core';
 import { createLambdaHandler, LambdaEvent, LambdaContext } from './lambda.adapter';
 import {

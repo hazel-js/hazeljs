@@ -30,8 +30,7 @@
   },
   "homepage": "https://hazeljs.ai",
   "dependencies": {
-    "pdf-parse": "^1.1.4",
-    "reflect-metadata": "^0.2.2"
+    "pdf-parse": "^1.1.4"
   },
   "peerDependencies": {
     "@hazeljs/ai": "^2.0.4",

@@ -1,7 +1,6 @@
 /**
  * Integration test: AI task execution (post-0.9.0 migration path).
  */
-import 'reflect-metadata';
 import { AITaskExecutor } from '../../packages/ai/src/ai-task.executor';
 import type { AITaskConfig } from '../../packages/ai/src/ai.types';
 

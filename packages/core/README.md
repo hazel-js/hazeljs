@@ -41,6 +41,8 @@ Built as the foundation for **AI-native applications** - not just another framew
 npm install @hazeljs/core
 ```
 
+Do **not** install or import `reflect-metadata` in your app. `@hazeljs/core` declares it and loads it on import. Enable `experimentalDecorators` and `emitDecoratorMetadata` in `tsconfig.json`.
+
 ## Quick Start
 
 ### 1. Create a Controller

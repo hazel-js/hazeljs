@@ -1,7 +1,6 @@
 /**
  * Integration test: JWT auth sign/verify flow across auth packages.
  */
-import 'reflect-metadata';
 import { JwtService, AuthService } from '@hazeljs/auth';
 
 const TEST_SECRET = 'integration-test-secret-key';

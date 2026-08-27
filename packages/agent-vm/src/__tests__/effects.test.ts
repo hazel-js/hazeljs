@@ -1,4 +1,3 @@
-import 'reflect-metadata';
 import { EffectKind } from '../effects/effect-kind';
 import { inferEffectKind } from '../effects/infer';
 import { Pure, Reversible, getEffectMetadata } from '../effects/effect.decorator';

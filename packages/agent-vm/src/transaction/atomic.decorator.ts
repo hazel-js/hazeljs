@@ -2,8 +2,6 @@
  * @Atomic — marks an agent method/run as transactionally undo-able.
  */
 
-import 'reflect-metadata';
-
 export const ATOMIC_METADATA_KEY = Symbol('hazel:agent-vm:atomic');
 
 export interface AtomicMetadata {

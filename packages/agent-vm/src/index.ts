@@ -2,6 +2,8 @@
  * @hazeljs/agent-vm — Effect-typed agent execution with speculation and rollback.
  */
 
+import '@hazeljs/core';
+
 export * from './effects/effect-kind';
 export * from './effects/effect.decorator';
 export * from './effects/compensate.decorator';

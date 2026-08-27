@@ -3,7 +3,6 @@
  * Rewrites and expands queries for better retrieval
  */
 
-import 'reflect-metadata';
 import { AgenticLLMProvider } from '../types';
 import { PromptRegistry } from '@hazeljs/prompts';
 import '../../prompts/agentic/query-rewriter.prompt';

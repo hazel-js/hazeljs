@@ -2,7 +2,6 @@
  * Decorators Tests
  */
 
-import 'reflect-metadata';
 import {
   ServiceRegistry,
   getServiceRegistryMetadata,

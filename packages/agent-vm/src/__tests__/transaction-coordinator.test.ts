@@ -1,4 +1,3 @@
-import 'reflect-metadata';
 import { EffectJournal } from '../journal/effect-journal';
 import { TransactionCoordinator } from '../transaction/transaction-coordinator';
 import { InMemoryQuarantineStore } from '../transaction/quarantine-store';

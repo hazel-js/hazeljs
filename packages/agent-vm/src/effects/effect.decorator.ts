@@ -2,7 +2,6 @@
  * Effect decorators — declare tool effect class for Agent VM.
  */
 
-import 'reflect-metadata';
 import { EffectKind, EffectMetadata } from './effect-kind';
 
 export const EFFECT_METADATA_KEY = Symbol('hazel:agent-vm:effect');

@@ -1,4 +1,4 @@
-import 'reflect-metadata';
+import '@hazeljs/core';
 
 // Global test setup — replace console methods so Jest does not reprint expected error noise
 beforeAll(() => {

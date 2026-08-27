@@ -1,4 +1,3 @@
-import 'reflect-metadata';
 import { SwaggerOptions, SwaggerOperation } from './swagger.types';
 
 const SWAGGER_METADATA_KEY = 'swagger:options';

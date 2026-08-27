@@ -31,9 +31,6 @@
     "url": "https://github.com/hazel-js/hazeljs/issues"
   },
   "homepage": "https://hazeljs.ai",
-  "dependencies": {
-    "reflect-metadata": "^0.2.2"
-  },
   "peerDependencies": {
     "@hazeljs/agent": "^2.0.4",
     "@hazeljs/ai": "^2.0.4",

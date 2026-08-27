@@ -3,7 +3,6 @@
  * Caches retrieval results for performance
  */
 
-import 'reflect-metadata';
 import { CacheEntry } from '../types';
 
 export interface CachedConfig {

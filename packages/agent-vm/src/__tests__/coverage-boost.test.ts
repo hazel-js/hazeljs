@@ -1,4 +1,3 @@
-import 'reflect-metadata';
 import { AgentRuntime, AgentState, AgentStateManager, type ToolMetadata } from '@hazeljs/agent';
 import {
   attachAgentVmFromEnv,

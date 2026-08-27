@@ -3,7 +3,6 @@
  * Optional: requires @hazeljs/kafka to be installed
  */
 
-import 'reflect-metadata';
 import type { InspectorEntry, KafkaInspectorEntry, HazelInspectorPlugin } from '../contracts/types';
 
 function createId(...parts: string[]): string {

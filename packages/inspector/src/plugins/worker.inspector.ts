@@ -3,7 +3,6 @@
  * Optional: requires @hazeljs/worker to be installed
  */
 
-import 'reflect-metadata';
 import type {
   InspectorEntry,
   WorkerInspectorEntry,

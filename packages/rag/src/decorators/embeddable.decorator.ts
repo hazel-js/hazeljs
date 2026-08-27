@@ -3,8 +3,6 @@
  * Automatically generates embeddings for entity fields
  */
 
-import 'reflect-metadata';
-
 type NewableFunction = new (...args: unknown[]) => unknown;
 
 export interface EmbeddableOptions {

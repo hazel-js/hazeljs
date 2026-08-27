@@ -1,4 +1,3 @@
-import 'reflect-metadata';
 import { sliceBudgetAcrossBranches, selectBranchesToPrune } from '../speculation/budget-slicer';
 import { Atomic, getAtomicMetadata, isAtomicMethod } from '../transaction/atomic.decorator';
 import { Speculate, getSpeculateMetadata } from '../speculation/speculate.decorator';

@@ -1,4 +1,3 @@
-import 'reflect-metadata';
 import logger from '@hazeljs/core';
 
 const PREDICT_METADATA_KEY = 'hazel:ml:predict';

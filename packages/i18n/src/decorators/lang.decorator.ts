@@ -1,4 +1,3 @@
-import 'reflect-metadata';
 import { LOCALE_KEY } from '../i18n.middleware';
 
 const INJECT_METADATA_KEY = 'hazel:inject';

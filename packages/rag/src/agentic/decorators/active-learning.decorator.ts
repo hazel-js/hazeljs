@@ -3,7 +3,6 @@
  * Learns from user feedback to improve retrieval
  */
 
-import 'reflect-metadata';
 import { FeedbackData } from '../types';
 
 export interface ActiveLearningConfig {

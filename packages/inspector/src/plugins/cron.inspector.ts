@@ -3,7 +3,6 @@
  * Optional: requires @hazeljs/cron to be installed
  */
 
-import 'reflect-metadata';
 import type { InspectorEntry, CronInspectorEntry, HazelInspectorPlugin } from '../contracts/types';
 function createId(...parts: string[]): string {
   return parts.filter(Boolean).join(':');

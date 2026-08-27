@@ -24,9 +24,6 @@
     "lint:fix": "eslint \"src/**/*.ts\" --fix",
     "clean": "rm -rf dist && find src -type f \\( -name '*.js' -o -name '*.d.ts' -o -name '*.d.ts.map' \\) -delete 2>/dev/null || true"
   },
-  "dependencies": {
-    "reflect-metadata": "^0.2.2"
-  },
   "peerDependencies": {
     "@hazeljs/ai": "^2.0.4",
     "@hazeljs/core": "^2.0.4",

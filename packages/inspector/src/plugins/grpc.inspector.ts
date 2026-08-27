@@ -3,7 +3,6 @@
  * Optional: requires @hazeljs/grpc to be installed
  */
 
-import 'reflect-metadata';
 import type { InspectorEntry, GrpcInspectorEntry, HazelInspectorPlugin } from '../contracts/types';
 
 function createId(...parts: string[]): string {

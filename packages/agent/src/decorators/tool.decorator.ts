@@ -3,7 +3,6 @@
  * Marks a method as a tool that can be used by agents
  */
 
-import 'reflect-metadata';
 import { ToolConfig, ToolMetadata } from '../types/tool.types';
 
 const TOOL_METADATA_KEY = Symbol('tool');

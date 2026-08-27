@@ -1,7 +1,6 @@
 /**
  * Flow runtime HTTP server using HazelApp
  */
-import 'reflect-metadata';
 import { HazelApp, HazelModule } from '@hazeljs/core';
 import type { FlowEngine } from '@hazeljs/flow';
 import { createFlowHandler } from './flow-handler.js';

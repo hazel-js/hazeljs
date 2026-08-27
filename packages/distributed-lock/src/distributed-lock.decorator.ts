@@ -1,4 +1,3 @@
-import 'reflect-metadata';
 import { DistributedLockOptions } from './interfaces';
 import { LockManager } from './lock-manager';
 

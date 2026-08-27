@@ -1,5 +1,3 @@
-import 'reflect-metadata';
-
 const GQL_QUERY_METADATA = Symbol('graphql:client:query');
 const GQL_MUTATION_METADATA = Symbol('graphql:client:mutation');
 

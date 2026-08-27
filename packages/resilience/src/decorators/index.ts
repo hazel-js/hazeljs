@@ -10,7 +10,6 @@
  *   @Bulkhead(...)         <-- innermost wrapper around the original fn
  */
 
-import 'reflect-metadata';
 import { CircuitBreakerRegistry } from '../circuit-breaker/circuit-breaker-registry';
 import { RetryPolicy } from '../retry/retry-policy';
 import { Timeout as TimeoutInstance } from '../timeout/timeout';

@@ -3,8 +3,6 @@
  * Enable semantic search capabilities on methods
  */
 
-import 'reflect-metadata';
-
 export interface SemanticSearchOptions {
   topK?: number;
   minScore?: number;

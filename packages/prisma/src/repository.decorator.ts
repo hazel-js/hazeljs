@@ -1,6 +1,4 @@
 import { RepositoryOptions } from '@hazeljs/core';
-import 'reflect-metadata';
-
 export function Repository(options: RepositoryOptions | string): ClassDecorator {
   return function (target: object): void {
     const opts = typeof options === 'string' ? { model: options } : options;

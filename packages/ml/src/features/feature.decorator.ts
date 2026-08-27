@@ -2,8 +2,6 @@
  * @Feature decorator - Mark a class property as a feature
  */
 
-import 'reflect-metadata';
-
 export const FEATURE_METADATA_KEY = Symbol('hazel:feature:metadata');
 
 export interface FeatureOptions {

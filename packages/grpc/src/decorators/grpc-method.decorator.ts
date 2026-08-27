@@ -1,4 +1,3 @@
-import 'reflect-metadata';
 import type { GrpcMethodMetadata } from '../grpc.types';
 
 /**

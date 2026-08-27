@@ -2,8 +2,6 @@
  * @Experiment decorator - Auto-track training runs
  */
 
-import 'reflect-metadata';
-
 export const EXPERIMENT_METADATA_KEY = Symbol('hazel:experiment:metadata');
 
 export interface ExperimentOptions {

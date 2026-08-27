@@ -3,7 +3,6 @@
  * Maintains conversation context for improved retrieval
  */
 
-import 'reflect-metadata';
 import { Context, Entity, Topic } from '../types';
 
 export interface ContextAwareConfig {

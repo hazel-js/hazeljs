@@ -3,7 +3,6 @@
  * Optional: requires @hazeljs/agent to be installed
  */
 
-import 'reflect-metadata';
 import type { InspectorEntry, AgentInspectorEntry, HazelInspectorPlugin } from '../contracts/types';
 
 function createId(...parts: string[]): string {

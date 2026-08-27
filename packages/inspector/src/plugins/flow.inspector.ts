@@ -3,7 +3,6 @@
  * Optional: requires @hazeljs/flow to be installed
  */
 
-import 'reflect-metadata';
 import type { InspectorEntry, FlowInspectorEntry, HazelInspectorPlugin } from '../contracts/types';
 
 function createId(...parts: string[]): string {

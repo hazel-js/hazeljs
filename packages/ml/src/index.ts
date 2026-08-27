@@ -2,8 +2,6 @@
  * @hazeljs/ml - Machine Learning & Model Management for HazelJS
  */
 
-import 'reflect-metadata';
-
 // Module
 export { MLModule, ML_MODELS, type MLModuleOptions } from './ml.module';
 

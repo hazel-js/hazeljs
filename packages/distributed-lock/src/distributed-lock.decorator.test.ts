@@ -1,4 +1,3 @@
-import 'reflect-metadata';
 import { DistributedLock } from './distributed-lock.decorator';
 import { LockManager } from './lock-manager';
 

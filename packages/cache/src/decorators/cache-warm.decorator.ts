@@ -1,4 +1,3 @@
-import 'reflect-metadata';
 import * as cron from 'node-cron';
 import { CacheWarmOptions } from '../cache.types';
 import logger from '@hazeljs/core';

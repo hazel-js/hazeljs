@@ -196,7 +196,6 @@ Use lookupOrder for facts. Call processRefund only after lookup. Be concise.`,
         },
         dependencies: {
           '@hazeljs/agent': '^1.0.6',
-          'reflect-metadata': '^0.2.2',
         },
         devDependencies: {
           '@types/node': '^20.19.39',
@@ -238,8 +237,7 @@ export function getOrder(id: string): Order | undefined {
   return ORDERS[id.toUpperCase()];
 }
 `,
-    'src/support.agent.ts': `import 'reflect-metadata';
-import { Agent, Tool } from '@hazeljs/agent';
+    'src/support.agent.ts': `import { Agent, Tool } from '@hazeljs/agent';
 import { getOrder } from './orders';
 
 @Agent({
@@ -280,7 +278,6 @@ export class SupportAgent {
  * Mini Agent OS app — real tools (not DNA stubs).
  * DNA in dna/ can be hot-reloaded / store-installed for prompt+policy overlays.
  */
-import 'reflect-metadata';
 import {
   AgentRuntime,
   AgentEventType,

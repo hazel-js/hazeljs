@@ -1,4 +1,3 @@
-import 'reflect-metadata';
 import { KafkaConsumerOptions } from '../kafka.types';
 import logger from '@hazeljs/core';
 

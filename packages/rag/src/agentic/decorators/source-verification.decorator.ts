@@ -3,7 +3,6 @@
  * Verifies source quality and generates citations
  */
 
-import 'reflect-metadata';
 import { VerifiedResponse, VerifiedSource, SourceVerification, Citation } from '../types';
 
 export interface SourceVerificationConfig {

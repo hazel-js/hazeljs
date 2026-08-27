@@ -1,5 +1,4 @@
 /// <reference types="jest" />
-import 'reflect-metadata';
 import { Audit, getAuditMetadata, hasAuditMetadata } from './audit.decorator';
 
 describe('Audit decorator', () => {

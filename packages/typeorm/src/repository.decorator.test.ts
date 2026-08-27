@@ -1,4 +1,3 @@
-import 'reflect-metadata';
 import { Repository, InjectRepository } from './repository.decorator';
 
 describe('Repository decorator', () => {

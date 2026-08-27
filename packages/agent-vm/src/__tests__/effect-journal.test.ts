@@ -1,4 +1,3 @@
-import 'reflect-metadata';
 import { EffectJournal } from '../journal/effect-journal';
 import { InMemoryJournalStore } from '../journal/stores/memory-journal.store';
 import { EffectKind } from '../effects/effect-kind';

@@ -1,4 +1,3 @@
-import 'reflect-metadata';
 import { Container } from '@hazeljs/core';
 import { GrpcServer } from './grpc.server';
 import { GrpcMethod } from './decorators/grpc-method.decorator';

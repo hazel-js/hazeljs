@@ -2,7 +2,6 @@
  * Flow runtime - standalone deployable service (default demo flows)
  */
 /// <reference types="node" />
-import 'reflect-metadata';
 import { getConfig } from './config.js';
 import { createServiceRegistry } from './services/ServiceRegistry.js';
 import { demoFraudFlow, demoSupportFlow } from './flows/index.js';

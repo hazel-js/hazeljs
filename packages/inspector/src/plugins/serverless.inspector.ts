@@ -3,7 +3,6 @@
  * Optional: requires @hazeljs/serverless to be installed
  */
 
-import 'reflect-metadata';
 import type {
   InspectorEntry,
   ServerlessInspectorEntry,

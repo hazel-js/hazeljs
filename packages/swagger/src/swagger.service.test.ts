@@ -1,4 +1,3 @@
-import 'reflect-metadata';
 import { SwaggerService } from './swagger.service';
 import { Swagger, ApiOperation } from './swagger.decorator';
 import { SwaggerOptions, SwaggerOperation } from './swagger.types';

@@ -18,8 +18,7 @@
     "clean": "rm -rf dist ui-dist"
   },
   "dependencies": {
-    "cron-parser": "^4.9.0",
-    "reflect-metadata": "^0.2.2"
+    "cron-parser": "^4.9.0"
   },
   "peerDependencies": {
     "@hazeljs/agent": "^2.0.4",

@@ -2,8 +2,6 @@
  * @hazeljs/data - Data Processing & ETL for HazelJS
  */
 
-import 'reflect-metadata';
-
 // ─── Module ──────────────────────────────────────────────────────────────────
 export { DataModule, type DataModuleOptions, type DataTelemetryOptions } from './data.module';
 

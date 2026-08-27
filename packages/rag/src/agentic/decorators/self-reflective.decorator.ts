@@ -3,7 +3,6 @@
  * Evaluates and iteratively improves retrieval results
  */
 
-import 'reflect-metadata';
 import { ReflectionResult, QualityAssessment, AgenticLLMProvider } from '../types';
 import { PromptRegistry } from '@hazeljs/prompts';
 import '../../prompts/agentic/self-reflective.prompt';

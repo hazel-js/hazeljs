@@ -3,6 +3,8 @@
  * AI-native Agent Runtime for HazelJS
  */
 
+import '@hazeljs/core';
+
 export * from './types/agent.types';
 export * from './types/tool.types';
 export * from './types/event.types';

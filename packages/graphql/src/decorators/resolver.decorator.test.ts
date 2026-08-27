@@ -1,4 +1,3 @@
-import 'reflect-metadata';
 import { Resolver, getResolverMetadata } from './resolver.decorator';
 
 describe('Resolver decorator', () => {

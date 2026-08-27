@@ -1,4 +1,3 @@
-import 'reflect-metadata';
 import { Field, getFieldMetadata } from './field.decorator';
 
 describe('Field decorator', () => {

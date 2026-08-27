@@ -1,7 +1,5 @@
 /// <reference types="jest" />
 
-import 'reflect-metadata';
-
 jest.mock('@hazeljs/core', () => ({
   __esModule: true,
   Service: () => () => undefined,

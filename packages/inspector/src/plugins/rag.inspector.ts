@@ -3,7 +3,6 @@
  * Optional: requires @hazeljs/rag to be installed
  */
 
-import 'reflect-metadata';
 import type { InspectorEntry, RagInspectorEntry, HazelInspectorPlugin } from '../contracts/types';
 import { collectModulesFromModule } from '@hazeljs/core';
 

@@ -2,7 +2,6 @@
  * Tests for AgentGraph, SupervisorAgent, and @Delegate decorator
  */
 
-import 'reflect-metadata';
 import { AgentGraph, CompiledGraph } from '../../src/graph/agent-graph';
 import { END, GraphState, GraphExecutionResult } from '../../src/graph/agent-graph.types';
 import { SupervisorAgent } from '../../src/supervisor/supervisor';

@@ -1,5 +1,4 @@
 /// <reference types="jest" />
-import 'reflect-metadata';
 import path from 'path';
 import * as grpc from '@grpc/grpc-js';
 import { GrpcClientService } from './grpc.client';

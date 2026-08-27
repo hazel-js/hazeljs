@@ -1,4 +1,3 @@
-import 'reflect-metadata';
 import { runTravelSpeculationDemo } from '../demo/travel-agent.demo';
 
 describe('Travel Agent (describeAgent-style)', () => {

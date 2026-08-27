@@ -1,4 +1,3 @@
-import 'reflect-metadata';
 import { Container } from '@hazeljs/core';
 import { Injectable } from '@hazeljs/core';
 import { GraphQLServer } from './graphql.server';

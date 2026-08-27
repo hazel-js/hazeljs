@@ -33,9 +33,6 @@
     "example:branching": "npm run build && node dist/examples/branching.js",
     "example:wait_resume": "npm run build && node dist/examples/wait_resume.js"
   },
-  "dependencies": {
-    "reflect-metadata": "^0.2.2"
-  },
   "optionalDependencies": {
     "@prisma/client": "^6.19.3"
   },

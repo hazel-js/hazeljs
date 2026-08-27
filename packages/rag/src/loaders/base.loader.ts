@@ -27,7 +27,6 @@
  * ```
  */
 
-import 'reflect-metadata';
 import type { Document, DocumentLoader } from '../types';
 
 // ── Metadata keys ────────────────────────────────────────────────────────────

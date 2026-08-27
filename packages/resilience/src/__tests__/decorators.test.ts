@@ -1,4 +1,3 @@
-import 'reflect-metadata';
 import { CircuitBreaker, Retry, Timeout, Bulkhead, Fallback, RateLimit } from '../decorators';
 import { WithCircuitBreaker, WithRetry, WithTimeout, WithBulkhead, WithRateLimit } from '../index';
 import { CircuitBreakerRegistry } from '../circuit-breaker/circuit-breaker-registry';

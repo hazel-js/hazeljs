@@ -1,4 +1,3 @@
-import 'reflect-metadata';
 import type { QueryMetadata, MutationMetadata, ArgMetadata } from '../graphql.types';
 
 export const QUERY_METADATA_KEY = Symbol('graphql:query');

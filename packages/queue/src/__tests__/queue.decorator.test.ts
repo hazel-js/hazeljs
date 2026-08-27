@@ -1,4 +1,3 @@
-import 'reflect-metadata';
 import { Queue, getQueueProcessorMetadata } from '../queue.decorator';
 
 describe('Queue decorator', () => {

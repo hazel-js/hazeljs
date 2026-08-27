@@ -1,4 +1,3 @@
-import 'reflect-metadata';
 import { CacheLockOptions } from '../cache.types';
 import {
   LockManager,

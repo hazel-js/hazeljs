@@ -1,5 +1,4 @@
 import { AITaskConfig } from './ai.types';
-import 'reflect-metadata';
 import { AIEnhancedService } from './ai-enhanced.service';
 import logger from '@hazeljs/core';
 

@@ -1,4 +1,3 @@
-import 'reflect-metadata';
 import { OnEvent, getOnEventMetadata, ON_EVENT_METADATA_KEY } from './on-event.decorator';
 
 describe('OnEvent decorator', () => {

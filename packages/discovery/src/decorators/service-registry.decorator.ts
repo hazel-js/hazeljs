@@ -3,7 +3,6 @@
  * Automatically registers a service on module initialization
  */
 
-import 'reflect-metadata';
 import { ServiceRegistryConfig } from '../types';
 
 type NewableFunction = new (...args: unknown[]) => unknown;

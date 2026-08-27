@@ -3,7 +3,6 @@
  * Generates hypothetical documents to improve retrieval
  */
 
-import 'reflect-metadata';
 import { HyDEResult, AgenticLLMProvider } from '../types';
 import { PromptRegistry } from '@hazeljs/prompts';
 import '../../prompts/agentic/hyde.prompt';

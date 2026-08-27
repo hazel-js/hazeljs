@@ -1,4 +1,3 @@
-import 'reflect-metadata';
 import { Model, getModelMetadata, hasModelMetadata } from './model.decorator';
 import { Train, getTrainMetadata, hasTrainMetadata } from './train.decorator';
 import { Predict, getPredictMetadata, hasPredictMetadata } from './predict.decorator';

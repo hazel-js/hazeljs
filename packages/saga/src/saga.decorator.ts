@@ -1,4 +1,3 @@
-import 'reflect-metadata';
 import { SagaOptions, SagaStepOptions } from './interfaces';
 import { SagaOrchestrator } from './orchestrator';
 

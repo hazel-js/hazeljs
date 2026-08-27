@@ -1,4 +1,3 @@
-import 'reflect-metadata';
 import { Lang, extractLang, LANG_QUERY_KEY } from './lang.decorator';
 import { LOCALE_KEY } from '../i18n.middleware';
 

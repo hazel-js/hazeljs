@@ -33,7 +33,7 @@ npm install @hazeljs/saga
 npm install @hazeljs/core @hazeljs/event-emitter
 ```
 
-> You do **not** need to install or import `reflect-metadata` yourself. `@hazeljs/saga` declares it as a regular dependency and its decorator modules load it via a side-effect import. Just enable `experimentalDecorators` in your `tsconfig.json`.
+> You do **not** need to install or import `reflect-metadata` yourself. `@hazeljs/core` loads it automatically. Just enable `experimentalDecorators` in your `tsconfig.json`.
 
 ---
 

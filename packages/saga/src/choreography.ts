@@ -1,4 +1,3 @@
-import 'reflect-metadata';
 import { EventEmitterService } from '@hazeljs/event-emitter';
 
 export class SagaChoreographyManager {
