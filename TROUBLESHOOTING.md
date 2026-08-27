@@ -445,14 +445,14 @@ If you can't find a solution here:
 
 1. **Check Documentation**
    - [QUICKSTART.md](QUICKSTART.md)
-   - [IMPROVEMENTS.md](IMPROVEMENTS.md)
    - [README.md](README.md)
+   - [hazeljs.ai/docs](https://hazeljs.ai/docs)
 
 2. **Search Issues**
-   - GitHub Issues: https://github.com/hazeljs/hazel-js/issues
+   - GitHub Issues: https://github.com/hazel-js/hazeljs/issues
 3. **Ask Community**
    - GitHub Discussions: https://github.com/hazel-js/hazeljs/discussions
-   - Discord: (Coming soon)
+   - Discord: https://discord.gg/PxNBPzvQk7
 
 4. **Report Bug**
    - Create detailed issue with:

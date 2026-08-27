@@ -2,7 +2,7 @@
 
 > A curated list of awesome HazelJS resources, packages, tools, and projects.
 
-HazelJS is a modern, TypeScript-first Node.js framework with AI built in. This list includes community projects, tutorials, plugins, and more.
+HazelJS is the **Agent OS for TypeScript backends** — durable agents in the same DI/HTTP app as your APIs. This list includes official starters, tutorials, and community projects.
 
 ## Contents
 
@@ -17,7 +17,9 @@ HazelJS is a modern, TypeScript-first Node.js framework with AI built in. This l
 ## Official Resources
 
 - [HazelJS GitHub](https://github.com/hazel-js/hazeljs) - Official repository
-- [Documentation](https://github.com/hazel-js/hazeljs#-documentation) - Official docs
+- [Documentation](https://hazeljs.ai/docs) - Official docs
+- [Agent OS](https://hazeljs.ai/agent-os) - Product lander
+- [Meridian](https://github.com/hazel-js/hazeljs-meridian-ops) - Flagship Agent OS teaching app
 - [Quick Start Guide](https://github.com/hazel-js/hazeljs/blob/main/QUICKSTART.md)
 - [Discord Community](https://discord.gg/PxNBPzvQk7)
 - [npm Packages](https://www.npmjs.com/search?q=%40hazeljs)
@@ -26,6 +28,9 @@ HazelJS is a modern, TypeScript-first Node.js framework with AI built in. This l
 
 _Official Open-source starter projects built with HazelJS_
 
+- [hazeljs-meridian-ops](https://github.com/hazel-js/hazeljs-meridian-ops) - Agent OS flagship (DNA, Store, Skillgate, HITL)
+- [hazeljs-skillgate-agent-starter](https://github.com/hazel-js/hazeljs-skillgate-agent-starter) - OpenAPI → governed skills
+- [hazeljs-mcp-starter](https://github.com/hazel-js/hazeljs-mcp-starter) - `@Tool` as an MCP server
 - [hazeljs-rest-starter](https://github.com/hazel-js/hazeljs-rest-starter) - REST API starter
 - [hazeljs-worker-tasks-starter](https://github.com/hazel-js/hazeljs-worker-tasks-starter) - Worker tasks starter
 - [hazeljs-inspector-dashboard-example](https://github.com/hazel-js/hazeljs-inspector-dashboard-example) - Inspector dashboard example

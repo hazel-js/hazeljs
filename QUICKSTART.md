@@ -1,454 +1,139 @@
-# HazelJS Quick Start Guide
+# HazelJS Quick Start
 
-## Installation
+**Agent OS for TypeScript backends.** Durable agents in the same DI/HTTP app as your APIs.
+
+Do **not** add `reflect-metadata` to your app. `@hazeljs/core` installs and loads it.
+
+## Option 1: Meridian (recommended)
+
+The flagship teaching app for DNA, Store, Skillgate, HITL, and local apply.
 
 ```bash
-npm install @hazeljs/core class-validator class-transformer
+git clone https://github.com/hazel-js/hazeljs-meridian-ops.git
+cd hazeljs-meridian-ops
+npm install
+npm run store:sync      # DNA packages + lockfile
+npm run platform:sync   # Apply Definitions / Deployments (does not restart Node)
+npm run dev
 ```
 
-## Basic Application
+Docs: [Agent OS](https://hazeljs.ai/agent-os) · [Agent OS guide](https://hazeljs.ai/docs/guides/agent-os) · [Skillgate](https://hazeljs.ai/docs/guides/skillgate)
 
-### 1. Create Your First Controller
+## Option 2: Agent OS scaffold
+
+Smaller than Meridian. DNA + HITL templates — not an HTTP/HCEL demo.
+
+```bash
+npx @hazeljs/cli agent new my-desk --template=agent-os
+# templates: bare | agent-os | skillgate
+cd my-desk && npm install && npm run dev
+```
+
+## Option 3: HTTP + HCEL / RAG scaffold
+
+Useful for framework onboarding. **Not** a substitute for Meridian if you need DNA / Store / Skillgate / HITL.
+
+```bash
+npx @hazeljs/cli g app my-app --template=ai-native
+cd my-app
+npm install
+cp .env.example .env
+docker-compose up -d
+npm run dev
+```
+
+Skeleton API only: `npx @hazeljs/cli g app my-app`
+
+## Option 4: One file (HTTP / DI)
+
+```bash
+npm install @hazeljs/core
+```
 
 ```typescript
-// user.controller.ts
-import { Controller, Get, Post, Body, Param } from '@hazeljs/core';
-import { UserService } from './user.service';
-import { CreateUserDto } from './dto/create-user.dto';
+import { HazelApp, HazelModule, Controller, Get } from '@hazeljs/core';
 
-@Controller('/users')
-export class UserController {
-  constructor(private userService: UserService) {}
-
+@Controller({ path: '/hello' })
+class HelloController {
   @Get()
-  async getAllUsers() {
-    return this.userService.findAll();
-  }
-
-  @Get('/:id')
-  async getUser(@Param('id') id: string) {
-    return this.userService.findById(parseInt(id));
-  }
-
-  @Post()
-  async createUser(@Body(CreateUserDto) user: CreateUserDto) {
-    return this.userService.create(user);
+  hello() {
+    return { message: 'Hello, World!' };
   }
 }
-```
-
-### 2. Create a Service
-
-```typescript
-// user.service.ts
-import { Injectable } from '@hazeljs/core';
-
-@Injectable()
-export class UserService {
-  private users = [
-    { id: 1, name: 'John Doe', email: 'john@example.com' },
-    { id: 2, name: 'Jane Smith', email: 'jane@example.com' },
-  ];
-
-  findAll() {
-    return this.users;
-  }
-
-  findById(id: number) {
-    return this.users.find((u) => u.id === id);
-  }
-
-  create(user: { name: string; email: string }) {
-    const newUser = {
-      id: this.users.length + 1,
-      ...user,
-    };
-    this.users.push(newUser);
-    return newUser;
-  }
-}
-```
-
-### 3. Create a DTO with Validation
-
-```typescript
-// dto/create-user.dto.ts
-import { IsString, IsEmail, MinLength } from 'class-validator';
-import { Expose } from 'class-transformer';
-
-export class CreateUserDto {
-  @Expose()
-  @IsString()
-  @MinLength(2)
-  name: string;
-
-  @Expose()
-  @IsEmail()
-  email: string;
-}
-```
-
-### 4. Create a Module
-
-```typescript
-// user.module.ts
-import { HazelModule } from '@hazeljs/core';
-import { UserController } from './user.controller';
-import { UserService } from './user.service';
 
 @HazelModule({
-  controllers: [UserController],
-  providers: [UserService],
+  controllers: [HelloController],
 })
-export class UserModule {}
-```
-
-### 5. Create the App Module
-
-```typescript
-// app.module.ts
-import { HazelModule, ConfigModule } from '@hazeljs/core';
-import { UserModule } from './user/user.module';
-
-@HazelModule({
-  imports: [
-    ConfigModule.forRoot({
-      envFilePath: '.env',
-      isGlobal: true,
-    }),
-    UserModule,
-  ],
-})
-export class AppModule {}
-```
-
-### 6. Bootstrap the Application
-
-```typescript
-// main.ts
-import { HazelApp } from '@hazeljs/core';
-import { AppModule } from './app.module';
+class AppModule {}
 
 async function bootstrap() {
   const app = new HazelApp(AppModule);
   await app.listen(3000);
-  console.log('Application is running on http://localhost:3000');
 }
 
 bootstrap();
 ```
 
-## Advanced Features
+`tsconfig.json` needs `"experimentalDecorators": true`. You do not need to import `reflect-metadata`.
 
-### Using Scoped Providers
-
-```typescript
-import { Injectable, Scope } from '@hazeljs/core';
-
-@Injectable({ scope: Scope.REQUEST })
-export class RequestScopedService {
-  private requestId = Math.random();
-
-  getRequestId() {
-    return this.requestId;
-  }
-}
-```
-
-### Exception Filters
+## Agent OS in 30 seconds
 
 ```typescript
-import { ExceptionFilter, Catch, ArgumentsHost, HttpError } from '@hazeljs/core';
+import { Agent, Tool } from '@hazeljs/agent';
 
-@Catch(HttpError)
-export class GlobalExceptionFilter implements ExceptionFilter<HttpError> {
-  catch(exception: HttpError, host: ArgumentsHost) {
-    const ctx = host.switchToHttp();
-    const response = ctx.getResponse();
-
-    response.status(exception.statusCode).json({
-      statusCode: exception.statusCode,
-      message: exception.message,
-      timestamp: new Date().toISOString(),
-    });
-  }
-}
-```
-
-### API Versioning
-
-```typescript
-import { Controller, Get, Version } from '@hazeljs/core';
-
-@Controller('/users')
-@Version('1')
-export class UserV1Controller {
-  @Get()
-  getUsers() {
-    return { version: 1, users: [] };
-  }
-}
-
-@Controller('/users')
-@Version('2')
-export class UserV2Controller {
-  @Get()
-  getUsers() {
-    return { version: 2, users: [], metadata: {} };
-  }
-}
-```
-
-### Global Middleware
-
-```typescript
-import { GlobalMiddlewareManager, CorsMiddleware, LoggerMiddleware } from '@hazeljs/core';
-
-const middlewareManager = new GlobalMiddlewareManager();
-
-// Add CORS
-middlewareManager.use(
-  new CorsMiddleware({
-    origin: '*',
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+@Agent({
+  name: 'support-agent',
+  systemPrompt: 'You are a helpful customer support agent.',
+})
+export class SupportAgent {
+  @Tool({
+    description: 'Look up order by ID',
+    parameters: [{ name: 'orderId', type: 'string', required: true }],
   })
-);
+  async lookupOrder(input: { orderId: string }) {
+    return { status: 'shipped' };
+  }
 
-// Add logging
-middlewareManager.use(new LoggerMiddleware());
-```
-
-### File Uploads
-
-```typescript
-import { Controller, Post, UploadedFile, UploadedFileType } from '@hazeljs/core';
-
-@Controller('/upload')
-export class UploadController {
-  @Post()
-  uploadFile(@UploadedFile('file') file: UploadedFileType) {
-    return {
-      filename: file.filename,
-      size: file.size,
-      mimetype: file.mimetype,
-    };
+  @Tool({
+    description: 'Process a refund',
+    requiresApproval: true,
+    parameters: [{ name: 'orderId', type: 'string' }],
+  })
+  async processRefund(input: { orderId: string }) {
+    return { success: true };
   }
 }
 ```
 
-### Testing
+Then: Skillgate for OpenAPI skills, Gatekeeper for fail-closed auth, Agent VM for reversible tools, `describeAgent` for CI. See the [root README](./README.md).
 
-```typescript
-import { Test } from '@hazeljs/core';
-import { UserController } from './user.controller';
-import { UserService } from './user.service';
-
-describe('UserController', () => {
-  let controller: UserController;
-  let service: UserService;
-
-  beforeEach(async () => {
-    const module = await Test.createTestingModule({
-      controllers: [UserController],
-      providers: [UserService],
-    }).compile();
-
-    controller = module.get(UserController);
-    service = module.get(UserService);
-  });
-
-  it('should return all users', async () => {
-    const users = await controller.getAllUsers();
-    expect(users).toBeDefined();
-    expect(Array.isArray(users)).toBe(true);
-  });
-});
-```
-
-### Configuration Service
-
-```typescript
-import { Injectable, ConfigService } from '@hazeljs/core';
-
-@Injectable()
-export class DatabaseService {
-  constructor(private config: ConfigService) {}
-
-  connect() {
-    const host = this.config.get('DB_HOST', 'localhost');
-    const port = this.config.get<number>('DB_PORT', 5432);
-    const database = this.config.getOrThrow<string>('DB_NAME');
-
-    console.log(`Connecting to ${host}:${port}/${database}`);
-  }
-}
-```
-
-## Project Structure
-
-```
-my-hazeljs-app/
-├── src/
-│   ├── user/
-│   │   ├── dto/
-│   │   │   └── create-user.dto.ts
-│   │   ├── user.controller.ts
-│   │   ├── user.service.ts
-│   │   └── user.module.ts
-│   ├── app.module.ts
-│   └── main.ts
-├── .env
-├── package.json
-└── tsconfig.json
-```
-
-## Environment Variables
-
-Create a `.env` file:
-
-```env
-PORT=3000
-NODE_ENV=development
-DATABASE_URL=postgresql://user:password@localhost:5432/mydb
-JWT_SECRET=your-secret-key
-```
-
-## TypeScript Configuration
+## TypeScript
 
 ```json
 {
   "compilerOptions": {
     "target": "ES2020",
     "module": "commonjs",
-    "lib": ["ES2020"],
-    "declaration": true,
-    "outDir": "./dist",
-    "rootDir": "./src",
     "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
     "experimentalDecorators": true,
-    "emitDecoratorMetadata": true,
-    "resolveJsonModule": true,
-    "moduleResolution": "node"
-  },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
-}
-```
-
-## Running the Application
-
-### Development
-
-```bash
-npm run dev
-```
-
-### Production
-
-```bash
-npm run build
-npm start
-```
-
-## Next Steps
-
-- Read the [full documentation](./IMPROVEMENTS.md)
-- Check out [example applications](./example)
-- Join our community
-- Contribute to the project
-
-## Common Patterns
-
-### Repository Pattern with Prisma
-
-```typescript
-import { Injectable } from '@hazeljs/core';
-import { BaseRepository } from '@hazeljs/core';
-import { PrismaService } from '@hazeljs/core';
-
-@Injectable()
-export class UserRepository extends BaseRepository<User> {
-  constructor(prisma: PrismaService) {
-    super(prisma, 'user');
-  }
-
-  async findByEmail(email: string) {
-    return this.prismaClient.user.findUnique({
-      where: { email },
-    });
+    "esModuleInterop": true,
+    "skipLibCheck": true
   }
 }
 ```
 
-### Guards for Authentication
+`emitDecoratorMetadata` is optional for most HazelJS apps. Do not install or import `reflect-metadata`.
 
-```typescript
-import { Injectable, CanActivate, ExecutionContext } from '@hazeljs/core';
+## Next steps
 
-@Injectable()
-export class AuthGuard implements CanActivate {
-  canActivate(context: ExecutionContext): boolean {
-    const request = context.switchToHttp().getRequest();
-    return !!request.headers.authorization;
-  }
-}
-
-// Use in controller
-@Controller('/protected')
-@UseGuards(AuthGuard)
-export class ProtectedController {
-  @Get()
-  getProtectedData() {
-    return { data: 'secret' };
-  }
-}
-```
-
-### Interceptors for Logging
-
-```typescript
-import { Injectable, Interceptor, RequestContext } from '@hazeljs/core';
-
-@Injectable()
-export class LoggingInterceptor implements Interceptor {
-  async intercept(context: RequestContext, next: () => Promise<unknown>) {
-    const start = Date.now();
-    console.log(`→ ${context.method} ${context.url}`);
-
-    const result = await next();
-
-    const duration = Date.now() - start;
-    console.log(`← ${context.method} ${context.url} ${duration}ms`);
-
-    return result;
-  }
-}
-```
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Decorators not working**
-   - Ensure `experimentalDecorators` and `emitDecoratorMetadata` are enabled in tsconfig.json
-   - Note: `reflect-metadata` is automatically imported by `@hazeljs/core`
-
-2. **Validation not working**
-   - Install `class-validator` and `class-transformer`
-   - Use `@Body(DtoClass)` decorator with your DTO class
-
-3. **Dependency injection failing**
-   - Ensure all services are decorated with `@Injectable()` or `@Service()`
-   - Check that providers are registered in the module
+- [Documentation](https://hazeljs.ai/docs)
+- [Agent OS guide](https://hazeljs.ai/docs/guides/agent-os)
+- [Meridian](https://github.com/hazel-js/hazeljs-meridian-ops)
+- [Troubleshooting](./TROUBLESHOOTING.md)
+- [Contributing](./CONTRIBUTING.md)
 
 ## Support
 
-- GitHub Issues: [Report bugs](https://github.com/yourusername/hazeljs/issues)
-- Discussions: [Ask questions](https://github.com/yourusername/hazeljs/discussions)
-- Discord: [Join our community](#)
-
-## License
-
-Apache 2.0
+- Issues: [github.com/hazel-js/hazeljs/issues](https://github.com/hazel-js/hazeljs/issues)
+- Discussions: [github.com/hazel-js/hazeljs/discussions](https://github.com/hazel-js/hazeljs/discussions)
+- Discord: [discord.gg/PxNBPzvQk7](https://discord.gg/PxNBPzvQk7)

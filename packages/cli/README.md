@@ -1,8 +1,8 @@
 # @hazeljs/cli
 
-**From zero to AI-powered apps in one command.**
+**Scaffold Agent OS apps and HazelJS backends.**
 
-Generate controllers, services, modules, AI agents, RAG systems — or create a complete AI-Native application with PostgreSQL, Redis, and Docker. Interactive project setup, package management, and code that follows best practices.
+DNA / Store / Skillgate / HITL live in [Meridian](https://github.com/hazel-js/hazeljs-meridian-ops) and `hazel agent new`. HTTP + HCEL templates (`--template=ai-native`) are a secondary framework path — not the Agent OS flagship.
 
 [![npm version](https://img.shields.io/npm/v/@hazeljs/cli.svg)](https://www.npmjs.com/package/@hazeljs/cli)
 [![npm downloads](https://img.shields.io/npm/dm/@hazeljs/cli)](https://www.npmjs.com/package/@hazeljs/cli)
@@ -10,13 +10,13 @@ Generate controllers, services, modules, AI agents, RAG systems — or create a 
 
 ## Features
 
-- 🤖 **AI-Native Templates** - Create complete AI applications with agents, RAG, PostgreSQL, and Docker
-- 🚀 **Project Scaffolding** - Create new HazelJS applications instantly with interactive setup
-- 🎨 **Code Generation** - Generate controllers, services, AI agents, RAG systems, and 20+ component types
-- 📦 **Package Management** - Add HazelJS packages interactively with optional setup file generation
-- 🏗️ **Best Practices** - Generated code follows HazelJS conventions and AI patterns
-- 🎯 **TypeScript First** - All generated code is fully typed
-- ⚡ **Fast Development** - Reduce boilerplate and speed up development
+- 🧬 **Agent OS** — `hazel agent new` (bare / agent-os / skillgate), Store, DNA install, runs, apply
+- 🚪 **Skillgate / Gatekeeper** — `hazel skillgate from-openapi`, `hazel gatekeeper validate|simulate|explain`
+- 🧪 **Eval / benchmark** — `hazel eval`, `hazel benchmark`
+- 🚀 **App scaffolding** — `hazel new`, `hazel g app` (HTTP skeleton or `--template=ai-native`)
+- 🎨 **Code generation** — controllers, services, agents, RAG, 20+ component types
+- 📦 **Package management** — `hazel add` with optional setup files
+- Generated apps do **not** list or import `reflect-metadata` — `@hazeljs/core` loads it
 
 ## Installation
 
@@ -34,25 +34,44 @@ npm install --save-dev @hazeljs/cli
 
 ## Commands
 
-### Create a New Application
+### Agent OS (start here)
 
-**AI-Native Application (Recommended for AI Projects):**
+**Flagship teaching path** — clone [Meridian](https://github.com/hazel-js/hazeljs-meridian-ops) (`store:sync` → `platform:sync` → `dev`). The CLI is not a substitute for that app.
+
+```bash
+# Smaller Agent OS / DNA scaffold (not Meridian)
+hazel agent new my-desk --template=agent-os
+# templates: bare | agent-os | skillgate
+cd my-desk && npm install && npm run dev
+
+hazel agent install ./packages/support.dna.json
+hazel agent runs list
+hazel store publish | install | list
+hazel skillgate from-openapi ./openapi.yaml
+hazel gatekeeper validate
+hazel benchmark
+hazel eval
+```
+
+`hazel agent run` is a DNA smoke with stubs. Real tools and HITL = your app’s `runtime.execute` / Meridian `/api/chat`. `hazel agent apply` declares desired state — it does not restart Node.
+
+### Create a framework application (secondary)
+
+HTTP + HCEL / RAG scaffold — **not** the Agent OS flagship:
 
 ```bash
 hazel g app my-ai-app --template=ai-native
 cd my-ai-app && npm install && cp .env.example .env && docker-compose up -d && npm run dev
 ```
 
-Creates a complete AI-powered application with agents, RAG (PostgreSQL + pgvector), Redis, and Docker.
-
-**Skeleton app (quick start):**
+Skeleton API:
 
 ```bash
 hazel g app my-app
 cd my-app && npm install && npm run dev
 ```
 
-**Full setup with interactive package selection:**
+Interactive package selection:
 
 ```bash
 hazel new my-app -i
@@ -218,6 +237,17 @@ hazel g serverless handler --platform lambda
 ## Quick Reference
 
 ```bash
+# Agent OS
+hazel agent new <name> [--template agent-os|bare|skillgate]
+hazel agent install <dna>
+hazel agent run | doctor | logs
+hazel agent runs list | inspect | cancel | resume | approve
+hazel store publish | install | list
+hazel skillgate from-openapi <spec>
+hazel gatekeeper validate | simulate | explain
+hazel benchmark
+hazel eval
+
 # Project Management
 hazel new <name> [-i]                # Create new project
 hazel info                           # Show project info

@@ -1,9 +1,14 @@
-# HazelJS Agent Runtime - Quick Start
+# HazelJS Agent Runtime — Quick Start
+
+**Primary path:** clone [Meridian](https://github.com/hazel-js/hazeljs-meridian-ops) (`store:sync` → `platform:sync` → `dev`) for DNA, Skillgate, HITL, and local apply. Or `npx @hazeljs/cli agent new my-desk --template=agent-os`.
+
+Do **not** import `reflect-metadata`. `@hazeljs/core` loads it.
 
 ## Installation
 
 ```bash
-npm install @hazeljs/agent @hazeljs/core @hazeljs/rag
+npm install @hazeljs/agent @hazeljs/core
+# optional: @hazeljs/skillgate @hazeljs/agent-gatekeeper @hazeljs/agent-vm @hazeljs/testing
 ```
 
 ## 5-Minute Quick Start
@@ -94,10 +99,11 @@ Subscribe to execution events for monitoring and debugging.
 
 ## Next Steps
 
-- Read the [full README](./README.md)
-- Check the [architecture guide](./ARCHITECTURE.md)
-- Explore [examples](./examples/)
-- Learn about [human-in-the-loop workflows](./README.md#human-in-the-loop)
+- [Meridian](https://github.com/hazel-js/hazeljs-meridian-ops) — flagship Agent OS app
+- [Agent OS guide](https://hazeljs.ai/docs/guides/agent-os)
+- [README](./README.md) — DNA, loop, policy, A2A
+- [Skillgate](../skillgate) · [Gatekeeper](../agent-gatekeeper) · [Agent VM](../agent-vm)
+- [Architecture](./ARCHITECTURE.md)
 
 ## Common Patterns
 

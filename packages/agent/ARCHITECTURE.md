@@ -529,16 +529,13 @@ HazelJS Agent Runtime is the kernel of the broader **Agent OS**.
 
 **Phases 1–4 (API surface in `@hazeljs/agent`):** loop, state, timeline, testing, time travel, contracts, policies, recovery, benchmark, skills, memory graph, evolution, cost optimizer, simulator, digital twin, DNA, consensus, governance.
 
-See [AGENT_OS_ROADMAP.md](../../../AGENT_OS_ROADMAP.md).
+See the [Agent OS guide](https://hazeljs.ai/docs/guides/agent-os) (DNA, HITL, Skillgate, local apply). Hosted marketplace and fleet remain product layers; file-backed Store + local apply is what you use today.
 
 ## Future Enhancements
 
-1. Publish `@hazeljs/testing` + `@hazeljs/benchmark` and harden GraphRAG-backed memory graph
-2. DNA hot-reload into live runtimes
-3. Knowledge freshness signals on RAG results
-4. Deeper Inspector analytics for twin/canary divergences
-5. Streaming confidence loops (`executeStream` + `options.loop`)
-6. Extract `@hazeljs/policies` / `@hazeljs/timetravel` when consumers need independent versioning
+1. Hosted DNA marketplace catalog (install from files works today)
+2. Deeper Inspector analytics for twin/canary divergences
+3. Extract `@hazeljs/policies` / `@hazeljs/timetravel` when consumers need independent versioning
 
 ## Conclusion
 

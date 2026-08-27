@@ -1,10 +1,10 @@
 # @hazeljs/core
 
-**AI-Native Foundation - DI, routing, and decorators built for intelligent applications.**
+**DI, routing, and modules for Agent OS and HTTP APIs.**
 
-Part of the HazelJS AI-Native Backend Framework. Stop wiring boilerplate. Build APIs with dependency injection, decorator-based routing, and middleware that just works. TypeScript-first, production-ready, zero Express dependency.
+The kernel every HazelJS app boots: modules, controllers, dependency injection, middleware. Agent OS (`@hazeljs/agent`) runs in the same `HazelApp`. TypeScript-first. No Express or Fastify dependency.
 
-**🚀 Trusted by 200K+ monthly downloads • 37+ GitHub stars • 15+ daily active developers**
+Do **not** install or import `reflect-metadata` in your app — this package declares it and loads it.
 
 [![npm version](https://img.shields.io/npm/v/@hazeljs/core.svg)](https://www.npmjs.com/package/@hazeljs/core)
 [![npm downloads](https://img.shields.io/npm/dm/@hazeljs/core)](https://www.npmjs.com/package/@hazeljs/core)
@@ -12,20 +12,19 @@ Part of the HazelJS AI-Native Backend Framework. Stop wiring boilerplate. Build 
 
 ## Why @hazeljs/core?
 
-Built as the foundation for **AI-native applications** - not just another framework. When you combine @hazeljs/core with our AI packages (@hazeljs/ai, @hazeljs/agent, @hazeljs/rag), you get a complete stack for intelligent backends without glue code.
+The HTTP / DI layer Agent OS sits on. Combine with `@hazeljs/agent`, Skillgate, Gatekeeper, and Agent VM to ship durable agents beside REST — without Nest + LangGraph + a worker fleet.
 
 **Perfect for:**
 
-- AI startups building production agents
-- Teams replacing NestJS/Express with AI-native backends
-- Developers who want TypeScript-first architecture
-- Projects needing dependency injection without complexity
+- Teams putting agents in the same TypeScript backend as APIs
+- Replacing NestJS / Express with one stack
+- TypeScript-first DI without a heavy HTTP adapter
 
 ## Features
 
 - 🎯 **Dependency Injection** - Advanced DI with Singleton, Transient, and Request scopes
 - 🎨 **Decorator-Based API** - Clean, intuitive programming model
-- 🛣️ **Routing** - Express-based routing with parameter extraction
+- 🛣️ **Routing** - Built-in routing with parameter extraction (no Express/Fastify)
 - 🔌 **Middleware Support** - Global and route-level middleware
 - 🛡️ **Guards & Interceptors** - Request validation and transformation
 - 🔧 **Pipes** - Data transformation and validation
@@ -41,7 +40,7 @@ Built as the foundation for **AI-native applications** - not just another framew
 npm install @hazeljs/core
 ```
 
-Do **not** install or import `reflect-metadata` in your app. `@hazeljs/core` declares it and loads it on import. Enable `experimentalDecorators` and `emitDecoratorMetadata` in `tsconfig.json`.
+Do **not** install or import `reflect-metadata` in your app. `@hazeljs/core` declares it and loads it on import. Enable `experimentalDecorators` in `tsconfig.json`.
 
 ## Quick Start
 

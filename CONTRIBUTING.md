@@ -254,9 +254,10 @@ npm run build:watch
 
 ## Documentation
 
-- **API Reference**: See [IMPROVEMENTS.md](IMPROVEMENTS.md)
-- **Quick Start**: See [QUICKSTART.md](QUICKSTART.md)
-- **Roadmap**: See [ROADMAP.md](ROADMAP.md)
+- **Docs site**: [hazeljs.ai/docs](https://hazeljs.ai/docs)
+- **Agent OS guide**: [hazeljs.ai/docs/guides/agent-os](https://hazeljs.ai/docs/guides/agent-os)
+- **Quick Start**: [QUICKSTART.md](QUICKSTART.md)
+- **CHANGELOG**: [CHANGELOG.md](CHANGELOG.md)
 
 ## Release Process
 
@@ -285,7 +286,7 @@ Each publishable `package.json` must include `repository.url` exactly as `https:
 
 - **GitHub Issues**: For bugs and feature requests
 - **GitHub Discussions**: For questions and general discussion
-- **Discord**: Join our community server (coming soon)
+- **Discord**: [discord.gg/PxNBPzvQk7](https://discord.gg/PxNBPzvQk7)
 
 ## Recognition
 
@@ -293,7 +294,7 @@ Contributors will be recognized in:
 
 - README.md contributors section
 - Release notes
-- Project website (coming soon)
+- [hazeljs.ai](https://hazeljs.ai)
 
 ## License
 

@@ -1,10 +1,8 @@
 # @hazeljs/agent
 
-**Build AI agents that actually do things.**
+**Agent OS kernel** — durable `@Agent` / `@Tool` runtime in the same DI app as your APIs.
 
-Part of the HazelJS **AI-native backend** and **Agent OS**. Stateful, tool-using, memory-enabled — plus confidence loops, a rich state machine, Inspector timelines, and CI tests via `@hazeljs/testing`. Define tools with `@Tool`, delegate between agents with `@Delegate`, orchestrate multi-agent pipelines with `AgentGraph`, and route tasks automatically with `SupervisorAgent`.
-
-**🚀 Trusted by 200K+ monthly downloads • 37+ GitHub stars • 15+ daily active developers**
+DNA packages, crash-safe HITL, confidence loops, policy, time travel, A2A. Pair with [Skillgate](../skillgate), [Gatekeeper](../agent-gatekeeper), [Agent VM](../agent-vm), and [`describeAgent`](../testing). Flagship path: clone [Meridian](https://github.com/hazel-js/hazeljs-meridian-ops).
 
 [![npm version](https://img.shields.io/npm/v/@hazeljs/agent.svg)](https://www.npmjs.com/package/@hazeljs/agent)
 [![npm downloads](https://img.shields.io/npm/dm/@hazeljs/agent)](https://www.npmjs.com/package/@hazeljs/agent)
@@ -12,14 +10,15 @@ Part of the HazelJS **AI-native backend** and **Agent OS**. Stateful, tool-using
 
 ## Why @hazeljs/agent?
 
-Built for **AI-native applications** - not just another agent framework. When you combine @hazeljs/agent with @hazeljs/core, @hazeljs/ai, and @hazeljs/rag, you get a complete stack for intelligent backends.
+This is the Agent OS runtime kernel — not a chat wrapper and not LangGraph glued onto Nest. Package prompt + policy as DNA (DNA ≠ tool implementations), suspend for HITL across process restarts, and authorize tools with Gatekeeper.
+
+**Start with:** [Meridian](https://github.com/hazel-js/hazeljs-meridian-ops) (`store:sync` → `platform:sync` → `dev`), or `npx @hazeljs/cli agent new my-desk --template=agent-os`.
 
 **Perfect for:**
 
-- AI startups building production agent systems
-- Teams creating customer support or automation agents
-- Developers who want stateful, long-running workflows
-- Projects needing multi-agent orchestration
+- Backend teams putting durable agents next to REST
+- Support / ops agents with HITL refunds and governed OpenAPI skills
+- Platform teams that need Store, apply, and Inspector timelines
 
 ## Overview
 
