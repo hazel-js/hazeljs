@@ -25,7 +25,8 @@ export const AGENT_TEMPLATES: AgentTemplateMeta[] = [
   {
     id: 'agent-os',
     label: 'Agent OS mini-app',
-    description: 'DNA + real @Agent/@Tool TypeScript app (HITL refund demo) + store lock',
+    description:
+      'DNA + real @Agent/@Tool app + ops stack (self-healing + predictive scaling) + K8s manifests',
   },
   {
     id: 'skillgate',
@@ -153,6 +154,237 @@ Wire real \`@Tool\` / Skillgate handlers in your Hazel app for production behavi
   };
 }
 
+function agentOsOpsFiles(npm: string, projectName: string): Record<string, string> {
+  const deployment = npm;
+  const hpaName = `${npm}-hpa`;
+
+  return {
+    '.env.example': `# Agent runtime
+HITL=0
+
+# Ops stack (proactive scaling + reactive self-healing)
+ENABLE_OPS_STACK=0
+K8S_DEPLOYMENT=${deployment}
+K8S_NAMESPACE=default
+K8S_HPA_NAME=${hpaName}
+PROMETHEUS_URL=http://prometheus.monitoring.svc:9090
+SLACK_BOT_TOKEN=
+PAGERDUTY_ROUTING_KEY=
+`,
+    'src/ops/stack.ts': `import { createOperationsStack } from '@hazeljs/predictive-scaling';
+import {
+  FetchKubernetesRestartClient,
+  FetchKubernetesScalingClient,
+  createSlackHealingNotifier,
+  createHealingNotifierChain,
+  InMemoryKubernetesRestartClient,
+  InMemoryKubernetesScalingClient,
+} from '@hazeljs/self-healing';
+
+export function createAgentOpsStack(appName: string) {
+  const deployment = process.env.K8S_DEPLOYMENT ?? appName;
+  const namespace = process.env.K8S_NAMESPACE ?? 'default';
+  const hpaName = process.env.K8S_HPA_NAME ?? \`\${deployment}-hpa\`;
+  const inCluster = Boolean(process.env.KUBERNETES_SERVICE_HOST);
+
+  const scalingClient = inCluster
+    ? new FetchKubernetesScalingClient()
+    : new InMemoryKubernetesScalingClient();
+  const restartClient = inCluster
+    ? new FetchKubernetesRestartClient()
+    : new InMemoryKubernetesRestartClient();
+
+  const notifications = [];
+  if (process.env.SLACK_BOT_TOKEN) {
+    notifications.push(
+      createSlackHealingNotifier({
+        token: process.env.SLACK_BOT_TOKEN,
+        channel: process.env.SLACK_ALERT_CHANNEL ?? '#ops-alerts',
+      })
+    );
+  }
+
+  return createOperationsStack({
+    healing: {
+      strategies: ['config-rollback', 'hpa-boost', 'pod-restart', 'safe-mode'],
+      aiDiagnostics: true,
+      drain: { timeoutMs: 30_000 },
+      notifyOn: ['critical-healing', 'healing-failed', 'hpa-boost', 'pod-restart'],
+      notifications: notifications.length ? createHealingNotifierChain(notifications) : undefined,
+      kubernetes: {
+        deployment,
+        namespace,
+        client: restartClient,
+        drainBeforeRestart: true,
+        hpa: {
+          name: hpaName,
+          namespace,
+          client: scalingClient,
+          boostMinReplicas: Number(process.env.HPA_BOOST_MIN ?? 4),
+          restoreAfterMs: Number(process.env.HPA_RESTORE_MS ?? 300_000),
+        },
+      },
+      performance: {
+        enabled: true,
+        autoScaleOnDegradation: true,
+        thresholds: { criticalLatencyMs: 2000, sampleSize: 20 },
+      },
+    },
+    scaling: {
+      model: 'time-series-forecast',
+      metrics: ['requests', 'latency', 'cpu'],
+      horizon: '30m',
+      confidence: 0.85,
+      capacityPerReplica: Number(process.env.CAPACITY_PER_REPLICA ?? 120),
+      hpa: {
+        name: hpaName,
+        namespace,
+        client: scalingClient,
+        maxReplicas: Number(process.env.HPA_MAX_REPLICAS ?? 50),
+      },
+    },
+    prometheus: process.env.PROMETHEUS_URL
+      ? {
+          baseUrl: process.env.PROMETHEUS_URL,
+          pollIntervalMs: 60_000,
+          queries: {
+            requests: \`sum(rate(http_requests_total{service="${deployment}"}[5m]))\`,
+            latency:
+              \`histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{service="${deployment}"}[5m])) by (le))\`,
+            cpu: \`avg(rate(container_cpu_usage_seconds_total{pod=~"${deployment}-.*"}[5m]))\`,
+          },
+        }
+      : undefined,
+  });
+}
+
+let opsStack: ReturnType<typeof createAgentOpsStack> | null = null;
+
+export function startAgentOpsStack(appName: string) {
+  if (opsStack) return opsStack;
+  opsStack = createAgentOpsStack(appName);
+  opsStack.start();
+  return opsStack;
+}
+
+export function stopAgentOpsStack() {
+  opsStack?.stop();
+  opsStack = null;
+}
+`,
+    'deploy/kubernetes/deployment.yaml': `apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ${deployment}
+  labels:
+    app: ${deployment}
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ${deployment}
+  template:
+    metadata:
+      labels:
+        app: ${deployment}
+    spec:
+      serviceAccountName: ${deployment}
+      containers:
+        - name: agent
+          image: ${deployment}:latest
+          env:
+            - name: ENABLE_OPS_STACK
+              value: "1"
+            - name: K8S_DEPLOYMENT
+              value: ${deployment}
+            - name: K8S_HPA_NAME
+              value: ${hpaName}
+            - name: PROMETHEUS_URL
+              value: http://prometheus.monitoring.svc:9090
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+`,
+    'deploy/kubernetes/hpa.yaml': `apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: ${hpaName}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: ${deployment}
+  minReplicas: 2
+  maxReplicas: 50
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+`,
+    'deploy/kubernetes/service.yaml': `apiVersion: v1
+kind: Service
+metadata:
+  name: ${deployment}
+spec:
+  selector:
+    app: ${deployment}
+  ports:
+    - port: 80
+      targetPort: 3000
+`,
+    'deploy/kubernetes/serviceaccount.yaml': `apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ${deployment}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: ${deployment}-ops
+rules:
+  - apiGroups: ["autoscaling"]
+    resources: ["horizontalpodautoscalers"]
+    verbs: ["get", "patch", "update"]
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get", "patch", "update"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: ${deployment}-ops
+subjects:
+  - kind: ServiceAccount
+    name: ${deployment}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: ${deployment}-ops
+`,
+    'deploy/kubernetes/kustomization.yaml': `apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - serviceaccount.yaml
+  - deployment.yaml
+  - service.yaml
+  - hpa.yaml
+`,
+  };
+}
+
 function agentOsFiles(projectName: string): Record<string, string> {
   const dnaName = agentDnaName(projectName);
   const npm = sanitizeNpmName(projectName);
@@ -196,6 +428,8 @@ Use lookupOrder for facts. Call processRefund only after lookup. Be concise.`,
         },
         dependencies: {
           '@hazeljs/agent': '^1.0.6',
+          '@hazeljs/self-healing': '^2.0.5',
+          '@hazeljs/predictive-scaling': '^2.0.5',
         },
         devDependencies: {
           '@types/node': '^20.19.39',
@@ -285,9 +519,16 @@ import {
   type AgentEvent,
 } from '@hazeljs/agent';
 import { SupportAgent } from './support.agent';
+import { startAgentOpsStack, stopAgentOpsStack } from './ops/stack';
 
 async function main() {
   const input = process.argv.slice(2).join(' ') || 'Where is ORD-1001?';
+
+  if (process.env.ENABLE_OPS_STACK === '1') {
+    startAgentOpsStack('${npm}');
+    process.on('SIGINT', () => stopAgentOpsStack());
+    process.on('SIGTERM', () => stopAgentOpsStack());
+  }
   // Demo uses mock LLM. Wire OpenAI (or another provider) in production apps.
   const llm = createMockLlmProvider(
     'Used real @Tool handlers on AgentRuntime. (Replace createMockLlmProvider with your LLM.)'
@@ -332,6 +573,8 @@ main().catch((e) => {
 | \`dna/agent.marketplace.json\` | DNA / marketplace package (OpenAPI-for-agents) |
 | \`src/support.agent.ts\` | Real tool handlers |
 | \`src/main.ts\` | AgentRuntime bootstrap + optional DNA overlay |
+| \`src/ops/stack.ts\` | Predictive scaling + self-healing ops stack |
+| \`deploy/kubernetes/\` | K8s Deployment, HPA, RBAC for in-cluster ops |
 
 ## Quick start
 
@@ -349,7 +592,21 @@ npm run store:install
 \`\`\`
 
 Set \`HITL=1\` to pause on \`processRefund\` approvals.
+
+## Production ops (predictive + self-healing)
+
+\`\`\`bash
+cp .env.example .env
+ENABLE_OPS_STACK=1 npm run dev
+
+# Deploy to Kubernetes (requires kubectl + kustomize)
+kubectl apply -k deploy/kubernetes
+\`\`\`
+
+- **Proactive:** \`@hazeljs/predictive-scaling\` forecasts traffic and adjusts HPA min replicas
+- **Reactive:** \`@hazeljs/self-healing\` heals failures, drains pods, opens Slack/Jira alerts
 `,
+    ...agentOsOpsFiles(npm, projectName),
   };
 }
 

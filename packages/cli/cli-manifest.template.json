@@ -738,6 +738,12 @@
           "description": "Environment-based configuration management"
         },
         {
+          "shortName": "config-server",
+          "npm": "@hazeljs/config-server",
+          "label": "Git config server (@hazeljs/config-server)",
+          "description": "Git-backed distributed configuration (Spring Cloud Config style)"
+        },
+        {
           "shortName": "cron",
           "npm": "@hazeljs/cron",
           "label": "Cron Jobs (@hazeljs/cron)",

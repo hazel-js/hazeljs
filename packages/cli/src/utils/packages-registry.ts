@@ -108,6 +108,23 @@ export const oauthImports = [
     setupTemplate: null,
   },
   {
+    shortName: 'config-server',
+    npm: '@hazeljs/config-server',
+    label: 'Git config server (@hazeljs/config-server)',
+    hint: 'import { ConfigServer } from "@hazeljs/config-server";\n  // await new ConfigServer({ git: { uri: process.env.CONFIG_GIT_URI! }, port: 8888 }).start()',
+    moduleImport: "import { ConfigServerModule } from '@hazeljs/config-server';",
+    moduleExpression:
+      "ConfigServerModule.forRoot({ git: { uri: process.env.CONFIG_GIT_URI || '' }, port: 8888 })",
+    setupTemplate: `import { ConfigServerModule } from '@hazeljs/config-server';
+
+// Add ConfigServerModule.forRoot(...) to your HazelModule imports, then start:
+// await new ConfigServer({ git: { uri: process.env.CONFIG_GIT_URI! }, port: 8888 }).start();
+export const configServerImports = [
+  ConfigServerModule.forRoot({ git: { uri: process.env.CONFIG_GIT_URI || '' }, port: 8888 }),
+];
+`,
+  },
+  {
     shortName: 'cron',
     npm: '@hazeljs/cron',
     label: 'Cron Jobs (@hazeljs/cron)',
@@ -379,6 +396,37 @@ export class ExampleResilienceService {
     return 'ok';
   }
 }
+`,
+  },
+  {
+    shortName: 'self-healing',
+    npm: '@hazeljs/self-healing',
+    label: 'Self-Healing Microservices (@hazeljs/self-healing)',
+    hint: 'import { SelfHealing, SelfHeal, createHealingCoordinator } from "@hazeljs/self-healing";',
+    moduleImport: null,
+    moduleExpression: null,
+    setupTemplate: `import { createHealingCoordinator } from '@hazeljs/self-healing';
+
+export const healing = createHealingCoordinator({
+  strategies: ['config-rollback', 'hpa-boost', 'pod-restart'],
+});
+`,
+  },
+  {
+    shortName: 'predictive-scaling',
+    npm: '@hazeljs/predictive-scaling',
+    label: 'Predictive Auto-Scaling (@hazeljs/predictive-scaling)',
+    hint: 'import { PredictiveScaling, createPredictiveScaler } from "@hazeljs/predictive-scaling";',
+    moduleImport: null,
+    moduleExpression: null,
+    setupTemplate: `import { createPredictiveScaler } from '@hazeljs/predictive-scaling';
+
+// Wire hpa.client to your Kubernetes scaling client
+export const scaler = createPredictiveScaler({
+  horizon: '30m',
+  metrics: ['requests', 'latency'],
+  hpa: { name: 'api-hpa', client: scalingClient },
+});
 `,
   },
   {
