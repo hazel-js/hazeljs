@@ -85,13 +85,13 @@ const healing = createHealingCoordinator({
 
 ## Strategies
 
-| Strategy          | When used                   | Action                                                    |
-| ----------------- | --------------------------- | --------------------------------------------------------- |
-| `auto-restart`    | Dependency / timeout errors | Re-run `onModuleDestroy` + `onModuleInit` lifecycle hooks |
-| `config-rollback` | Config errors               | Restore last config snapshot                              |
-| `memory-cleanup`  | Memory pressure             | Call `clearCache()` + `global.gc()` if exposed            |
-| `safe-mode`       | Unrecoverable errors        | Invoke named fallback method                              |
-| `pod-restart`     | Cluster-level failures      | Drain in-flight work, then PATCH deployment `restartedAt` |
+| Strategy          | When used                   | Action                                                      |
+| ----------------- | --------------------------- | ----------------------------------------------------------- |
+| `auto-restart`    | Dependency / timeout errors | Re-run `onModuleDestroy` + `onModuleInit` lifecycle hooks   |
+| `config-rollback` | Config errors               | Restore last config snapshot                                |
+| `memory-cleanup`  | Memory pressure             | Call `clearCache()` + `global.gc()` if exposed              |
+| `safe-mode`       | Unrecoverable errors        | Invoke named fallback method                                |
+| `pod-restart`     | Cluster-level failures      | Drain in-flight work, then PATCH deployment `restartedAt`   |
 | `hpa-boost`       | Performance / load spikes   | Temporarily raise HPA `minReplicas`, restore after cooldown |
 
 ## Drain, HPA, and Jira
