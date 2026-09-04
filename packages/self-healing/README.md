@@ -1,25 +1,25 @@
 # @hazeljs/self-healing
 
-**Self-healing microservices** for HazelJS — automatic error diagnosis, recovery strategies, config rollback, memory guard, K8s pod restart, and incident notifications.
+**Diagnose the failure. Recover automatically.**
 
+Self-healing microservices for HazelJS: error diagnosis, recovery strategies, config rollback, memory guard, Kubernetes pod restart, HPA boost, and incident notifications.
+
+[![npm version](https://img.shields.io/npm/v/@hazeljs/self-healing.svg)](https://www.npmjs.com/package/@hazeljs/self-healing)
+[![npm downloads](https://img.shields.io/npm/dm/@hazeljs/self-healing)](https://www.npmjs.com/package/@hazeljs/self-healing)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 
-## Overview
+## Features
 
-**Phase 1** — rule-based diagnosis and recovery primitives (decorators + programmatic API).
+- 🩺 **Error diagnosis** - Rule-based diagnostics, optional LLM via `@hazeljs/ai`
+- ♻️ **Recovery strategies** - Restart, config rollback, memory cleanup, safe-mode
+- ☸️ **Kubernetes** - Pod restart with rollout patch client
+- 🚪 **Graceful drain** - Finish in-flight work before restart
+- 📈 **HPA boost** - Temporarily raise `minReplicas`, restore after cooldown
+- ⏱️ **Latency-driven scale** - `recordLatency()` auto-boosts on degradation
+- 🔔 **Incident notify** - Slack, PagerDuty, Jira, or a notifier chain
+- 🎨 **Decorator API** - `@SelfHealing`, `@SelfHeal`, `@MemoryGuard`
 
-**Phase 2** — production integrations:
-
-- **LLM diagnosis** via `@hazeljs/ai` (`aiDiagnostics: true` or `createHazelAIDiagnosticsProvider`)
-- **Kubernetes pod restart** (`pod-restart` strategy + rollout patch client)
-- **Slack / PagerDuty** healing notifications
-
-**Phase 3** — cluster ops & incident workflow:
-
-- **Graceful drain** before pod restart (`GracefulDrainCoordinator`, `drainBeforeRestart`)
-- **HPA boost** (`hpa-boost` strategy) with auto-restore after cooldown
-- **Performance-driven scaling** (`recordLatency` + `performance.autoScaleOnDegradation`)
-- **Jira incidents** via `createJiraHealingNotifier` (compatible with `@hazeljs/ops-agent`)
+Pair with [`@hazeljs/predictive-scaling`](https://hazeljs.ai/docs/packages/predictive-scaling) for **proactive** HPA (forecast). This package is **reactive** recovery.
 
 ## Installation
 
@@ -27,7 +27,7 @@
 npm install @hazeljs/self-healing @hazeljs/core
 ```
 
-Optional integrations:
+### Optional Dependencies
 
 ```bash
 npm install @hazeljs/resilience @hazeljs/ai @hazeljs/ops-agent
@@ -35,7 +35,7 @@ npm install @hazeljs/resilience @hazeljs/ai @hazeljs/ops-agent
 
 ## Quick Start
 
-### Decorators
+### 1. Decorate the module
 
 ```typescript
 import {
@@ -43,7 +43,6 @@ import {
   SelfHeal,
   MemoryGuard,
   createSlackHealingNotifier,
-  InMemoryKubernetesRestartClient,
 } from '@hazeljs/self-healing';
 
 @SelfHealing({
@@ -61,7 +60,7 @@ import {
 export class AppModule {}
 ```
 
-### Programmatic API with AI + K8s
+### 2. Programmatic API
 
 ```typescript
 import {
@@ -86,16 +85,16 @@ const healing = createHealingCoordinator({
 
 ## Strategies
 
-| Strategy          | When used                   | Action                                                      |
-| ----------------- | --------------------------- | ----------------------------------------------------------- |
-| `auto-restart`    | Dependency / timeout errors | Re-run `onModuleDestroy` + `onModuleInit` lifecycle hooks   |
-| `config-rollback` | Config errors               | Restore last config snapshot                                |
-| `memory-cleanup`  | Memory pressure             | Call `clearCache()` + `global.gc()` if exposed              |
-| `safe-mode`       | Unrecoverable errors        | Invoke named fallback method                                |
-| `pod-restart`     | Cluster-level failures      | Drain in-flight work, then PATCH deployment `restartedAt`   |
+| Strategy          | When used                   | Action                                                    |
+| ----------------- | --------------------------- | --------------------------------------------------------- |
+| `auto-restart`    | Dependency / timeout errors | Re-run `onModuleDestroy` + `onModuleInit` lifecycle hooks |
+| `config-rollback` | Config errors               | Restore last config snapshot                              |
+| `memory-cleanup`  | Memory pressure             | Call `clearCache()` + `global.gc()` if exposed            |
+| `safe-mode`       | Unrecoverable errors        | Invoke named fallback method                              |
+| `pod-restart`     | Cluster-level failures      | Drain in-flight work, then PATCH deployment `restartedAt` |
 | `hpa-boost`       | Performance / load spikes   | Temporarily raise HPA `minReplicas`, restore after cooldown |
 
-## Phase 3: Drain, HPA, Jira
+## Drain, HPA, and Jira
 
 ```typescript
 import {
@@ -168,6 +167,23 @@ const notifications = createHealingNotifierChain([
 ]);
 ```
 
+## Testing
+
+```bash
+npm test
+```
+
+## Contributing
+
+Contributions are welcome! Please read our [Contributing Guide](../../CONTRIBUTING.md) for details.
+
 ## License
 
-Apache-2.0
+Apache 2.0 © [HazelJS](https://hazeljs.ai)
+
+## Links
+
+- [Documentation](https://hazeljs.ai/docs/packages/self-healing)
+- [GitHub](https://github.com/hazel-js/hazeljs)
+- [Issues](https://github.com/hazel-js/hazeljs/issues)
+- [Discord](https://discord.gg/PxNBPzvQk7)

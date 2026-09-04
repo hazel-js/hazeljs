@@ -1,16 +1,25 @@
 # @hazeljs/predictive-scaling
 
-**Predictive auto-scaling** for HazelJS — forecast traffic 30 minutes ahead, proactively adjust Kubernetes HPA, and scale on business events.
+**Scale before the spike. Not after.**
+
+Forecast traffic ~30 minutes ahead, raise Kubernetes HPA `minReplicas` proactively, and boost on business events.
+
+Use [`@hazeljs/self-healing`](https://hazeljs.ai/docs/packages/self-healing) for **reactive** recovery (`hpa-boost` after latency degrades). This package is **proactive**.
+
+[![npm version](https://img.shields.io/npm/v/@hazeljs/predictive-scaling.svg)](https://www.npmjs.com/package/@hazeljs/predictive-scaling)
+[![npm downloads](https://img.shields.io/npm/dm/@hazeljs/predictive-scaling)](https://www.npmjs.com/package/@hazeljs/predictive-scaling)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 
 ## Features
 
-- **Time-series forecasting** — exponential smoothing + seasonal hour-of-week patterns
-- **Proactive HPA scaling** — raises `minReplicas` before predicted spikes
-- **Cost optimization** — confidence thresholds, gradual scale-down
-- **Event-driven boosts** — `black-friday`, `product-launch`, custom events
-- **Decorators** — `@PredictiveScaling`, `@ScalePredict`, `@ScaleOnEvent`
-- **Optional AI forecasts** — `createAIForecastProvider()` hook for `@hazeljs/ai`
-- **Self-healing bridge** — `adaptSelfHealingScalingClient()` from `@hazeljs/self-healing`
+- 📈 **Time-series forecast** - Exponential smoothing + seasonal hour-of-week patterns
+- ☸️ **Proactive HPA** - Raise `minReplicas` before predicted spikes
+- 💰 **Cost optimization** - Confidence thresholds and gradual scale-down
+- 🎉 **Event-driven boosts** - `black-friday`, `product-launch`, custom events
+- 🎨 **Decorator API** - `@PredictiveScaling`, `@ScalePredict`, `@ScaleOnEvent`
+- 🤖 **Optional AI forecasts** - `createAIForecastProvider()` hook for `@hazeljs/ai`
+- 📊 **Prometheus ingest** - Poll real cluster metrics into the forecast
+- 🔗 **Self-healing bridge** - `adaptSelfHealingScalingClient()` + `createOperationsStack()`
 
 ## Installation
 
@@ -18,7 +27,7 @@
 npm install @hazeljs/predictive-scaling @hazeljs/core
 ```
 
-Optional:
+### Optional Dependencies
 
 ```bash
 npm install @hazeljs/self-healing @hazeljs/ai
@@ -33,9 +42,9 @@ import {
   ScaleOnEvent,
   createPredictiveScaler,
   InMemoryScalingClient,
+  adaptSelfHealingScalingClient,
 } from '@hazeljs/predictive-scaling';
 import { InMemoryKubernetesScalingClient } from '@hazeljs/self-healing';
-import { adaptSelfHealingScalingClient } from '@hazeljs/predictive-scaling';
 
 @PredictiveScaling({
   model: 'time-series-forecast',
@@ -83,7 +92,7 @@ scaler.start(); // poll + forecast + apply every 60s
 await scaler.triggerEvent('black-friday');
 ```
 
-## Prometheus ingestion
+## Prometheus Ingestion
 
 Feed real cluster metrics into forecasts:
 
@@ -110,7 +119,9 @@ scaler.start();
 prometheus.start();
 ```
 
-## Combined ops stack (with `@hazeljs/self-healing`)
+## Combined Ops Stack
+
+Wire this package with `@hazeljs/self-healing`:
 
 ```typescript
 import { createOperationsStack } from '@hazeljs/predictive-scaling';
@@ -139,6 +150,23 @@ ops.start();
 
 See `examples/production-ops-stack.ts` for a full production wiring template.
 
+## Testing
+
+```bash
+npm test
+```
+
+## Contributing
+
+Contributions are welcome! Please read our [Contributing Guide](../../CONTRIBUTING.md) for details.
+
 ## License
 
-Apache-2.0
+Apache 2.0 © [HazelJS](https://hazeljs.ai)
+
+## Links
+
+- [Documentation](https://hazeljs.ai/docs/packages/predictive-scaling)
+- [GitHub](https://github.com/hazel-js/hazeljs)
+- [Issues](https://github.com/hazel-js/hazeljs/issues)
+- [Discord](https://discord.gg/PxNBPzvQk7)

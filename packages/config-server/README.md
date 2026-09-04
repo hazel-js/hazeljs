@@ -4,22 +4,22 @@
 
 Spring Cloud Config for TypeScript: clone a config repo, overlay `application` + `{app}` + `{profile}` files, decrypt `{cipher}` secrets, serve over HTTP, and pull updates on demand.
 
+Use `@hazeljs/config` for local `.env` / schema validation. Use **this package** when many services should read the same Git repo.
+
 [![npm version](https://img.shields.io/npm/v/@hazeljs/config-server.svg)](https://www.npmjs.com/package/@hazeljs/config-server)
 [![npm downloads](https://img.shields.io/npm/dm/@hazeljs/config-server)](https://www.npmjs.com/package/@hazeljs/config-server)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 
-Use `@hazeljs/config` for local `.env` / schema validation. Use **this package** when many services should read the same Git repo.
-
 ## Features
 
-- Git clone / fetch / checkout by **label** (branch or tag)
-- Search paths with `{application}`, `{profile}`, `{label}`
-- Override order: `application` → `application-{profile}` → `{app}` → `{app}-{profile}`
-- YAML, JSON, `.properties`, `.env`
-- AES-256-GCM `{cipher}v1:...` (passphrase or key file — not a Java keystore)
-- HTTP API: `GET /{application}/{profile}/{label}`, `/refresh`, `/encrypt`, `/decrypt`, `/audit`
-- Client with `refresh()` and `@ConfigValue({ refresh: true })`
-- Audit trail of clone, resolve, encrypt, and fetch
+- 🌿 **Git-backed** - Clone, fetch, and checkout by label (branch or tag)
+- 📂 **Search paths** - `{application}`, `{profile}`, `{label}` placeholders
+- 📚 **Overlay order** - `application` → `application-{profile}` → `{app}` → `{app}-{profile}`
+- 📄 **Multiple formats** - YAML, JSON, `.properties`, `.env`
+- 🔐 **AES-256-GCM secrets** - `{cipher}v1:...` with passphrase or key file
+- 🌐 **HTTP API** - Resolve, refresh, encrypt, decrypt, health, audit
+- 🔄 **Hot refresh** - `ConfigClient.refresh()` and `@ConfigValue({ refresh: true })`
+- 📋 **Audit trail** - Clone, resolve, encrypt, and fetch events
 
 ## Installation
 
@@ -27,22 +27,11 @@ Use `@hazeljs/config` for local `.env` / schema validation. Use **this package**
 npm install @hazeljs/config-server
 ```
 
-The server shells out to `git`. Clients only need HTTP.
+The server shells out to `git`. HTTP clients do not need a Git binary.
 
-## Config repo layout
+## Quick Start
 
-```
-application.yml                 # shared defaults
-application-prod.yml            # shared prod overlay
-user-service.yml
-user-service-prod.yml
-configs/user-service/prod/      # optional searchPath
-  extra.yml
-```
-
-Later files win. Nested keys work with dotted getters: `database.url`.
-
-## Run a server
+### 1. Run a server
 
 ```typescript
 import { ConfigServer } from '@hazeljs/config-server';
@@ -66,7 +55,7 @@ await server.start();
 
 HTTPS Git: set `git.username` + `git.password` (PAT). Local path or `file://` also works.
 
-Decorator form (stores options for `forRoot`):
+### 2. Decorator / module form
 
 ```typescript
 import { EnableConfigServer, ConfigServerModule } from '@hazeljs/config-server';
@@ -84,32 +73,7 @@ ConfigServerModule.forRoot({
 });
 ```
 
-## HTTP API
-
-| Method | Path                               | Purpose                                            |
-| ------ | ---------------------------------- | -------------------------------------------------- |
-| GET    | `/{application}/{profile}`         | Merged environment (`profile` may be `prod,cloud`) |
-| GET    | `/{application}/{profile}/{label}` | Same, pinned to a Git ref                          |
-| POST   | `/refresh`                         | `git fetch` + checkout                             |
-| POST   | `/encrypt`                         | plaintext → `{cipher}v1:...`                       |
-| POST   | `/decrypt`                         | cipher → plaintext                                 |
-| GET    | `/health`                          | liveness + current SHA                             |
-| GET    | `/audit`                           | recent config events                               |
-
-Response shape:
-
-```json
-{
-  "name": "user-service",
-  "profiles": ["prod"],
-  "label": "main",
-  "version": "abc123...",
-  "propertySources": [{ "name": "application.yml", "source": {} }],
-  "config": { "database": { "url": "postgres://..." } }
-}
-```
-
-## Client
+### 3. Pull config from a client
 
 ```typescript
 import { ConfigClient, ConfigValue } from '@hazeljs/config-server';
@@ -140,6 +104,44 @@ class AppConfig {
 
 In-process (no HTTP), pass `server` instead of `uri`.
 
+## Config Repo Layout
+
+```
+application.yml                 # shared defaults
+application-prod.yml            # shared prod overlay
+user-service.yml
+user-service-prod.yml
+configs/user-service/prod/      # optional searchPath
+  extra.yml
+```
+
+Later files win. Nested keys work with dotted getters: `database.url`.
+
+## HTTP API
+
+| Method | Path                               | Purpose                                            |
+| ------ | ---------------------------------- | -------------------------------------------------- |
+| GET    | `/{application}/{profile}`         | Merged environment (`profile` may be `prod,cloud`) |
+| GET    | `/{application}/{profile}/{label}` | Same, pinned to a Git ref                          |
+| POST   | `/refresh`                         | `git fetch` + checkout                             |
+| POST   | `/encrypt`                         | plaintext → `{cipher}v1:...`                       |
+| POST   | `/decrypt`                         | cipher → plaintext                                 |
+| GET    | `/health`                          | liveness + current SHA                             |
+| GET    | `/audit`                           | recent config events                               |
+
+Response shape:
+
+```json
+{
+  "name": "user-service",
+  "profiles": ["prod"],
+  "label": "main",
+  "version": "abc123...",
+  "propertySources": [{ "name": "application.yml", "source": {} }],
+  "config": { "database": { "url": "postgres://..." } }
+}
+```
+
 ## Encryption
 
 Java `.jks` keystores are JVM-specific. This package uses **AES-256-GCM**. Put the passphrase in `CONFIG_SERVER_ENCRYPT_KEY` or `encryption.keyFile`.
@@ -153,10 +155,31 @@ const cipher = server.encrypt('my-db-password');
 
 Values are decrypted when the environment is served. Do not commit the key next to the ciphertext.
 
-## Native directory (no Git)
+## Native Directory (no Git)
 
 ```typescript
 new ConfigServer({ nativePath: './config-files', port: 8888 });
 ```
 
 Useful in tests and air-gapped images. Production should use `git.uri`.
+
+## Testing
+
+```bash
+npm test
+```
+
+## Contributing
+
+Contributions are welcome! Please read our [Contributing Guide](../../CONTRIBUTING.md) for details.
+
+## License
+
+Apache 2.0 © [HazelJS](https://hazeljs.ai)
+
+## Links
+
+- [Documentation](https://hazeljs.ai/docs/packages/config-server)
+- [GitHub](https://github.com/hazel-js/hazeljs)
+- [Issues](https://github.com/hazel-js/hazeljs/issues)
+- [Discord](https://discord.gg/PxNBPzvQk7)
