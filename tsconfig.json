@@ -61,6 +61,9 @@
       "path": "./packages/config"
     },
     {
+      "path": "./packages/config-server"
+    },
+    {
       "path": "./packages/distributed-lock"
     },
     {
@@ -83,6 +86,12 @@
     },
     {
       "path": "./packages/resilience"
+    },
+    {
+      "path": "./packages/self-healing"
+    },
+    {
+      "path": "./packages/predictive-scaling"
     },
     {
       "path": "./packages/gateway"

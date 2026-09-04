@@ -42,6 +42,7 @@ npm install --save-dev @hazeljs/cli
 # Smaller Agent OS / DNA scaffold (not Meridian)
 hazel agent new my-desk --template=agent-os
 # templates: bare | agent-os | skillgate
+# agent-os includes: DNA + real @Tool app + ops stack (self-healing + predictive-scaling) + K8s manifests
 cd my-desk && npm install && npm run dev
 
 hazel agent install ./packages/support.dna.json
