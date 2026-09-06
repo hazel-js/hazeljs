@@ -86,17 +86,20 @@ const state = await host.inspect();
 Inject `OrganismRepository` via `createOrganism` / `createOpsOrganism({ repository })`.  
 `InMemoryOrganismRepository` is built-in for tests and demos. Production apps implement the interface against their database.
 
-Use `OrganismHostRegistry` to reuse live hosts by id instead of keeping a parallel `Map` in the product layer:
+**Repository is durable truth; registry is a warm cache.** When `createOpsOrganism({ id, repository })` runs and the repository already has that organism, the runtime **restores** the persisted record and agents (pool, status, capability index) instead of creating a greenfield society. That lets multiple process replicas hydrate the same organism without sticky routing.
+
+Use `OrganismHostRegistry` to reuse live hosts by id within a process:
 
 ```ts
 import { OrganismHostRegistry, createOpsOrganism } from '@hazeljs/organism';
 
 const registry = new OrganismHostRegistry();
 const host = await registry.getOrCreate(existingId, () =>
-  createOpsOrganism({ /* ... */, repository })
+  createOpsOrganism({ id: existingId, /* ... */, repository })
 );
 ```
 
+On a registry miss (new replica), the factory hydrates from `repository` when the id already exists.
 ## Simulation
 
 ```ts

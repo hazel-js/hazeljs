@@ -6,7 +6,9 @@
 import {
   AgentRuntime,
   PolicyEngine,
+  createAgentClassFromDna,
   createMockLlmProvider,
+  exportAgentDna,
   type LLMProvider,
 } from '@hazeljs/agent';
 import type {
@@ -235,6 +237,21 @@ export class OrganismRuntime {
   }
 
   private async initialize(options: CreateOrganismOptions): Promise<void> {
+    const existing = options.id ? await this.repo.getOrganism(this.id) : undefined;
+
+    if (existing) {
+      this.record = normalizeOrganismRecord(existing);
+      this.wireEngines(this.record.constitution, options);
+      await this.hydrateAgentsFromRepository();
+      await this.events.emit(OrganismEventType.ORGANISM_RESTORED, this.id, {
+        missionId: this.record.mission.id,
+        objective: this.record.mission.objective,
+        agentCount: this.agentCache.size,
+      });
+      this.log(`[ORGANISM] Restored ${this.id} with ${this.agentCache.size} agents`);
+      return;
+    }
+
     const mission = resolveMission(options.mission);
     const genes = (options.genes ?? []).map(resolveGene);
     const environment = options.environment ? resolveEnvironment(options.environment) : undefined;
@@ -282,6 +299,19 @@ export class OrganismRuntime {
       emergencyStopped: false,
     };
 
+    this.wireEngines(constitution, options);
+
+    await this.repo.saveOrganism(this.record);
+    await this.events.emit(OrganismEventType.ORGANISM_CREATED, this.id, {
+      missionId: mission.id,
+      objective: mission.objective,
+    });
+  }
+
+  private wireEngines(
+    constitution: ConstitutionDefinition | undefined,
+    options: CreateOrganismOptions
+  ): void {
     this.constitutionEnforcer = new ConstitutionEnforcer(constitution, this.events, this.id);
     const policyRules = this.constitutionEnforcer.toPolicyRules();
     if (policyRules.length) {
@@ -332,12 +362,44 @@ export class OrganismRuntime {
       { ...DEFAULT_UTILITY_WEIGHTS },
       () => this.clock.now()
     );
+  }
 
-    await this.repo.saveOrganism(this.record);
-    await this.events.emit(OrganismEventType.ORGANISM_CREATED, this.id, {
-      missionId: mission.id,
-      objective: mission.objective,
-    });
+  /** Rebuild agent cache + capability index from durable repository (multi-replica hydrate). */
+  private async hydrateAgentsFromRepository(): Promise<void> {
+    const agents = await this.repo.listAgents(this.id);
+    for (const raw of agents) {
+      const agent = normalizeAgentRecord(raw);
+      this.agentCache.set(agent.id, agent);
+      this.capabilities.register(agent.id, agent.capabilities);
+      this.reregisterAgentDna(agent);
+    }
+  }
+
+  private reregisterAgentDna(agent: RuntimeAgentRecord): void {
+    if (!this.agentRuntime || !agent.dnaAgentName) return;
+    try {
+      const dna = exportAgentDna({
+        name: agent.dnaAgentName,
+        description: agent.objective,
+        systemPrompt:
+          agent.systemPrompt ??
+          `You are ${agent.dnaAgentName}. Objective: ${agent.objective}. Capabilities: ${agent.capabilities.join(', ')}.`,
+        tools: [],
+        mission: { goal: agent.objective },
+        metadata: {
+          capabilities: agent.capabilities,
+          organismId: this.id,
+          geneId: agent.geneId,
+          needId: agent.birthProposal?.needId,
+          terminationCriteria: agent.terminationCriteria,
+        },
+        version: '1.0.0',
+      });
+      const AgentClass = createAgentClassFromDna(dna);
+      this.agentRuntime.registerAgent(AgentClass);
+    } catch {
+      // DNA re-registration is best-effort; observe/spawn still work via capabilities.
+    }
   }
 
   get status(): OrganismRecord['status'] {
@@ -1275,6 +1337,29 @@ export class OrganismRuntime {
     this.record.updatedAt = this.clock.now();
     await this.repo.saveOrganism(this.record);
   }
+}
+
+function asDate(value: Date | string): Date {
+  return value instanceof Date ? value : new Date(value);
+}
+
+function normalizeOrganismRecord(record: OrganismRecord): OrganismRecord {
+  return {
+    ...record,
+    createdAt: asDate(record.createdAt),
+    updatedAt: asDate(record.updatedAt),
+  };
+}
+
+function normalizeAgentRecord(agent: RuntimeAgentRecord): RuntimeAgentRecord {
+  return {
+    ...agent,
+    createdAt: asDate(agent.createdAt),
+    terminatedAt: agent.terminatedAt ? asDate(agent.terminatedAt) : undefined,
+    lastEvaluatedAt: agent.lastEvaluatedAt ? asDate(agent.lastEvaluatedAt) : undefined,
+    lastReproductionAt: agent.lastReproductionAt ? asDate(agent.lastReproductionAt) : undefined,
+    lastMutationAt: agent.lastMutationAt ? asDate(agent.lastMutationAt) : undefined,
+  };
 }
 
 export type SurvivalReport = import('../lifecycle/survival-engine').SurvivalVerdict;

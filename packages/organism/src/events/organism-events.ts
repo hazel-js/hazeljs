@@ -4,6 +4,7 @@
 
 export enum OrganismEventType {
   ORGANISM_CREATED = 'organism.created',
+  ORGANISM_RESTORED = 'organism.restored',
   ORGANISM_STARTED = 'organism.started',
   ORGANISM_PAUSED = 'organism.paused',
   ORGANISM_RESUMED = 'organism.resumed',

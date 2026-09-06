@@ -106,4 +106,57 @@ describe('organism embedding boilerplate', () => {
     await a.terminate();
     registry.clear();
   });
+
+  it('restores organism record and agents from shared repository', async () => {
+    const { InMemoryOrganismRepository } = await import('../persistence/organism-repository');
+    const repo = new InMemoryOrganismRepository();
+
+    const first = await createOpsOrganism({
+      id: 'org_restore',
+      mission: { id: 'm', objective: 'Keep ops healthy' },
+      genes: [{ id: 'g', capabilities: ['operations', 'analytics'] }],
+      signalNeedMappings: [
+        {
+          signalType: 'refunds.increased',
+          need: 'refund-analysis',
+          requiredCapabilities: ['analytics', 'operations'],
+          urgency: 0.9,
+          confidence: 0.9,
+        },
+      ],
+      repository: repo,
+      simulation: true,
+    });
+    await first.start();
+    await first.observe(
+      toEnvironmentSignal({
+        type: 'refunds.increased',
+        source: 'test',
+        severity: 0.9,
+        data: {},
+      })
+    );
+    const before = await first.inspect();
+    expect(before.agents.length).toBeGreaterThanOrEqual(1);
+    const agentIds = before.agents.map((a) => a.id).sort();
+    const tokensBefore = first.runtime.getRecord().pool.tokensRemaining;
+
+    // Simulate another replica: empty local registry, same durable repo.
+    const second = await createOpsOrganism({
+      id: 'org_restore',
+      mission: { id: 'm', objective: 'Keep ops healthy' },
+      genes: [{ id: 'g', capabilities: ['operations', 'analytics'] }],
+      repository: repo,
+      simulation: true,
+    });
+    await second.start();
+    const after = await second.inspect();
+    expect(after.agents.map((a) => a.id).sort()).toEqual(agentIds);
+    expect(second.runtime.getRecord().pool.tokensRemaining).toBe(tokensBefore);
+    expect(second.runtime.getRecord().status === 'operating' || after.status === 'operating').toBe(
+      true
+    );
+
+    await second.terminate();
+  });
 });
