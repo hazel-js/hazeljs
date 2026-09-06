@@ -100,6 +100,7 @@ const host = await registry.getOrCreate(existingId, () =>
 ```
 
 On a registry miss (new replica), the factory hydrates from `repository` when the id already exists.
+
 ## Simulation
 
 ```ts
