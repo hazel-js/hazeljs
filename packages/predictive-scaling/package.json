@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/predictive-scaling",
-  "version": "2.0.6",
+  "version": "2.0.7",
   "description": "Predictive auto-scaling for HazelJS - traffic forecasting, proactive HPA adjustments, and event-driven scaling",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -20,9 +20,9 @@
     "reflect-metadata": "^0.2.2"
   },
   "peerDependencies": {
-    "@hazeljs/core": "^2.0.6",
-    "@hazeljs/self-healing": "^2.0.6",
-    "@hazeljs/ai": "^2.0.6"
+    "@hazeljs/core": "^2.0.7",
+    "@hazeljs/self-healing": "^2.0.7",
+    "@hazeljs/ai": "^2.0.7"
   },
   "peerDependenciesMeta": {
     "@hazeljs/self-healing": {
@@ -33,9 +33,9 @@
     }
   },
   "devDependencies": {
-    "@hazeljs/core": "^2.0.6",
-    "@hazeljs/self-healing": "^2.0.6",
-    "@hazeljs/ai": "^2.0.6",
+    "@hazeljs/core": "^2.0.7",
+    "@hazeljs/self-healing": "^2.0.7",
+    "@hazeljs/ai": "^2.0.7",
     "@types/jest": "^29.5.14",
     "@types/node": "^20.19.39",
     "@typescript-eslint/eslint-plugin": "^8.58.0",

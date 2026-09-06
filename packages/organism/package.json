@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/organism",
-  "version": "2.0.6",
+  "version": "2.0.7",
   "description": "Agentic Organism Runtime for HazelJS — mission-defined, self-organizing ephemeral agent societies",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -36,8 +36,8 @@
     "access": "public"
   },
   "devDependencies": {
-    "@hazeljs/agent": "^2.0.6",
-    "@hazeljs/core": "^2.0.6",
+    "@hazeljs/agent": "^2.0.7",
+    "@hazeljs/core": "^2.0.7",
     "@types/jest": "^29.5.14",
     "@types/node": "^20.19.39",
     "jest": "^29.7.0",
@@ -46,10 +46,10 @@
     "typescript": "^6.0.3"
   },
   "peerDependencies": {
-    "@hazeljs/agent": "^2.0.6",
-    "@hazeljs/core": "^2.0.6",
-    "@hazeljs/agent-gatekeeper": "^2.0.6",
-    "@hazeljs/observability": "^2.0.6",
+    "@hazeljs/agent": "^2.0.7",
+    "@hazeljs/core": "^2.0.7",
+    "@hazeljs/agent-gatekeeper": "^2.0.7",
+    "@hazeljs/observability": "^2.0.7",
     "@opentelemetry/api": "^1.9.0"
   },
   "peerDependenciesMeta": {
