@@ -73,13 +73,13 @@ const state = await host.inspect();
 ## Boundary rules
 
 | Belongs in `@hazeljs/organism` | Belongs in the product (e.g. Zynli) |
-|--------------------------------|-------------------------------------|
-| Mission, genes, need detection | Vertical incident detectors |
-| Spawn / reuse / specialize | Semantic action catalogs |
-| Constitution enforcement | Business policy / approvals |
-| Utility, reputation, survival | Tenancy (`tenantId`, `businessId`) |
-| `simulate()` | Integration adapters (Woo, PMS) |
-| `OrganismRepository` | Product DB for incidents/approvals |
+| ------------------------------ | ----------------------------------- |
+| Mission, genes, need detection | Vertical incident detectors         |
+| Spawn / reuse / specialize     | Semantic action catalogs            |
+| Constitution enforcement       | Business policy / approvals         |
+| Utility, reputation, survival  | Tenancy (`tenantId`, `businessId`)  |
+| `simulate()`                   | Integration adapters (Woo, PMS)     |
+| `OrganismRepository`           | Product DB for incidents/approvals  |
 
 ## Persistence
 
@@ -102,9 +102,7 @@ const host = await registry.getOrCreate(existingId, () =>
 ```ts
 await host.simulate({
   duration: '7d',
-  signals: [
-    { type: 'room.not_ready', source: 'pms', severity: 0.8, data: {} },
-  ],
+  signals: [{ type: 'room.not_ready', source: 'pms', severity: 0.8, data: {} }],
 });
 ```
 

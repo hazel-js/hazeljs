@@ -10,7 +10,13 @@ import { createOrganism } from '@hazeljs/organism';
 const organism = await createOrganism({
   mission: { id: 'ops', objective: 'Operate support profitably' },
   genes: [{ id: 'support', capabilities: ['customer-support'] }],
-  limits: { maxAgents: 10, maxGenerationDepth: 3, maxChildrenPerAgent: 3, maxSpawnRatePerMinute: 5, maxTotalCostPerHour: 10 },
+  limits: {
+    maxAgents: 10,
+    maxGenerationDepth: 3,
+    maxChildrenPerAgent: 3,
+    maxSpawnRatePerMinute: 5,
+    maxTotalCostPerHour: 10,
+  },
 });
 
 await organism.start();

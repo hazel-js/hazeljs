@@ -123,15 +123,15 @@ class StoreOrganism {}
 
 ## Core Concepts
 
-| Term | Meaning |
-|------|---------|
-| **Mission** | What the organism is trying to achieve |
-| **Organism** | Autonomous runtime pursuing the mission |
-| **Gene** | Reusable capability template for spawning agents |
-| **Agent** | Ephemeral worker created inside the organism |
-| **Environment** | External signals the organism observes |
-| **Constitution** | Rules no agent may override |
-| **Economy** | Finite token / money / tool budgets |
+| Term             | Meaning                                          |
+| ---------------- | ------------------------------------------------ |
+| **Mission**      | What the organism is trying to achieve           |
+| **Organism**     | Autonomous runtime pursuing the mission          |
+| **Gene**         | Reusable capability template for spawning agents |
+| **Agent**        | Ephemeral worker created inside the organism     |
+| **Environment**  | External signals the organism observes           |
+| **Constitution** | Rules no agent may override                      |
+| **Economy**      | Finite token / money / tool budgets              |
 
 ## Safety Defaults
 

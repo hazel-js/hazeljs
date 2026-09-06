@@ -112,9 +112,11 @@ const SIGNAL_MAPPINGS = [
   },
 ];
 
-export async function runEcommerceOrganismDemo(opts: {
-  log?: (line: string) => void;
-} = {}): Promise<void> {
+export async function runEcommerceOrganismDemo(
+  opts: {
+    log?: (line: string) => void;
+  } = {}
+): Promise<void> {
   resetAgentSeqForTests();
   const log = opts.log ?? ((line: string) => console.log(line));
 
