@@ -147,6 +147,7 @@
     { "path": "./packages/benchmark" },
     { "path": "./packages/testing" },
     { "path": "./packages/agent-gatekeeper" },
-    { "path": "./packages/agent-vm" }
+    { "path": "./packages/agent-vm" },
+    { "path": "./packages/organism" }
   ]
 }

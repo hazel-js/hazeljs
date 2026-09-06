@@ -305,6 +305,26 @@ export const gatekeeper = new AgentGatekeeper({
 `,
   },
   {
+    shortName: 'organism',
+    npm: '@hazeljs/organism',
+    label: 'Agentic Organism Runtime (@hazeljs/organism)',
+    hint: 'import { createOrganism, OrganismRuntime } from "@hazeljs/organism";\n  // const organism = await createOrganism({ mission, genes, constitution })',
+    moduleImport: null,
+    moduleExpression: null,
+    setupTemplate: `import { createOrganism } from '@hazeljs/organism';
+
+export async function startOrganism() {
+  const organism = await createOrganism({
+    mission: { id: 'ops', objective: 'Operate within budget and constraints' },
+    genes: [],
+    limits: { maxAgents: 10, maxGenerationDepth: 3 },
+  });
+  await organism.start();
+  return organism;
+}
+`,
+  },
+  {
     shortName: 'pdf-to-audio',
     npm: '@hazeljs/pdf-to-audio',
     label: 'PDF to Audio (@hazeljs/pdf-to-audio)',

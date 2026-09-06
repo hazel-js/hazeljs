@@ -154,7 +154,7 @@ Wire real \`@Tool\` / Skillgate handlers in your Hazel app for production behavi
   };
 }
 
-function agentOsOpsFiles(npm: string, projectName: string): Record<string, string> {
+function agentOsOpsFiles(npm: string, _projectName: string): Record<string, string> {
   const deployment = npm;
   const hpaName = `${npm}-hpa`;
 

@@ -59,6 +59,7 @@ import { registerAgentCommand } from './commands/agent';
 import { registerSkillgateCommand } from './commands/skillgate';
 import { registerGatekeeperCommand } from './commands/gatekeeper';
 import { registerStoreCommand } from './commands/store';
+import { registerOrganismCommand } from './commands/organism';
 
 // Read version from package.json to ensure consistency
 const packageJson = JSON.parse(readFileSync(join(__dirname, '../package.json'), 'utf8'));
@@ -82,6 +83,7 @@ registerAgentCommand(program);
 registerSkillgateCommand(program);
 registerGatekeeperCommand(program);
 registerStoreCommand(program);
+registerOrganismCommand(program);
 
 // Generate command group (unified: hazel g <type> <name> [--path] [--dry-run] [--json], or hazel g --list)
 const generateCommand = program

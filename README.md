@@ -464,6 +464,7 @@ Do **not** add `reflect-metadata` to your app. `@hazeljs/core` installs and load
 | `@hazeljs/skillgate`        | OpenAPI / REST → governed skills (allowlist, classify, approval)            |
 | `@hazeljs/agent-gatekeeper` | Fail-closed authorization on every tool call                                |
 | `@hazeljs/agent-vm`         | Reversible tools, speculative branches, atomic undo                         |
+| `@hazeljs/organism`         | Mission-defined self-organizing agent societies (Agentic Organism Runtime)  |
 | `@hazeljs/testing`          | `describeAgent` CI suites (latency / cost / tools)                          |
 | `@hazeljs/eval`             | Golden datasets, RAG + trajectory metrics                                   |
 | `@hazeljs/benchmark`        | Benchmark suites + regression compare (`hazel benchmark`)                   |
@@ -520,7 +521,7 @@ Competitor libraries excel at orchestration graphs. HazelJS differentiates on **
 - **[Skillgate](https://hazeljs.ai/docs/guides/skillgate)** — OpenAPI → governed skills
 - **[Quick Start](./QUICKSTART.md)** · **[Troubleshooting](./TROUBLESHOOTING.md)** · **[Contributing](./CONTRIBUTING.md)**
 - **[Meridian](https://github.com/hazel-js/hazeljs-meridian-ops)** — flagship teaching app
-- Package READMEs: [`agent`](./packages/agent) · [`skillgate`](./packages/skillgate) · [`agent-vm`](./packages/agent-vm) · [`agent-gatekeeper`](./packages/agent-gatekeeper) · [`testing`](./packages/testing) · [`mcp`](./packages/mcp)
+- Package READMEs: [`agent`](./packages/agent) · [`skillgate`](./packages/skillgate) · [`agent-vm`](./packages/agent-vm) · [`agent-gatekeeper`](./packages/agent-gatekeeper) · [`organism`](./packages/organism) · [`testing`](./packages/testing) · [`mcp`](./packages/mcp)
 
 Hosted DNA marketplace and fleet remain product layers. File-backed Store + local apply is what you use today.
 

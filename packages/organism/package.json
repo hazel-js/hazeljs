@@ -1,0 +1,73 @@
+{
+  "name": "@hazeljs/organism",
+  "version": "2.0.6",
+  "description": "Agentic Organism Runtime for HazelJS — mission-defined, self-organizing ephemeral agent societies",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc --build",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "jest --coverage --passWithNoTests",
+    "test:watch": "jest --watch",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "format:check": "prettier --check \"src/**/*.ts\"",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "hazeljs",
+    "organism",
+    "agent",
+    "multi-agent",
+    "agentic",
+    "mission",
+    "self-organizing",
+    "agent-os"
+  ],
+  "author": "Muhammad Arslan <muhammad.arslan@hazeljs.ai>",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hazel-js/hazeljs",
+    "directory": "packages/organism"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "devDependencies": {
+    "@hazeljs/agent": "^2.0.6",
+    "@hazeljs/core": "^2.0.6",
+    "@types/jest": "^29.5.14",
+    "@types/node": "^20.19.39",
+    "jest": "^29.7.0",
+    "prettier": "^3.8.1",
+    "ts-jest": "^29.4.9",
+    "typescript": "^6.0.3"
+  },
+  "peerDependencies": {
+    "@hazeljs/agent": "^2.0.6",
+    "@hazeljs/core": "^2.0.6",
+    "@hazeljs/agent-gatekeeper": "^2.0.6",
+    "@hazeljs/observability": "^2.0.6",
+    "@opentelemetry/api": "^1.9.0"
+  },
+  "peerDependenciesMeta": {
+    "@hazeljs/agent-gatekeeper": {
+      "optional": true,
+      "description": "Optional tool authorization / human approval gates"
+    },
+    "@hazeljs/observability": {
+      "optional": true,
+      "description": "Optional OpenTelemetry integration"
+    },
+    "@opentelemetry/api": {
+      "optional": true,
+      "description": "OpenTelemetry API for organism metrics"
+    }
+  },
+  "bugs": {
+    "url": "https://github.com/hazel-js/hazeljs/issues"
+  },
+  "homepage": "https://hazeljs.ai"
+}
