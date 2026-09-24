@@ -1026,6 +1026,100 @@
       ]
     },
     {
+      "name": "decision",
+      "usage": "hazel decision <command>",
+      "description": "Decision Runtime — run, compare, and project governed decisions (@hazeljs/decision)",
+      "subcommands": [
+        {
+          "name": "run",
+          "usage": "hazel decision run [--state state.json] [--choices retry,rollback] [--risk high]",
+          "description": "Run a governed decision (never executes capabilities unless --execute)",
+          "options": [
+            {
+              "name": "name",
+              "type": "string",
+              "default": "incident-remediation",
+              "description": "Decision definition name"
+            },
+            { "name": "objective", "type": "string", "description": "Decision objective" },
+            { "name": "state", "type": "string", "description": "JSON state file" },
+            {
+              "name": "choices",
+              "type": "string",
+              "default": "retry,rollback,escalate,ignore",
+              "description": "Comma-separated choices"
+            },
+            { "name": "risk", "type": "string", "default": "high", "description": "Risk level" },
+            {
+              "name": "provider",
+              "type": "string",
+              "default": "hazel-agent",
+              "description": "Provider name"
+            },
+            {
+              "name": "strategy",
+              "type": "string",
+              "default": "auto",
+              "description": "Execution strategy"
+            },
+            {
+              "name": "execute",
+              "type": "boolean",
+              "description": "Request capability execution (still subject to Gatekeeper)"
+            },
+            { "name": "json", "type": "boolean", "description": "Print raw JSON" }
+          ]
+        },
+        {
+          "name": "compare",
+          "usage": "hazel decision compare [--providers hazel-agent,mock]",
+          "description": "Shadow-compare providers (never executes capabilities)",
+          "options": [
+            {
+              "name": "providers",
+              "type": "string",
+              "default": "hazel-agent,mock",
+              "description": "Comma-separated providers"
+            },
+            { "name": "state", "type": "string", "description": "JSON state file" },
+            { "name": "risk", "type": "string", "default": "high", "description": "Risk level" },
+            { "name": "json", "type": "boolean", "description": "Print raw JSON" }
+          ]
+        },
+        {
+          "name": "flow",
+          "usage": "hazel decision flow [--risk high] [--strategy auto]",
+          "description": "Project decision pipeline as a Flow-shaped graph (no execution)",
+          "options": [
+            { "name": "risk", "type": "string", "default": "high", "description": "Risk level" },
+            {
+              "name": "strategy",
+              "type": "string",
+              "default": "auto",
+              "description": "Strategy override"
+            },
+            { "name": "json", "type": "boolean", "description": "Print raw JSON" }
+          ]
+        },
+        {
+          "name": "lab",
+          "usage": "hazel decision lab [--state state.json]",
+          "description": "Decision Lab: run once and print pipeline graph",
+          "options": [
+            { "name": "state", "type": "string", "description": "JSON state file" },
+            { "name": "risk", "type": "string", "default": "high", "description": "Risk level" },
+            {
+              "name": "provider",
+              "type": "string",
+              "default": "hazel-agent",
+              "description": "Provider"
+            },
+            { "name": "json", "type": "boolean", "description": "Print raw JSON" }
+          ]
+        }
+      ]
+    },
+    {
       "name": "install",
       "usage": "hazel install <spec> [--cwd <dir>] [--registry <dir>]",
       "description": "Alias for hazel store install",

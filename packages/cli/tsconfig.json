@@ -18,7 +18,8 @@
       "@hazeljs/agent": ["../agent/src/index.ts"],
       "@hazeljs/benchmark": ["../benchmark/src/index.ts"],
       "@hazeljs/skillgate": ["../skillgate/src/index.ts"],
-      "@hazeljs/agent-gatekeeper": ["../agent-gatekeeper/src/index.ts"]
+      "@hazeljs/agent-gatekeeper": ["../agent-gatekeeper/src/index.ts"],
+      "@hazeljs/decision": ["../decision/src/index.ts"]
     }
   },
   "include": ["src/**/*"],
@@ -28,6 +29,7 @@
     { "path": "../agent" },
     { "path": "../benchmark" },
     { "path": "../skillgate" },
-    { "path": "../agent-gatekeeper" }
+    { "path": "../agent-gatekeeper" },
+    { "path": "../decision" }
   ]
 }

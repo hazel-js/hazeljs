@@ -58,6 +58,7 @@ import { registerBenchmarkCommand } from './commands/benchmark';
 import { registerAgentCommand } from './commands/agent';
 import { registerSkillgateCommand } from './commands/skillgate';
 import { registerGatekeeperCommand } from './commands/gatekeeper';
+import { registerDecisionCommand } from './commands/decision';
 import { registerStoreCommand } from './commands/store';
 import { registerOrganismCommand } from './commands/organism';
 
@@ -82,6 +83,7 @@ registerBenchmarkCommand(program);
 registerAgentCommand(program);
 registerSkillgateCommand(program);
 registerGatekeeperCommand(program);
+registerDecisionCommand(program);
 registerStoreCommand(program);
 registerOrganismCommand(program);
 

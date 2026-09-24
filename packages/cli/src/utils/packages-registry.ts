@@ -325,6 +325,28 @@ export async function startOrganism() {
 `,
   },
   {
+    shortName: 'decision',
+    npm: '@hazeljs/decision',
+    label: 'Decision Runtime - native Agent OS decisions (@hazeljs/decision)',
+    hint: 'import { createDecisionRuntime } from "@hazeljs/decision";\n  // await decisions.decide({ objective, state, choices: [...] as const })',
+    moduleImport: null,
+    moduleExpression: null,
+    setupTemplate: `import { createDecisionRuntime } from '@hazeljs/decision';
+
+export async function decideIncident() {
+  const decisions = createDecisionRuntime();
+  return decisions.decide({
+    name: 'incident-remediation',
+    objective: 'Choose the safest production remediation',
+    state: { errorRate: 0.38 },
+    choices: ['retry', 'rollback', 'escalate', 'ignore'] as const,
+    risk: 'high',
+    provider: 'hazel-agent',
+  });
+}
+`,
+  },
+  {
     shortName: 'pdf-to-audio',
     npm: '@hazeljs/pdf-to-audio',
     label: 'PDF to Audio (@hazeljs/pdf-to-audio)',

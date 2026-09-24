@@ -49,6 +49,95 @@ export interface AgentDnaSchedule {
   timezone?: string;
 }
 
+/** Risk level for a declared decision (trusted config — never model-authored). */
+export type AgentDnaDecisionRiskLevel = 'low' | 'medium' | 'high' | 'critical';
+
+export type AgentDnaDecisionStrategyMode =
+  | 'auto'
+  | 'fast'
+  | 'standard'
+  | 'deliberate'
+  | 'human-required'
+  | 'rules';
+
+export type AgentDnaDecisionPolicyAction =
+  | 'allow'
+  | 'deny'
+  | 'critique'
+  | 'review'
+  | 'escalate'
+  | 'fallback';
+
+/** Declarative Decision DNA nested under an Agent DNA document. */
+export interface AgentDnaDecision {
+  /** Semantic version of this decision definition (e.g. "3"). */
+  version?: string;
+  objective: string;
+  choices: string[];
+  risk?:
+    | AgentDnaDecisionRiskLevel
+    | {
+        level: AgentDnaDecisionRiskLevel;
+        impact?: string;
+        reversible?: boolean;
+      };
+  strategy?:
+    | AgentDnaDecisionStrategyMode
+    | {
+        mode: AgentDnaDecisionStrategyMode;
+      };
+  provider?: string;
+  /** Confidence band thresholds (heuristic / ensemble — not calibrated by default). */
+  confidence?: {
+    high?: number;
+    medium?: number;
+  };
+  /** Deterministic post-decision policy rules (evaluated in code, not by a model). */
+  policy?: Array<{
+    when?: {
+      risk?: AgentDnaDecisionRiskLevel;
+      confidence?: { gte?: number; lt?: number; lte?: number; gt?: number };
+    };
+    action: AgentDnaDecisionPolicyAction;
+  }>;
+  /** Required evidence keys / state paths (missing → evidence gaps). */
+  evidence?: {
+    required?: string[];
+    projections?: Array<{
+      key: string;
+      from: string;
+      /** Optional transform: delta vs another path, ratio, or boolean threshold. */
+      transform?:
+        | { type: 'value' }
+        | { type: 'delta'; against: string }
+        | { type: 'ratio'; against: string }
+        | { type: 'boolean'; gte?: number; gt?: number; lte?: number; lt?: number };
+      relevance?: number;
+    }>;
+  };
+  /** Weighted evidence keys that support each candidate (offline scoring). */
+  scoring?: Record<
+    string,
+    Array<{ evidenceKey: string; weight: number; when?: 'present' | 'truthy' | 'gt0' }>
+  >;
+  /** Tie-break preference when candidate scores are equal. */
+  onTie?: string;
+  /** Map choice → capability / HITL. */
+  execution?: Record<
+    string,
+    {
+      capability?: string;
+      hitl?: boolean;
+    }
+  >;
+  slo?: {
+    p95LatencyMs?: number;
+    maxReviewRate?: number;
+    maxFailureRate?: number;
+  };
+  metadata?: Record<string, unknown>;
+}
+
 export interface AgentDna {
   format: 'hazeljs.agent.dna';
   version: string;
@@ -71,6 +160,11 @@ export interface AgentDna {
   memory?: AgentDnaMemory;
   slo?: AgentDnaSlo;
   schedule?: AgentDnaSchedule;
+  /**
+   * Optional Decision DNA map (name → definition).
+   * Consumed by `@hazeljs/decision`. Omitted documents remain valid.
+   */
+  decisions?: Record<string, AgentDnaDecision>;
 }
 
 export interface MarketplaceAgentPackage {
@@ -99,6 +193,7 @@ export function exportAgentDna(input: {
   memory?: AgentDnaMemory;
   slo?: AgentDnaSlo;
   schedule?: AgentDnaSchedule;
+  decisions?: Record<string, AgentDnaDecision>;
 }): AgentDna {
   const missionGoal = input.mission?.goal;
   return {
@@ -122,6 +217,7 @@ export function exportAgentDna(input: {
     memory: input.memory,
     slo: input.slo,
     schedule: input.schedule,
+    decisions: input.decisions,
   };
 }
 

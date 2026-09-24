@@ -1,0 +1,26 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "composite": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "paths": {
+      "@hazeljs/agent": ["../agent/src"],
+      "@hazeljs/agent-gatekeeper": ["../agent-gatekeeper/src"],
+      "@hazeljs/skillgate": ["../skillgate/src"],
+      "@hazeljs/core": ["../core/src"]
+    },
+    "types": ["jest", "node", "reflect-metadata"]
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "**/*.test.ts", "tests", "examples"],
+  "references": [
+    { "path": "../agent" },
+    { "path": "../agent-gatekeeper" },
+    { "path": "../skillgate" },
+    { "path": "../core" }
+  ]
+}

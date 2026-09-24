@@ -35,7 +35,8 @@
     "@hazeljs/benchmark": "^2.0.7",
     "@hazeljs/agent": "^2.0.7",
     "@hazeljs/skillgate": "^2.0.7",
-    "@hazeljs/agent-gatekeeper": "^2.0.7"
+    "@hazeljs/agent-gatekeeper": "^2.0.7",
+    "@hazeljs/decision": "^2.0.7"
   },
   "peerDependenciesMeta": {
     "@hazeljs/eval": {
@@ -52,6 +53,9 @@
     },
     "@hazeljs/agent-gatekeeper": {
       "optional": true
+    },
+    "@hazeljs/decision": {
+      "optional": true
     }
   },
   "devDependencies": {
@@ -60,6 +64,7 @@
     "@hazeljs/agent": "^2.0.7",
     "@hazeljs/skillgate": "^2.0.7",
     "@hazeljs/agent-gatekeeper": "^2.0.7",
+    "@hazeljs/decision": "^2.0.7",
     "@types/inquirer": "^8.2.10",
     "@types/mustache": "^4.2.5",
     "typescript": "^6.0.3"
