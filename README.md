@@ -80,7 +80,7 @@ Define → Run → Decide → Govern → Survive
 
 ### Option 1: Meridian (Agent OS flagship)
 
-The teaching app for DNA, Store, Decision, Skillgate, HITL, and local apply.
+The teaching app for DNA, Store, Decision (`POST /api/decision/refund`), Skillgate, HITL, and local apply.
 
 ```bash
 git clone https://github.com/hazel-js/hazeljs-meridian-ops.git

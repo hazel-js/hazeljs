@@ -328,6 +328,97 @@ describe('@hazeljs/decision', () => {
       expect(calls).toBe(1);
       expect(again.execution?.receiptId).toBeDefined();
     });
+
+    it('resumes after clearing in-memory results (cold-start / process restart)', async () => {
+      let calls = 0;
+      const gatekeeper = new AgentGatekeeper({
+        mode: 'enforce',
+        defaultDecision: 'deny',
+        policies: [
+          {
+            id: 'allow-refund',
+            version: '1',
+            priority: 100,
+            match: { tools: ['payments.refund'] },
+            rules: {
+              allowWhen: async () => true,
+            },
+          },
+        ],
+      });
+
+      const checkpoints = new InMemoryCheckpointService();
+      const humanTasks = new InMemoryHumanTaskService();
+      const runtime = createDecisionRuntime({
+        gatekeeper,
+        checkpoints,
+        humanTasks,
+        capabilityHandlers: {
+          'payments.refund': async () => {
+            calls += 1;
+            return { refunded: true };
+          },
+        },
+      });
+      runtime.registry.register({ name: 'refund-approval', ...refundDefinition });
+
+      const result = await runtime.decide({
+        name: 'refund-approval',
+        objective: refundDefinition.objective,
+        state: { amount: 9000, refundHistory: { count: 0 } },
+        choices: ['approve', 'reject', 'review'] as const,
+        risk: 'high',
+        provider: 'hazel-agent',
+        strategy: 'human-required',
+      });
+
+      expect(result.status).toBe('WAITING_FOR_HUMAN');
+
+      // Simulate process restart — memory gone, checkpoints remain.
+      runtime.clearMemory();
+      expect(runtime.getResult(result.id)).toBeUndefined();
+
+      const resumed = await runtime.resumeFromHuman({
+        decisionId: result.id,
+        runId: result.trace.runId!,
+        action: 'override',
+        decision: 'approve',
+        actor: 'ops-lead',
+        reason: 'Verified after restart',
+        execute: true,
+      });
+
+      expect(resumed.hitl?.status).toBe('overridden');
+      expect(calls).toBe(1);
+      expect(resumed.execution?.invoked).toBe(true);
+
+      // Second resume after another memory clear must not double-invoke.
+      runtime.clearMemory();
+      const again = await runtime.resumeFromHuman({
+        decisionId: result.id,
+        runId: result.trace.runId!,
+        action: 'approve',
+        actor: 'ops-lead',
+        execute: true,
+      });
+      expect(calls).toBe(1);
+      expect(again.execution?.receiptId).toBeDefined();
+
+      const replay = await runtime.replay(result.trace.runId!);
+      expect(replay?.result.id).toBe(result.id);
+    });
+
+    it('rejects cold-start resume when no durable checkpoint exists', async () => {
+      const runtime = createDecisionRuntime();
+      await expect(
+        runtime.resumeFromHuman({
+          decisionId: 'dec_missing',
+          runId: 'run_missing',
+          action: 'approve',
+          actor: 'ops',
+        })
+      ).rejects.toThrow(/Unknown decision/);
+    });
   });
 
   describe('provider failure', () => {

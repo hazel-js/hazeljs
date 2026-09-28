@@ -211,7 +211,7 @@ export type DecisionRunStatus =
   | 'FAILED'
   | 'DENIED';
 
-/** Serializable Decision Lab DTO (UI deferred). */
+/** Serializable Decision Lab DTO (UI in hazeljs-agent-office `/office/decisions`). */
 export interface DecisionLabRun {
   result: DecisionResult;
   stages: Array<{

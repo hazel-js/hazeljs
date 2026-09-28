@@ -469,6 +469,7 @@ export class DecisionRuntime {
             kind: 'hazeljs.decision',
             status,
             result: result as DecisionResult,
+            state: request.state,
             machineDecision: String(result.decision),
             machineConfidence: result.confidence,
           });
@@ -526,9 +527,11 @@ export class DecisionRuntime {
     reason?: string;
     execute?: boolean;
   }): Promise<DecisionResult> {
-    const existing = this.results.get(input.decisionId);
+    const existing = await this.resolveResult(input.decisionId, input.runId);
     if (!existing) {
-      throw new DecisionValidationError(`Unknown decision: ${input.decisionId}`);
+      throw new DecisionValidationError(
+        `Unknown decision: ${input.decisionId} (not in memory and no durable checkpoint for run ${input.runId})`
+      );
     }
 
     const payload = await this.durable.loadLatest(input.runId);
@@ -554,6 +557,14 @@ export class DecisionRuntime {
         policy: { outcome: 'deny', reason: input.reason ?? 'human rejected' },
       };
       this.results.set(input.decisionId, result);
+      await this.durable.save(input.runId, {
+        kind: 'hazeljs.decision',
+        status: result.status,
+        result,
+        state: payload?.state,
+        machineDecision: payload?.machineDecision ?? String(existing.decision),
+        machineConfidence: payload?.machineConfidence ?? existing.confidence,
+      });
       return result;
     }
 
@@ -612,13 +623,14 @@ export class DecisionRuntime {
               decisionId: input.decisionId,
               decision: String(decision),
               capability,
-              state: undefined,
+              state: payload?.state,
               tenantId: existing.provenance.tenantId,
             });
             const receiptId = `rcpt_${input.decisionId}`;
             await this.durable.save(input.runId, {
               kind: 'hazeljs.decision',
               status: 'COMPLETED',
+              state: payload?.state,
               executionReceipt: {
                 receiptId,
                 capability,
@@ -666,13 +678,51 @@ export class DecisionRuntime {
       },
     };
     this.results.set(input.decisionId, result);
+    await this.durable.save(input.runId, {
+      kind: 'hazeljs.decision',
+      status: result.status,
+      result,
+      state: payload?.state,
+      machineDecision: String(result.decision),
+      machineConfidence: result.confidence,
+      executionReceipt:
+        result.execution?.receiptId && result.execution.capability
+          ? {
+              receiptId: result.execution.receiptId,
+              capability: result.execution.capability,
+              at: new Date().toISOString(),
+            }
+          : undefined,
+    });
     return result;
+  }
+
+  /**
+   * Resolve a decision from in-memory index, or hydrate from durable checkpoints
+   * (process restart / cold start).
+   */
+  private async resolveResult(
+    decisionId: string,
+    runId?: string
+  ): Promise<DecisionResult | undefined> {
+    const cached = this.results.get(decisionId);
+    if (cached) return cached;
+    if (!runId) return undefined;
+    const hydrated = await this.durable.loadResult(runId, decisionId);
+    if (hydrated) {
+      this.results.set(decisionId, hydrated);
+    }
+    return hydrated;
   }
 
   /** Replay reads durable checkpoints — never re-invokes handlers. */
   async replay(runId: string): Promise<DecisionLabRun | undefined> {
     const payload = await this.durable.loadLatest(runId);
-    if (!payload?.result) return undefined;
+    if (!payload?.result) {
+      const hydrated = await this.durable.loadResult(runId);
+      if (!hydrated) return undefined;
+      return enrichLabRun(hydrated);
+    }
     return enrichLabRun(payload.result);
   }
 
@@ -700,6 +750,11 @@ export class DecisionRuntime {
     return this.results.get(decisionId);
   }
 
+  /** Async get — hydrates from durable store when runId is known. */
+  async getResultAsync(decisionId: string, runId?: string): Promise<DecisionResult | undefined> {
+    return this.resolveResult(decisionId, runId);
+  }
+
   getHistory(): DecisionHistory | undefined {
     return this.history;
   }
@@ -716,6 +771,11 @@ export class DecisionRuntime {
     const result = this.results.get(decisionId);
     if (!result) return undefined;
     return enrichLabRun(result);
+  }
+
+  /** Clear in-memory results (tests / simulate process restart). */
+  clearMemory(): void {
+    this.results.clear();
   }
 }
 

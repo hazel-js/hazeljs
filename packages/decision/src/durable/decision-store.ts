@@ -9,6 +9,8 @@ export interface DecisionCheckpointPayload {
   kind: 'hazeljs.decision';
   status: DecisionRunStatus;
   result?: DecisionResult;
+  /** Request state — needed so resume/execute after restart can invoke handlers. */
+  state?: unknown;
   machineDecision?: string;
   machineConfidence?: number;
   humanOverride?: {
@@ -53,9 +55,31 @@ export class DecisionDurableStore {
     return last.payload as DecisionCheckpointPayload;
   }
 
+  /**
+   * Hydrate a DecisionResult after process restart.
+   * Prefers the newest checkpoint that carries a full `result` for `decisionId`.
+   */
+  async loadResult(runId: string, decisionId?: string): Promise<DecisionResult | undefined> {
+    if (!this.checkpoints) return undefined;
+    const list = await this.checkpoints.list(runId);
+    for (let i = list.length - 1; i >= 0; i -= 1) {
+      const payload = list[i].payload as DecisionCheckpointPayload;
+      if (payload?.kind !== 'hazeljs.decision' || !payload.result) continue;
+      if (decisionId && payload.result.id !== decisionId) continue;
+      return payload.result;
+    }
+    return undefined;
+  }
+
   async getExecutionReceipt(
     runId: string
   ): Promise<DecisionCheckpointPayload['executionReceipt'] | undefined> {
+    if (!this.checkpoints) return undefined;
+    const list = await this.checkpoints.list(runId);
+    for (let i = list.length - 1; i >= 0; i -= 1) {
+      const payload = list[i].payload as DecisionCheckpointPayload;
+      if (payload?.executionReceipt) return payload.executionReceipt;
+    }
     const payload = await this.loadLatest(runId);
     return payload?.executionReceipt;
   }

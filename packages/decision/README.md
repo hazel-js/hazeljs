@@ -22,7 +22,7 @@ Reasoning ≠ Decision ≠ Policy ≠ Authorization ≠ Execution
 - **Deterministic policy** — allow / critique / review / deny from confidence bands (never authorization)
 - **Gatekeeper + Skillgate** — execute only after policy allow **and** Gatekeeper allow; skill class may raise risk floor
 - **Durable HITL** — review creates `HumanTask`; resume with receipts (no double-invoke)
-- **Decision Lab** — run / shadow compare / flow projection; Agent Office at `/office/decisions`
+- **Decision Lab** — run / shadow compare / flow projection; Agent Office UI in [hazeljs-agent-office](https://github.com/hazel-js/hazeljs-agent-office) at `/office/decisions` (not Inspector)
 - **Opt-in extensions** — ensemble, cache, history/trends, calibration, cost-aware router
 - **CLI** — `hazel decision run | compare | flow | lab`
 
@@ -141,6 +141,8 @@ await decisions.resumeFromHuman({
 });
 ```
 
+Resume hydrates from durable checkpoints when in-memory results are gone (process restart). Receipts prevent double-invoke.
+
 ## Decision DNA
 
 Optional on Agent DNA (`format: 'hazeljs.agent.dna'`):
@@ -170,6 +172,10 @@ const run = await lab.run({ objective, state, choices: [...] as const, risk: 'hi
 const cmp = await lab.compare(request, ['hazel-agent', 'mock']);
 // cmp.executionForbidden === true
 ```
+
+Agent Office (Run · Compare · Flow · History · Calibration) lives in the sibling app
+[hazeljs-agent-office](https://github.com/hazel-js/hazeljs-agent-office) at `/office/decisions` — not in `@hazeljs/inspector`.
+Meridian teaches the API path: `POST /api/decision/refund` → resume.
 
 ## Opt-in extensions
 
@@ -240,6 +246,8 @@ npx tsx examples/ensemble.ts
 - [@hazeljs/skillgate](https://hazeljs.ai/docs/packages/skillgate)
 - [@hazeljs/agent-gatekeeper](https://hazeljs.ai/docs/packages/agent-gatekeeper)
 - [@hazeljs/flow](https://hazeljs.ai/docs/packages/flow)
+- [hazeljs-agent-office](https://github.com/hazel-js/hazeljs-agent-office) — Decision Lab UI
+- [hazeljs-meridian-ops](https://github.com/hazel-js/hazeljs-meridian-ops) — Decision teaching API
 
 ## License
 
