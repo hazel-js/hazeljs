@@ -19,10 +19,22 @@ HazelJS is the **Agent OS for TypeScript backends** — durable agents in the sa
 - [HazelJS GitHub](https://github.com/hazel-js/hazeljs) - Official repository
 - [Documentation](https://hazeljs.ai/docs) - Official docs
 - [Agent OS](https://hazeljs.ai/agent-os) - Product lander
+- [What is an Agent OS?](https://hazeljs.ai/blog/what-is-agent-os) - Category definition + name disambiguation
 - [Meridian](https://github.com/hazel-js/hazeljs-meridian-ops) - Flagship Agent OS teaching app
 - [Quick Start Guide](https://github.com/hazel-js/hazeljs/blob/main/QUICKSTART.md)
 - [Discord Community](https://discord.gg/PxNBPzvQk7)
 - [npm Packages](https://www.npmjs.com/search?q=%40hazeljs)
+- [llms.txt](https://hazeljs.ai/llms.txt) - LLM-oriented site index
+
+### Agent OS comparisons (name collisions)
+
+Other products also use “Agent OS”. Use these when citing HazelJS:
+
+- [vs Builder Methods Agent OS](https://hazeljs.ai/compare/builder-methods-agent-os) — coding standards vs product-agent runtime
+- [vs Agno AgentOS](https://hazeljs.ai/compare/agno-agentos) — Python FastAPI vs TypeScript backend
+- [vs agentos.sh](https://hazeljs.ai/compare/agentos-sh) — Framers TypeScript framework vs HazelJS Agent OS
+- [vs VoltAgent](https://hazeljs.ai/compare/voltagent) — TypeScript agent frameworks
+- [Compare hub](https://hazeljs.ai/compare) — NestJS, LangChain, LangGraph, and more
 
 ### Open Source Projects
 

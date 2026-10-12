@@ -2,7 +2,7 @@
 
 # HazelJS
 
-**Agent OS for TypeScript backends.** Durable AI agents in the same DI/HTTP app as your APIs.
+**HazelJS Agent OS for TypeScript backends.** Durable AI agents in the same DI/HTTP app as your APIs.
 
 [![GitHub stars](https://img.shields.io/github/stars/hazel-js/hazeljs?style=social)](https://github.com/hazel-js/hazeljs)
 [![CI](https://github.com/hazel-js/hazeljs/actions/workflows/ci.yml/badge.svg)](https://github.com/hazel-js/hazeljs/actions/workflows/ci.yml)
@@ -26,7 +26,7 @@ Framework packages (HCEL, RAG, workflows) are there when you need them. They are
 
 ## What HazelJS is
 
-HazelJS is a TypeScript backend whose **primary product is Agent OS**: durable AI agents inside the same app as your APIs. Package them (DNA), **decide** from a closed set (Decision Runtime), govern writes (Skillgate), authorize every tool (Gatekeeper), survive crashes (HITL), and undo speculative work (Agent VM).
+HazelJS is a TypeScript backend whose **primary product is HazelJS Agent OS**: durable AI agents inside the same app as your APIs. Package them (DNA), **decide** from a closed set (Decision Runtime), govern writes (Skillgate), authorize every tool (Gatekeeper), survive crashes (HITL), and undo speculative work (Agent VM).
 
 | Audience                             | Story                                                                                                     |
 | ------------------------------------ | --------------------------------------------------------------------------------------------------------- |
@@ -34,6 +34,8 @@ HazelJS is a TypeScript backend whose **primary product is Agent OS**: durable A
 | **Agent platform teams**             | Agent OS control plane — Store, Definitions / Deployments, reconcile; K8s optional                        |
 
 You do **not** assemble Nest + LangGraph + a worker fleet. The Agent Runtime is the kernel; Agent OS is how you ship it.
+
+**Name collisions:** HazelJS Agent OS is not [Builder Methods Agent OS](https://hazeljs.ai/compare/builder-methods-agent-os) (coding standards for Claude Code/Cursor), not [Agno AgentOS](https://hazeljs.ai/compare/agno-agentos) (Python FastAPI), and not [Framers AgentOS / agentos.sh](https://hazeljs.ai/compare/agentos-sh).
 
 ```
 Define → Run → Decide → Govern → Survive

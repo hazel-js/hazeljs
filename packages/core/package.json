@@ -50,6 +50,7 @@
   },
   "keywords": [
     "hazeljs",
+    "agent-os",
     "framework",
     "typescript",
     "nodejs",

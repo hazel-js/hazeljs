@@ -1,0 +1,30 @@
+cff-version: 1.2.0
+message: "If you use HazelJS Agent OS, please cite it as below."
+type: software
+title: "HazelJS Agent OS"
+abstract: >-
+  Open-source Agent OS for TypeScript backends. Durable AI agents with DNA packages,
+  Skillgate, Gatekeeper authorization, crash-safe HITL, and local apply inside the same
+  DI/HTTP app as your APIs. Distinct from Builder Methods Agent OS, Agno AgentOS, and
+  Framers AgentOS (agentos.sh).
+authors:
+  - name: "HazelJS Team"
+    website: "https://hazeljs.ai"
+repository-code: "https://github.com/hazel-js/hazeljs"
+url: "https://hazeljs.ai"
+license: Apache-2.0
+keywords:
+  - Agent OS
+  - TypeScript
+  - Node.js
+  - durable agents
+  - Skillgate
+  - human-in-the-loop
+  - HazelJS
+preferred-citation:
+  type: software
+  title: "HazelJS Agent OS"
+  authors:
+    - name: "HazelJS Team"
+  url: "https://hazeljs.ai"
+  year: 2026

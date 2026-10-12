@@ -1,7 +1,7 @@
 {
   "name": "@hazeljs/agent",
   "version": "2.0.9",
-  "description": "AI-native Agent Runtime for HazelJS - stateful, long-running agents with tools, memory, and human-in-the-loop",
+  "description": "HazelJS Agent OS kernel — durable @Agent/@Tool runtime with DNA, crash-safe HITL, policies, and local apply in TypeScript",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
@@ -13,11 +13,16 @@
   },
   "keywords": [
     "hazeljs",
+    "agent-os",
+    "hazeljs-agent-os",
+    "typescript-agent-os",
     "agent",
     "ai-agent",
     "llm",
     "agentic",
     "agent-runtime",
+    "durable-agents",
+    "skillgate",
     "tools",
     "memory",
     "human-in-the-loop"
