@@ -110,6 +110,12 @@ export interface AgentContext {
   steps: AgentStep[];
   memory: AgentMemoryContext;
   ragContext?: string[];
+  /** Cached stable context from @hazeljs/cag (when cagService is injected). */
+  cagContext?: string[];
+  /** Structured knowledge evidence from @hazeljs/kag (when kagService is injected). */
+  kagContext?: string[];
+  /** Assembled multi-source context from @hazeljs/context (when contextService is injected). */
+  unifiedContext?: string[];
   metadata: Record<string, unknown>;
   createdAt: Date;
   updatedAt: Date;
@@ -147,6 +153,14 @@ export interface AgentConfig {
   enableMemory?: boolean;
   enableRAG?: boolean;
   ragTopK?: number;
+  /** When true and cagService is injected, load cached context. */
+  enableCAG?: boolean;
+  /** Default CAG namespace (optional). */
+  cagNamespace?: string;
+  /** When true and kagService is injected, query knowledge graph. */
+  enableKAG?: boolean;
+  /** Default KAG graph name (optional). */
+  kagGraph?: string;
   tools?: string[];
   policies?: string[];
   metadata?: Record<string, unknown>;
@@ -197,6 +211,8 @@ export interface AgentExecutionOptions {
   signal?: AbortSignal;
   enableMemory?: boolean;
   enableRAG?: boolean;
+  enableCAG?: boolean;
+  enableKAG?: boolean;
   initialContext?: Record<string, unknown>;
   metadata?: Record<string, unknown>;
   /** When true and LLM supports streamChat, tokens are streamed for final response. */

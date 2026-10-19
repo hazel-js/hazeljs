@@ -79,6 +79,15 @@
       "path": "./packages/rag"
     },
     {
+      "path": "./packages/cag"
+    },
+    {
+      "path": "./packages/kag"
+    },
+    {
+      "path": "./packages/context"
+    },
+    {
       "path": "./packages/agent"
     },
     {

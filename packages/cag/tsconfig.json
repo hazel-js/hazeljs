@@ -1,0 +1,19 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "skipLibCheck": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "composite": true,
+    "declarationMap": true,
+    "baseUrl": ".",
+    "paths": {
+      "@hazeljs/core": ["../core/src"],
+      "@hazeljs/cache": ["../cache/src"]
+    },
+    "types": ["jest", "node", "reflect-metadata"]
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "src/**/*.test.ts", "src/__tests__/**", "src/bench.ts"],
+  "references": [{ "path": "../core" }, { "path": "../cache" }]
+}

@@ -423,6 +423,60 @@ export const queueImports = [QueueModule];
     setupTemplate: null,
   },
   {
+    shortName: 'cag',
+    npm: '@hazeljs/cag',
+    label: 'Cache-Augmented Generation (@hazeljs/cag)',
+    hint: 'import { CagModule, CagService } from "@hazeljs/cag";',
+    moduleImport: "import { CagModule } from '@hazeljs/cag';",
+    moduleExpression: "CagModule.forRoot({ store: 'memory', ttl: '1h', maxTokens: 50000 })",
+    setupTemplate: `import { CagModule } from '@hazeljs/cag';
+
+export const cagImports = [
+  CagModule.forRoot({
+    store: 'memory',
+    ttl: '1h',
+    maxTokens: 50_000,
+    multiTenant: true,
+  }),
+];
+`,
+  },
+  {
+    shortName: 'kag',
+    npm: '@hazeljs/kag',
+    label: 'Knowledge-Augmented Generation (@hazeljs/kag)',
+    hint: 'import { KagModule, KnowledgeGraph } from "@hazeljs/kag";',
+    moduleImport: "import { KagModule } from '@hazeljs/kag';",
+    moduleExpression: "KagModule.forRoot({ tenantId: 'default' })",
+    setupTemplate: `import { KagModule } from '@hazeljs/kag';
+
+export const kagImports = [
+  KagModule.forRoot({
+    tenantId: 'default',
+    graph: 'main',
+  }),
+];
+`,
+  },
+  {
+    shortName: 'context',
+    npm: '@hazeljs/context',
+    label: 'Unified Context Engine (@hazeljs/context)',
+    hint: 'import { ContextModule, ContextService } from "@hazeljs/context";',
+    moduleImport: "import { ContextModule } from '@hazeljs/context';",
+    moduleExpression:
+      "ContextModule.forRoot({ strategy: 'auto', sources: ['cache', 'rag', 'knowledge', 'memory'] })",
+    setupTemplate: `import { ContextModule } from '@hazeljs/context';
+
+export const contextImports = [
+  ContextModule.forRoot({
+    strategy: 'auto',
+    sources: ['cache', 'rag', 'knowledge', 'memory'],
+  }),
+];
+`,
+  },
+  {
     shortName: 'resilience',
     npm: '@hazeljs/resilience',
     label: 'Resilience - Circuit Breaker (@hazeljs/resilience)',

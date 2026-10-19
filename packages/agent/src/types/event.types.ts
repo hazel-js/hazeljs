@@ -24,6 +24,12 @@ export enum AgentEventType {
   MEMORY_UPDATED = 'agent.memory.updated',
   RAG_QUERY_EXECUTED = 'agent.rag.executed',
   RAG_QUERY_FAILED = 'agent.rag.failed',
+  CAG_CONTEXT_LOADED = 'agent.cag.loaded',
+  CAG_CONTEXT_FAILED = 'agent.cag.failed',
+  KAG_QUERY_EXECUTED = 'agent.kag.queried',
+  KAG_QUERY_FAILED = 'agent.kag.failed',
+  CONTEXT_ASSEMBLED = 'agent.context.assembled',
+  CONTEXT_FAILED = 'agent.context.failed',
 
   // Graph orchestration events
   GRAPH_STARTED = 'graph.started',

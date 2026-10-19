@@ -122,6 +122,21 @@ export interface AICompletionRequest {
    * - AIJsonSchema: Model returns JSON conforming to the given schema
    */
   responseFormat?: AIResponseFormat;
+
+  /**
+   * Optional provider-native prompt-cache hints (from @hazeljs/cag or custom).
+   * Providers may ignore unknown fields; this is additive and backward-compatible.
+   */
+  promptCache?: {
+    provider?: 'openai' | 'anthropic' | 'gemini' | 'custom';
+    /** Opaque cache key / handle for the provider. */
+    cacheKey?: string;
+    /** Suggested character offsets for Anthropic-style cache breakpoints. */
+    breakpoints?: number[];
+    /** Gemini cached content resource name. */
+    cachedContent?: string;
+    metadata?: Record<string, unknown>;
+  };
 }
 
 /**

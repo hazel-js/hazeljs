@@ -35,6 +35,18 @@ export interface AgentDnaMemory {
   strategy?: string;
 }
 
+/** Optional context substrate declaration (intent only — services are injected at runtime). */
+export interface AgentDnaContext {
+  /** Unified planner strategy (consumed by @hazeljs/context when injected). */
+  strategy?: 'auto' | 'all' | 'explicit';
+  /** Preferred sources / allow-list (aliases: cache→cag, knowledge→kag). */
+  sources?: Array<'cache' | 'cag' | 'rag' | 'knowledge' | 'kag' | 'memory'>;
+  cag?: { enabled: boolean; namespace?: string };
+  rag?: { enabled: boolean; collection?: string };
+  kag?: { enabled: boolean; graph?: string };
+  memory?: { enabled: boolean };
+}
+
 export interface AgentDnaSlo {
   successRate?: number;
   maxResponseTimeMs?: number;
@@ -158,6 +170,12 @@ export interface AgentDna {
   modelConfig?: AgentDnaModel;
   autonomy?: AgentAutonomy;
   memory?: AgentDnaMemory;
+  /**
+   * Optional context sources (CAG / RAG / KAG / memory).
+   * Declares intent; the application still injects services on AgentRuntimeConfig.
+   * Omitted documents remain valid.
+   */
+  context?: AgentDnaContext;
   slo?: AgentDnaSlo;
   schedule?: AgentDnaSchedule;
   /**
@@ -191,6 +209,7 @@ export function exportAgentDna(input: {
   modelConfig?: AgentDnaModel;
   autonomy?: AgentAutonomy;
   memory?: AgentDnaMemory;
+  context?: AgentDnaContext;
   slo?: AgentDnaSlo;
   schedule?: AgentDnaSchedule;
   decisions?: Record<string, AgentDnaDecision>;
@@ -215,6 +234,7 @@ export function exportAgentDna(input: {
     modelConfig: input.modelConfig,
     autonomy: input.autonomy,
     memory: input.memory,
+    context: input.context,
     slo: input.slo,
     schedule: input.schedule,
     decisions: input.decisions,
