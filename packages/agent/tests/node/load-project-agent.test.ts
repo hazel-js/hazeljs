@@ -6,10 +6,7 @@ import * as os from 'os';
 import * as path from 'path';
 import { Agent } from '../../src/decorators/agent.decorator';
 import { Tool } from '../../src/decorators/tool.decorator';
-import {
-  loadProjectAgent,
-  projectAgentFromModule,
-} from '../../src/node/load-project-agent';
+import { loadProjectAgent, projectAgentFromModule } from '../../src/node/load-project-agent';
 import { AgentOS } from '../../src/os/agent-os';
 import { defineAgent } from '../../src/os/define-agent';
 import { createMockLlmProvider } from '../../src/llm/http-llm.provider';
@@ -27,9 +24,7 @@ describe('projectAgentFromModule (src)', () => {
   @Agent({ name: 'desk' })
   class DeskAgent {
     @Tool({
-      parameters: [
-        { name: 'orderId', type: 'string', description: 'Order id', required: true },
-      ],
+      parameters: [{ name: 'orderId', type: 'string', description: 'Order id', required: true }],
     })
     async lookup_order({ orderId }: { orderId: string }) {
       return { found: true as const, orderId: orderId.toUpperCase() };
@@ -66,9 +61,11 @@ describe('projectAgentFromModule (src)', () => {
       found: true,
       orderId: 'ORD-1',
     });
-    await expect(
-      project.handlers.issue_refund({ orderId: 'ORD-1', amount: 10 })
-    ).resolves.toEqual({ ok: true, orderId: 'ORD-1', amount: 10 });
+    await expect(project.handlers.issue_refund({ orderId: 'ORD-1', amount: 10 })).resolves.toEqual({
+      ok: true,
+      orderId: 'ORD-1',
+      amount: 10,
+    });
   });
 
   it('picks the sole @Agent when no preferred name', () => {
@@ -82,17 +79,14 @@ describe('projectAgentFromModule (src)', () => {
 
   it('throws when preferred name matches none of several agents', () => {
     expect(() =>
-      projectAgentFromModule(
-        { DeskAgent, OtherAgent },
-        { preferredAgentName: 'missing' }
-      )
+      projectAgentFromModule({ DeskAgent, OtherAgent }, { preferredAgentName: 'missing' })
     ).toThrow(/Multiple @Agent classes/);
   });
 
   it('throws when sole agent name mismatches DNA', () => {
-    expect(() =>
-      projectAgentFromModule({ OtherAgent }, { preferredAgentName: 'desk' })
-    ).toThrow(/does not match DNA name "desk"/);
+    expect(() => projectAgentFromModule({ OtherAgent }, { preferredAgentName: 'desk' })).toThrow(
+      /does not match DNA name "desk"/
+    );
   });
 });
 
@@ -109,7 +103,10 @@ describe('loadProjectAgent (src I/O)', () => {
   it('loads agent.js from project root', async () => {
     const root = tmpDir('hazel-js-agent-');
     try {
-      fs.writeFileSync(path.join(root, 'package.json'), JSON.stringify({ name: 'tmp', version: '1.0.0' }));
+      fs.writeFileSync(
+        path.join(root, 'package.json'),
+        JSON.stringify({ name: 'tmp', version: '1.0.0' })
+      );
       // Write a CommonJS module that reuses this test file's already-decorated class via a thin shim:
       // instead, export a plain class and rely on projectAgentFromModule for decorator coverage;
       // here we only assert candidate resolution + require of a handler map module.
@@ -129,7 +126,10 @@ module.exports = { Plain };
   it('resolves src/agent.js candidate', () => {
     const root = tmpDir('hazel-src-agent-');
     try {
-      fs.writeFileSync(path.join(root, 'package.json'), JSON.stringify({ name: 'tmp', version: '1.0.0' }));
+      fs.writeFileSync(
+        path.join(root, 'package.json'),
+        JSON.stringify({ name: 'tmp', version: '1.0.0' })
+      );
       fs.mkdirSync(path.join(root, 'src'));
       fs.writeFileSync(path.join(root, 'src/agent.js'), 'module.exports = {};\n');
       expect(() => loadProjectAgent(root)).toThrow(/no @Agent class/);
@@ -141,7 +141,10 @@ module.exports = { Plain };
   it('throws when agent.ts is present but tsx is missing', () => {
     const root = tmpDir('hazel-tsx-missing-');
     try {
-      fs.writeFileSync(path.join(root, 'package.json'), JSON.stringify({ name: 'tmp', version: '1.0.0' }));
+      fs.writeFileSync(
+        path.join(root, 'package.json'),
+        JSON.stringify({ name: 'tmp', version: '1.0.0' })
+      );
       fs.writeFileSync(path.join(root, 'agent.ts'), 'export class X {}');
       expect(() => loadProjectAgent(root)).toThrow(/Install tsx/);
     } finally {
@@ -164,10 +167,12 @@ describe('AgentOS deploy with project agent wiring', () => {
       { WiredAgent },
       { preferredAgentName: 'desk', filePath: 'agent.ts' }
     );
-    const spy = jest.spyOn(
-      require('../../src/node/load-project-agent') as typeof import('../../src/node/load-project-agent'),
-      'loadProjectAgent'
-    ).mockReturnValue(project);
+    const spy = jest
+      .spyOn(
+        require('../../src/node/load-project-agent') as typeof import('../../src/node/load-project-agent'),
+        'loadProjectAgent'
+      )
+      .mockReturnValue(project);
 
     const root = tmpDir('hazel-os-wire-');
     const osPlane = new AgentOS({
@@ -206,7 +211,10 @@ describe('AgentOS deploy with project agent wiring', () => {
 
   it('warns and falls back when loadProjectAgent throws', async () => {
     const root = tmpDir('hazel-os-bad-');
-    fs.writeFileSync(path.join(root, 'package.json'), JSON.stringify({ name: 'tmp', version: '1.0.0' }));
+    fs.writeFileSync(
+      path.join(root, 'package.json'),
+      JSON.stringify({ name: 'tmp', version: '1.0.0' })
+    );
     fs.writeFileSync(path.join(root, 'agent.js'), 'module.exports = { nope: true };\n');
     const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
     const osPlane = new AgentOS({
@@ -286,19 +294,19 @@ module.exports = { FixtureAgent, agentName: '${agentName}' };
 
 (distReady ? describe : describe.skip)('loadProjectAgent (dist E2E)', () => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { loadProjectAgent: loadDist } = require(distLoader) as typeof import('../../src/node/load-project-agent');
+  const { loadProjectAgent: loadDist } = require(
+    distLoader
+  ) as typeof import('../../src/node/load-project-agent');
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { AgentOS: DistOS } = require(distOs) as typeof import('../../src/os/agent-os');
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { defineAgent: defineDist } = require(path.join(
-    agentPkgRoot,
-    'dist/os/define-agent.js'
-  )) as typeof import('../../src/os/define-agent');
+  const { defineAgent: defineDist } = require(
+    path.join(agentPkgRoot, 'dist/os/define-agent.js')
+  ) as typeof import('../../src/os/define-agent');
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { createMockLlmProvider: mockDist } = require(path.join(
-    agentPkgRoot,
-    'dist/llm/http-llm.provider.js'
-  )) as typeof import('../../src/llm/http-llm.provider');
+  const { createMockLlmProvider: mockDist } = require(
+    path.join(agentPkgRoot, 'dist/llm/http-llm.provider.js')
+  ) as typeof import('../../src/llm/http-llm.provider');
 
   let root: string;
 

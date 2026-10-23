@@ -129,10 +129,7 @@ describe('AgentDefinition YAML DNA', () => {
       };
       const def = store.items.find((i) => i.kind === 'AgentDefinition');
       expect(def?.spec?.dna?.name).toBe('my_bot');
-      expect(def?.spec?.dna?.tools?.map((t) => t.name)).toEqual([
-        'lookup_order',
-        'issue_refund',
-      ]);
+      expect(def?.spec?.dna?.tools?.map((t) => t.name)).toEqual(['lookup_order', 'issue_refund']);
       expect(def?.spec?.dna?.tools?.find((t) => t.name === 'issue_refund')?.requiresApproval).toBe(
         true
       );
