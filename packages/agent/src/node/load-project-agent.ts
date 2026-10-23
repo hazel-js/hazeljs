@@ -85,9 +85,39 @@ function extractHandlers(
       (typeof meta?.method === 'function' ? meta.method : undefined) ??
       (instance as Record<string, unknown>)[methodName];
     if (typeof method !== 'function') continue;
-    handlers[toolName] = async (input: Record<string, unknown>) => method.call(instance, input);
+    handlers[toolName] = async (input: Record<string, unknown>): Promise<unknown> =>
+      method.call(instance, input);
   }
   return handlers;
+}
+
+/**
+ * Build a project agent from an already-loaded module (same Reflect metadata realm).
+ * Used by {@link loadProjectAgent} and unit tests.
+ */
+export function projectAgentFromModule(
+  mod: Record<string, unknown>,
+  options: { filePath?: string; preferredAgentName?: string; rootLabel?: string } = {}
+): ProjectAgentModule {
+  const filePath = options.filePath ?? 'agent.ts';
+  const preferredAgentName = options.preferredAgentName;
+  const agentClass = pickAgentClass(mod, preferredAgentName);
+  if (!agentClass) {
+    throw new Error(
+      `Loaded ${options.rootLabel ?? filePath} but found no @Agent class. Export a class decorated with @Agent({ name }).`
+    );
+  }
+
+  const meta = getAgentMetadata(agentClass);
+  if (preferredAgentName && meta?.name && meta.name !== preferredAgentName) {
+    throw new Error(
+      `agent.ts @Agent name "${meta.name}" does not match DNA name "${preferredAgentName}". Align them.`
+    );
+  }
+
+  const instance = new agentClass();
+  const handlers = extractHandlers(agentClass, instance as object);
+  return { filePath, agentClass, instance, handlers };
 }
 
 /**
@@ -118,22 +148,9 @@ export function loadProjectAgent(
   }
 
   const mod = req(filePath) as Record<string, unknown>;
-  const agentClass = pickAgentClass(mod, preferredAgentName);
-  if (!agentClass) {
-    throw new Error(
-      `Loaded ${path.relative(root, filePath)} but found no @Agent class. Export a class decorated with @Agent({ name }).`
-    );
-  }
-
-  const meta = getAgentMetadata(agentClass);
-  if (preferredAgentName && meta?.name && meta.name !== preferredAgentName) {
-    throw new Error(
-      `agent.ts @Agent name "${meta.name}" does not match DNA name "${preferredAgentName}". Align them.`
-    );
-  }
-
-  const instance = new agentClass();
-  const handlers = extractHandlers(agentClass, instance as object);
-
-  return { filePath, agentClass, instance, handlers };
+  return projectAgentFromModule(mod, {
+    filePath,
+    preferredAgentName,
+    rootLabel: path.relative(root, filePath),
+  });
 }

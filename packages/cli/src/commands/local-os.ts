@@ -9,6 +9,7 @@
 import { Command } from 'commander';
 import * as fs from 'fs';
 import * as path from 'path';
+import { extractDna, loadDnaOrYaml } from './dna-file';
 
 function resolveHazeldScript(): string {
   return path.join(__dirname, '..', 'hazeld.js');
@@ -48,28 +49,6 @@ function printTable(rows: Array<Record<string, string>>, cols: string[]): void {
     // eslint-disable-next-line no-console
     console.log(cols.map((c) => (r[c] ?? '').padEnd(widths[c])).join('  '));
   }
-}
-
-async function loadDnaOrYaml(filePath: string): Promise<unknown> {
-  const abs = path.resolve(filePath);
-  const raw = fs.readFileSync(abs, 'utf8');
-  if (abs.endsWith('.yaml') || abs.endsWith('.yml')) {
-    const { parse } = await import('yaml');
-    return parse(raw);
-  }
-  return JSON.parse(raw);
-}
-
-function extractDna(doc: unknown): unknown {
-  if (!doc || typeof doc !== 'object') return doc;
-  const o = doc as Record<string, unknown>;
-  if (o.format === 'hazeljs.agent.dna') return o;
-  if (o.dna && typeof o.dna === 'object') return o.dna;
-  if (o.kind === 'AgentDefinition' && (o.spec as { dna?: unknown })?.dna) {
-    return (o.spec as { dna: unknown }).dna;
-  }
-  if (o.name && (o.systemPrompt || o.mission || o.tools)) return o;
-  return o;
 }
 
 export function registerLocalOsCommands(program: Command): void {

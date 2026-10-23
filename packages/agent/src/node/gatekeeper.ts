@@ -47,7 +47,7 @@ export function tryCreateLocalGatekeeper(
           version: '1.0.0',
           priority: 100,
           match: { classifications: ['read'] },
-          rules: { allowWhen: () => true },
+          rules: { allowWhen: (): boolean => true },
         },
         {
           id: 'local-write-approval',
@@ -55,8 +55,8 @@ export function tryCreateLocalGatekeeper(
           priority: 200,
           match: { classifications: ['write', 'destructive', 'external'] },
           rules: {
-            allowWhen: () => true,
-            requireApprovalWhen: () => true,
+            allowWhen: (): boolean => true,
+            requireApprovalWhen: (): boolean => true,
           },
         },
         {
@@ -66,8 +66,8 @@ export function tryCreateLocalGatekeeper(
           priority: 250,
           match: { tools: ['refund', 'processRefund', 'charge', 'delete*', 'drop*'] },
           rules: {
-            allowWhen: () => true,
-            requireApprovalWhen: () => true,
+            allowWhen: (): boolean => true,
+            requireApprovalWhen: (): boolean => true,
           },
         },
         {
@@ -75,7 +75,7 @@ export function tryCreateLocalGatekeeper(
           version: '1.0.0',
           priority: 10,
           match: { tools: ['*'] },
-          rules: { allowWhen: () => true },
+          rules: { allowWhen: (): boolean => true },
         },
       ],
     });

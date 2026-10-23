@@ -41,7 +41,7 @@ class NoopHostService implements HostServiceManager {
   }
   async stop(): Promise<void> {}
   async uninstall(): Promise<void> {}
-  async status() {
+  async status(): Promise<{ installed: boolean; running: boolean; detail?: string }> {
     return { installed: false, running: false, detail: process.platform };
   }
 }
@@ -117,7 +117,7 @@ ${programArgs}
     if (fs.existsSync(this.plistPath)) fs.unlinkSync(this.plistPath);
   }
 
-  async status() {
+  async status(): Promise<{ installed: boolean; running: boolean; detail?: string }> {
     const installed = fs.existsSync(this.plistPath);
     let running = false;
     try {
@@ -193,7 +193,7 @@ WantedBy=default.target
     if (fs.existsSync(this.unitPath)) fs.unlinkSync(this.unitPath);
   }
 
-  async status() {
+  async status(): Promise<{ installed: boolean; running: boolean; detail?: string }> {
     const installed = fs.existsSync(this.unitPath);
     let running = false;
     try {
@@ -254,7 +254,7 @@ class WindowsTaskHostService implements HostServiceManager {
     }
   }
 
-  async status() {
+  async status(): Promise<{ installed: boolean; running: boolean; detail?: string }> {
     try {
       execFileSync('schtasks', ['/Query', '/TN', this.taskName], { stdio: 'ignore' });
       return { installed: true, running: false, detail: this.taskName };

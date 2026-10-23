@@ -58,8 +58,8 @@ export class HazeldServer {
       node: this.node,
       secrets: this.secrets,
       socketPath: this.options.socketPath ?? home.socketPath,
-      onShutdown: () => this.stop(),
-      onApply: async () => {
+      onShutdown: (): Promise<void> => this.stop(),
+      onApply: async (): Promise<void> => {
         await this.armSchedulesFromDna();
       },
     });
@@ -118,7 +118,9 @@ export class HazeldServer {
         runAt: nextCronDate(cron).toISOString(),
         createdAt: new Date().toISOString(),
       });
-      return () => this.jobs.remove(id);
+      return (): void => {
+        this.jobs.remove(id);
+      };
     });
 
     for (const agent of await this.node.list()) {
@@ -192,7 +194,7 @@ export async function runHazeldMain(options: HazeldServerOptions = {}): Promise<
   // eslint-disable-next-line no-console
   console.log(`  home:   ${hazelHome(options.home).home}`);
 
-  const shutdown = async () => {
+  const shutdown = async (): Promise<void> => {
     await server.stop();
     process.exit(0);
   };

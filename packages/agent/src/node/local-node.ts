@@ -9,7 +9,8 @@ import type { DefineAgentInput } from '../os/define-agent';
 import type { OfficeAgent } from '../os/types';
 import type { AgentRun } from '../run/agent-run.types';
 import { AgentRunStatus } from '../run/agent-run.types';
-import type { HumanTask } from '../run/human-task.service';
+import type { HumanTask, HumanTaskService } from '../run/human-task.service';
+import type { ToolAuthorizationGate } from '../authorization/tool-authorization-gate.interface';
 import type { AgentExecutionResult } from '../types/agent.types';
 import { createAgentOSStore, type AgentOSStore } from './store';
 import { hazelHome, ensureHazelHome, projectHazelPaths } from './paths';
@@ -74,7 +75,7 @@ export class LocalNode implements HazelNode {
     const createGate =
       options.createAuthorizationGate ??
       (this.gatekeeperEnabled
-        ? (humanTasks) => {
+        ? (humanTasks: HumanTaskService): ToolAuthorizationGate | undefined => {
             const gk = tryCreateLocalGatekeeper(humanTasks);
             if (gk) this.gatekeeperBackend = gk.approvalBackend;
             return gk?.authorizationGate;
