@@ -1,8 +1,17 @@
 # @hazeljs/cli
 
-**Scaffold Agent OS apps and HazelJS backends.**
+**Run autonomous AI agents locally like services** — and scaffold HazelJS backends.
 
-DNA / Store / Skillgate / HITL live in [Meridian](https://github.com/hazel-js/hazeljs-meridian-ops) and `hazel agent new`. HTTP + HCEL templates (`--template=ai-native`) are a secondary framework path — not the Agent OS flagship.
+```bash
+npm i -g @hazeljs/cli
+hazel new agent my-bot && cd my-bot && npm i
+hazel apply agent.yaml    # starts hazeld; returns to the prompt
+hazel inspect my_bot      # Status: Running — survives terminal close
+```
+
+Bins: `hazel` (CLI) + `hazeld` (Agent OS node). Cloud / Kubernetes are optional; the **local node is the default**.
+
+DNA / Store / Skillgate / HITL also ship in [Meridian](https://github.com/hazel-js/hazeljs-meridian-ops). HTTP + HCEL templates (`--template=ai-native`) are a secondary framework path.
 
 [![npm version](https://img.shields.io/npm/v/@hazeljs/cli.svg)](https://www.npmjs.com/package/@hazeljs/cli)
 [![npm downloads](https://img.shields.io/npm/dm/@hazeljs/cli)](https://www.npmjs.com/package/@hazeljs/cli)
@@ -10,7 +19,9 @@ DNA / Store / Skillgate / HITL live in [Meridian](https://github.com/hazel-js/ha
 
 ## Features
 
-- 🧬 **Agent OS** — `hazel agent new` (bare / agent-os / skillgate), Store, DNA install, runs, apply
+- 🧬 **Local-first Agent OS** — `hazel new agent`, `hazel apply`, `hazel ps` / `inspect` / `start|stop`, `hazeld`
+- ✅ **Approvals & secrets** — `hazel approvals` / `approve` / `deny`, `hazel secret set`
+- 🩺 **DX** — `hazel doctor`, `hazel logs`, `hazel runs`, `hazel ui` (Inspector)
 - 🚪 **Skillgate / Gatekeeper** — `hazel skillgate from-openapi`, `hazel gatekeeper validate|simulate|explain`
 - 🧪 **Eval / benchmark** — `hazel eval`, `hazel benchmark`
 - 🚀 **App scaffolding** — `hazel new`, `hazel g app` (HTTP skeleton or `--template=ai-native`)
@@ -36,17 +47,24 @@ npm install --save-dev @hazeljs/cli
 
 ### Agent OS (start here)
 
-**Flagship teaching path** — clone [Meridian](https://github.com/hazel-js/hazeljs-meridian-ops) (`store:sync` → `platform:sync` → `dev`). The CLI is not a substitute for that app.
+**Local-first (default):**
 
 ```bash
-# Smaller Agent OS / DNA scaffold (not Meridian)
-hazel agent new my-desk --template=agent-os
-# templates: bare | agent-os | skillgate
-# agent-os includes: DNA + real @Tool app + ops stack (self-healing + predictive-scaling) + K8s manifests
-cd my-desk && npm install && npm run dev
+hazel new agent my-bot --template=local   # minimal; no k8s
+cd my-bot && npm install
+hazel apply agent.yaml
+hazel inspect <agent> && hazel ps && hazel doctor
+```
 
-hazel agent install ./packages/support.dna.json
-hazel agent runs list
+**Larger showcase** — clone [Meridian](https://github.com/hazel-js/hazeljs-meridian-ops) (`store:sync` → `platform:sync` → `dev`).
+
+```bash
+# Templates: local (default) | context | bare | agent-os | skillgate
+hazel new agent my-desk --template=context   # CAG+RAG+KAG+Memory + HITL
+hazel agent new my-api --template=skillgate
+
+hazel approvals | approve | deny
+hazel secret set NAME value
 hazel store publish | install | list
 hazel skillgate from-openapi ./openapi.yaml
 hazel gatekeeper validate
@@ -54,7 +72,7 @@ hazel benchmark
 hazel eval
 ```
 
-`hazel agent run` is a DNA smoke with stubs. Real tools and HITL = your app’s `runtime.execute` / Meridian `/api/chat`. `hazel agent apply` declares desired state — it does not restart Node.
+`hazel apply` ensures `hazeld`, registers DNA, and loads `./agent.ts` `@Tool` handlers into the live node. `hazel agent apply` still writes platform desired state. `hazel agent run` is a DNA-only smoke with stubs (no `agent.ts`).
 
 ### Create a framework application (secondary)
 

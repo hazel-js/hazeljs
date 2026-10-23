@@ -1,6 +1,6 @@
 # @hazeljs/agent
 
-**Agent OS kernel** — durable `@Agent` / `@Tool` runtime in the same DI app as your APIs.
+**Agent OS kernel** — durable `@Agent` / `@Tool` runtime, plus a local-first node (`LocalNode` / `hazeld`) so agents survive terminal close. Run them like services: `hazel apply` → still Running after you quit the shell. See [docs/LOCAL_NODE.md](./docs/LOCAL_NODE.md).
 
 DNA packages, crash-safe HITL, confidence loops, policy, time travel, A2A. Pair with [Skillgate](../skillgate), [Gatekeeper](../agent-gatekeeper), [Agent VM](../agent-vm), and [`describeAgent`](../testing). Flagship path: clone [Meridian](https://github.com/hazel-js/hazeljs-meridian-ops).
 
@@ -12,7 +12,18 @@ DNA packages, crash-safe HITL, confidence loops, policy, time travel, A2A. Pair 
 
 This is the Agent OS runtime kernel — not a chat wrapper and not LangGraph glued onto Nest. Package prompt + policy as DNA (DNA ≠ tool implementations), suspend for HITL across process restarts, and authorize tools with Gatekeeper.
 
-**Start with:** [Meridian](https://github.com/hazel-js/hazeljs-meridian-ops) (`store:sync` → `platform:sync` → `dev`), or `npx @hazeljs/cli agent new my-desk --template=agent-os`.
+**Status:** Local Agent OS is **stable for single-user** (`hazeld` + `hazel apply`). Distributed / Cloud seams remain experimental.
+
+**Start with (local-first):**
+
+```bash
+npm i -g @hazeljs/cli
+hazel new agent my-bot && cd my-bot && npm i
+hazel apply agent.yaml
+hazel doctor
+```
+
+Guide: [Run Your First Autonomous Agent Locally](https://hazeljs.ai/docs/guides/local-agent-os). Showcase app (secondary): [Meridian](https://github.com/hazel-js/hazeljs-meridian-ops). In-repo demo: `examples/local-agent-os`.
 
 **Perfect for:**
 

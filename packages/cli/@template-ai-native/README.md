@@ -1,14 +1,20 @@
 # HazelJS AI-Native Application
 
-A complete AI-native backend application with HazelJS, featuring:
+HTTP backend scaffold (`hazel new my-app --template=ai-native`). Runs as a **server** on port 3000 — not `hazeld`.
 
-- 🤖 **AI Chat Service** - OpenAI-powered chat endpoints
-- 🧠 **AI Agents** - Agents with tools and capabilities
-- 📚 **RAG System** - Document ingestion and semantic search
-- 🏥 **Health Checks** - Application monitoring
-- 📊 **Inspector** - Development tools and debugging
-- 🐳 **Docker Support** - Containerized deployment
-- 📮 **Postman Collection** - Ready-to-use API tests
+Includes:
+
+- AI chat (HCEL / OpenAI)
+- Agents with tools (weather, travel, **support desk**)
+- **ContextService** — CAG + RAG + KAG + Memory planner (`/context/*`, `kb/`)
+- Prisma vector RAG (`/rag/*`)
+- Health + Inspector + Docker
+
+**Agent OS (local daemon / apply / HITL)?** Use a different path:
+
+```bash
+hazel new agent my-desk --template=context
+```
 
 ## Quick Start
 
@@ -22,7 +28,7 @@ A complete AI-native backend application with HazelJS, featuring:
 
    ```bash
    cp .env.example .env
-   # Add your OpenAI API key to .env
+   # Add your OpenAI API key to .env (needed for /chat, /agent, Prisma RAG)
    ```
 
 3. **Start development server**
@@ -35,6 +41,8 @@ A complete AI-native backend application with HazelJS, featuring:
    - App: http://localhost:3000
    - Inspector: http://localhost:3000/\_\_hazel
    - Health: http://localhost:3000/health
+   - Context (offline KB): `POST /context/assemble`
+   - Desk agent: `POST /desk/chat`
 
 ## Skillgate (optional)
 
@@ -87,6 +95,24 @@ curl -X POST http://localhost:3000/rag/ingest \
 curl -X POST http://localhost:3000/rag/search \
   -H "Content-Type: application/json" \
   -d '{"query": "What is HazelJS?"}'
+```
+
+### Context planner (CAG + RAG + KAG + Memory)
+
+Offline seeds in `kb/` — no API key required for this endpoint:
+
+```bash
+curl -X POST http://localhost:3000/context/assemble \
+  -H "Content-Type: application/json" \
+  -d '{"query": "What is the refund policy for damaged goods?"}'
+
+curl -X POST http://localhost:3000/context/remember \
+  -H "Content-Type: application/json" \
+  -d '{"key": "contact_channel", "value": "email"}'
+
+curl -X POST http://localhost:3000/desk/chat \
+  -H "Content-Type: application/json" \
+  -d '{"message": "Who owns ORD-2042?"}'
 ```
 
 ## Docker Deployment

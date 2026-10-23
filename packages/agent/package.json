@@ -64,6 +64,7 @@
     "@hazeljs/observability": "^2.0.9",
     "@hazeljs/flow": "^2.0.9",
     "@opentelemetry/api": "^1.9.0",
+    "@hazeljs/agent-gatekeeper": "^2.0.9",
     "redis": ">=4.0.0"
   },
   "peerDependenciesMeta": {
@@ -94,6 +95,10 @@
     "@opentelemetry/api": {
       "optional": true,
       "description": "OpenTelemetry API for agent execution spans"
+    },
+    "@hazeljs/agent-gatekeeper": {
+      "optional": true,
+      "description": "Default local Gatekeeper for hazeld (HumanTask approvals)"
     }
   },
   "bugs": {

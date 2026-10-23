@@ -1,0 +1,42 @@
+{
+  "orders": {
+    "ORD-2042": {
+      "customerId": "cust_amina",
+      "customer": "Amina R.",
+      "sku": "HZ-JACKET-M",
+      "product": "Hazel field jacket — size M",
+      "total": 148,
+      "status": "delivered"
+    },
+    "ORD-1990": {
+      "customerId": "cust_jon",
+      "customer": "Jon K.",
+      "sku": "HZ-STICKER",
+      "product": "Agent OS sticker pack",
+      "total": 12,
+      "status": "shipped"
+    }
+  },
+  "edges": [
+    {
+      "from": "ORD-2042",
+      "rel": "OWNED_BY",
+      "to": "cust_amina"
+    },
+    {
+      "from": "ORD-2042",
+      "rel": "CONTAINS",
+      "to": "HZ-JACKET-M"
+    },
+    {
+      "from": "ORD-1990",
+      "rel": "OWNED_BY",
+      "to": "cust_jon"
+    },
+    {
+      "from": "ORD-1990",
+      "rel": "CONTAINS",
+      "to": "HZ-STICKER"
+    }
+  ]
+}

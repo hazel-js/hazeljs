@@ -1,0 +1,27 @@
+{
+  "name": "local-agent-os-example",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Local-first HazelJS Agent OS demo — refund HITL via hazeld",
+  "scripts": {
+    "apply": "hazel apply agent.yaml",
+    "ps": "hazel ps",
+    "inspect": "hazel inspect support_desk",
+    "run": "hazel run support_desk \"Please refund order ord_42\"",
+    "approvals": "hazel approvals",
+    "doctor": "hazel doctor",
+    "demo": "tsx ./scripts/demo.ts"
+  },
+  "dependencies": {
+    "@hazeljs/agent": "file:../../packages/agent",
+    "@hazeljs/cli": "file:../../packages/cli",
+    "@hazeljs/agent-gatekeeper": "file:../../packages/agent-gatekeeper"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.3.3"
+  },
+  "keywords": ["hazeljs", "agent-os", "local-first"],
+  "license": "Apache-2.0"
+}

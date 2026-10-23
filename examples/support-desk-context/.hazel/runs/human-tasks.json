@@ -1,0 +1,44 @@
+[
+  {
+    "id": "ht_2f312d8c-c847-4d1c-b169-1e2ea97bad1e_1792654431188_1",
+    "runId": "2f312d8c-c847-4d1c-b169-1e2ea97bad1e",
+    "type": "tool_approval",
+    "status": "approved",
+    "toolName": "issue_refund",
+    "payload": {
+      "requestId": "5964d532-fa73-4922-ac76-e58e74fdb9e3",
+      "input": {
+        "orderId": "ORD-2042",
+        "amount": 148
+      }
+    },
+    "createdAt": "2026-10-22T07:33:51.188Z",
+    "metadata": {
+      "requestId": "5964d532-fa73-4922-ac76-e58e74fdb9e3"
+    },
+    "resolvedAt": "2026-10-22T07:33:51.215Z",
+    "resolvedBy": {
+      "decidedBy": "demo"
+    }
+  },
+  {
+    "id": "ht_bfbe051c-a011-4c4b-9ecd-3a3a63a37474_1792658173513_1",
+    "runId": "bfbe051c-a011-4c4b-9ecd-3a3a63a37474",
+    "type": "tool_approval",
+    "status": "approved",
+    "toolName": "issue_refund",
+    "payload": {
+      "requestId": "e36af430-3b6b-438c-a449-dd8a7eb59268",
+      "input": {
+        "orderId": "ORD-2042",
+        "amount": 148
+      }
+    },
+    "createdAt": "2026-10-22T08:36:13.513Z",
+    "metadata": {
+      "requestId": "e36af430-3b6b-438c-a449-dd8a7eb59268"
+    },
+    "resolvedAt": "2026-10-22T08:36:13.532Z",
+    "resolvedBy": "demo"
+  }
+]

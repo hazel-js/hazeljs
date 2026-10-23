@@ -1,0 +1,122 @@
+[
+  {
+    "id": "a005a086-5a5f-4b13-a6f6-369854a394d3",
+    "agentName": "support_desk",
+    "agentVersion": "1.0.0",
+    "status": "completed",
+    "input": "Please refund order ord_42",
+    "rootRunId": "a005a086-5a5f-4b13-a6f6-369854a394d3",
+    "attempt": 1,
+    "createdAt": "2026-10-20T05:53:19.690Z",
+    "updatedAt": "2026-10-20T05:53:19.706Z",
+    "metadata": {
+      "capabilities": [],
+      "pendingApprovalRequestId": "ffd310f4-428d-4a82-9264-ca66a963a72f",
+      "pendingToolName": "refund"
+    },
+    "startedAt": "2026-10-20T05:53:19.690Z",
+    "checkpointId": "cp_a005a086-5a5f-4b13-a6f6-369854a394d3_1792475599693_2",
+    "completedAt": "2026-10-20T05:53:19.706Z",
+    "output": "Refund completed."
+  },
+  {
+    "id": "66963c07-bc89-4183-9b92-f4e753edc979",
+    "agentName": "support_desk",
+    "agentVersion": "1.0.0",
+    "status": "completed",
+    "input": "Please refund order ord_42",
+    "rootRunId": "66963c07-bc89-4183-9b92-f4e753edc979",
+    "attempt": 1,
+    "createdAt": "2026-10-20T06:30:09.362Z",
+    "updatedAt": "2026-10-20T06:30:09.392Z",
+    "metadata": {
+      "capabilities": [],
+      "pendingApprovalRequestId": "91bd6e3b-4ccf-4174-96fb-80528f80c9a6",
+      "pendingToolName": "refund"
+    },
+    "startedAt": "2026-10-20T06:30:09.362Z",
+    "checkpointId": "cp_66963c07-bc89-4183-9b92-f4e753edc979_1792477809366_2",
+    "completedAt": "2026-10-20T06:30:09.392Z",
+    "output": "Refund completed."
+  },
+  {
+    "id": "eaf42c74-8104-49dc-b23d-11777f61b1ba",
+    "agentName": "support_desk",
+    "agentVersion": "1.0.0",
+    "status": "completed",
+    "input": "Please refund order ord_42",
+    "rootRunId": "eaf42c74-8104-49dc-b23d-11777f61b1ba",
+    "attempt": 1,
+    "createdAt": "2026-10-20T06:31:15.665Z",
+    "updatedAt": "2026-10-20T06:31:15.682Z",
+    "metadata": {
+      "capabilities": [],
+      "pendingApprovalRequestId": "e32820d5-ec59-4fa0-9476-d1ecd121265a",
+      "pendingToolName": "refund"
+    },
+    "startedAt": "2026-10-20T06:31:15.665Z",
+    "checkpointId": "cp_eaf42c74-8104-49dc-b23d-11777f61b1ba_1792477875669_2",
+    "completedAt": "2026-10-20T06:31:15.682Z",
+    "output": "Refund completed."
+  },
+  {
+    "id": "cb955dd9-b9ec-4102-b45b-0ad9e2ba4bcb",
+    "agentName": "support_desk",
+    "agentVersion": "1.0.0",
+    "status": "completed",
+    "input": "Goal: Please refund order ord_42\n\nPlan:\nOK\n\nExecute the plan and produce the final answer.",
+    "rootRunId": "cb955dd9-b9ec-4102-b45b-0ad9e2ba4bcb",
+    "attempt": 1,
+    "createdAt": "2026-10-20T06:37:49.745Z",
+    "updatedAt": "2026-10-20T06:37:49.747Z",
+    "metadata": {
+      "loopIteration": 1,
+      "loopPlan": "OK",
+      "loopStage": "execute",
+      "capabilities": []
+    },
+    "startedAt": "2026-10-20T06:37:49.745Z",
+    "completedAt": "2026-10-20T06:37:49.747Z",
+    "output": "OK"
+  },
+  {
+    "id": "90c5ca8a-9fdd-42ec-8f54-26929307bccf",
+    "agentName": "support_desk",
+    "agentVersion": "1.0.0",
+    "status": "completed",
+    "input": "Goal: Please refund order ord_42\n\nPlan:\nOK\n\nExecute the plan and produce the final answer.",
+    "rootRunId": "90c5ca8a-9fdd-42ec-8f54-26929307bccf",
+    "attempt": 1,
+    "createdAt": "2026-10-20T06:37:49.748Z",
+    "updatedAt": "2026-10-20T06:37:49.750Z",
+    "metadata": {
+      "loopIteration": 2,
+      "loopPlan": "OK",
+      "loopStage": "execute",
+      "capabilities": []
+    },
+    "startedAt": "2026-10-20T06:37:49.748Z",
+    "completedAt": "2026-10-20T06:37:49.750Z",
+    "output": "OK"
+  },
+  {
+    "id": "da46f14b-878c-4250-a863-bea33bb1b152",
+    "agentName": "support_desk",
+    "agentVersion": "1.0.0",
+    "status": "completed",
+    "input": "Goal: Please refund order ord_42\n\nPlan:\nOK\n\nExecute the plan and produce the final answer.",
+    "rootRunId": "da46f14b-878c-4250-a863-bea33bb1b152",
+    "attempt": 1,
+    "createdAt": "2026-10-20T06:37:49.750Z",
+    "updatedAt": "2026-10-20T06:37:49.752Z",
+    "metadata": {
+      "loopIteration": 3,
+      "loopPlan": "OK",
+      "loopStage": "execute",
+      "capabilities": []
+    },
+    "startedAt": "2026-10-20T06:37:49.751Z",
+    "completedAt": "2026-10-20T06:37:49.752Z",
+    "output": "OK"
+  }
+]

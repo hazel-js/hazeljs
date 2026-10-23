@@ -1,7 +1,7 @@
 {
   "name": "@hazeljs/cli",
   "version": "2.0.9",
-  "description": "Command-line interface for scaffolding and generating HazelJS applications and components",
+  "description": "Part of HazelJS — the open-source Agent OS for TypeScript. CLI for scaffolding applications and Agent OS projects",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
@@ -11,7 +11,8 @@
     "cli-manifest.json"
   ],
   "bin": {
-    "hazel": "./dist/index.js"
+    "hazel": "./dist/index.js",
+    "hazeld": "./dist/hazeld.js"
   },
   "scripts": {
     "build": "tsc -b && node scripts/generate-manifest.js",
@@ -28,7 +29,8 @@
     "chalk": "^4.1.2",
     "commander": "^11.1.0",
     "inquirer": "^8.2.7",
-    "mustache": "^4.2.0"
+    "mustache": "^4.2.0",
+    "yaml": "^2.8.0"
   },
   "peerDependencies": {
     "@hazeljs/eval": "^2.0.9",

@@ -1,0 +1,28 @@
+# DNA for support-desk-context — context desk (CAG+RAG+KAG+Memory + HITL).
+# Handlers: agent.ts · Context planner: context.ts · Seeds: kb/
+apiVersion: agent.hazeljs.dev/v1alpha1
+kind: AgentDefinition
+metadata:
+  name: support_desk_context
+spec:
+  dna:
+    format: hazeljs.agent.dna
+    version: "1.0.0"
+    name: support_desk_context
+    description: Support desk with ContextService + HITL refunds
+    systemPrompt: |
+      You are a local order-support desk agent with a context planner.
+      Call assemble_context for policy/handbook/entity/preference questions.
+      Use lookup_order, remember, and issue_refund (HITL) as needed.
+    tools:
+      - name: assemble_context
+        description: Plan + assemble CAG/RAG/KAG/Memory for a question
+      - name: remember
+        description: Store a lasting preference (Memory)
+      - name: lookup_order
+        description: Look up an order by id
+      - name: issue_refund
+        description: Issue a refund (requires approval)
+        requiresApproval: true
+    schedule:
+      kind: manual

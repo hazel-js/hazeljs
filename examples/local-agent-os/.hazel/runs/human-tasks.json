@@ -1,0 +1,62 @@
+[
+  {
+    "id": "ht_a005a086-5a5f-4b13-a6f6-369854a394d3_1792475599693_1",
+    "runId": "a005a086-5a5f-4b13-a6f6-369854a394d3",
+    "type": "tool_approval",
+    "status": "approved",
+    "toolName": "refund",
+    "payload": {
+      "requestId": "ffd310f4-428d-4a82-9264-ca66a963a72f",
+      "input": {
+        "amount": 42,
+        "orderId": "ord_42"
+      }
+    },
+    "createdAt": "2026-10-20T05:53:19.693Z",
+    "metadata": {
+      "requestId": "ffd310f4-428d-4a82-9264-ca66a963a72f"
+    },
+    "resolvedAt": "2026-10-20T05:53:19.704Z",
+    "resolvedBy": "demo"
+  },
+  {
+    "id": "ht_66963c07-bc89-4183-9b92-f4e753edc979_1792477809365_1",
+    "runId": "66963c07-bc89-4183-9b92-f4e753edc979",
+    "type": "tool_approval",
+    "status": "approved",
+    "toolName": "refund",
+    "payload": {
+      "requestId": "91bd6e3b-4ccf-4174-96fb-80528f80c9a6",
+      "input": {
+        "amount": 42,
+        "orderId": "ord_42"
+      }
+    },
+    "createdAt": "2026-10-20T06:30:09.365Z",
+    "metadata": {
+      "requestId": "91bd6e3b-4ccf-4174-96fb-80528f80c9a6"
+    },
+    "resolvedAt": "2026-10-20T06:30:09.390Z",
+    "resolvedBy": "demo"
+  },
+  {
+    "id": "ht_eaf42c74-8104-49dc-b23d-11777f61b1ba_1792477875669_1",
+    "runId": "eaf42c74-8104-49dc-b23d-11777f61b1ba",
+    "type": "tool_approval",
+    "status": "approved",
+    "toolName": "refund",
+    "payload": {
+      "requestId": "e32820d5-ec59-4fa0-9476-d1ecd121265a",
+      "input": {
+        "amount": 42,
+        "orderId": "ord_42"
+      }
+    },
+    "createdAt": "2026-10-20T06:31:15.669Z",
+    "metadata": {
+      "requestId": "e32820d5-ec59-4fa0-9476-d1ecd121265a"
+    },
+    "resolvedAt": "2026-10-20T06:31:15.680Z",
+    "resolvedBy": "demo"
+  }
+]

@@ -1,0 +1,184 @@
+[
+  {
+    "id": "cp_2f312d8c-c847-4d1c-b169-1e2ea97bad1e_1792654431188_1",
+    "runId": "2f312d8c-c847-4d1c-b169-1e2ea97bad1e",
+    "payload": {
+      "kind": "tool_approval",
+      "requestId": "5964d532-fa73-4922-ac76-e58e74fdb9e3",
+      "toolName": "issue_refund",
+      "input": {
+        "orderId": "ORD-2042",
+        "amount": 148
+      }
+    },
+    "createdAt": "2026-10-22T07:33:51.188Z"
+  },
+  {
+    "id": "cp_2f312d8c-c847-4d1c-b169-1e2ea97bad1e_1792654431189_2",
+    "runId": "2f312d8c-c847-4d1c-b169-1e2ea97bad1e",
+    "payload": {
+      "kind": "durable_hitl",
+      "context": {
+        "executionId": "2f312d8c-c847-4d1c-b169-1e2ea97bad1e",
+        "agentId": "support_desk_context",
+        "sessionId": "session_1792654431185_kfqo4ed8m",
+        "input": "Customer asks to refund order ORD-2042",
+        "state": "waiting_for_approval",
+        "steps": [
+          {
+            "id": "045c7180-6b3f-412d-ba50-af20d971a32c",
+            "agentId": "support_desk_context",
+            "executionId": "2f312d8c-c847-4d1c-b169-1e2ea97bad1e",
+            "stepNumber": 1,
+            "state": "waiting_for_approval",
+            "timestamp": "2026-10-22T07:33:51.187Z",
+            "action": {
+              "type": "use_tool",
+              "toolName": "issue_refund",
+              "toolInput": {
+                "orderId": "ORD-2042",
+                "amount": 148
+              },
+              "thought": ""
+            },
+            "result": {
+              "success": false,
+              "error": "Pending human approval",
+              "metadata": {
+                "pendingApproval": true,
+                "requestId": "5964d532-fa73-4922-ac76-e58e74fdb9e3",
+                "toolName": "issue_refund",
+                "toolInput": {
+                  "orderId": "ORD-2042",
+                  "amount": 148
+                },
+                "duration": 1
+              }
+            },
+            "duration": 1
+          }
+        ],
+        "memory": {
+          "conversationHistory": [
+            {
+              "role": "user",
+              "content": "Customer asks to refund order ORD-2042",
+              "timestamp": "2026-10-22T07:33:51.187Z"
+            }
+          ],
+          "workingMemory": {},
+          "facts": [],
+          "entities": []
+        },
+        "metadata": {
+          "systemPrompt": "You are support_desk_context. Mission: Help with orders and refunds; refunds need approval",
+          "agentDescription": "support_desk_context"
+        },
+        "createdAt": "2026-10-22T07:33:51.185Z",
+        "updatedAt": "2026-10-22T07:33:51.188Z"
+      },
+      "pendingTool": {
+        "toolName": "issue_refund",
+        "toolInput": {
+          "orderId": "ORD-2042",
+          "amount": 148
+        },
+        "requestId": "5964d532-fa73-4922-ac76-e58e74fdb9e3"
+      },
+      "maxSteps": 8,
+      "agentName": "support_desk_context"
+    },
+    "createdAt": "2026-10-22T07:33:51.189Z"
+  },
+  {
+    "id": "cp_bfbe051c-a011-4c4b-9ecd-3a3a63a37474_1792658173513_1",
+    "runId": "bfbe051c-a011-4c4b-9ecd-3a3a63a37474",
+    "payload": {
+      "kind": "tool_approval",
+      "requestId": "e36af430-3b6b-438c-a449-dd8a7eb59268",
+      "toolName": "issue_refund",
+      "input": {
+        "orderId": "ORD-2042",
+        "amount": 148
+      }
+    },
+    "createdAt": "2026-10-22T08:36:13.513Z"
+  },
+  {
+    "id": "cp_bfbe051c-a011-4c4b-9ecd-3a3a63a37474_1792658173513_2",
+    "runId": "bfbe051c-a011-4c4b-9ecd-3a3a63a37474",
+    "payload": {
+      "kind": "durable_hitl",
+      "context": {
+        "executionId": "bfbe051c-a011-4c4b-9ecd-3a3a63a37474",
+        "agentId": "support_desk_context",
+        "sessionId": "session_1792658173510_bkpkqvrs8",
+        "input": "Customer asks to refund order ORD-2042",
+        "state": "waiting_for_approval",
+        "steps": [
+          {
+            "id": "e655d4bd-e96c-4d55-a334-79615faecbfa",
+            "agentId": "support_desk_context",
+            "executionId": "bfbe051c-a011-4c4b-9ecd-3a3a63a37474",
+            "stepNumber": 1,
+            "state": "waiting_for_approval",
+            "timestamp": "2026-10-22T08:36:13.511Z",
+            "action": {
+              "type": "use_tool",
+              "toolName": "issue_refund",
+              "toolInput": {
+                "orderId": "ORD-2042",
+                "amount": 148
+              },
+              "thought": ""
+            },
+            "result": {
+              "success": false,
+              "error": "Pending human approval",
+              "metadata": {
+                "pendingApproval": true,
+                "requestId": "e36af430-3b6b-438c-a449-dd8a7eb59268",
+                "toolName": "issue_refund",
+                "toolInput": {
+                  "orderId": "ORD-2042",
+                  "amount": 148
+                },
+                "duration": 1
+              }
+            },
+            "duration": 2
+          }
+        ],
+        "memory": {
+          "conversationHistory": [
+            {
+              "role": "user",
+              "content": "Customer asks to refund order ORD-2042",
+              "timestamp": "2026-10-22T08:36:13.511Z"
+            }
+          ],
+          "workingMemory": {},
+          "facts": [],
+          "entities": []
+        },
+        "metadata": {
+          "systemPrompt": "You are support_desk_context. Mission: Help with orders and refunds; refunds need approval",
+          "agentDescription": "support_desk_context"
+        },
+        "createdAt": "2026-10-22T08:36:13.510Z",
+        "updatedAt": "2026-10-22T08:36:13.513Z"
+      },
+      "pendingTool": {
+        "toolName": "issue_refund",
+        "toolInput": {
+          "orderId": "ORD-2042",
+          "amount": 148
+        },
+        "requestId": "e36af430-3b6b-438c-a449-dd8a7eb59268"
+      },
+      "maxSteps": 8,
+      "agentName": "support_desk_context"
+    },
+    "createdAt": "2026-10-22T08:36:13.513Z"
+  }
+]

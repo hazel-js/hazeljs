@@ -179,6 +179,11 @@ export interface AgentDna {
   slo?: AgentDnaSlo;
   schedule?: AgentDnaSchedule;
   /**
+   * Env bindings resolved only inside hazeld.
+   * Use `{ secret: "REF" }` for SecretStore refs — values are never printed by the CLI.
+   */
+  env?: Record<string, string | { secret: string }>;
+  /**
    * Optional Decision DNA map (name → definition).
    * Consumed by `@hazeljs/decision`. Omitted documents remain valid.
    */

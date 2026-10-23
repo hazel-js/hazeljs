@@ -1,7 +1,7 @@
 {
   "name": "@hazeljs/ai",
   "version": "2.0.9",
-  "description": "AI integration module for HazelJS framework",
+  "description": "Part of HazelJS — the open-source Agent OS for TypeScript. AI provider integration and task decorators",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
