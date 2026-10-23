@@ -1,11 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { ContextService, CONTEXT_EVENTS, type AssembledContext } from '@hazeljs/context';
-import {
-  createDefaultMemoryStore,
-  MemoryCategory,
-  MemoryService,
-} from '@hazeljs/memory';
+import { createDefaultMemoryStore, MemoryCategory, MemoryService } from '@hazeljs/memory';
 
 const kbDir = path.join(__dirname, 'kb');
 const TENANT = 'desk-local';

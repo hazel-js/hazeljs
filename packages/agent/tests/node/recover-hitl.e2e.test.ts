@@ -104,8 +104,7 @@ describe('hazeld recover HITL E2E', () => {
       const run = await serverA.node.store.runs.get(waitingExec.executionId);
       expect(run).toBeDefined();
       expect(
-        run!.status === AgentRunStatus.SUSPENDED ||
-          run!.status === AgentRunStatus.WAITING_FOR_HUMAN
+        run!.status === AgentRunStatus.SUSPENDED || run!.status === AgentRunStatus.WAITING_FOR_HUMAN
       ).toBe(true);
       expect(run!.checkpointId).toBeDefined();
     } finally {
@@ -122,8 +121,7 @@ describe('hazeld recover HITL E2E', () => {
       const runs = await serverB.node.listRuns('support');
       const waiting = runs.find(
         (r) =>
-          r.status === AgentRunStatus.SUSPENDED ||
-          r.status === AgentRunStatus.WAITING_FOR_HUMAN
+          r.status === AgentRunStatus.SUSPENDED || r.status === AgentRunStatus.WAITING_FOR_HUMAN
       );
       expect(waiting).toBeDefined();
 

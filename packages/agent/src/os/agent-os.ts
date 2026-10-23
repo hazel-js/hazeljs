@@ -493,13 +493,9 @@ export class AgentOS {
       const existing = this.runtime.getAgentTools(dna.name).find((t) => t.name === tool.name);
       const boundExisting =
         existing?.method &&
-        (async (input: Record<string, unknown>) =>
-          existing.method!.call(existing.target, input));
+        (async (input: Record<string, unknown>) => existing.method!.call(existing.target, input));
       const handler =
-        this.skillHandlers[tool.name] ??
-        project?.handlers[tool.name] ??
-        boundExisting ??
-        undefined;
+        this.skillHandlers[tool.name] ?? project?.handlers[tool.name] ?? boundExisting ?? undefined;
 
       this.runtime.registerDynamicTool(dna.name, {
         name: tool.name,

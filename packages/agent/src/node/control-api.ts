@@ -131,7 +131,8 @@ export class LocalControlApiServer {
         const applied = await this.node.apply(req.dna);
         await this.onApply?.();
         return applied;
-      }      case 'start':
+      }
+      case 'start':
       case 'run':
         return this.node.start(req.agentId, req.input);
       case 'stop':
@@ -152,12 +153,11 @@ export class LocalControlApiServer {
       case 'recover':
         return this.node.recover();
       case 'metrics':
-        return (this.node as { agentOs?: { metrics(): Promise<unknown> } }).agentOs?.metrics?.() ??
-          {};
-      case 'skills':
         return (
-          this.node as { agentOs?: { listSkills(): unknown } }
-        ).agentOs?.listSkills?.() ?? [];
+          (this.node as { agentOs?: { metrics(): Promise<unknown> } }).agentOs?.metrics?.() ?? {}
+        );
+      case 'skills':
+        return (this.node as { agentOs?: { listSkills(): unknown } }).agentOs?.listSkills?.() ?? [];
       case 'secret.set':
         if (!this.secrets) throw new Error('Secrets store not available');
         await this.secrets.set(req.name, req.value);

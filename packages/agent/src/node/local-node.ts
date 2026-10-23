@@ -18,12 +18,7 @@ import type { DurableJobStore } from './jobs';
 import type { SecretStore } from './secrets';
 import { createSecretStore } from './secrets';
 import { activateSecrets, resolveDnaSecrets } from './secret-resolve';
-import {
-  toDisplayStatus,
-  type AgentInspectView,
-  type HazelNode,
-  type NodeStatus,
-} from './types';
+import { toDisplayStatus, type AgentInspectView, type HazelNode, type NodeStatus } from './types';
 import { VERSION } from './version';
 
 export interface LocalNodeOptions extends AgentOSOptions {
@@ -63,10 +58,8 @@ export class LocalNode implements HazelNode {
 
     const platformStore =
       options.storePath ?? (useProject ? project.platformStore : home.platformStore);
-    const durableDir =
-      options.durableDir ?? (useProject ? project.durableDir : home.runsDir);
-    const timelinePath =
-      options.timelinePath ?? path.join(durableDir, 'timeline.jsonl');
+    const durableDir = options.durableDir ?? (useProject ? project.durableDir : home.runsDir);
+    const timelinePath = options.timelinePath ?? path.join(durableDir, 'timeline.jsonl');
     const eventsPath = options.eventsPath ?? home.eventsPath;
 
     this.store = createAgentOSStore({
@@ -129,9 +122,8 @@ export class LocalNode implements HazelNode {
         stopped: agents.filter((a) => a.status === 'paused' || a.status === 'terminated').length,
         failed: agents.filter((a) => a.status === 'failed').length,
         sleeping: agents.filter((a) => a.status === 'sleeping').length,
-        waiting: agents.filter(
-          (a) => a.status === 'waiting' || a.status === 'approval_required'
-        ).length,
+        waiting: agents.filter((a) => a.status === 'waiting' || a.status === 'approval_required')
+          .length,
       },
       runs: { active: active.length, waiting: waiting.length },
       storage: { status: 'Healthy', path: this.store.paths.home },
@@ -191,8 +183,7 @@ export class LocalNode implements HazelNode {
     const successful = runs.filter((r) => r.status === AgentRunStatus.COMPLETED).length;
     const failed = runs.filter((r) => r.status === AgentRunStatus.FAILED).length;
     const waiting = runs.filter(
-      (r) =>
-        r.status === AgentRunStatus.WAITING_FOR_HUMAN || r.status === AgentRunStatus.SUSPENDED
+      (r) => r.status === AgentRunStatus.WAITING_FOR_HUMAN || r.status === AgentRunStatus.SUSPENDED
     ).length;
     const skills = (agent.dna.tools ?? []).map((t) => t.name);
     const display =
@@ -299,8 +290,7 @@ async function continueSuspendedRuns(
     try {
       await node.store.runs.updateStatus(run.id, AgentRunStatus.FAILED, {
         error: {
-          message:
-            'Recovered after node restart without safe HITL checkpoint (no silent retry)',
+          message: 'Recovered after node restart without safe HITL checkpoint (no silent retry)',
           code: 'NODE_RECOVER_NO_CHECKPOINT',
         },
       });

@@ -31,6 +31,14 @@
     "tsx": "^4.19.0",
     "typescript": "^5.3.3"
   },
-  "keywords": ["hazeljs", "agent-os", "context", "rag", "cag", "kag", "memory"],
+  "keywords": [
+    "hazeljs",
+    "agent-os",
+    "context",
+    "rag",
+    "cag",
+    "kag",
+    "memory"
+  ],
   "license": "Apache-2.0"
 }

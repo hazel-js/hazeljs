@@ -2,20 +2,20 @@
 
 **Context desk** — local Agent OS + multi-layer context + HITL refunds.
 
-| Layer | Demo prompt |
-| --- | --- |
-| **CAG** | "What is the refund policy for damaged goods?" |
-| **RAG** | "How do I escalate a shipping delay?" |
-| **KAG** | "Who owns ORD-2042 and what product is it?" |
+| Layer      | Demo prompt                                      |
+| ---------- | ------------------------------------------------ |
+| **CAG**    | "What is the refund policy for damaged goods?"   |
+| **RAG**    | "How do I escalate a shipping delay?"            |
+| **KAG**    | "Who owns ORD-2042 and what product is it?"      |
 | **Memory** | `remember` contact_channel=email, then ask again |
-| **HITL** | "Refund ORD-2042" → `hazel approve` |
+| **HITL**   | "Refund ORD-2042" → `hazel approve`              |
 
-| File | Role |
-| --- | --- |
-| `agent.ts` | Tools: assemble_context, remember, lookup_order, issue_refund |
-| `context.ts` | `ContextService` planner + offline CAG/RAG/KAG/Memory ports |
-| `kb/` | policy.md, faq.md, graph.json |
-| `agent.yaml` | DNA for `hazel apply` |
+| File         | Role                                                          |
+| ------------ | ------------------------------------------------------------- |
+| `agent.ts`   | Tools: assemble_context, remember, lookup_order, issue_refund |
+| `context.ts` | `ContextService` planner + offline CAG/RAG/KAG/Memory ports   |
+| `kb/`        | policy.md, faq.md, graph.json                                 |
+| `agent.yaml` | DNA for `hazel apply`                                         |
 
 ```bash
 npm install

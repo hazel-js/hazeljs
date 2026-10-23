@@ -1,11 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { ContextService, CONTEXT_EVENTS, type AssembledContext } from '@hazeljs/context';
-import {
-  createDefaultMemoryStore,
-  MemoryCategory,
-  MemoryService,
-} from '@hazeljs/memory';
+import { createDefaultMemoryStore, MemoryCategory, MemoryService } from '@hazeljs/memory';
 
 const kbDir = path.join(__dirname, '..', '..', 'kb');
 const TENANT = 'ai-native';
@@ -93,9 +89,7 @@ export async function getDeskContext() {
           async ask(question: string) {
             const match = question.toUpperCase().match(/ORD-?\d+/);
             const raw = match?.[0] ?? 'ORD-2042';
-            const normalized = raw.startsWith('ORD-')
-              ? raw
-              : `ORD-${raw.replace(/\D/g, '')}`;
+            const normalized = raw.startsWith('ORD-') ? raw : `ORD-${raw.replace(/\D/g, '')}`;
             const order = graph.orders[normalized];
             if (!order) {
               return {

@@ -85,9 +85,7 @@ export class LocalDeploymentBackend implements DeploymentBackend {
 
     const status: BackendStatus = {
       ready: true,
-      message: this.hosted
-        ? 'Agent registered in AgentOS (hazeld)'
-        : 'Local deployment recorded',
+      message: this.hosted ? 'Agent registered in AgentOS (hazeld)' : 'Local deployment recorded',
       observed: {
         runtimeClassName: input.runtimeClassName,
         definition: input.definition.definition.metadata.name,

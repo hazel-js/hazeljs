@@ -66,7 +66,9 @@ describe('agent templates scaffold', () => {
     expect(result.files).toEqual(
       expect.arrayContaining(['package.json', 'agent.yaml', 'agent.ts', 'README.md'])
     );
-    expect(result.files).not.toEqual(expect.arrayContaining(['host.ts', 'showcase.ts', 'demo-llm.ts']));
+    expect(result.files).not.toEqual(
+      expect.arrayContaining(['host.ts', 'showcase.ts', 'demo-llm.ts'])
+    );
     expect(fs.existsSync(path.join(dest, 'agent.yaml'))).toBe(true);
     expect(fs.existsSync(path.join(dest, 'agent.ts'))).toBe(true);
     expect(fs.existsSync(path.join(dest, 'deploy/kubernetes'))).toBe(false);

@@ -12,7 +12,9 @@ async function main(): Promise<void> {
   console.log('   sources:', policy.sourcesUsed.join(', '));
   console.log('   snippet:', policy.text.slice(0, 160).replace(/\n/g, ' '), '…\n');
 
-  const handbook = await assembleContext('How do I escalate a shipping delay according to the handbook?');
+  const handbook = await assembleContext(
+    'How do I escalate a shipping delay according to the handbook?'
+  );
   console.log('2) Handbook / RAG');
   console.log('   sources:', handbook.sourcesUsed.join(', '));
   console.log('   snippet:', handbook.text.slice(0, 160).replace(/\n/g, ' '), '…\n');

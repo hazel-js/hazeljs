@@ -42,8 +42,7 @@ export function createAgentOSStore(options: CreateAgentOSStoreOptions = {}): Age
   const durableDir = options.durableDir ?? paths.runsDir;
   const eventsPath = options.eventsPath ?? paths.eventsPath;
 
-  const useSql =
-    options.preferSql !== false && durableRunStoreBackendFromEnv() === 'sql';
+  const useSql = options.preferSql !== false && durableRunStoreBackendFromEnv() === 'sql';
   const durable = useSql
     ? createDurableRunStoreFromEnv({ cwd: options.projectRoot ?? paths.home })
     : createDurableRunStore(durableDir);

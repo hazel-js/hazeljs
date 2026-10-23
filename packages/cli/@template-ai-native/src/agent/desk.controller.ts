@@ -46,15 +46,7 @@ export class SupportDeskAgent {
       { name: 'value', type: 'string', required: true },
     ],
   })
-  async remember({
-    userId,
-    key,
-    value,
-  }: {
-    userId?: string;
-    key: string;
-    value: string;
-  }) {
+  async remember({ userId, key, value }: { userId?: string; key: string; value: string }) {
     const uid = userId ?? 'http-user';
     await rememberPreference(uid, key, value);
     return { ok: true, userId: uid, key, value };
@@ -63,26 +55,26 @@ export class SupportDeskAgent {
   @Tool({
     name: 'lookup_order',
     description: 'Look up an order by id (try ORD-2042)',
-    parameters: [
-      { name: 'orderId', type: 'string', description: 'Order id', required: true },
-    ],
+    parameters: [{ name: 'orderId', type: 'string', description: 'Order id', required: true }],
   })
   async lookup_order({ orderId }: { orderId: string }) {
-    const orders: Record<string, { customer: string; item: string; total: number; status: string }> =
-      {
-        'ORD-2042': {
-          customer: 'Amina R.',
-          item: 'Hazel field jacket — size M',
-          total: 148,
-          status: 'delivered',
-        },
-        'ORD-1990': {
-          customer: 'Jon K.',
-          item: 'Agent OS sticker pack',
-          total: 12,
-          status: 'shipped',
-        },
-      };
+    const orders: Record<
+      string,
+      { customer: string; item: string; total: number; status: string }
+    > = {
+      'ORD-2042': {
+        customer: 'Amina R.',
+        item: 'Hazel field jacket — size M',
+        total: 148,
+        status: 'delivered',
+      },
+      'ORD-1990': {
+        customer: 'Jon K.',
+        item: 'Agent OS sticker pack',
+        total: 12,
+        status: 'shipped',
+      },
+    };
     const id = (orderId || 'ORD-2042').toUpperCase();
     const order = orders[id];
     if (!order) return { found: false as const, orderId: id };

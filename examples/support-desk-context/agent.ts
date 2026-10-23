@@ -57,19 +57,21 @@ export class SupportDeskContextAgent {
     description: 'Store a lasting preference for this user (Memory layer)',
     parameters: [
       { name: 'userId', type: 'string', description: 'User id', required: false },
-      { name: 'key', type: 'string', description: 'Preference key, e.g. contact_channel', required: true },
-      { name: 'value', type: 'string', description: 'Preference value, e.g. email', required: true },
+      {
+        name: 'key',
+        type: 'string',
+        description: 'Preference key, e.g. contact_channel',
+        required: true,
+      },
+      {
+        name: 'value',
+        type: 'string',
+        description: 'Preference value, e.g. email',
+        required: true,
+      },
     ],
   })
-  async remember({
-    userId,
-    key,
-    value,
-  }: {
-    userId?: string;
-    key: string;
-    value: string;
-  }) {
+  async remember({ userId, key, value }: { userId?: string; key: string; value: string }) {
     const uid = userId ?? 'desk-user';
     await rememberPreference(uid, key, value);
     return { ok: true, userId: uid, key, value };

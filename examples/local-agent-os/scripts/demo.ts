@@ -100,9 +100,7 @@ async function main(): Promise<void> {
   console.log('   recover:', recovered);
   const runs = await server.node.listRuns('support_desk');
   const waiting = runs.find(
-    (r) =>
-      r.status === AgentRunStatus.SUSPENDED ||
-      r.status === AgentRunStatus.WAITING_FOR_HUMAN
+    (r) => r.status === AgentRunStatus.SUSPENDED || r.status === AgentRunStatus.WAITING_FOR_HUMAN
   );
   if (!waiting) throw new Error('expected waiting run after restart');
 

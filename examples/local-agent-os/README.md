@@ -47,10 +47,10 @@ This: apply → refund HITL → kill hazeld → restart → approve → complete
 
 ## Files
 
-| File | Role |
-| --- | --- |
-| `agent.yaml` | DNA + deployment |
-| `agent.ts` | Optional skill handlers |
+| File              | Role                                     |
+| ----------------- | ---------------------------------------- |
+| `agent.yaml`      | DNA + deployment                         |
+| `agent.ts`        | Optional skill handlers                  |
 | `scripts/demo.ts` | Recover / approve proof (`npm run demo`) |
 
 ## Want CAG + RAG + KAG + Memory?

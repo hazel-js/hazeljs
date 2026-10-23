@@ -52,12 +52,7 @@ class LaunchdHostService implements HostServiceManager {
 
   constructor(private readonly options: HostServiceOptions) {
     this.label = options.label ?? 'ai.hazeljs.hazeld';
-    this.plistPath = path.join(
-      os.homedir(),
-      'Library',
-      'LaunchAgents',
-      `${this.label}.plist`
-    );
+    this.plistPath = path.join(os.homedir(), 'Library', 'LaunchAgents', `${this.label}.plist`);
   }
 
   async install(): Promise<void> {
@@ -202,11 +197,9 @@ WantedBy=default.target
     const installed = fs.existsSync(this.unitPath);
     let running = false;
     try {
-      const out = execFileSync(
-        'systemctl',
-        ['--user', 'is-active', `${this.unitName}.service`],
-        { encoding: 'utf8' }
-      ).trim();
+      const out = execFileSync('systemctl', ['--user', 'is-active', `${this.unitName}.service`], {
+        encoding: 'utf8',
+      }).trim();
       running = out === 'active';
     } catch {
       running = false;

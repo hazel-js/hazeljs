@@ -17,17 +17,17 @@ hazel inspect my_bot
 
 ## Architecture
 
-| Layer | Package / type | Role |
-| --- | --- | --- |
-| CLI | `@hazeljs/cli` (`hazel`, `hazeld`) | Apply / inspect / approvals over a Unix socket |
-| Control API | `LocalControlApi` | JSON request/response on `~/.hazel/hazeld.sock` |
-| Node seam | `HazelNode` / `LocalNode` | Portable host interface |
-| Kernel | `AgentOS` | Deploy, start, pause, recover, approve; loads project `agent.ts` |
-| Platform | `LocalDeploymentBackend` (hosted) | `ready` = DNA registered in AgentOS |
-| Durability | `DurableRunStore` + `DurableJobStore` | Runs, HITL, cron jobs under `~/.hazel` / `.hazel/` |
-| Governance | Gatekeeper + `HumanTaskService` | Default local approvals (no Redis) |
-| Secrets | `EncryptedFileSecretStore` | `hazel secret set` — values never printed |
-| Reboot | `HostServiceManager` | launchd / systemd user / Windows task |
+| Layer       | Package / type                        | Role                                                             |
+| ----------- | ------------------------------------- | ---------------------------------------------------------------- |
+| CLI         | `@hazeljs/cli` (`hazel`, `hazeld`)    | Apply / inspect / approvals over a Unix socket                   |
+| Control API | `LocalControlApi`                     | JSON request/response on `~/.hazel/hazeld.sock`                  |
+| Node seam   | `HazelNode` / `LocalNode`             | Portable host interface                                          |
+| Kernel      | `AgentOS`                             | Deploy, start, pause, recover, approve; loads project `agent.ts` |
+| Platform    | `LocalDeploymentBackend` (hosted)     | `ready` = DNA registered in AgentOS                              |
+| Durability  | `DurableRunStore` + `DurableJobStore` | Runs, HITL, cron jobs under `~/.hazel` / `.hazel/`               |
+| Governance  | Gatekeeper + `HumanTaskService`       | Default local approvals (no Redis)                               |
+| Secrets     | `EncryptedFileSecretStore`            | `hazel secret set` — values never printed                        |
+| Reboot      | `HostServiceManager`                  | launchd / systemd user / Windows task                            |
 
 ```
 CLI ──unix socket──► LocalControlApi ──► LocalNode ──► AgentOS ──► AgentRuntime

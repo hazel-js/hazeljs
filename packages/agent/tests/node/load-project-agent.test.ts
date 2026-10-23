@@ -71,16 +71,19 @@ module.exports = { FixtureAgent, agentName: '${agentName}' };
 
 (distReady ? describe : describe.skip)('loadProjectAgent (dist)', () => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { loadProjectAgent } = require(distLoader) as typeof import('../../src/node/load-project-agent');
+  const { loadProjectAgent } = require(
+    distLoader
+  ) as typeof import('../../src/node/load-project-agent');
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { AgentOS } = require(distOs) as typeof import('../../src/os/agent-os');
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { defineAgent } = require(path.join(agentPkgRoot, 'dist/os/define-agent.js')) as typeof import('../../src/os/define-agent');
+  const { defineAgent } = require(
+    path.join(agentPkgRoot, 'dist/os/define-agent.js')
+  ) as typeof import('../../src/os/define-agent');
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { createMockLlmProvider } = require(path.join(
-    agentPkgRoot,
-    'dist/llm/http-llm.provider.js'
-  )) as typeof import('../../src/llm/http-llm.provider');
+  const { createMockLlmProvider } = require(
+    path.join(agentPkgRoot, 'dist/llm/http-llm.provider.js')
+  ) as typeof import('../../src/llm/http-llm.provider');
 
   let root: string;
 
@@ -140,7 +143,8 @@ module.exports = { FixtureAgent, agentName: '${agentName}' };
 
 describe('loadProjectAgent (src discovery)', () => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { loadProjectAgent } = require('../../src/node/load-project-agent') as typeof import('../../src/node/load-project-agent');
+  const { loadProjectAgent } =
+    require('../../src/node/load-project-agent') as typeof import('../../src/node/load-project-agent');
 
   it('returns undefined for empty project root', () => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), 'hazel-empty-'));

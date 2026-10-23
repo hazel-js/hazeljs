@@ -47,7 +47,9 @@ function resolveAgentFile(projectRoot: string): string | undefined {
 }
 
 function isAgentClass(value: unknown): value is new (...args: unknown[]) => unknown {
-  return typeof value === 'function' && !!getAgentMetadata(value as new (...args: unknown[]) => unknown);
+  return (
+    typeof value === 'function' && !!getAgentMetadata(value as new (...args: unknown[]) => unknown)
+  );
 }
 
 function pickAgentClass(
@@ -83,8 +85,7 @@ function extractHandlers(
       (typeof meta?.method === 'function' ? meta.method : undefined) ??
       (instance as Record<string, unknown>)[methodName];
     if (typeof method !== 'function') continue;
-    handlers[toolName] = async (input: Record<string, unknown>) =>
-      method.call(instance, input);
+    handlers[toolName] = async (input: Record<string, unknown>) => method.call(instance, input);
   }
   return handlers;
 }

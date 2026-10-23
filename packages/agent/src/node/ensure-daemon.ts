@@ -54,9 +54,7 @@ export async function ensureDaemon(options: EnsureDaemonOptions = {}): Promise<{
     }
     await sleep(150);
   }
-  throw new Error(
-    `Timed out waiting for hazeld at ${home.socketPath}. Tried starting: ${script}`
-  );
+  throw new Error(`Timed out waiting for hazeld at ${home.socketPath}. Tried starting: ${script}`);
 }
 
 function resolveHazeldScript(): string {

@@ -16,9 +16,7 @@ export interface TriggerHandler {
 export class ScheduleTriggerHandler implements TriggerHandler {
   readonly kind = 'schedule' as const;
 
-  constructor(
-    private readonly schedule: (agentId: string, cron: string) => Promise<() => void>
-  ) {}
+  constructor(private readonly schedule: (agentId: string, cron: string) => Promise<() => void>) {}
 
   async register(agentId: string, trigger: AgentTrigger): Promise<() => void> {
     if (trigger.type !== 'schedule') {

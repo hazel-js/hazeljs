@@ -6,12 +6,7 @@
 import { spawn } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
-import {
-  controlRequest,
-  isDaemonReachable,
-  hazelHome,
-  ensureHazelHome,
-} from '../../src';
+import { controlRequest, isDaemonReachable, hazelHome, ensureHazelHome } from '../../src';
 
 const HAZELD_BIN = path.resolve(__dirname, '../../dist/node/hazeld-bin.js');
 
