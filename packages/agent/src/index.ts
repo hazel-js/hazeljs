@@ -108,3 +108,6 @@ export * from './scheduler/agent-scheduler';
 export * from './platform';
 
 export * from './os';
+
+/** Local-first Agent OS node (`hazeld`) — see docs/LOCAL_NODE.md */
+export * from './node';

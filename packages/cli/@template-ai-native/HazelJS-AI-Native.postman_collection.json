@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "hazeljs-ai-native-template",
     "name": "HazelJS AI-Native API",
-    "description": "Postman collection for HazelJS AI-Native application with AI chat, agents, and RAG endpoints",
+    "description": "HTTP AI-native app: chat, agents, Prisma RAG, ContextService (CAG+RAG+KAG+Memory), and support desk. Not hazeld — use hazel new agent --template=context for local Agent OS.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
@@ -364,6 +364,154 @@
               "raw": "{{baseUrl}}/travel/supervisor",
               "host": ["{{baseUrl}}"],
               "path": ["travel", "supervisor"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Context (CAG + RAG + KAG + Memory)",
+      "description": "POST /context/* — offline kb/ seeds via ContextService planner. No OpenAI key required for assemble/remember.",
+      "item": [
+        {
+          "name": "Assemble — refund policy (CAG)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"What is the refund policy for damaged goods?\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/context/assemble",
+              "host": ["{{baseUrl}}"],
+              "path": ["context", "assemble"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Assemble — shipping delay (RAG handbook)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"How do I escalate a shipping delay according to the handbook?\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/context/assemble",
+              "host": ["{{baseUrl}}"],
+              "path": ["context", "assemble"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Assemble — order entity (KAG)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"Who owns ORD-2042 and which product is related?\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/context/assemble",
+              "host": ["{{baseUrl}}"],
+              "path": ["context", "assemble"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Remember preference (Memory)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"http-user\",\n  \"key\": \"contact_channel\",\n  \"value\": \"email\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/context/remember",
+              "host": ["{{baseUrl}}"],
+              "path": ["context", "remember"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Assemble — recall preference",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"What contact channel do I prefer?\",\n  \"userId\": \"http-user\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/context/assemble",
+              "host": ["{{baseUrl}}"],
+              "path": ["context", "assemble"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Support Desk Agent",
+      "description": "POST /desk/chat — SupportDeskAgent with assemble_context, remember, lookup_order tools.",
+      "item": [
+        {
+          "name": "Policy question",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"What is the refund policy for damaged goods?\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/desk/chat",
+              "host": ["{{baseUrl}}"],
+              "path": ["desk", "chat"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Lookup order ORD-2042",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"Look up order ORD-2042\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/desk/chat",
+              "host": ["{{baseUrl}}"],
+              "path": ["desk", "chat"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Entity + preference",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"Who owns ORD-2042 and remember that I prefer email\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/desk/chat",
+              "host": ["{{baseUrl}}"],
+              "path": ["desk", "chat"]
             }
           },
           "response": []

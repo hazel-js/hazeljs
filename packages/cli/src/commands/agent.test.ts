@@ -46,8 +46,66 @@ describe('agent templates scaffold', () => {
     fs.rmSync(tmp, { recursive: true, force: true });
   });
 
-  it('lists three templates', () => {
-    expect(listAgentTemplates().map((t) => t.id)).toEqual(['bare', 'agent-os', 'skillgate']);
+  it('lists local, context, bare, agent-os, and skillgate templates', () => {
+    expect(listAgentTemplates().map((t) => t.id)).toEqual([
+      'local',
+      'context',
+      'bare',
+      'agent-os',
+      'skillgate',
+    ]);
+  });
+
+  it('scaffolds local Agent OS (default) with agent.yaml', () => {
+    const dest = path.join(tmp, 'local-demo');
+    const result = scaffoldAgentProject({
+      name: 'local-demo',
+      destDir: dest,
+      template: 'local',
+    });
+    expect(result.files).toEqual(
+      expect.arrayContaining(['package.json', 'agent.yaml', 'agent.ts', 'README.md'])
+    );
+    expect(result.files).not.toEqual(
+      expect.arrayContaining(['host.ts', 'showcase.ts', 'demo-llm.ts'])
+    );
+    expect(fs.existsSync(path.join(dest, 'agent.yaml'))).toBe(true);
+    expect(fs.existsSync(path.join(dest, 'agent.ts'))).toBe(true);
+    expect(fs.existsSync(path.join(dest, 'deploy/kubernetes'))).toBe(false);
+    const agent = fs.readFileSync(path.join(dest, 'agent.ts'), 'utf8');
+    expect(agent).toMatch(/lookup_order/);
+    expect(agent).toMatch(/issue_refund/);
+    expect(agent).toMatch(/requiresApproval:\s*true/);
+  });
+
+  it('scaffolds context desk with ContextService seeds', () => {
+    const dest = path.join(tmp, 'context-demo');
+    const result = scaffoldAgentProject({
+      name: 'context-demo',
+      destDir: dest,
+      template: 'context',
+    });
+    expect(result.files).toEqual(
+      expect.arrayContaining([
+        'package.json',
+        'agent.yaml',
+        'agent.ts',
+        'context.ts',
+        'kb/policy.md',
+        'kb/faq.md',
+        'kb/graph.json',
+        'scripts/walkthrough.ts',
+      ])
+    );
+    const agent = fs.readFileSync(path.join(dest, 'agent.ts'), 'utf8');
+    expect(agent).toMatch(/assemble_context/);
+    expect(agent).toMatch(/issue_refund/);
+    const ctx = fs.readFileSync(path.join(dest, 'context.ts'), 'utf8');
+    expect(ctx).toMatch(/ContextService/);
+    expect(ctx).toMatch(/createDefaultMemoryStore/);
+    const pkg = JSON.parse(fs.readFileSync(path.join(dest, 'package.json'), 'utf8'));
+    expect(pkg.dependencies['@hazeljs/context']).toBe('^2.0.9');
+    expect(pkg.dependencies['@hazeljs/memory']).toBe('^2.0.9');
   });
 
   it('scaffolds bare DNA package', () => {
@@ -70,8 +128,9 @@ describe('agent templates scaffold', () => {
     expect(fs.existsSync(path.join(dest, 'deploy/kubernetes/hpa.yaml'))).toBe(true);
     expect(fs.existsSync(path.join(dest, 'dna/agent.marketplace.json'))).toBe(true);
     const pkg = JSON.parse(fs.readFileSync(path.join(dest, 'package.json'), 'utf8'));
-    expect(pkg.dependencies['@hazeljs/self-healing']).toBe('^2.0.5');
-    expect(pkg.dependencies['@hazeljs/predictive-scaling']).toBe('^2.0.5');
+    expect(pkg.dependencies['@hazeljs/self-healing']).toBe('^2.0.9');
+    expect(pkg.dependencies['@hazeljs/predictive-scaling']).toBe('^2.0.9');
+    expect(pkg.dependencies['@hazeljs/agent']).toBe('^2.0.9');
     expect(pkg.dependencies['reflect-metadata']).toBeUndefined();
     const main = fs.readFileSync(path.join(dest, 'src/main.ts'), 'utf8');
     const agent = fs.readFileSync(path.join(dest, 'src/support.agent.ts'), 'utf8');

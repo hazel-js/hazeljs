@@ -7,6 +7,7 @@ import inquirer from 'inquirer';
 import type { GenerateResult, GenerateCLIOptions } from '../utils/generator';
 import { printGenerateResult } from '../utils/generator';
 import { findPackage, HAZEL_PACKAGES } from '../utils/packages-registry';
+import { scaffoldAgentProject, type AgentTemplateId } from './agent-templates';
 
 function copyRecursiveSync(src: string, dest: string) {
   if (fs.existsSync(src)) {
@@ -197,24 +198,87 @@ bootstrap();
 
 export function generateApp(program: Command) {
   program
-    .command('new <appName>')
-    .description('Create a new HazelJS application')
+    .command('new')
+    .description(
+      'Create a HazelJS app (`hazel new my-app`) or local Agent OS agent (`hazel new agent <name>`)'
+    )
+    .argument('<appNameOrKind>', 'App name, or "agent" for a local Agent OS scaffold')
+    .argument('[agentName]', 'Agent project name when first argument is "agent"')
     .option('-d, --dest <destPath>', 'Destination path', '.')
     .option('--skip-install', 'Skip npm install')
     .option('--skip-git', 'Skip git initialization')
     .option('-i, --interactive', 'Interactive setup')
-    .option('-t, --template <template>', 'Project template (basic, ai-native)', 'basic')
+    .option(
+      '-t, --template <template>',
+      'App: basic|ai-native · Agent: local|context|bare|agent-os|skillgate',
+      'basic'
+    )
+    .option('-f, --force', 'Allow non-empty destination (agent scaffold)')
+    .option('--json', 'Machine-readable output (agent scaffold)')
     .action(
       async (
-        appName: string,
+        appNameOrKind: string,
+        agentName: string | undefined,
         options: {
           dest?: string;
           skipInstall?: boolean;
           skipGit?: boolean;
           interactive?: boolean;
           template?: string;
+          force?: boolean;
+          json?: boolean;
         }
       ) => {
+        // `hazel new agent <name>` — local-first Agent OS scaffold
+        if (appNameOrKind === 'agent') {
+          if (!agentName) {
+            console.error(chalk.red('Usage: hazel new agent <name>'));
+            process.exitCode = 1;
+            return;
+          }
+          try {
+            const destDir = path.resolve(process.cwd(), options.dest || '.', agentName);
+            const template = (
+              options.template === 'basic' ? 'local' : options.template
+            ) as AgentTemplateId;
+            const result = scaffoldAgentProject({
+              name: agentName,
+              destDir,
+              template: ['local', 'context', 'bare', 'agent-os', 'skillgate'].includes(template)
+                ? template
+                : 'local',
+              force: options.force,
+            });
+            const payload = {
+              ok: true,
+              action: 'new-agent',
+              ...result,
+              next: [
+                `cd ${path.relative(process.cwd(), result.path) || '.'}`,
+                'npm install',
+                'hazel apply agent.yaml',
+                'hazel inspect <agent>',
+              ],
+            };
+            console.log(
+              options.json
+                ? JSON.stringify(payload, null, 2)
+                : [
+                    `✓ Created local agent project (${result.template})`,
+                    `  ${result.path}`,
+                    '',
+                    'Next:',
+                    ...payload.next.map((l) => `  ${l}`),
+                  ].join('\n')
+            );
+          } catch (e) {
+            console.error(chalk.red(e instanceof Error ? e.message : String(e)));
+            process.exitCode = 1;
+          }
+          return;
+        }
+
+        const appName = appNameOrKind;
         try {
           let projectConfig = {
             name: appName,

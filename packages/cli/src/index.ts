@@ -56,6 +56,7 @@ import { addCommand } from './commands/add';
 import { registerEvalCommand } from './commands/eval';
 import { registerBenchmarkCommand } from './commands/benchmark';
 import { registerAgentCommand } from './commands/agent';
+import { registerLocalOsCommands } from './commands/local-os';
 import { registerSkillgateCommand } from './commands/skillgate';
 import { registerGatekeeperCommand } from './commands/gatekeeper';
 import { registerDecisionCommand } from './commands/decision';
@@ -69,8 +70,11 @@ const program = new Command();
 
 program
   .name('hazel')
-  .description('CLI for generating HazelJS components and applications')
+  .description('HazelJS CLI — local-first Agent OS (`hazel apply`) and app scaffolding')
   .version(packageJson.version);
+
+// Local-first Agent OS aliases (`hazel new agent`, apply, ps, …) before `hazel new <app>`
+registerLocalOsCommands(program);
 
 // New app command
 generateApp(program);

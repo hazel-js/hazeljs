@@ -6,6 +6,7 @@
 import * as path from 'path';
 import { parseDna, type AgentDna } from '../dna/agent-dna';
 import { createAgentClassFromDna, type DnaToolHandler } from '../dna/bootstrap-from-dna';
+import { loadProjectAgent } from '../node/load-project-agent';
 import {
   createLocalPlatform,
   PLATFORM_API_VERSION,
@@ -55,6 +56,11 @@ export interface AgentOSOptions {
   authorizationGate?: ToolAuthorizationGate;
   createAuthorizationGate?: (humanTasks: HumanTaskService) => ToolAuthorizationGate | undefined;
   namespace?: string;
+  /**
+   * When set (hazeld), sleepUntil persists wakes to DurableJobStore instead of
+   * process-only InMemoryAgentScheduler timers.
+   */
+  durableJobs?: import('../node/jobs').DurableJobStore;
   runtime?: Omit<
     AgentRuntimeConfig,
     'llmProvider' | 'runRepository' | 'checkpointService' | 'humanTaskService' | 'scheduler'
@@ -68,12 +74,16 @@ export class AgentOS {
   readonly slo: SloTracker;
   readonly usage: UsageLedger;
   readonly namespace: string;
+  private readonly projectRoot: string;
   private readonly skillHandlers: Record<string, DnaToolHandler>;
   private readonly scheduler = new InMemoryAgentScheduler();
   private readonly sleepJobs = new Map<string, string>();
+  private readonly durableJobs?: import('../node/jobs').DurableJobStore;
 
   constructor(options: AgentOSOptions = {}) {
+    this.durableJobs = options.durableJobs;
     const projectRoot = options.projectRoot ?? process.cwd();
+    this.projectRoot = path.resolve(projectRoot);
     this.namespace = options.namespace ?? 'default';
     this.skillHandlers = options.skillHandlers ?? {};
     const durableDir = path.resolve(options.durableDir ?? path.join(projectRoot, '.hazel', 'runs'));
@@ -97,6 +107,13 @@ export class AgentOS {
         : createDurableRunStore(durableDir);
     const authorizationGate =
       options.authorizationGate ?? options.createAuthorizationGate?.(this.store.humanTaskService);
+
+    // When AgentOS is the long-lived host (hazeld), local apply registers DNA in-process.
+    this.platform.backend.setHosted({
+      onApply: (input) => {
+        this.registerFromDna(input.definition.dna);
+      },
+    });
     this.slo = new SloTracker((type, agentId, executionId, data) => {
       this.runtime.emit(type, agentId, executionId, data);
     });
@@ -298,12 +315,27 @@ export class AgentOS {
   }
 
   async sleepUntil(id: string, at: Date): Promise<OfficeAgent> {
+    const input = (await this.requireAgent(id)).dna.mission?.goal ?? 'Wake';
     const existing = this.sleepJobs.get(id);
-    if (existing) await this.scheduler.cancel(existing);
-    const jobId = await this.scheduler.scheduleAt(at, {
-      agentName: id,
-      input: (await this.requireAgent(id)).dna.mission?.goal ?? 'Wake',
-    });
+    if (existing) {
+      if (this.durableJobs) this.durableJobs.remove(existing);
+      else await this.scheduler.cancel(existing);
+    }
+
+    let jobId: string;
+    if (this.durableJobs) {
+      jobId = `sleep:${id}`;
+      this.durableJobs.upsert({
+        id: jobId,
+        agentId: id,
+        kind: 'sleep',
+        runAt: at.toISOString(),
+        input,
+        createdAt: new Date().toISOString(),
+      });
+    } else {
+      jobId = await this.scheduler.scheduleAt(at, { agentName: id, input });
+    }
     this.sleepJobs.set(id, jobId);
     await this.patchOccupancy(id, {
       desiredPhase: 'sleeping',
@@ -316,7 +348,10 @@ export class AgentOS {
 
   async wake(id: string): Promise<OfficeAgent> {
     const jobId = this.sleepJobs.get(id);
-    if (jobId) await this.scheduler.cancel(jobId);
+    if (jobId) {
+      if (this.durableJobs) this.durableJobs.remove(jobId);
+      else await this.scheduler.cancel(jobId);
+    }
     this.sleepJobs.delete(id);
     await this.patchOccupancy(id, {
       desiredPhase: 'running',
@@ -431,18 +466,44 @@ export class AgentOS {
   }
 
   private registerFromDna(dna: AgentDna): void {
-    if (!this.runtime.getAgentMetadata(dna.name)) {
+    // Prefer ./agent.ts handlers from the project (hazel apply cwd / HAZEL_PROJECT_ROOT).
+    let project: ReturnType<typeof loadProjectAgent>;
+    try {
+      project = loadProjectAgent(this.projectRoot, dna.name);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      // eslint-disable-next-line no-console
+      console.warn(`[AgentOS] Could not load project agent.ts: ${msg}`);
+      project = undefined;
+    }
+
+    if (project) {
+      if (this.runtime.getAgentMetadata(dna.name)) {
+        this.runtime.unregisterAgent(dna.name);
+      }
+      this.runtime.registerAgent(project.agentClass);
+      this.runtime.registerAgentInstance(dna.name, project.instance);
+    } else if (!this.runtime.getAgentMetadata(dna.name)) {
       const Klass = createAgentClassFromDna(dna);
       this.runtime.registerAgent(Klass);
       this.runtime.registerAgentInstance(dna.name, new Klass());
     }
+
     for (const tool of dna.tools ?? []) {
+      const existing = this.runtime.getAgentTools(dna.name).find((t) => t.name === tool.name);
+      const boundExisting =
+        existing?.method &&
+        (async (input: Record<string, unknown>): Promise<unknown> =>
+          existing.method!.call(existing.target, input));
+      const handler =
+        this.skillHandlers[tool.name] ?? project?.handlers[tool.name] ?? boundExisting ?? undefined;
+
       this.runtime.registerDynamicTool(dna.name, {
         name: tool.name,
-        description: tool.description,
-        parameters: tool.parameters,
-        requiresApproval: tool.requiresApproval,
-        handler: this.skillHandlers[tool.name],
+        description: tool.description ?? existing?.description,
+        parameters: tool.parameters ?? existing?.parameters,
+        requiresApproval: tool.requiresApproval ?? existing?.requiresApproval,
+        handler,
       });
     }
     const engine = this.runtime.getPolicyEngine() ?? new PolicyEngine([]);

@@ -1,7 +1,7 @@
 {
   "name": "hazeljs-ai-native-app",
-  "version": "0.8.1",
-  "description": "A HazelJS AI-native application with agents, RAG, and chat",
+  "version": "2.0.0",
+  "description": "HazelJS HTTP AI-native app — chat, agents, RAG, and ContextService (CAG+RAG+KAG+Memory)",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
@@ -22,14 +22,18 @@
     "seed": "ts-node prisma/seed.ts"
   },
   "dependencies": {
-    "@hazeljs/core": "latest",
-    "@hazeljs/ai": "latest",
-    "@hazeljs/agent": "latest",
-    "@hazeljs/rag": "latest",
-    "@hazeljs/config": "latest",
-    "@hazeljs/cache": "latest",
-    "@hazeljs/inspector": "latest",
-    "@hazeljs/prisma": "latest",
+    "@hazeljs/agent": "^2.0.9",
+    "@hazeljs/ai": "^2.0.9",
+    "@hazeljs/cag": "^2.0.9",
+    "@hazeljs/cache": "^2.0.9",
+    "@hazeljs/config": "^2.0.9",
+    "@hazeljs/context": "^2.0.9",
+    "@hazeljs/core": "^2.0.9",
+    "@hazeljs/inspector": "^2.0.9",
+    "@hazeljs/kag": "^2.0.9",
+    "@hazeljs/memory": "^2.0.9",
+    "@hazeljs/prisma": "^2.0.9",
+    "@hazeljs/rag": "^2.0.9",
     "@prisma/client": "^5.22.0"
   },
   "devDependencies": {

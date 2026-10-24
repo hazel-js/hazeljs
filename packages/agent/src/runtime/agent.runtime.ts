@@ -78,6 +78,45 @@ export interface AgentRuntimeConfig {
   approvalStore?: IApprovalStore;
   memoryManager?: MemoryManager;
   ragService?: RAGService;
+  /**
+   * Optional Cache-Augmented Generation port (duck-typed; typically @hazeljs/cag CagService).
+   * No hard dependency on @hazeljs/cag.
+   */
+  cagService?: {
+    getContext(input: {
+      namespace: string;
+      tenantId: string;
+      agentId?: string;
+    }): Promise<{ context: { text: string }; hit?: boolean }>;
+  };
+  /**
+   * Optional Knowledge-Augmented Generation port (duck-typed; typically @hazeljs/kag KagService).
+   * No hard dependency on @hazeljs/kag.
+   */
+  kagService?: {
+    ask(
+      question: string,
+      options?: { explain?: boolean; tenantId?: string; graph?: string }
+    ): Promise<{ answer?: string; explanation?: string; confidence?: number }>;
+  };
+  /**
+   * Optional unified context planner (duck-typed; typically @hazeljs/context ContextService).
+   * When set, preferred over calling cag/rag/kag ports individually.
+   */
+  contextService?: {
+    assemble(request: {
+      query: string;
+      tenantId: string;
+      namespace?: string;
+      agentId?: string;
+      userId?: string;
+      sessionId?: string;
+    }): Promise<{
+      text: string;
+      sourcesUsed?: string[];
+      plan?: { rationale?: string[] };
+    }>;
+  };
   llmProvider?: LLMProvider;
   guardrailsService?: IGuardrailsService;
   observabilityProvider?: ObservabilityProvider;
@@ -630,15 +669,88 @@ export class AgentRuntime {
         await this.contextBuilder.buildWithMemory(context);
       }
 
-      if (options.enableRAG !== false && this.config.ragService) {
+      if (this.config.contextService) {
         await this.stateManager.updateState(context.executionId, AgentState.SEARCHING_KNOWLEDGE);
-        await this.contextBuilder.buildWithRAG(
-          context,
-          this.config.ragService,
-          agent.ragTopK || 5,
-          (error) => this.handleRagError(context, error),
-          this.config.knowledgeFreshness
-        );
+        await this.contextBuilder.buildWithUnifiedContext(context, this.config.contextService, {
+          tenantId: agent.tenantId,
+          namespace: agent.cagNamespace,
+          onError: (error) => {
+            void this.eventEmitter.emit(
+              AgentEventType.CONTEXT_FAILED,
+              context.agentId,
+              context.executionId,
+              { error: error.message }
+            );
+          },
+        });
+        if (context.unifiedContext?.length) {
+          void this.eventEmitter.emit(
+            AgentEventType.CONTEXT_ASSEMBLED,
+            context.agentId,
+            context.executionId,
+            {
+              chunks: context.unifiedContext.length,
+              sourcesUsed: context.metadata?.contextSourcesUsed,
+            }
+          );
+        }
+      } else {
+        if (options.enableRAG !== false && this.config.ragService) {
+          await this.stateManager.updateState(context.executionId, AgentState.SEARCHING_KNOWLEDGE);
+          await this.contextBuilder.buildWithRAG(
+            context,
+            this.config.ragService,
+            agent.ragTopK || 5,
+            (error) => this.handleRagError(context, error),
+            this.config.knowledgeFreshness
+          );
+        }
+
+        if (options.enableCAG !== false && agent.enableCAG !== false && this.config.cagService) {
+          await this.contextBuilder.buildWithCAG(context, this.config.cagService, {
+            namespace: agent.cagNamespace,
+            tenantId: agent.tenantId,
+            onError: (error) => {
+              void this.eventEmitter.emit(
+                AgentEventType.CAG_CONTEXT_FAILED,
+                context.agentId,
+                context.executionId,
+                { error: error.message }
+              );
+            },
+          });
+          if (context.cagContext?.length) {
+            void this.eventEmitter.emit(
+              AgentEventType.CAG_CONTEXT_LOADED,
+              context.agentId,
+              context.executionId,
+              { chunks: context.cagContext.length }
+            );
+          }
+        }
+
+        if (options.enableKAG !== false && agent.enableKAG !== false && this.config.kagService) {
+          await this.contextBuilder.buildWithKAG(context, this.config.kagService, {
+            graph: agent.kagGraph,
+            tenantId: agent.tenantId,
+            onError: (error) => {
+              void this.eventEmitter.emit(
+                AgentEventType.KAG_QUERY_FAILED,
+                context.agentId,
+                context.executionId,
+                { error: error.message }
+              );
+            },
+          });
+          if (context.kagContext?.length) {
+            void this.eventEmitter.emit(
+              AgentEventType.KAG_QUERY_EXECUTED,
+              context.agentId,
+              context.executionId,
+              { chunks: context.kagContext.length }
+            );
+          }
+        }
       }
 
       if (options.initialContext) {
@@ -835,15 +947,35 @@ export class AgentRuntime {
       await this.stateManager.updateState(context.executionId, AgentState.SEARCHING_MEMORY);
       await this.contextBuilder.buildWithMemory(context);
     }
-    if (options.enableRAG !== false && this.config.ragService) {
+    if (this.config.contextService) {
       await this.stateManager.updateState(context.executionId, AgentState.SEARCHING_KNOWLEDGE);
-      await this.contextBuilder.buildWithRAG(
-        context,
-        this.config.ragService,
-        agent.ragTopK || 5,
-        (error) => this.handleRagError(context, error),
-        this.config.knowledgeFreshness
-      );
+      await this.contextBuilder.buildWithUnifiedContext(context, this.config.contextService, {
+        tenantId: agent.tenantId,
+        namespace: agent.cagNamespace,
+      });
+    } else {
+      if (options.enableRAG !== false && this.config.ragService) {
+        await this.stateManager.updateState(context.executionId, AgentState.SEARCHING_KNOWLEDGE);
+        await this.contextBuilder.buildWithRAG(
+          context,
+          this.config.ragService,
+          agent.ragTopK || 5,
+          (error) => this.handleRagError(context, error),
+          this.config.knowledgeFreshness
+        );
+      }
+      if (options.enableCAG !== false && agent.enableCAG !== false && this.config.cagService) {
+        await this.contextBuilder.buildWithCAG(context, this.config.cagService, {
+          namespace: agent.cagNamespace,
+          tenantId: agent.tenantId,
+        });
+      }
+      if (options.enableKAG !== false && agent.enableKAG !== false && this.config.kagService) {
+        await this.contextBuilder.buildWithKAG(context, this.config.kagService, {
+          graph: agent.kagGraph,
+          tenantId: agent.tenantId,
+        });
+      }
     }
     if (options.initialContext) {
       Object.assign(context.memory.workingMemory, options.initialContext);

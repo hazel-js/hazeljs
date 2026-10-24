@@ -102,6 +102,129 @@ export class AgentContextBuilder {
   }
 
   /**
+   * Build context with Cache-Augmented Generation (duck-typed CagService port).
+   */
+  async buildWithCAG(
+    context: AgentContext,
+    cagService: {
+      getContext(input: {
+        namespace: string;
+        tenantId: string;
+        agentId?: string;
+      }): Promise<{ context: { text: string }; hit?: boolean }>;
+    },
+    options?: { namespace?: string; tenantId?: string; onError?: (error: Error) => void }
+  ): Promise<void> {
+    if (!cagService) return;
+    try {
+      const tenantId =
+        options?.tenantId ??
+        (typeof context.metadata?.tenantId === 'string' ? context.metadata.tenantId : undefined) ??
+        context.userId ??
+        'default';
+      const result = await cagService.getContext({
+        namespace: options?.namespace ?? 'default',
+        tenantId,
+        agentId: context.agentId,
+      });
+      context.cagContext = [result.context.text];
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      options?.onError?.(err);
+      context.cagContext = [];
+    }
+  }
+
+  /**
+   * Build context with Knowledge-Augmented Generation (duck-typed KagService port).
+   */
+  async buildWithKAG(
+    context: AgentContext,
+    kagService: {
+      ask(
+        question: string,
+        options?: { explain?: boolean; tenantId?: string; graph?: string }
+      ): Promise<{ answer?: string; explanation?: string; confidence?: number }>;
+    },
+    options?: { graph?: string; tenantId?: string; onError?: (error: Error) => void }
+  ): Promise<void> {
+    if (!kagService) return;
+    try {
+      const tenantId =
+        options?.tenantId ??
+        (typeof context.metadata?.tenantId === 'string' ? context.metadata.tenantId : undefined) ??
+        context.userId ??
+        'default';
+      const result = await kagService.ask(context.input, {
+        explain: true,
+        tenantId,
+        graph: options?.graph,
+      });
+      const pieces = [result.answer, result.explanation].filter(
+        (p): p is string => typeof p === 'string' && p.length > 0
+      );
+      context.kagContext = pieces;
+      context.metadata = {
+        ...context.metadata,
+        kagConfidence: result.confidence,
+      };
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      options?.onError?.(err);
+      context.kagContext = [];
+    }
+  }
+
+  /**
+   * Build unified multi-source context (duck-typed @hazeljs/context ContextService).
+   */
+  async buildWithUnifiedContext(
+    context: AgentContext,
+    contextService: {
+      assemble(request: {
+        query: string;
+        tenantId: string;
+        namespace?: string;
+        agentId?: string;
+        userId?: string;
+        sessionId?: string;
+      }): Promise<{
+        text: string;
+        sourcesUsed?: string[];
+        plan?: { rationale?: string[] };
+      }>;
+    },
+    options?: { tenantId?: string; namespace?: string; onError?: (error: Error) => void }
+  ): Promise<void> {
+    if (!contextService) return;
+    try {
+      const tenantId =
+        options?.tenantId ??
+        (typeof context.metadata?.tenantId === 'string' ? context.metadata.tenantId : undefined) ??
+        context.userId ??
+        'default';
+      const result = await contextService.assemble({
+        query: context.input,
+        tenantId,
+        namespace: options?.namespace,
+        agentId: context.agentId,
+        userId: context.userId,
+        sessionId: context.sessionId,
+      });
+      context.unifiedContext = result.text ? [result.text] : [];
+      context.metadata = {
+        ...context.metadata,
+        contextSourcesUsed: result.sourcesUsed,
+        contextPlanRationale: result.plan?.rationale,
+      };
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      options?.onError?.(err);
+      context.unifiedContext = [];
+    }
+  }
+
+  /**
    * Persist context to memory
    */
   async persistToMemory(context: AgentContext): Promise<void> {

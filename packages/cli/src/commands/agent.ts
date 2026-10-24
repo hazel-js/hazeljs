@@ -21,62 +21,113 @@ const DEFAULT_PLATFORM_STORE = path.join('.hazel', 'platform', 'resources.json')
 export function registerAgentCommand(program: Command): void {
   program
     .command('agents')
-    .description('List deployed Agent OS agents (name, status, current task)')
+    .description('List deployed Agent OS agents (prefers hazeld when reachable)')
     .option('--store <path>', 'Platform resource store path', DEFAULT_PLATFORM_STORE)
     .option('--dir <path>', 'Durable store directory', DEFAULT_DURABLE_DIR)
     .option('--project <path>', 'Project root', '.')
     .option('--json', 'Print JSON')
-    .action(async (opts: { store: string; dir: string; project: string; json?: boolean }) => {
-      try {
-        const { AgentOS } = await import('@hazeljs/agent');
-        const projectRoot = path.resolve(opts.project);
-        const osPlane = new AgentOS({
-          projectRoot,
-          storePath: path.resolve(opts.store),
-          durableDir: path.resolve(opts.dir),
-        });
+    .option('--local', 'Force in-process AgentOS (skip hazeld)')
+    .action(
+      async (opts: {
+        store: string;
+        dir: string;
+        project: string;
+        json?: boolean;
+        local?: boolean;
+      }) => {
         try {
-          await osPlane.recover();
-          const agents = await osPlane.list();
-          if (opts.json) {
+          const agentPkg = await import('@hazeljs/agent');
+          if (!opts.local && (await agentPkg.isDaemonReachable())) {
+            const res = await agentPkg.controlRequest({ op: 'list' });
+            if (!res.ok) throw new Error(res.error ?? 'hazeld list failed');
+            const agents =
+              (res.data as Array<{
+                name: string;
+                status: string;
+                occupancy?: { currentTask?: string; nextWakeAt?: string };
+              }>) ?? [];
+            if (opts.json) {
+              // eslint-disable-next-line no-console
+              console.log(JSON.stringify({ agents }, null, 2));
+              return;
+            }
+            const rows = agents.map((a) => ({
+              NAME: a.name,
+              STATUS: agentPkg.toDisplayStatus(a.status as never),
+              CURRENT:
+                a.occupancy?.currentTask ??
+                (a.status === 'sleeping' ? (a.occupancy?.nextWakeAt ?? '-') : '-'),
+            }));
+            if (!rows.length) {
+              // eslint-disable-next-line no-console
+              console.log('No agents on hazeld. Try `hazel apply agent.yaml`.');
+              return;
+            }
+            const widths = {
+              NAME: Math.max(4, ...rows.map((r) => r.NAME.length)),
+              STATUS: Math.max(6, ...rows.map((r) => r.STATUS.length)),
+              CURRENT: Math.max(7, ...rows.map((r) => r.CURRENT.length)),
+            };
+            const line = (r: { NAME: string; STATUS: string; CURRENT: string }) =>
+              `${r.NAME.padEnd(widths.NAME)}  ${r.STATUS.padEnd(widths.STATUS)}  ${r.CURRENT}`;
             // eslint-disable-next-line no-console
-            console.log(JSON.stringify({ agents }, null, 2));
+            console.log(line({ NAME: 'NAME', STATUS: 'STATUS', CURRENT: 'CURRENT' }));
+            for (const r of rows) {
+              // eslint-disable-next-line no-console
+              console.log(line(r));
+            }
             return;
           }
-          const rows = agents.map((a) => ({
-            NAME: a.name,
-            STATUS: a.status,
-            CURRENT:
-              a.occupancy.currentTask ??
-              (a.status === 'sleeping' ? (a.occupancy.nextWakeAt ?? '-') : '-'),
-          }));
-          if (!rows.length) {
+
+          const projectRoot = path.resolve(opts.project);
+          const osPlane = new agentPkg.AgentOS({
+            projectRoot,
+            storePath: path.resolve(opts.store),
+            durableDir: path.resolve(opts.dir),
+          });
+          try {
+            await osPlane.recover();
+            const agents = await osPlane.list();
+            if (opts.json) {
+              // eslint-disable-next-line no-console
+              console.log(JSON.stringify({ agents }, null, 2));
+              return;
+            }
+            const rows = agents.map((a) => ({
+              NAME: a.name,
+              STATUS: a.status,
+              CURRENT:
+                a.occupancy.currentTask ??
+                (a.status === 'sleeping' ? (a.occupancy.nextWakeAt ?? '-') : '-'),
+            }));
+            if (!rows.length) {
+              // eslint-disable-next-line no-console
+              console.log('No agents deployed. Use `hazel apply` or `hazel agent apply`.');
+              return;
+            }
+            const widths = {
+              NAME: Math.max(4, ...rows.map((r) => r.NAME.length)),
+              STATUS: Math.max(6, ...rows.map((r) => r.STATUS.length)),
+              CURRENT: Math.max(7, ...rows.map((r) => r.CURRENT.length)),
+            };
+            const line = (r: { NAME: string; STATUS: string; CURRENT: string }) =>
+              `${r.NAME.padEnd(widths.NAME)}  ${r.STATUS.padEnd(widths.STATUS)}  ${r.CURRENT}`;
             // eslint-disable-next-line no-console
-            console.log('No agents deployed. Use Agent Office or `hazel agent apply`.');
-            return;
+            console.log(line({ NAME: 'NAME', STATUS: 'STATUS', CURRENT: 'CURRENT' }));
+            for (const r of rows) {
+              // eslint-disable-next-line no-console
+              console.log(line(r));
+            }
+          } finally {
+            await osPlane.dispose();
           }
-          const widths = {
-            NAME: Math.max(4, ...rows.map((r) => r.NAME.length)),
-            STATUS: Math.max(6, ...rows.map((r) => r.STATUS.length)),
-            CURRENT: Math.max(7, ...rows.map((r) => r.CURRENT.length)),
-          };
-          const line = (r: { NAME: string; STATUS: string; CURRENT: string }) =>
-            `${r.NAME.padEnd(widths.NAME)}  ${r.STATUS.padEnd(widths.STATUS)}  ${r.CURRENT}`;
+        } catch (e) {
           // eslint-disable-next-line no-console
-          console.log(line({ NAME: 'NAME', STATUS: 'STATUS', CURRENT: 'CURRENT' }));
-          for (const r of rows) {
-            // eslint-disable-next-line no-console
-            console.log(line(r));
-          }
-        } finally {
-          await osPlane.dispose();
+          console.error(e instanceof Error ? e.message : e);
+          process.exitCode = 1;
         }
-      } catch (e) {
-        // eslint-disable-next-line no-console
-        console.error(e instanceof Error ? e.message : e);
-        process.exitCode = 1;
       }
-    });
+    );
 
   const agent = program
     .command('agent')
@@ -106,10 +157,14 @@ export function registerAgentCommand(program: Command): void {
   agent
     .command('new')
     .description(
-      'Scaffold an Agent OS / DNA project (bare | agent-os | skillgate). DNA = contract; app tools = implementation.'
+      'Scaffold an Agent OS / DNA project (local | bare | agent-os | skillgate). DNA = contract; app tools = implementation.'
     )
     .argument('<name>', 'Project directory / package name')
-    .option('-t, --template <id>', 'Template: bare | agent-os | skillgate', 'agent-os')
+    .option(
+      '-t, --template <id>',
+      'Template: local | context | bare | agent-os | skillgate',
+      'local'
+    )
     .option('-d, --dest <dir>', 'Parent directory', '.')
     .option('-f, --force', 'Allow non-empty destination')
     .option('--json', 'Print machine-readable result')
@@ -123,6 +178,7 @@ export function registerAgentCommand(program: Command): void {
             template: opts.template as AgentTemplateId,
             force: opts.force,
           });
+          const isLocalOs = result.template === 'local' || result.template === 'context';
           const payload = {
             ok: true,
             action: 'agent-new',
@@ -131,10 +187,21 @@ export function registerAgentCommand(program: Command): void {
               `cd ${path.relative(process.cwd(), result.path) || '.'}`,
               result.template === 'bare'
                 ? 'npx hazel agent run dna/agent.marketplace.json "hello"'
-                : 'npm install && npm run dev',
-              'npx hazel store publish dna/agent.marketplace.json',
+                : isLocalOs
+                  ? 'npm install && hazel apply agent.yaml'
+                  : 'npm install && npm run dev',
+              ...(result.template === 'bare'
+                ? ['npx hazel store publish dna/agent.marketplace.json']
+                : isLocalOs
+                  ? ['hazel inspect <agent>', 'hazel run <agent> "…"']
+                  : ['npx hazel store publish dna/agent.marketplace.json']),
             ],
           };
+          const note = isLocalOs
+            ? 'Note: `hazel apply` loads `./agent.ts` into hazeld. `hazel agent run` on DNA alone still uses stubs.'
+            : result.template === 'bare'
+              ? 'Note: `hazel agent run` on DNA uses stub tools.'
+              : 'Note: `hazel agent run` on DNA uses stub tools. Use the app (`npm run dev`) for real @Tool / Skillgate handlers.';
           // eslint-disable-next-line no-console
           console.log(
             opts.json
@@ -147,7 +214,7 @@ export function registerAgentCommand(program: Command): void {
                   'Next:',
                   ...payload.next.map((l) => `  ${l}`),
                   '',
-                  'Note: `hazel agent run` on DNA uses stub tools. Use the app (`npm run dev`) for real @Tool / Skillgate handlers.',
+                  note,
                 ].join('\n')
           );
         } catch (e) {
