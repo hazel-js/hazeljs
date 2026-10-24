@@ -21,11 +21,11 @@ Frameworks help you **build** agents. HazelJS helps you **run** them — durable
 
 ## Why an Agent OS?
 
-| | |
-| --- | --- |
-| **Frameworks help you build** | Prompt loops and tools get you to a demo. |
+|                                |                                                                       |
+| ------------------------------ | --------------------------------------------------------------------- |
+| **Frameworks help you build**  | Prompt loops and tools get you to a demo.                             |
 | **Agent OS helps you operate** | Durable runs, Gatekeeper, DNA, and HITL keep agents running for real. |
-| **Local-first TypeScript** | `hazel apply` on your laptop. Cloud and Kubernetes are optional. |
+| **Local-first TypeScript**     | `hazel apply` on your laptop. Cloud and Kubernetes are optional.      |
 
 You do **not** assemble Nest + LangGraph + a worker fleet. Agents live in the same TypeScript backend as your APIs.
 
@@ -79,7 +79,7 @@ npm run dev
 Then open:
 
 - App: http://localhost:3000
-- Inspector: http://localhost:3000/__hazel
+- Inspector: http://localhost:3000/\_\_hazel
 - Health: http://localhost:3000/health
 
 Quick checks:
@@ -96,13 +96,13 @@ Skeleton API only (no AI scaffold): `hazel new my-api` or `hazel g app my-api`.
 
 ## What you get
 
-| Layer | Primitives | Job |
-| --- | --- | --- |
-| **Define & Deploy** | DNA · Store · Apply | Version identity, prompt, skills, and policy. Declare desired state locally. |
-| **Run** | Runtime · Agent VM · Organism | Execute the loop. Speculate / undo. Self-organize specialists from a mission. |
-| **Decide** | Decision Runtime · Confidence · Policy | Closed-set choose (`retry \| rollback \| escalate`). Confidence informs — never authorizes. |
-| **Govern** | Skillgate · Gatekeeper | Curate which APIs become skills. Authorize every tool call (default deny). |
-| **Survive** | Durable runs · HITL · Recovery | Crash-safe human approval. Runs outlive process restarts. |
+| Layer               | Primitives                             | Job                                                                                         |
+| ------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------- |
+| **Define & Deploy** | DNA · Store · Apply                    | Version identity, prompt, skills, and policy. Declare desired state locally.                |
+| **Run**             | Runtime · Agent VM · Organism          | Execute the loop. Speculate / undo. Self-organize specialists from a mission.               |
+| **Decide**          | Decision Runtime · Confidence · Policy | Closed-set choose (`retry \| rollback \| escalate`). Confidence informs — never authorizes. |
+| **Govern**          | Skillgate · Gatekeeper                 | Curate which APIs become skills. Authorize every tool call (default deny).                  |
+| **Survive**         | Durable runs · HITL · Recovery         | Crash-safe human approval. Runs outlive process restarts.                                   |
 
 Built on your TypeScript / Node.js backend. Local first. Kubernetes optional — never the product.
 
@@ -199,12 +199,12 @@ hazel add @hazeljs/auth --setup
 
 ## Examples
 
-| Repo | Learn |
-| --- | --- |
-| [hazeljs-meridian-ops](https://github.com/hazel-js/hazeljs-meridian-ops) | Flagship Agent OS — DNA, Store, Decision, Skillgate, HITL |
-| [hazeljs-skillgate-agent-starter](https://github.com/hazel-js/hazeljs-skillgate-agent-starter) | OpenAPI → governed skills + MCP |
-| [hazeljs-mcp-starter](https://github.com/hazel-js/hazeljs-mcp-starter) | `@Tool` as an MCP server |
-| [hazeljs-csr-agent](https://github.com/hazel-js/hazeljs-csr-agent) | Support agent example |
+| Repo                                                                                           | Learn                                                     |
+| ---------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| [hazeljs-meridian-ops](https://github.com/hazel-js/hazeljs-meridian-ops)                       | Flagship Agent OS — DNA, Store, Decision, Skillgate, HITL |
+| [hazeljs-skillgate-agent-starter](https://github.com/hazel-js/hazeljs-skillgate-agent-starter) | OpenAPI → governed skills + MCP                           |
+| [hazeljs-mcp-starter](https://github.com/hazel-js/hazeljs-mcp-starter)                         | `@Tool` as an MCP server                                  |
+| [hazeljs-csr-agent](https://github.com/hazel-js/hazeljs-csr-agent)                             | Support agent example                                     |
 
 ---
 
@@ -212,23 +212,23 @@ hazel add @hazeljs/auth --setup
 
 **Agent OS**
 
-| Package | Role |
-| --- | --- |
-| `@hazeljs/agent` | Runtime — `@Agent` / `@Tool`, DNA, HITL, policy |
-| `@hazeljs/decision` | Closed-set Decision Runtime |
-| `@hazeljs/skillgate` | OpenAPI → governed skills |
-| `@hazeljs/agent-gatekeeper` | Fail-closed tool authorization |
-| `@hazeljs/agent-vm` | Reversible tools, speculative undo |
-| `@hazeljs/organism` | Mission-defined agent societies |
-| `@hazeljs/testing` · `@hazeljs/eval` · `@hazeljs/benchmark` | CI, golden sets, regression |
-| `@hazeljs/inspector` · `@hazeljs/mcp` | Timelines · MCP from `@Tool` |
+| Package                                                     | Role                                            |
+| ----------------------------------------------------------- | ----------------------------------------------- |
+| `@hazeljs/agent`                                            | Runtime — `@Agent` / `@Tool`, DNA, HITL, policy |
+| `@hazeljs/decision`                                         | Closed-set Decision Runtime                     |
+| `@hazeljs/skillgate`                                        | OpenAPI → governed skills                       |
+| `@hazeljs/agent-gatekeeper`                                 | Fail-closed tool authorization                  |
+| `@hazeljs/agent-vm`                                         | Reversible tools, speculative undo              |
+| `@hazeljs/organism`                                         | Mission-defined agent societies                 |
+| `@hazeljs/testing` · `@hazeljs/eval` · `@hazeljs/benchmark` | CI, golden sets, regression                     |
+| `@hazeljs/inspector` · `@hazeljs/mcp`                       | Timelines · MCP from `@Tool`                    |
 
 **Around Agent OS** (optional — they support it, they do not compete with it)
 
-| Area | Packages |
-| --- | --- |
-| AI / RAG / Flow | `@hazeljs/ai` · `@hazeljs/rag` · `@hazeljs/flow` · `@hazeljs/prompts` |
-| Backend | `@hazeljs/core` · `@hazeljs/auth` · `@hazeljs/prisma` · GraphQL / gRPC / queues |
+| Area            | Packages                                                                        |
+| --------------- | ------------------------------------------------------------------------------- |
+| AI / RAG / Flow | `@hazeljs/ai` · `@hazeljs/rag` · `@hazeljs/flow` · `@hazeljs/prompts`           |
+| Backend         | `@hazeljs/core` · `@hazeljs/auth` · `@hazeljs/prisma` · GraphQL / gRPC / queues |
 
 ```bash
 npm install @hazeljs/agent @hazeljs/decision @hazeljs/skillgate @hazeljs/agent-gatekeeper
@@ -242,14 +242,14 @@ Do **not** add `reflect-metadata` yourself — `@hazeljs/core` loads it.
 
 ## Why not Nest + LangGraph?
 
-| | HazelJS | Nest + LangGraph |
-| --- | --- | --- |
-| Agents in the same app as APIs | Yes | Glue |
-| DNA / Store / local apply | Yes | No |
-| Closed-set Decision Runtime | Yes | DIY |
-| Governed OpenAPI skills | Skillgate | DIY |
-| Fail-closed tool auth | Gatekeeper | DIY |
-| Crash-safe HITL | Yes | Partial |
+|                                | HazelJS    | Nest + LangGraph |
+| ------------------------------ | ---------- | ---------------- |
+| Agents in the same app as APIs | Yes        | Glue             |
+| DNA / Store / local apply      | Yes        | No               |
+| Closed-set Decision Runtime    | Yes        | DIY              |
+| Governed OpenAPI skills        | Skillgate  | DIY              |
+| Fail-closed tool auth          | Gatekeeper | DIY              |
+| Crash-safe HITL                | Yes        | Partial          |
 
 ---
 
