@@ -1,6 +1,6 @@
 {
   "name": "hazeljs",
-  "version": "2.0.11",
+  "version": "2.0.12",
   "private": true,
   "description": "HazelJS Agent OS — open-source production lifecycle for TypeScript agents (DNA, Skillgate, Gatekeeper, crash-safe HITL) inside your Node backend",
   "workspaces": [
