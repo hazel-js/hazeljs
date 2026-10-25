@@ -55,7 +55,7 @@ export class OAuthService {
     OAuthService.options = options;
   }
 
-  private static getOptions(): OAuthModuleOptions {
+  static getOptions(): OAuthModuleOptions {
     if (!OAuthService.options) {
       throw new Error(
         'OAuthModule not configured. Call OAuthModule.forRoot({ providers: {...} }) in your app module.'
@@ -278,11 +278,19 @@ export class OAuthService {
   handleSamlCallback(
     idpKey: string,
     samlResponseBase64: string,
-    relayState?: string
+    options: {
+      expectedRequestId: string;
+      relayState?: string;
+      expectedRelayState?: string;
+    }
   ): SamlCallbackResult {
     const provider = this.getSamlProvider(idpKey);
-    const parsed = parseSamlResponse(provider, samlResponseBase64, relayState);
-    return buildSamlCallbackResult(idpKey, parsed, relayState, samlResponseBase64);
+    const parsed = parseSamlResponse(provider, samlResponseBase64, {
+      expectedRequestId: options.expectedRequestId,
+      relayState: options.relayState,
+      expectedRelayState: options.expectedRelayState,
+    });
+    return buildSamlCallbackResult(idpKey, parsed, options.relayState, samlResponseBase64);
   }
 
   getSamlMetadata(idpKey: string): string {

@@ -1,10 +1,16 @@
 import { Controller, Get, Param, Query, Res, Req, type Response, Post, Body } from '@hazeljs/core';
 import { OAuthService } from './oauth.service';
 import type { SupportedProvider } from './providers/provider.types';
+import {
+  SAML_REQ_COOKIE,
+  buildClearSamlReqCookie,
+  buildSamlReqSetCookie,
+  signSamlRequestBinding,
+  verifySamlRequestBinding,
+} from './saml-request-binding';
 
 const STATE_COOKIE = 'oauth_state';
 const CODE_VERIFIER_COOKIE = 'oauth_code_verifier';
-const SAML_RELAYSTATE_COOKIE = 'saml_relay_state';
 const COOKIE_MAX_AGE = 60 * 10; // 10 minutes
 const COOKIE_OPTS = `Path=/; HttpOnly; SameSite=Lax; Max-Age=${COOKIE_MAX_AGE}`;
 const OAUTH_PROVIDERS: SupportedProvider[] = [
@@ -23,7 +29,13 @@ function getCookie(
   const cookieHeader = Array.isArray(h) ? h[0] : h;
   if (typeof cookieHeader !== 'string') return undefined;
   const part = cookieHeader.split(';').find((c) => c.trim().startsWith(`${name}=`));
-  return part?.split('=')[1]?.trim();
+  if (!part) return undefined;
+  const raw = part.slice(part.indexOf('=') + 1).trim();
+  try {
+    return decodeURIComponent(raw);
+  } catch {
+    return raw;
+  }
 }
 
 /**
@@ -117,6 +129,7 @@ export class OAuthController {
 
   /**
    * GET /auth/saml/:idp - Redirects user to SAML IdP login.
+   * Binds AuthnRequest ID (+ RelayState) in a signed httpOnly cookie for ACS correlation.
    */
   @Get('/saml/:idp')
   async samlLogin(
@@ -125,14 +138,18 @@ export class OAuthController {
     @Res() res: Response
   ): Promise<void> {
     try {
-      const { url, relayState } = this.oauthService.getSamlAuthorizationUrl(idp, query.relayState);
-      const cookies: string[] = [];
-      if (relayState) {
-        cookies.push(`${SAML_RELAYSTATE_COOKIE}=${relayState}; ${COOKIE_OPTS}`);
-      }
-      if (cookies.length > 0) {
-        (res.setHeader as (n: string, v: string | string[]) => void)('Set-Cookie', cookies);
-      }
+      const { url, requestId, relayState } = this.oauthService.getSamlAuthorizationUrl(
+        idp,
+        query.relayState
+      );
+      const signed = signSamlRequestBinding(OAuthService.getOptions(), {
+        requestId,
+        relayState,
+      });
+      (res.setHeader as (n: string, v: string | string[]) => void)(
+        'Set-Cookie',
+        buildSamlReqSetCookie(signed)
+      );
       res.status(302);
       res.setHeader('Location', url);
       res.end();
@@ -144,6 +161,7 @@ export class OAuthController {
 
   /**
    * POST /auth/saml/:idp/callback - Handles SAML ACS callback.
+   * Requires the saml_req cookie from login; rejects unsolicited responses.
    */
   @Post('/saml/:idp/callback')
   async samlCallback(
@@ -163,14 +181,30 @@ export class OAuthController {
       this.redirectOrJson(res, 400, body?.errorRedirect, { error: 'Missing SAMLResponse' });
       return;
     }
-    const relayState = body?.RelayState ?? getCookie(req, SAML_RELAYSTATE_COOKIE);
 
-    (res.setHeader as (n: string, v: string | string[]) => void)('Set-Cookie', [
-      `${SAML_RELAYSTATE_COOKIE}=; Path=/; HttpOnly; Max-Age=0`,
-    ]);
+    const binding = verifySamlRequestBinding(
+      OAuthService.getOptions(),
+      getCookie(req, SAML_REQ_COOKIE)
+    );
+
+    (res.setHeader as (n: string, v: string | string[]) => void)(
+      'Set-Cookie',
+      buildClearSamlReqCookie()
+    );
+
+    if (!binding) {
+      this.redirectOrJson(res, 401, body?.errorRedirect, {
+        error: 'Missing or invalid SAML AuthnRequest binding',
+      });
+      return;
+    }
 
     try {
-      const result = this.oauthService.handleSamlCallback(idp, samlResponse, relayState);
+      const result = this.oauthService.handleSamlCallback(idp, samlResponse, {
+        expectedRequestId: binding.requestId,
+        relayState: body?.RelayState,
+        expectedRelayState: binding.relayState,
+      });
       const response = await this.oauthService.executeCallback(`saml:${idp}`, result);
 
       if (body.successRedirect) {

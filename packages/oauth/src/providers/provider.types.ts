@@ -50,11 +50,16 @@ export interface SamlProviderConfig {
    */
   acsUrl: string;
   /**
-   * IdP certificate (PEM). Required for signature validation in production.
+   * IdP signing certificate (PEM). Required — unsigned responses are rejected.
    */
-  idpCertificate?: string;
+  idpCertificate: string;
   /**
-   * Optional explicit audience check. Defaults to `issuer`.
+   * IdP entity ID / Issuer. Defaults to `ssoUrl` origin when omitted.
+   * Must match Response and Assertion Issuer values.
+   */
+  idpIssuer?: string;
+  /**
+   * Explicit audience check. Defaults to SP `issuer`. Audience is required in the assertion.
    */
   audience?: string;
   /**
@@ -66,7 +71,7 @@ export interface SamlProviderConfig {
    */
   relayState?: string;
   /**
-   * Optional allowed clock skew for time validations.
+   * Allowed clock skew for Conditions NotBefore / NotOnOrAfter.
    * @default 120
    */
   clockSkewSec?: number;
@@ -159,6 +164,11 @@ export interface OAuthModuleOptions {
   providers: OAuthProvidersConfig;
   /** Default scopes per provider. Override via getAuthorizationUrl scopes param. */
   defaultScopes?: Partial<Record<SupportedProvider, string[]>>;
+  /**
+   * Optional HMAC secret used to sign the SAML AuthnRequest binding cookie.
+   * When omitted, a key is derived from configured IdP certificates.
+   */
+  stateSecret?: string;
   /**
    * Optional class (must be registered in the DI container) whose `handle()` method is
    * called after a successful OAuth callback.  Use it to look up / create the user in

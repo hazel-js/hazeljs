@@ -36,7 +36,7 @@
     "chromadb": "^1.8.0",
     "cohere-ai": "^7.0.0",
     "mammoth": "^1.11.0",
-    "openai": "^6.0.0",
+    "openai": "^4.0.0 || ^6.0.0",
     "pdf-parse": "^1.1.1",
     "weaviate-ts-client": "^2.0.0"
   },

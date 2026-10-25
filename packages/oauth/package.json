@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/oauth",
-  "version": "2.0.9",
+  "version": "2.0.11",
   "description": "OAuth 2.0 and SAML SSO module for HazelJS - Google, Microsoft, GitHub, and enterprise IdPs",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -15,7 +15,9 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "arctic": "^3.7.0"
+    "@xmldom/xmldom": "^0.9.12",
+    "arctic": "^3.7.0",
+    "xml-crypto": "^6.4.0"
   },
   "devDependencies": {
     "@types/node": "^20.19.39",
