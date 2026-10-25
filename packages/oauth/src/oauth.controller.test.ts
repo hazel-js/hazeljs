@@ -72,7 +72,9 @@ describe('OAuthController', () => {
     );
 
     expect(res.status).toHaveBeenCalledWith(401);
-    expect((oauthService as { handleSamlCallback: jest.Mock }).handleSamlCallback).not.toHaveBeenCalled();
+    expect(
+      (oauthService as { handleSamlCallback: jest.Mock }).handleSamlCallback
+    ).not.toHaveBeenCalled();
   });
 
   it('returns 401 when ACS has no saml_req cookie', async () => {
@@ -93,7 +95,9 @@ describe('OAuthController', () => {
     expect(res.json).toHaveBeenCalledWith({
       error: 'Missing or invalid SAML AuthnRequest binding',
     });
-    expect((oauthService as { handleSamlCallback: jest.Mock }).handleSamlCallback).not.toHaveBeenCalled();
+    expect(
+      (oauthService as { handleSamlCallback: jest.Mock }).handleSamlCallback
+    ).not.toHaveBeenCalled();
   });
 
   it('passes binding requestId into handleSamlCallback', async () => {

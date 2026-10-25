@@ -89,7 +89,7 @@ function findChild(parent: XmlElement, name: string): XmlElement | undefined {
 
 function findDeep(root: XmlElement, name: string): XmlElement[] {
   const found: XmlElement[] = [];
-  const walk = (node: XmlElement) => {
+  const walk = (node: XmlElement): void => {
     if (localName(node) === name) found.push(node);
     for (const child of childElements(node)) walk(child);
   };
@@ -130,7 +130,7 @@ function parseXml(xml: string): XmlDocument {
   let doc: XmlDocument;
   try {
     doc = new DOMParser({
-      onError: (level, message) => {
+      onError: (level, message): void => {
         if (level === 'warning') return;
         errors.push(String(message));
       },
@@ -230,7 +230,10 @@ function extractAttributes(assertion: XmlElement): Record<string, string | strin
   return attributes;
 }
 
-function pickEmail(attributes: Record<string, string | string[]>, nameId: string): string | undefined {
+function pickEmail(
+  attributes: Record<string, string | string[]>,
+  nameId: string
+): string | undefined {
   const candidates = [
     attributes.email,
     attributes.mail,

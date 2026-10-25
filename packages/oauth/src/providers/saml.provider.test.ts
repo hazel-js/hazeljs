@@ -66,10 +66,8 @@ describe('SAML provider helpers', () => {
   }): string {
     const audience = overrides?.audience === null ? null : (overrides?.audience ?? config.audience);
     const includeAudience = overrides?.includeAudience !== false && audience != null;
-    const notBefore =
-      overrides?.notBefore ?? new Date(Date.now() - 60_000).toISOString();
-    const notOnOrAfter =
-      overrides?.notOnOrAfter ?? new Date(Date.now() + 3_600_000).toISOString();
+    const notBefore = overrides?.notBefore ?? new Date(Date.now() - 60_000).toISOString();
+    const notOnOrAfter = overrides?.notOnOrAfter ?? new Date(Date.now() + 3_600_000).toISOString();
     const issuer = overrides?.issuer ?? idpIssuer;
     const assertionIssuer = overrides?.assertionIssuer ?? issuer;
     const inResponseTo =
@@ -138,7 +136,11 @@ describe('SAML provider helpers', () => {
     return sig.getSignedXml();
   }
 
-  function parseOpts(extra?: { expectedRequestId?: string; relayState?: string; expectedRelayState?: string }) {
+  function parseOpts(extra?: {
+    expectedRequestId?: string;
+    relayState?: string;
+    expectedRelayState?: string;
+  }) {
     return {
       expectedRequestId: extra?.expectedRequestId ?? requestId,
       relayState: extra?.relayState,
@@ -171,9 +173,9 @@ describe('SAML provider helpers', () => {
   });
 
   it('rejects unsigned Success responses', () => {
-    expect(() =>
-      parseSamlResponse(config, encode(buildUnsignedResponse()), parseOpts())
-    ).toThrow(/not signed/i);
+    expect(() => parseSamlResponse(config, encode(buildUnsignedResponse()), parseOpts())).toThrow(
+      /not signed/i
+    );
   });
 
   it('rejects forged signatures (wrong key)', () => {
@@ -208,9 +210,7 @@ describe('SAML provider helpers', () => {
   });
 
   it('rejects audience mismatch', () => {
-    const signed = signAssertion(
-      buildUnsignedResponse({ audience: 'https://wrong.example.com' })
-    );
+    const signed = signAssertion(buildUnsignedResponse({ audience: 'https://wrong.example.com' }));
     expect(() => parseSamlResponse(config, encode(signed), parseOpts())).toThrow(
       /audience mismatch/i
     );
@@ -247,7 +247,9 @@ describe('SAML provider helpers', () => {
         assertionIssuer: 'https://attacker.example.com',
       })
     );
-    expect(() => parseSamlResponse(config, encode(signed), parseOpts())).toThrow(/Issuer mismatch/i);
+    expect(() => parseSamlResponse(config, encode(signed), parseOpts())).toThrow(
+      /Issuer mismatch/i
+    );
   });
 
   it('rejects Destination mismatch', () => {
@@ -281,7 +283,9 @@ describe('SAML provider helpers', () => {
 
   it('throws when email attribute is missing', () => {
     const signed = signAssertion(buildUnsignedResponse({ email: null }));
-    expect(() => parseSamlResponse(config, encode(signed), parseOpts())).toThrow(/email attribute/i);
+    expect(() => parseSamlResponse(config, encode(signed), parseOpts())).toThrow(
+      /email attribute/i
+    );
   });
 
   it('throws when idpCertificate is missing', () => {
@@ -332,15 +336,15 @@ describe('SAML provider helpers', () => {
 
   it('rejects missing expectedRequestId option', () => {
     const signed = signAssertion(buildUnsignedResponse());
-    expect(() =>
-      parseSamlResponse(config, encode(signed), { expectedRequestId: '' })
-    ).toThrow(/expectedRequestId/i);
+    expect(() => parseSamlResponse(config, encode(signed), { expectedRequestId: '' })).toThrow(
+      /expectedRequestId/i
+    );
   });
 
   it('rejects invalid XML', () => {
-    expect(() =>
-      parseSamlResponse(config, encode('<not:valid'), parseOpts())
-    ).toThrow(/Invalid SAMLResponse XML/i);
+    expect(() => parseSamlResponse(config, encode('<not:valid'), parseOpts())).toThrow(
+      /Invalid SAMLResponse XML/i
+    );
   });
 
   it('rejects SubjectConfirmation Recipient mismatch', () => {
@@ -400,10 +404,7 @@ describe('SAML provider helpers', () => {
   });
 
   it('rejects missing Conditions element', () => {
-    const xml = buildUnsignedResponse().replace(
-      /<saml:Conditions[\s\S]*?<\/saml:Conditions>/,
-      ''
-    );
+    const xml = buildUnsignedResponse().replace(/<saml:Conditions[\s\S]*?<\/saml:Conditions>/, '');
     const signed = signAssertion(xml);
     expect(() => parseSamlResponse(config, encode(signed), parseOpts())).toThrow(/Conditions/i);
   });

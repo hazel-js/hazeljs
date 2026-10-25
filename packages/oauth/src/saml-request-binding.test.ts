@@ -66,9 +66,9 @@ QIDAQAB
   });
 
   it('throws when neither stateSecret nor idpCertificate present', () => {
-    expect(() =>
-      signSamlRequestBinding({ providers: {} }, { requestId: '_x' })
-    ).toThrow(/stateSecret or SAML idpCertificate/);
+    expect(() => signSamlRequestBinding({ providers: {} }, { requestId: '_x' })).toThrow(
+      /stateSecret or SAML idpCertificate/
+    );
   });
 
   it('builds set-cookie and clear-cookie headers', () => {

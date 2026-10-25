@@ -20,7 +20,9 @@ function resolveStateSecret(options: OAuthModuleOptions): string {
     .sort()
     .join('|');
   if (!material) {
-    throw new Error('OAuthModule stateSecret or SAML idpCertificate required for AuthnRequest binding');
+    throw new Error(
+      'OAuthModule stateSecret or SAML idpCertificate required for AuthnRequest binding'
+    );
   }
   return material;
 }
