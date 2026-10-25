@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/cli",
-  "version": "2.0.10",
+  "version": "2.0.11",
   "description": "Part of HazelJS — the open-source Agent OS for TypeScript. CLI for scaffolding applications and Agent OS projects",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -33,12 +33,12 @@
     "yaml": "^2.8.0"
   },
   "peerDependencies": {
-    "@hazeljs/eval": "^2.0.10",
-    "@hazeljs/benchmark": "^2.0.10",
-    "@hazeljs/agent": "^2.0.10",
-    "@hazeljs/skillgate": "^2.0.10",
-    "@hazeljs/agent-gatekeeper": "^2.0.10",
-    "@hazeljs/decision": "^2.0.10"
+    "@hazeljs/eval": "^2.0.11",
+    "@hazeljs/benchmark": "^2.0.11",
+    "@hazeljs/agent": "^2.0.11",
+    "@hazeljs/skillgate": "^2.0.11",
+    "@hazeljs/agent-gatekeeper": "^2.0.11",
+    "@hazeljs/decision": "^2.0.11"
   },
   "peerDependenciesMeta": {
     "@hazeljs/eval": {
@@ -61,12 +61,12 @@
     }
   },
   "devDependencies": {
-    "@hazeljs/eval": "^2.0.10",
-    "@hazeljs/benchmark": "^2.0.10",
-    "@hazeljs/agent": "^2.0.10",
-    "@hazeljs/skillgate": "^2.0.10",
-    "@hazeljs/agent-gatekeeper": "^2.0.10",
-    "@hazeljs/decision": "^2.0.10",
+    "@hazeljs/eval": "^2.0.11",
+    "@hazeljs/benchmark": "^2.0.11",
+    "@hazeljs/agent": "^2.0.11",
+    "@hazeljs/skillgate": "^2.0.11",
+    "@hazeljs/agent-gatekeeper": "^2.0.11",
+    "@hazeljs/decision": "^2.0.11",
     "@types/inquirer": "^8.2.10",
     "@types/mustache": "^4.2.5",
     "typescript": "^6.0.3"
