@@ -1,6 +1,5 @@
 import { createHmac, timingSafeEqual } from 'crypto';
 import type { OAuthModuleOptions } from './providers/provider.types';
-import { fingerprintCertificate } from './providers/saml.provider';
 
 export const SAML_REQ_COOKIE = 'saml_req';
 export const SAML_REQ_MAX_AGE_SEC = 600;
@@ -11,20 +10,18 @@ export interface SamlRequestBinding {
   exp: number;
 }
 
+/**
+ * HMAC secret for the saml_req cookie.
+ * Fail closed: IdP certificates are public and must never be used as the secret.
+ */
 function resolveStateSecret(options: OAuthModuleOptions): string {
-  if (options.stateSecret?.trim()) return options.stateSecret.trim();
-  const saml = options.providers.saml || {};
-  const material = Object.values(saml)
-    .map((c) => fingerprintCertificate(c.idpCertificate || ''))
-    .filter(Boolean)
-    .sort()
-    .join('|');
-  if (!material) {
+  const secret = options.stateSecret?.trim();
+  if (!secret) {
     throw new Error(
-      'OAuthModule stateSecret or SAML idpCertificate required for AuthnRequest binding'
+      'OAuthModule stateSecret is required for SAML AuthnRequest binding (do not derive from IdP certificates)'
     );
   }
-  return material;
+  return secret;
 }
 
 function b64url(buf: Buffer | string): string {
@@ -93,10 +90,18 @@ export function parseCookieHeader(cookieHeader: string | undefined): Record<stri
   return out;
 }
 
+/**
+ * Cookie flags for the AuthnRequest binding.
+ *
+ * SameSite=None; Secure is required: the IdP ACS callback is a cross-site POST,
+ * and browsers do not send SameSite=Lax cookies on that request.
+ */
+const SAML_REQ_COOKIE_FLAGS = 'Path=/; HttpOnly; Secure; SameSite=None';
+
 export function buildClearSamlReqCookie(): string {
-  return `${SAML_REQ_COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`;
+  return `${SAML_REQ_COOKIE}=; ${SAML_REQ_COOKIE_FLAGS}; Max-Age=0`;
 }
 
 export function buildSamlReqSetCookie(signedValue: string): string {
-  return `${SAML_REQ_COOKIE}=${encodeURIComponent(signedValue)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${SAML_REQ_MAX_AGE_SEC}`;
+  return `${SAML_REQ_COOKIE}=${encodeURIComponent(signedValue)}; ${SAML_REQ_COOKIE_FLAGS}; Max-Age=${SAML_REQ_MAX_AGE_SEC}`;
 }

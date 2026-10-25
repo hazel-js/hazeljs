@@ -3,11 +3,13 @@ import { OAuthService } from './oauth.service';
 import type { SupportedProvider } from './providers/provider.types';
 import {
   SAML_REQ_COOKIE,
+  SAML_REQ_MAX_AGE_SEC,
   buildClearSamlReqCookie,
   buildSamlReqSetCookie,
   signSamlRequestBinding,
   verifySamlRequestBinding,
 } from './saml-request-binding';
+import { getDefaultSamlAuthnRequestStore } from './saml-authn-request-store';
 
 const STATE_COOKIE = 'oauth_state';
 const CODE_VERIFIER_COOKIE = 'oauth_code_verifier';
@@ -182,10 +184,8 @@ export class OAuthController {
       return;
     }
 
-    const binding = verifySamlRequestBinding(
-      OAuthService.getOptions(),
-      getCookie(req, SAML_REQ_COOKIE)
-    );
+    const options = OAuthService.getOptions();
+    const binding = verifySamlRequestBinding(options, getCookie(req, SAML_REQ_COOKIE));
 
     (res.setHeader as (n: string, v: string | string[]) => void)(
       'Set-Cookie',
@@ -195,6 +195,18 @@ export class OAuthController {
     if (!binding) {
       this.redirectOrJson(res, 401, body?.errorRedirect, {
         error: 'Missing or invalid SAML AuthnRequest binding',
+      });
+      return;
+    }
+
+    const store = options.samlAuthnRequestStore ?? getDefaultSamlAuthnRequestStore();
+    const ttlSec = Math.max(1, binding.exp - Math.floor(Date.now() / 1000));
+    const consumed = await Promise.resolve(
+      store.tryConsume(binding.requestId, Math.min(ttlSec, SAML_REQ_MAX_AGE_SEC))
+    );
+    if (!consumed) {
+      this.redirectOrJson(res, 401, body?.errorRedirect, {
+        error: 'SAML AuthnRequest binding already used or replayed',
       });
       return;
     }

@@ -110,6 +110,9 @@ export class AuthController {
 
 ```typescript
 OAuthModule.forRoot({
+  // Required for SAML — private HMAC secret for AuthnRequest cookie binding.
+  // Never derive this from IdP certificates (they are public).
+  stateSecret: process.env.OAUTH_STATE_SECRET!,
   providers: {
     google: { ...googleConfig },
     saml: {
@@ -119,6 +122,7 @@ OAuthModule.forRoot({
         issuer: 'https://api.example.com',
         acsUrl: 'https://api.example.com/auth/saml/okta-main/callback',
         audience: 'https://api.example.com',
+        idpCertificate: process.env.OKTA_IDP_CERT!,
         relayState: 'app=dashboard',
       },
       azureMain: {
@@ -126,6 +130,7 @@ OAuthModule.forRoot({
         ssoUrl: 'https://login.microsoftonline.com/.../saml2',
         issuer: 'https://api.example.com',
         acsUrl: 'https://api.example.com/auth/saml/azure-main/callback',
+        idpCertificate: process.env.AZURE_IDP_CERT!,
       },
     },
   },
@@ -134,9 +139,11 @@ OAuthModule.forRoot({
 
 Use start + callback flow:
 
-1. Browser hits `GET /auth/saml/okta-main`
+1. Browser hits `GET /auth/saml/okta-main` (sets `saml_req` with `SameSite=None; Secure` so the IdP ACS cross-site POST still receives it)
 2. IdP authenticates user and POSTS `SAMLResponse` to ACS callback
-3. Package parses assertion, extracts profile, then invokes optional callback handler
+3. Package verifies signature↔Assertion binding, SubjectConfirmation, consumes the AuthnRequest ID server-side (replay-safe), then invokes optional callback handler
+
+**Multi-instance:** pass `samlAuthnRequestStore` (e.g. Redis) so consumed request IDs are shared across processes.
 
 ## Configuration
 

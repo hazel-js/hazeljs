@@ -43,7 +43,7 @@ describe('saml-request-binding', () => {
     expect(verifySamlRequestBinding(options, 'nosig')).toBeNull();
   });
 
-  it('derives secret from idpCertificate when stateSecret omitted', () => {
+  it('fails closed when stateSecret is omitted (no certificate fallback)', () => {
     const derived: OAuthModuleOptions = {
       providers: {
         saml: {
@@ -61,19 +61,28 @@ QIDAQAB
         },
       },
     };
-    const signed = signSamlRequestBinding(derived, { requestId: '_x' });
-    expect(verifySamlRequestBinding(derived, signed)?.requestId).toBe('_x');
-  });
-
-  it('throws when neither stateSecret nor idpCertificate present', () => {
-    expect(() => signSamlRequestBinding({ providers: {} }, { requestId: '_x' })).toThrow(
-      /stateSecret or SAML idpCertificate/
+    expect(() => signSamlRequestBinding(derived, { requestId: '_x' })).toThrow(
+      /stateSecret is required/
     );
   });
 
-  it('builds set-cookie and clear-cookie headers', () => {
-    expect(buildSamlReqSetCookie('abc')).toContain(`${SAML_REQ_COOKIE}=abc`);
-    expect(buildClearSamlReqCookie()).toContain('Max-Age=0');
+  it('throws when stateSecret is missing', () => {
+    expect(() => signSamlRequestBinding({ providers: {} }, { requestId: '_x' })).toThrow(
+      /stateSecret is required/
+    );
+  });
+
+  it('builds set-cookie with SameSite=None; Secure for cross-site ACS POST', () => {
+    const setCookie = buildSamlReqSetCookie('abc');
+    expect(setCookie).toContain(`${SAML_REQ_COOKIE}=abc`);
+    expect(setCookie).toMatch(/SameSite=None/i);
+    expect(setCookie).toMatch(/(?:^|;\s*)Secure(?:;|$)/i);
+    expect(setCookie).not.toMatch(/SameSite=Lax/i);
+
+    const clear = buildClearSamlReqCookie();
+    expect(clear).toContain('Max-Age=0');
+    expect(clear).toMatch(/SameSite=None/i);
+    expect(clear).toMatch(/(?:^|;\s*)Secure(?:;|$)/i);
   });
 
   it('parses cookie headers', () => {

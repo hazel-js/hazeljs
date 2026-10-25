@@ -159,7 +159,11 @@ function findDirectSignature(parent: XmlElement): XmlElement | undefined {
   return childElements(parent).find(isSignatureElement);
 }
 
-function verifyXmlSignature(xml: string, signatureNode: XmlElement, certificatePem: string): void {
+function verifyXmlSignature(
+  xml: string,
+  signatureNode: XmlElement,
+  certificatePem: string
+): SignedXml {
   const signed = new SignedXml({ publicCert: normalizePem(certificatePem) });
   signed.loadSignature(signatureNode as never);
   try {
@@ -177,12 +181,61 @@ function verifyXmlSignature(xml: string, signatureNode: XmlElement, certificateP
     const detail = err instanceof Error ? err.message : String(err);
     throw new Error(`SAML signature verification failed: ${detail}`);
   }
+  return signed;
 }
 
-function parseInstant(value: string | undefined): number | undefined {
-  if (!value) return undefined;
+function assertionElementId(assertion: XmlElement): string {
+  const id = attr(assertion, 'ID') || attr(assertion, 'Id') || attr(assertion, 'id');
+  if (!id) {
+    throw new Error('SAML Assertion ID is required for signature binding');
+  }
+  return id;
+}
+
+/**
+ * Prove the Assertion we parse is the content covered by a verified signature
+ * (defeats SAML assertion wrapping / sibling-injection).
+ *
+ * Uses Reference URIs and cryptographically validated signed reference XML —
+ * never `getValidatedNode()` (deprecated / unsafe for binding checks).
+ */
+function assertSignatureCoversAssertion(signed: SignedXml, assertion: XmlElement): void {
+  const assertionId = assertionElementId(assertion);
+  const refs = signed.getReferences();
+  if (!refs.length) {
+    throw new Error('SAML signature has no References');
+  }
+
+  for (const ref of refs) {
+    const uri = (ref.uri || '').replace(/^#/, '');
+    if (uri === assertionId) return;
+  }
+
+  // Response-level (or other) enveloped signature: URI may point at Response.
+  // After checkSignature, getSignedReferences() is the authenticated content.
+  const signedChunks = signed.getSignedReferences();
+  for (const chunk of signedChunks) {
+    const hasId =
+      chunk.includes(`ID="${assertionId}"`) ||
+      chunk.includes(`Id="${assertionId}"`) ||
+      chunk.includes(`id="${assertionId}"`);
+    if (!hasId) continue;
+    const assertionOpens = (chunk.match(/<(?:[\w.-]+:)?Assertion[\s>]/g) || []).length;
+    if (assertionOpens === 1) return;
+  }
+
+  throw new Error('SAML signature does not cover the Assertion used for claims');
+}
+
+function requireInstant(value: string | undefined, label: string): number {
+  if (!value) {
+    throw new Error(`SAML ${label} is required`);
+  }
   const ms = Date.parse(value);
-  return Number.isNaN(ms) ? undefined : ms;
+  if (Number.isNaN(ms)) {
+    throw new Error(`SAML ${label} is invalid`);
+  }
+  return ms;
 }
 
 function validateConditions(assertion: XmlElement, clockSkewSec: number): void {
@@ -192,13 +245,21 @@ function validateConditions(assertion: XmlElement, clockSkewSec: number): void {
   }
   const now = Date.now();
   const skewMs = clockSkewSec * 1000;
-  const notBefore = parseInstant(attr(conditions, 'NotBefore'));
-  const notOnOrAfter = parseInstant(attr(conditions, 'NotOnOrAfter'));
-  if (notBefore != null && now + skewMs < notBefore) {
-    throw new Error('SAML assertion not yet valid (NotBefore)');
-  }
-  if (notOnOrAfter != null && now - skewMs >= notOnOrAfter) {
+
+  const notOnOrAfter = requireInstant(attr(conditions, 'NotOnOrAfter'), 'Conditions NotOnOrAfter');
+  if (now - skewMs >= notOnOrAfter) {
     throw new Error('SAML assertion expired (NotOnOrAfter)');
+  }
+
+  const notBeforeRaw = attr(conditions, 'NotBefore');
+  if (notBeforeRaw) {
+    const notBefore = Date.parse(notBeforeRaw);
+    if (Number.isNaN(notBefore)) {
+      throw new Error('SAML Conditions NotBefore is invalid');
+    }
+    if (now + skewMs < notBefore) {
+      throw new Error('SAML assertion not yet valid (NotBefore)');
+    }
   }
 }
 
@@ -261,16 +322,67 @@ function pickDisplayName(attributes: Record<string, string | string[]>): string 
   return undefined;
 }
 
-function validateSubjectConfirmation(assertion: XmlElement, acsUrl: string): void {
+const BEARER_METHOD = 'urn:oasis:names:tc:SAML:2.0:cm:bearer';
+
+function validateSubjectConfirmation(
+  assertion: XmlElement,
+  acsUrl: string,
+  expectedRequestId: string,
+  clockSkewSec: number
+): void {
   const subject = findChild(assertion, 'Subject');
-  if (!subject) return;
-  for (const confirmation of findChildren(subject, 'SubjectConfirmation')) {
+  if (!subject) {
+    throw new Error('SAML assertion missing Subject');
+  }
+
+  const confirmations = findChildren(subject, 'SubjectConfirmation');
+  if (!confirmations.length) {
+    throw new Error('SAML assertion missing SubjectConfirmation');
+  }
+
+  const now = Date.now();
+  const skewMs = clockSkewSec * 1000;
+  let bearerValidated = false;
+
+  for (const confirmation of confirmations) {
+    const method = attr(confirmation, 'Method');
+    if (method !== BEARER_METHOD) continue;
+
     const data = findChild(confirmation, 'SubjectConfirmationData');
-    if (!data) continue;
+    if (!data) {
+      throw new Error('SAML SubjectConfirmationData is required for bearer confirmation');
+    }
+
     const recipient = attr(data, 'Recipient');
-    if (recipient && recipient !== acsUrl) {
+    if (!recipient) {
+      throw new Error('SAML SubjectConfirmationData Recipient is required');
+    }
+    if (recipient !== acsUrl) {
       throw new Error('SAML SubjectConfirmationData Recipient mismatch');
     }
+
+    const notOnOrAfter = requireInstant(
+      attr(data, 'NotOnOrAfter'),
+      'SubjectConfirmationData NotOnOrAfter'
+    );
+    if (now - skewMs >= notOnOrAfter) {
+      throw new Error('SAML SubjectConfirmationData expired (NotOnOrAfter)');
+    }
+
+    const inResponseTo = attr(data, 'InResponseTo');
+    if (!inResponseTo) {
+      throw new Error('SAML SubjectConfirmationData InResponseTo is required');
+    }
+    if (inResponseTo !== expectedRequestId) {
+      throw new Error('SAML SubjectConfirmationData InResponseTo mismatch');
+    }
+
+    bearerValidated = true;
+    break;
+  }
+
+  if (!bearerValidated) {
+    throw new Error('SAML bearer SubjectConfirmation is required');
   }
 }
 
@@ -375,10 +487,14 @@ export function parseSamlResponse(
     throw new Error('SAML Response Issuer mismatch');
   }
 
-  const assertion = findChild(response, 'Assertion');
-  if (!assertion) {
+  const assertions = findChildren(response, 'Assertion');
+  if (assertions.length === 0) {
     throw new Error('SAMLResponse missing Assertion (EncryptedAssertion is not supported)');
   }
+  if (assertions.length > 1) {
+    throw new Error('SAMLResponse must contain exactly one Assertion');
+  }
+  const assertion = assertions[0];
 
   const assertionIssuer = textContent(findChild(assertion, 'Issuer'));
   if (!assertionIssuer || assertionIssuer !== expectedIdpIssuer) {
@@ -394,19 +510,18 @@ export function parseSamlResponse(
     throw new Error('SAMLResponse is not signed');
   }
 
-  // Prefer assertion signature; also verify response-level signature when present.
+  // Cryptographic check + binding: the Assertion we parse must be covered by
+  // a verified Reference (assertion signature preferred; response-only allowed
+  // only when the Response reference uniquely covers this Assertion).
   if (assertionSig) {
-    verifyXmlSignature(xml, assertionSig, config.idpCertificate);
+    const signed = verifyXmlSignature(xml, assertionSig, config.idpCertificate);
+    assertSignatureCoversAssertion(signed, assertion);
   }
   if (responseSig) {
-    verifyXmlSignature(xml, responseSig, config.idpCertificate);
-  }
-  // Reject response-only signature without covering assertion claims path:
-  // when only Response is signed, assertion must still be a direct child (already is)
-  // and we verified the Response signature covers referenced content via xml-crypto.
-  if (!assertionSig && responseSig) {
-    // Ensure the signed Response reference includes this document; claims still
-    // come only from the Assertion element that is a child of the signed Response.
+    const signed = verifyXmlSignature(xml, responseSig, config.idpCertificate);
+    if (!assertionSig) {
+      assertSignatureCoversAssertion(signed, assertion);
+    }
   }
 
   const clockSkewSec = config.clockSkewSec ?? DEFAULT_CLOCK_SKEW_SEC;
@@ -418,7 +533,7 @@ export function parseSamlResponse(
     throw new Error('SAML audience mismatch');
   }
 
-  validateSubjectConfirmation(assertion, config.acsUrl);
+  validateSubjectConfirmation(assertion, config.acsUrl, options.expectedRequestId, clockSkewSec);
 
   const subject = findChild(assertion, 'Subject');
   if (!subject) {

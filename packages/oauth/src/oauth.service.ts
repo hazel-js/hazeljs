@@ -52,6 +52,10 @@ export class OAuthService {
   private static options: OAuthModuleOptions | null = null;
 
   static configure(options: OAuthModuleOptions): void {
+    const samlCount = Object.keys(options.providers.saml || {}).length;
+    if (samlCount > 0 && !options.stateSecret?.trim()) {
+      throw new Error('OAuthModule stateSecret is required when SAML providers are configured');
+    }
     OAuthService.options = options;
   }
 

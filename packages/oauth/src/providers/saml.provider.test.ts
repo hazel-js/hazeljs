@@ -136,6 +136,29 @@ describe('SAML provider helpers', () => {
     return sig.getSignedXml();
   }
 
+  function signResponse(xml: string, key = privateKey, cert = certificate): string {
+    const sig = new SignedXml({ privateKey: key, publicCert: cert });
+    sig.signatureAlgorithm = 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha256';
+    sig.canonicalizationAlgorithm = 'http://www.w3.org/2001/10/xml-exc-c14n#';
+    sig.addReference({
+      xpath: '/*[local-name()="Response"]',
+      transforms: [
+        'http://www.w3.org/2000/09/xmldsig#enveloped-signature',
+        'http://www.w3.org/2001/10/xml-exc-c14n#',
+      ],
+      digestAlgorithm: 'http://www.w3.org/2001/04/xmlenc#sha256',
+      uri: '#_resp1',
+    });
+    sig.computeSignature(xml, {
+      location: {
+        reference: '//*[local-name()="Response"]/*[local-name()="Issuer"]',
+        action: 'after',
+      },
+      prefix: 'ds',
+    });
+    return sig.getSignedXml();
+  }
+
   function parseOpts(extra?: {
     expectedRequestId?: string;
     relayState?: string;
@@ -355,6 +378,91 @@ describe('SAML provider helpers', () => {
     const signed = signAssertion(xml);
     expect(() => parseSamlResponse(config, encode(signed), parseOpts())).toThrow(
       /Recipient mismatch/i
+    );
+  });
+
+  it('rejects missing SubjectConfirmation Recipient', () => {
+    const xml = buildUnsignedResponse().replace(/ Recipient="[^"]+"/, '');
+    const signed = signAssertion(xml);
+    expect(() => parseSamlResponse(config, encode(signed), parseOpts())).toThrow(
+      /Recipient is required/i
+    );
+  });
+
+  it('rejects missing SubjectConfirmation InResponseTo', () => {
+    const xml = buildUnsignedResponse().replace(
+      /(<saml:SubjectConfirmationData[^>]*) InResponseTo="[^"]+"/,
+      '$1'
+    );
+    const signed = signAssertion(xml);
+    expect(() => parseSamlResponse(config, encode(signed), parseOpts())).toThrow(
+      /SubjectConfirmationData InResponseTo is required/i
+    );
+  });
+
+  it('rejects non-bearer SubjectConfirmation', () => {
+    const xml = buildUnsignedResponse().replace(
+      'urn:oasis:names:tc:SAML:2.0:cm:bearer',
+      'urn:oasis:names:tc:SAML:2.0:cm:holder-of-key'
+    );
+    const signed = signAssertion(xml);
+    expect(() => parseSamlResponse(config, encode(signed), parseOpts())).toThrow(
+      /bearer SubjectConfirmation is required/i
+    );
+  });
+
+  it('rejects expired SubjectConfirmation NotOnOrAfter', () => {
+    const expired = '2020-01-01T00:00:00.000Z';
+    const xml = buildUnsignedResponse({
+      notBefore: '2019-12-01T00:00:00.000Z',
+      notOnOrAfter: expired,
+    });
+    // Keep Conditions valid-looking window but expire SubjectConfirmationData only.
+    const patched = xml
+      .replace(/(<saml:SubjectConfirmationData[^>]*NotOnOrAfter=")[^"]+(")/, `$1${expired}$2`)
+      .replace(
+        /(<saml:Conditions[^>]*NotOnOrAfter=")[^"]+(")/,
+        `$1${new Date(Date.now() + 3_600_000).toISOString()}$2`
+      );
+    const signed = signAssertion(patched);
+    expect(() => parseSamlResponse(config, encode(signed), parseOpts())).toThrow(
+      /SubjectConfirmationData expired/i
+    );
+  });
+
+  it('rejects malformed Conditions NotOnOrAfter', () => {
+    const xml = buildUnsignedResponse().replace(
+      /NotOnOrAfter="[^"]+"/,
+      'NotOnOrAfter="not-a-timestamp"'
+    );
+    // First Conditions NotOnOrAfter is on SubjectConfirmationData — corrupt Conditions only.
+    const corrupted = xml.replace(
+      /(<saml:Conditions[^>]*NotOnOrAfter=")[^"]+(")/,
+      '$1not-a-timestamp$2'
+    );
+    const signed = signAssertion(corrupted);
+    expect(() => parseSamlResponse(config, encode(signed), parseOpts())).toThrow(
+      /Conditions NotOnOrAfter is invalid/i
+    );
+  });
+
+  it('accepts response-only signature when it covers the single Assertion', () => {
+    const signed = signResponse(buildUnsignedResponse());
+    const parsed = parseSamlResponse(config, encode(signed), parseOpts());
+    expect(parsed.email).toBe('user@example.com');
+  });
+
+  it('rejects multiple Assertions (wrapping)', () => {
+    const base = buildUnsignedResponse();
+    const extra = `
+  <saml:Assertion ID="_assert2" Version="2.0" IssueInstant="${new Date().toISOString()}">
+    <saml:Issuer>${idpIssuer}</saml:Issuer>
+    <saml:Subject><saml:NameID>evil</saml:NameID></saml:Subject>
+  </saml:Assertion>`;
+    const wrapped = base.replace('</samlp:Response>', `${extra}</samlp:Response>`);
+    const signed = signAssertion(wrapped);
+    expect(() => parseSamlResponse(config, encode(signed), parseOpts())).toThrow(
+      /exactly one Assertion/i
     );
   });
 

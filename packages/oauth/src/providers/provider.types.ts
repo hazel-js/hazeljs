@@ -160,15 +160,29 @@ export interface OAuthCallbackHandler {
   ): Promise<unknown> | unknown;
 }
 
+/**
+ * Server-side single-use ledger for SAML AuthnRequest IDs (replay defense).
+ */
+export interface SamlAuthnRequestStore {
+  tryConsume(requestId: string, ttlSec?: number): boolean | Promise<boolean>;
+}
+
 export interface OAuthModuleOptions {
   providers: OAuthProvidersConfig;
   /** Default scopes per provider. Override via getAuthorizationUrl scopes param. */
   defaultScopes?: Partial<Record<SupportedProvider, string[]>>;
   /**
-   * Optional HMAC secret used to sign the SAML AuthnRequest binding cookie.
-   * When omitted, a key is derived from configured IdP certificates.
+   * HMAC secret used to sign the SAML AuthnRequest binding cookie.
+   * **Required when any SAML IdP is configured.** Must be a private secret —
+   * IdP certificates are public and must never be used as the cookie key.
    */
   stateSecret?: string;
+  /**
+   * Optional server-side store for single-use AuthnRequest IDs (replay defense).
+   * Defaults to an in-memory store. Provide a shared store (e.g. Redis) for
+   * multi-instance deployments.
+   */
+  samlAuthnRequestStore?: SamlAuthnRequestStore;
   /**
    * Optional class (must be registered in the DI container) whose `handle()` method is
    * called after a successful OAuth callback.  Use it to look up / create the user in

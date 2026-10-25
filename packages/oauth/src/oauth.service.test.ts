@@ -115,6 +115,24 @@ QIDAQAB
   });
 
   describe('configure and getOptions', () => {
+    it('requires stateSecret when SAML providers are configured', () => {
+      expect(() =>
+        OAuthService.configure({
+          providers: {
+            saml: {
+              okta: {
+                idpKey: 'okta',
+                ssoUrl: 'https://idp.example.com/sso',
+                issuer: 'https://app.example.com',
+                acsUrl: 'https://app.example.com/acs',
+                idpCertificate: 'cert',
+              },
+            },
+          },
+        })
+      ).toThrow(/stateSecret is required/);
+    });
+
     it('should throw when not configured', () => {
       (OAuthService as unknown as { options: null }).options = null;
       expect(() => new OAuthService()).toThrow('OAuthModule not configured');

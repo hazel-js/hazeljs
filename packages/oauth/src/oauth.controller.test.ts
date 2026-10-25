@@ -9,8 +9,13 @@ jest.mock('./oauth.service', () => ({
 import { OAuthController } from './oauth.controller';
 import { OAuthService } from './oauth.service';
 import { SAML_REQ_COOKIE, signSamlRequestBinding } from './saml-request-binding';
+import { resetDefaultSamlAuthnRequestStore } from './saml-authn-request-store';
 
 describe('OAuthController', () => {
+  beforeEach(() => {
+    resetDefaultSamlAuthnRequestStore();
+  });
+
   function createResponseMock() {
     const res = {
       status: jest.fn().mockReturnThis(),
@@ -44,6 +49,8 @@ describe('OAuthController', () => {
       (c) => c[0] === 'Set-Cookie'
     );
     expect(setCookieCall?.[1]).toContain(`${SAML_REQ_COOKIE}=`);
+    expect(String(setCookieCall?.[1])).toMatch(/SameSite=None/i);
+    expect(String(setCookieCall?.[1])).toMatch(/(?:^|;\s*)Secure(?:;|$)/i);
   });
 
   it('returns 400 when SAML callback is missing response payload', async () => {
@@ -127,6 +134,45 @@ describe('OAuthController', () => {
       expectedRelayState: 'relay-bound',
     });
     expect(res.status).toHaveBeenCalledWith(200);
+  });
+
+  it('rejects replay of a previously consumed AuthnRequest binding', async () => {
+    const signed = signSamlRequestBinding(
+      { stateSecret: 'test-state-secret', providers: {} },
+      { requestId: '_req-replay' }
+    );
+    const handleSamlCallback = jest.fn().mockReturnValue({
+      protocol: 'saml',
+      user: { email: 'a@b.com' },
+    });
+    const executeCallback = jest.fn().mockResolvedValue({ ok: true });
+    const oauthService = { handleSamlCallback, executeCallback } as never;
+    const controller = new OAuthController(oauthService);
+    const cookieHeader = {
+      headers: { cookie: `${SAML_REQ_COOKIE}=${encodeURIComponent(signed)}` },
+    };
+
+    const first = createResponseMock();
+    await controller.samlCallback(
+      'okta-main',
+      { SAMLResponse: 'dGVzdA==' },
+      cookieHeader,
+      first as never
+    );
+    expect(first.status).toHaveBeenCalledWith(200);
+
+    const second = createResponseMock();
+    await controller.samlCallback(
+      'okta-main',
+      { SAMLResponse: 'dGVzdA==' },
+      cookieHeader,
+      second as never
+    );
+    expect(second.status).toHaveBeenCalledWith(401);
+    expect(second.json).toHaveBeenCalledWith({
+      error: 'SAML AuthnRequest binding already used or replayed',
+    });
+    expect(handleSamlCallback).toHaveBeenCalledTimes(1);
   });
 
   it('returns metadata xml from service', async () => {
