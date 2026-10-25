@@ -124,6 +124,9 @@
       "path": "./packages/queue"
     },
     {
+      "path": "./packages/redis"
+    },
+    {
       "path": "./packages/kafka"
     },
     {
