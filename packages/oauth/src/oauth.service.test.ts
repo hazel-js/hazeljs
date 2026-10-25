@@ -1,3 +1,8 @@
+import { execSync } from 'child_process';
+import { mkdtempSync, readFileSync, rmSync } from 'fs';
+import { tmpdir } from 'os';
+import { join } from 'path';
+import { SignedXml } from 'xml-crypto';
 import { OAuthService } from './oauth.service';
 import * as arctic from 'arctic';
 
@@ -407,12 +412,6 @@ QIDAQAB
     });
 
     it('returns callback result for a valid signed SAMLResponse', () => {
-      const { execSync } = require('child_process') as typeof import('child_process');
-      const { mkdtempSync, readFileSync, rmSync } = require('fs') as typeof import('fs');
-      const { tmpdir } = require('os') as typeof import('os');
-      const { join } = require('path') as typeof import('path');
-      const { SignedXml } = require('xml-crypto') as typeof import('xml-crypto');
-
       const dir = mkdtempSync(join(tmpdir(), 'saml-svc-'));
       let privateKey: string;
       let certificate: string;
