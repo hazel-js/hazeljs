@@ -1,31 +1,39 @@
 import 'reflect-metadata';
-import { WebSocketGatewayOptions } from '../websocket.types';
 import logger from '@hazeljs/core';
+import { WebSocketGatewayOptions } from '../websocket.types';
 
 const REALTIME_METADATA_KEY = 'hazel:realtime';
+const SERVICE_METADATA_KEY = 'hazel:service';
 const SUBSCRIBE_METADATA_KEY = 'hazel:subscribe';
 const ON_CONNECT_METADATA_KEY = 'hazel:onconnect';
 const ON_DISCONNECT_METADATA_KEY = 'hazel:ondisconnect';
 const ON_MESSAGE_METADATA_KEY = 'hazel:onmessage';
 
 /**
- * Realtime decorator for WebSocket gateways
+ * Marks a class as a WebSocket gateway (also applies `@Service` metadata).
+ * Path / options are applied automatically on attach and bootstrap.
  *
  * @example
  * ```typescript
  * @Realtime('/notifications')
- * export class NotificationGateway {
- *   // Gateway methods
+ * export class NotificationGateway extends WebSocketGateway {
+ *   @OnMessage('ping')
+ *   onPing(client: WebSocketClient, data: unknown) { ... }
  * }
  * ```
  */
 export function Realtime(pathOrOptions?: string | WebSocketGatewayOptions): ClassDecorator {
   return (target: object | (new (...args: unknown[]) => object)) => {
+    // So apps only need @Realtime — not @Service() + @Realtime()
+    if (!Reflect.hasMetadata(SERVICE_METADATA_KEY, target)) {
+      Reflect.defineMetadata(SERVICE_METADATA_KEY, {}, target);
+    }
+
     const options: WebSocketGatewayOptions =
       typeof pathOrOptions === 'string' ? { path: pathOrOptions } : pathOrOptions || {};
 
     const defaults: WebSocketGatewayOptions = {
-      path: '/',
+      path: '/ws',
       namespace: '/',
       auth: false,
       pingInterval: 25000,
