@@ -139,11 +139,8 @@ function parseXml(xml: string): XmlDocument {
     const msg = err instanceof Error ? err.message : String(err);
     throw new Error(`Invalid SAMLResponse XML: ${msg}`);
   }
-  if (errors.length > 0) {
-    throw new Error(`Invalid SAMLResponse XML: ${errors[0]}`);
-  }
-  if (!doc?.documentElement) {
-    throw new Error('Invalid SAMLResponse XML');
+  if (errors.length > 0 || !doc?.documentElement) {
+    throw new Error(`Invalid SAMLResponse XML${errors[0] ? `: ${errors[0]}` : ''}`);
   }
   return doc;
 }
@@ -202,9 +199,6 @@ function assertionElementId(assertion: XmlElement): string {
 function assertSignatureCoversAssertion(signed: SignedXml, assertion: XmlElement): void {
   const assertionId = assertionElementId(assertion);
   const refs = signed.getReferences();
-  if (!refs.length) {
-    throw new Error('SAML signature has no References');
-  }
 
   for (const ref of refs) {
     const uri = (ref.uri || '').replace(/^#/, '');
@@ -213,6 +207,7 @@ function assertSignatureCoversAssertion(signed: SignedXml, assertion: XmlElement
 
   // Response-level (or other) enveloped signature: URI may point at Response.
   // After checkSignature, getSignedReferences() is the authenticated content.
+  // Empty references also fall through here (fail closed).
   const signedChunks = signed.getSignedReferences();
   for (const chunk of signedChunks) {
     const hasId =
@@ -329,7 +324,7 @@ function validateSubjectConfirmation(
   acsUrl: string,
   expectedRequestId: string,
   clockSkewSec: number
-): void {
+): XmlElement {
   const subject = findChild(assertion, 'Subject');
   if (!subject) {
     throw new Error('SAML assertion missing Subject');
@@ -384,6 +379,7 @@ function validateSubjectConfirmation(
   if (!bearerValidated) {
     throw new Error('SAML bearer SubjectConfirmation is required');
   }
+  return subject;
 }
 
 /**
@@ -446,10 +442,8 @@ export function parseSamlResponse(
     throw new Error('SAML RelayState mismatch');
   }
 
-  let xml: string;
-  try {
-    xml = Buffer.from(samlResponseBase64, 'base64').toString('utf8');
-  } catch {
+  const xml = Buffer.from(samlResponseBase64, 'base64').toString('utf8');
+  if (!xml.trim()) {
     throw new Error('Invalid SAMLResponse encoding');
   }
 
@@ -500,9 +494,6 @@ export function parseSamlResponse(
   if (!assertionIssuer || assertionIssuer !== expectedIdpIssuer) {
     throw new Error('SAML Assertion Issuer mismatch');
   }
-  if (!responseIssuer && !assertionIssuer) {
-    throw new Error('SAML Issuer is required');
-  }
 
   const assertionSig = findDirectSignature(assertion);
   const responseSig = findDirectSignature(response);
@@ -533,12 +524,12 @@ export function parseSamlResponse(
     throw new Error('SAML audience mismatch');
   }
 
-  validateSubjectConfirmation(assertion, config.acsUrl, options.expectedRequestId, clockSkewSec);
-
-  const subject = findChild(assertion, 'Subject');
-  if (!subject) {
-    throw new Error('SAML assertion missing Subject');
-  }
+  const subject = validateSubjectConfirmation(
+    assertion,
+    config.acsUrl,
+    options.expectedRequestId,
+    clockSkewSec
+  );
   const nameId = textContent(findChild(subject, 'NameID'));
   if (!nameId) {
     throw new Error('SAML assertion missing NameID');

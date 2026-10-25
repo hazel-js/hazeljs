@@ -159,6 +159,29 @@ describe('SAML provider helpers', () => {
     return sig.getSignedXml();
   }
 
+  /** Sign only Response Issuer — signature verifies but does not cover Assertion claims. */
+  function signResponseIssuerOnly(xml: string, key = privateKey, cert = certificate): string {
+    const sig = new SignedXml({ privateKey: key, publicCert: cert });
+    sig.signatureAlgorithm = 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha256';
+    sig.canonicalizationAlgorithm = 'http://www.w3.org/2001/10/xml-exc-c14n#';
+    sig.addReference({
+      xpath: '//*[local-name()="Response"]/*[local-name()="Issuer"]',
+      transforms: ['http://www.w3.org/2001/10/xml-exc-c14n#'],
+      digestAlgorithm: 'http://www.w3.org/2001/04/xmlenc#sha256',
+      uri: '#_issuer1',
+    });
+    // Ensure Issuer has an Id for the reference URI.
+    const withIssuerId = xml.replace(/(<saml:Issuer)(>)/, '$1 ID="_issuer1"$2');
+    sig.computeSignature(withIssuerId, {
+      location: {
+        reference: '//*[local-name()="Response"]/*[local-name()="Issuer"]',
+        action: 'after',
+      },
+      prefix: 'ds',
+    });
+    return sig.getSignedXml();
+  }
+
   function parseOpts(extra?: {
     expectedRequestId?: string;
     relayState?: string;
@@ -182,6 +205,14 @@ describe('SAML provider helpers', () => {
     const result = createSamlAuthnRequest({ ...config, relayState: 'app=dashboard' });
     expect(result.url).toContain('RelayState=app%3Ddashboard');
     expect(result.relayState).toBe('app=dashboard');
+  });
+
+  it('appends AuthnRequest params with & when ssoUrl already has a query', () => {
+    const result = createSamlAuthnRequest({
+      ...config,
+      ssoUrl: 'https://idp.example.com/sso?tenant=acme',
+    });
+    expect(result.url).toMatch(/sso\?tenant=acme&SAMLRequest=/);
   });
 
   it('accepts a valid signed assertion', () => {
@@ -297,6 +328,14 @@ describe('SAML provider helpers', () => {
     });
     // Status fails before signature — unsigned is fine for this check
     expect(() => parseSamlResponse(config, encode(xml), parseOpts())).toThrow(/not successful/i);
+  });
+
+  it('reports unknown status when StatusCode has no Value', () => {
+    const xml = buildUnsignedResponse().replace(
+      /<samlp:StatusCode Value="[^"]*"\/>/,
+      '<samlp:StatusCode/>'
+    );
+    expect(() => parseSamlResponse(config, encode(xml), parseOpts())).toThrow(/unknown status/i);
   });
 
   it('throws when NameID is missing', () => {
@@ -466,6 +505,174 @@ describe('SAML provider helpers', () => {
     );
   });
 
+  it('rejects signature that does not cover the Assertion', () => {
+    const signed = signResponseIssuerOnly(buildUnsignedResponse());
+    expect(() => parseSamlResponse(config, encode(signed), parseOpts())).toThrow(
+      /does not cover the Assertion/i
+    );
+  });
+
+  it('rejects Assertion without ID when verifying signature binding', () => {
+    const xml = buildUnsignedResponse().replace(' ID="_assert1"', '');
+    const signed = signResponse(xml);
+    expect(() => parseSamlResponse(config, encode(signed), parseOpts())).toThrow(
+      /Assertion ID is required/i
+    );
+  });
+
+  it('rejects missing Conditions NotOnOrAfter', () => {
+    const xml = buildUnsignedResponse().replace(
+      /(<saml:Conditions[^>]*) NotOnOrAfter="[^"]+"/,
+      '$1'
+    );
+    const signed = signAssertion(xml);
+    expect(() => parseSamlResponse(config, encode(signed), parseOpts())).toThrow(
+      /Conditions NotOnOrAfter is required/i
+    );
+  });
+
+  it('rejects malformed Conditions NotBefore', () => {
+    const xml = buildUnsignedResponse().replace(
+      /(<saml:Conditions[^>]*NotBefore=")[^"]+(")/,
+      '$1not-a-timestamp$2'
+    );
+    const signed = signAssertion(xml);
+    expect(() => parseSamlResponse(config, encode(signed), parseOpts())).toThrow(
+      /Conditions NotBefore is invalid/i
+    );
+  });
+
+  it('rejects missing Subject', () => {
+    const xml = buildUnsignedResponse().replace(/<saml:Subject>[\s\S]*?<\/saml:Subject>/, '');
+    const signed = signAssertion(xml);
+    expect(() => parseSamlResponse(config, encode(signed), parseOpts())).toThrow(
+      /missing Subject/i
+    );
+  });
+
+  it('rejects missing SubjectConfirmation', () => {
+    const xml = buildUnsignedResponse().replace(
+      /<saml:SubjectConfirmation[\s\S]*?<\/saml:SubjectConfirmation>/,
+      ''
+    );
+    const signed = signAssertion(xml);
+    expect(() => parseSamlResponse(config, encode(signed), parseOpts())).toThrow(
+      /missing SubjectConfirmation/i
+    );
+  });
+
+  it('rejects bearer SubjectConfirmation without SubjectConfirmationData', () => {
+    const xml = buildUnsignedResponse().replace(
+      /<saml:SubjectConfirmation Method="urn:oasis:names:tc:SAML:2.0:cm:bearer">[\s\S]*?<\/saml:SubjectConfirmation>/,
+      '<saml:SubjectConfirmation Method="urn:oasis:names:tc:SAML:2.0:cm:bearer"/>'
+    );
+    const signed = signAssertion(xml);
+    expect(() => parseSamlResponse(config, encode(signed), parseOpts())).toThrow(
+      /SubjectConfirmationData is required/i
+    );
+  });
+
+  it('rejects SubjectConfirmation InResponseTo mismatch', () => {
+    const xml = buildUnsignedResponse().replace(
+      /(<saml:SubjectConfirmationData[^>]*InResponseTo=")[^"]+(")/,
+      '$1_other-request$2'
+    );
+    const signed = signAssertion(xml);
+    expect(() => parseSamlResponse(config, encode(signed), parseOpts())).toThrow(
+      /SubjectConfirmationData InResponseTo mismatch/i
+    );
+  });
+
+  it('rejects Response with no Assertion', () => {
+    const xml = buildUnsignedResponse().replace(/<saml:Assertion[\s\S]*?<\/saml:Assertion>/, '');
+    const signed = signResponse(xml);
+    expect(() => parseSamlResponse(config, encode(signed), parseOpts())).toThrow(
+      /missing Assertion/i
+    );
+  });
+
+  it('rejects Assertion Issuer mismatch when Response Issuer matches', () => {
+    const signed = signAssertion(
+      buildUnsignedResponse({
+        issuer: idpIssuer,
+        assertionIssuer: 'https://attacker.example.com',
+      })
+    );
+    expect(() => parseSamlResponse(config, encode(signed), parseOpts())).toThrow(
+      /Assertion Issuer mismatch/i
+    );
+  });
+
+  it('falls back to ssoUrl when idpIssuer omitted and ssoUrl is not a URL', () => {
+    const withoutIssuer = {
+      ...config,
+      idpIssuer: undefined,
+      ssoUrl: 'not-a-valid-url',
+    };
+    // Issuer in fixture is https://idp.example.com — will mismatch fallback "not-a-valid-url"
+    const signed = signAssertion(buildUnsignedResponse());
+    expect(() => parseSamlResponse(withoutIssuer, encode(signed), parseOpts())).toThrow(
+      /Issuer mismatch/i
+    );
+  });
+
+  it('rejects empty base64 SAMLResponse payload', () => {
+    expect(() => parseSamlResponse(config, '', parseOpts())).toThrow(
+      /Invalid SAMLResponse encoding/i
+    );
+  });
+
+  it('accepts signed assertion without display-name attributes', () => {
+    const xml = buildUnsignedResponse().replace(
+      /<saml:Attribute Name="name">[\s\S]*?<\/saml:Attribute>/,
+      ''
+    );
+    const signed = signAssertion(xml);
+    const parsed = parseSamlResponse(config, encode(signed), parseOpts());
+    expect(parsed.email).toBe('user@example.com');
+    expect(parsed.name).toBeUndefined();
+  });
+
+  it('buildSamlCallbackResult requires email', () => {
+    expect(() =>
+      buildSamlCallbackResult('okta-main', {
+        nameId: 'x',
+        attributes: {},
+      } as ParsedSamlAssertion)
+    ).toThrow(/email attribute/i);
+  });
+
+  it('rejects empty document XML', () => {
+    expect(() => parseSamlResponse(config, encode(''), parseOpts())).toThrow(
+      /Invalid SAMLResponse/i
+    );
+  });
+
+  it('rejects XML prolog-only payloads (no document element)', () => {
+    expect(() => parseSamlResponse(config, encode('<?xml version="1.0"?>'), parseOpts())).toThrow(
+      /Invalid SAMLResponse XML/i
+    );
+  });
+
+  it('rejects malformed XML reported by the parser', () => {
+    expect(() =>
+      parseSamlResponse(config, encode('<samlp:Response><unclosed>'), parseOpts())
+    ).toThrow(/Invalid SAMLResponse XML/i);
+  });
+
+  it('rejects XML with undeclared entities (parser onError path)', () => {
+    // xmldom reports the entity error without throwing — our onError + errors[] path.
+    expect(() =>
+      parseSamlResponse(
+        config,
+        encode(
+          `<samlp:Response xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol">&invalid;</samlp:Response>`
+        ),
+        parseOpts()
+      )
+    ).toThrow(/Invalid SAMLResponse XML/i);
+  });
+
   it('accepts NameID as email when email attribute absent', () => {
     const xml = buildUnsignedResponse({ email: null, nameId: 'user@example.com' });
     const signed = signAssertion(xml);
@@ -478,6 +685,28 @@ describe('SAML provider helpers', () => {
     const signed = signAssertion(buildUnsignedResponse());
     const parsed = parseSamlResponse(withoutIssuer, encode(signed), parseOpts());
     expect(parsed.email).toBe('user@example.com');
+  });
+
+  it('falls back to issuer when audience is omitted from config', () => {
+    const { audience: _omit, ...withoutAudience } = config;
+    const signed = signAssertion(buildUnsignedResponse({ audience: config.issuer }));
+    const parsed = parseSamlResponse(withoutAudience, encode(signed), parseOpts());
+    expect(parsed.email).toBe('user@example.com');
+  });
+
+  it('picks email from multi-valued email attribute and skips nameless attributes', () => {
+    const xml = buildUnsignedResponse({ email: null }).replace(
+      '<saml:AttributeStatement>',
+      `<saml:AttributeStatement>
+      <saml:Attribute><saml:AttributeValue>ignored</saml:AttributeValue></saml:Attribute>
+      <saml:Attribute Name="email">
+        <saml:AttributeValue>first@example.com</saml:AttributeValue>
+        <saml:AttributeValue>second@example.com</saml:AttributeValue>
+      </saml:Attribute>`
+    );
+    const signed = signAssertion(xml);
+    const parsed = parseSamlResponse(config, encode(signed), parseOpts());
+    expect(parsed.email).toBe('first@example.com');
   });
 
   it('rejects NotBefore in the future', () => {

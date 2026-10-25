@@ -133,6 +133,25 @@ QIDAQAB
       ).toThrow(/stateSecret is required/);
     });
 
+    it('rejects whitespace-only stateSecret when SAML is configured', () => {
+      expect(() =>
+        OAuthService.configure({
+          stateSecret: '   ',
+          providers: {
+            saml: {
+              okta: {
+                idpKey: 'okta',
+                ssoUrl: 'https://idp.example.com/sso',
+                issuer: 'https://app.example.com',
+                acsUrl: 'https://app.example.com/acs',
+                idpCertificate: 'cert',
+              },
+            },
+          },
+        })
+      ).toThrow(/stateSecret is required/);
+    });
+
     it('should throw when not configured', () => {
       (OAuthService as unknown as { options: null }).options = null;
       expect(() => new OAuthService()).toThrow('OAuthModule not configured');
@@ -385,6 +404,100 @@ QIDAQAB
       expect(() =>
         service.handleSamlCallback('okta-main', encoded, { expectedRequestId: '_req123' })
       ).toThrow('not successful');
+    });
+
+    it('returns callback result for a valid signed SAMLResponse', () => {
+      const { execSync } = require('child_process') as typeof import('child_process');
+      const { mkdtempSync, readFileSync, rmSync } = require('fs') as typeof import('fs');
+      const { tmpdir } = require('os') as typeof import('os');
+      const { join } = require('path') as typeof import('path');
+      const { SignedXml } = require('xml-crypto') as typeof import('xml-crypto');
+
+      const dir = mkdtempSync(join(tmpdir(), 'saml-svc-'));
+      let privateKey: string;
+      let certificate: string;
+      try {
+        execSync(
+          `openssl req -x509 -newkey rsa:2048 -keyout key.pem -out cert.pem -days 1 -nodes -subj "/CN=idp.example.com"`,
+          { cwd: dir, stdio: 'pipe' }
+        );
+        privateKey = readFileSync(join(dir, 'key.pem'), 'utf8');
+        certificate = readFileSync(join(dir, 'cert.pem'), 'utf8');
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+
+      OAuthService.configure({
+        stateSecret: 'test-state-secret',
+        providers: {
+          saml: {
+            'okta-main': {
+              idpKey: 'okta-main',
+              ssoUrl: 'https://idp.example.com/sso',
+              issuer: 'https://app.example.com',
+              acsUrl: 'https://app.example.com/auth/saml/okta-main/callback',
+              audience: 'https://app.example.com',
+              idpIssuer: 'https://idp.example.com',
+              idpCertificate: certificate,
+            },
+          },
+        },
+      });
+
+      const requestId = '_req-svc-ok';
+      const notBefore = new Date(Date.now() - 60_000).toISOString();
+      const notOnOrAfter = new Date(Date.now() + 3_600_000).toISOString();
+      const unsigned = `<?xml version="1.0"?>
+<samlp:Response xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol" xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion" ID="_resp1" Version="2.0" IssueInstant="${new Date().toISOString()}" Destination="https://app.example.com/auth/saml/okta-main/callback" InResponseTo="${requestId}">
+  <saml:Issuer>https://idp.example.com</saml:Issuer>
+  <samlp:Status><samlp:StatusCode Value="urn:oasis:names:tc:SAML:2.0:status:Success"/></samlp:Status>
+  <saml:Assertion ID="_assert1" Version="2.0" IssueInstant="${new Date().toISOString()}">
+    <saml:Issuer>https://idp.example.com</saml:Issuer>
+    <saml:Subject>
+      <saml:NameID>nameid-1</saml:NameID>
+      <saml:SubjectConfirmation Method="urn:oasis:names:tc:SAML:2.0:cm:bearer">
+        <saml:SubjectConfirmationData Recipient="https://app.example.com/auth/saml/okta-main/callback" NotOnOrAfter="${notOnOrAfter}" InResponseTo="${requestId}"/>
+      </saml:SubjectConfirmation>
+    </saml:Subject>
+    <saml:Conditions NotBefore="${notBefore}" NotOnOrAfter="${notOnOrAfter}">
+      <saml:AudienceRestriction><saml:Audience>https://app.example.com</saml:Audience></saml:AudienceRestriction>
+    </saml:Conditions>
+    <saml:AttributeStatement>
+      <saml:Attribute Name="email"><saml:AttributeValue>user@example.com</saml:AttributeValue></saml:Attribute>
+    </saml:AttributeStatement>
+  </saml:Assertion>
+</samlp:Response>`;
+
+      const sig = new SignedXml({ privateKey, publicCert: certificate });
+      sig.signatureAlgorithm = 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha256';
+      sig.canonicalizationAlgorithm = 'http://www.w3.org/2001/10/xml-exc-c14n#';
+      sig.addReference({
+        xpath: '//*[local-name()="Assertion"]',
+        transforms: [
+          'http://www.w3.org/2000/09/xmldsig#enveloped-signature',
+          'http://www.w3.org/2001/10/xml-exc-c14n#',
+        ],
+        digestAlgorithm: 'http://www.w3.org/2001/04/xmlenc#sha256',
+        uri: '#_assert1',
+      });
+      sig.computeSignature(unsigned, {
+        location: {
+          reference: '//*[local-name()="Assertion"]/*[local-name()="Issuer"]',
+          action: 'after',
+        },
+        prefix: 'ds',
+      });
+      const encoded = Buffer.from(sig.getSignedXml(), 'utf8').toString('base64');
+
+      const service = new OAuthService();
+      const result = service.handleSamlCallback('okta-main', encoded, {
+        expectedRequestId: requestId,
+        relayState: 'relay-xyz',
+      });
+      expect(result.protocol).toBe('saml');
+      expect(result.user.email).toBe('user@example.com');
+      expect(result.relayState).toBe('relay-xyz');
+      expect(result.rawAssertion).toBe(encoded);
     });
   });
 });

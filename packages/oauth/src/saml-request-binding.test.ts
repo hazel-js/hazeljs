@@ -1,3 +1,4 @@
+import { createHmac } from 'crypto';
 import {
   SAML_REQ_COOKIE,
   buildClearSamlReqCookie,
@@ -41,6 +42,21 @@ describe('saml-request-binding', () => {
   it('rejects empty cookie', () => {
     expect(verifySamlRequestBinding(options, undefined)).toBeNull();
     expect(verifySamlRequestBinding(options, 'nosig')).toBeNull();
+    // body/sig empty after split on '.'
+    expect(verifySamlRequestBinding(options, '.sig')).toBeNull();
+    expect(verifySamlRequestBinding(options, 'body.')).toBeNull();
+  });
+
+  it('rejects cookie whose payload is not valid JSON (HMAC still matches)', () => {
+    const body = Buffer.from('not-json{').toString('base64url');
+    const sig = createHmac('sha256', 'unit-test-secret').update(body).digest('base64url');
+    expect(verifySamlRequestBinding(options, `${body}.${sig}`)).toBeNull();
+  });
+
+  it('rejects cookie missing requestId or exp fields', () => {
+    const body = Buffer.from(JSON.stringify({ requestId: '_x' })).toString('base64url');
+    const sig = createHmac('sha256', 'unit-test-secret').update(body).digest('base64url');
+    expect(verifySamlRequestBinding(options, `${body}.${sig}`)).toBeNull();
   });
 
   it('fails closed when stateSecret is omitted (no certificate fallback)', () => {
@@ -91,5 +107,7 @@ QIDAQAB
       other: '2',
     });
     expect(parseCookieHeader(undefined)).toEqual({});
+    // segments without '=' are skipped
+    expect(parseCookieHeader('lonely; a=1')).toEqual({ a: '1' });
   });
 });
