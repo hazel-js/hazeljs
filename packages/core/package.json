@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/core",
-  "version": "2.0.10",
+  "version": "2.0.12",
   "description": "Part of HazelJS — the open-source Agent OS for TypeScript. Dependency injection, routing, decorators, and base functionality",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

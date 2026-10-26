@@ -5,18 +5,24 @@ import {
   WebSocketServerOptions,
 } from './websocket.types';
 import { RoomManager } from './room/room.manager';
-import logger from '@hazeljs/core';
+import { dispatchOnConnect, dispatchOnDisconnect, dispatchOnMessage } from './decorator-dispatch';
+import { getRealtimeMetadata, isRealtimeGateway } from './decorators/realtime.decorator';
+import logger, { type HazelApp } from '@hazeljs/core';
 import { Server as HttpServer, IncomingMessage } from 'http';
 import WebSocket, { WebSocketServer } from 'ws';
 import { randomUUID } from 'crypto';
 
 /**
- * Base WebSocket Gateway class
+ * Base WebSocket Gateway class.
+ *
+ * Gateways marked with `@Realtime(...)` auto-attach on application bootstrap
+ * using that metadata — apps only declare decorators and handlers.
  */
 export class WebSocketGateway {
   protected clients: Map<string, WebSocketClient> = new Map();
   protected roomManager: RoomManager = new RoomManager();
   protected wss: WebSocketServer | null = null;
+  protected path = '/ws';
   protected stats: WebSocketStats = {
     connectedClients: 0,
     totalRooms: 0,
@@ -28,15 +34,55 @@ export class WebSocketGateway {
   };
 
   /**
-   * Attach WebSocket server to an existing HTTP server
+   * Merge call-site options with `@Realtime` metadata on the concrete class.
+   * Explicit `options` always win.
+   */
+  protected resolveServerOptions(options: WebSocketServerOptions = {}): WebSocketServerOptions {
+    const meta = getRealtimeMetadata(this.constructor as new (...args: unknown[]) => object);
+    return {
+      path: meta?.path ?? '/ws',
+      maxPayload: meta?.maxPayload ?? 1048576,
+      perMessageDeflate: false,
+      clientTracking: true,
+      ...options,
+    };
+  }
+
+  /**
+   * Resolved WebSocket path (from `@Realtime` / last attach).
+   */
+  getPath(): string {
+    return this.path;
+  }
+
+  /**
+   * Auto-attach when this class is marked `@Realtime` and the HTTP server is ready.
+   * Skip if already attached (e.g. manual `attachToServer` during tests).
+   */
+  onApplicationBootstrap(app: HazelApp): void {
+    if (this.wss) return;
+    if (!isRealtimeGateway(this.constructor as new (...args: unknown[]) => object)) {
+      return;
+    }
+    const server = app.getServer();
+    if (server) {
+      this.attachToServer(server);
+    }
+  }
+
+  /**
+   * Attach WebSocket server to an existing HTTP server.
+   * Options default from `@Realtime` on the subclass when present.
    */
   attachToServer(server: HttpServer, options: WebSocketServerOptions = {}): WebSocketServer {
+    const resolved = this.resolveServerOptions(options);
+    this.path = resolved.path || '/ws';
     this.wss = new WebSocketServer({
       server,
-      path: options.path || '/ws',
-      perMessageDeflate: options.perMessageDeflate ?? false,
-      maxPayload: options.maxPayload || 1048576, // 1MB default
-      clientTracking: options.clientTracking ?? true,
+      path: this.path,
+      perMessageDeflate: resolved.perMessageDeflate ?? false,
+      maxPayload: resolved.maxPayload || 1048576,
+      clientTracking: resolved.clientTracking ?? true,
     });
 
     this.wss.on('connection', (socket: WebSocket, _request: IncomingMessage) => {
@@ -67,7 +113,7 @@ export class WebSocketGateway {
       logger.error('WebSocket server error:', error);
     });
 
-    logger.info(`WebSocket server attached at path: ${options.path || '/ws'}`);
+    logger.info(`WebSocket server attached at path: ${this.path}`);
     return this.wss;
   }
 
@@ -75,12 +121,14 @@ export class WebSocketGateway {
    * Create a standalone WebSocket server (without HTTP server)
    */
   listen(port: number, options: WebSocketServerOptions = {}): WebSocketServer {
+    const resolved = this.resolveServerOptions(options);
+    this.path = resolved.path || '/ws';
     this.wss = new WebSocketServer({
       port,
-      path: options.path,
-      perMessageDeflate: options.perMessageDeflate ?? false,
-      maxPayload: options.maxPayload || 1048576,
-      clientTracking: options.clientTracking ?? true,
+      path: this.path,
+      perMessageDeflate: resolved.perMessageDeflate ?? false,
+      maxPayload: resolved.maxPayload || 1048576,
+      clientTracking: resolved.clientTracking ?? true,
     });
 
     this.wss.on('connection', (socket: WebSocket, _request: IncomingMessage) => {
@@ -133,21 +181,25 @@ export class WebSocketGateway {
   }
 
   /**
-   * Handle client connection
+   * Handle client connection — registers the client, then invokes @OnConnect handlers.
+   * Override and call `super.handleConnection(client)` to keep decorator dispatch.
    */
   protected handleConnection(client: WebSocketClient): void {
     this.clients.set(client.id, client);
     this.stats.connectedClients = this.clients.size;
     logger.info(`WebSocket client connected: ${client.id}`);
+    dispatchOnConnect(this, client);
   }
 
   /**
-   * Handle client disconnection
+   * Handle client disconnection — invokes @OnDisconnect first (while client is still
+   * available), then cleans up rooms. Override and call `super.handleDisconnection`
+   * to keep decorator dispatch.
    */
   protected handleDisconnection(clientId: string): void {
     const client = this.clients.get(clientId);
     if (client) {
-      // Remove from all rooms
+      dispatchOnDisconnect(this, client);
       this.roomManager.removeClientFromAllRooms(clientId);
       this.clients.delete(clientId);
       this.stats.connectedClients = this.clients.size;
@@ -156,12 +208,17 @@ export class WebSocketGateway {
   }
 
   /**
-   * Handle incoming message
+   * Handle incoming message — updates stats, then invokes @OnMessage / @Subscribe handlers.
+   * Override and call `super.handleMessage(clientId, message)` to keep decorator dispatch.
    */
   protected handleMessage(clientId: string, message: WebSocketMessage): void {
     this.stats.messagesReceived++;
     this.stats.bytesReceived += JSON.stringify(message).length;
     logger.debug(`Message received from ${clientId}: ${message.event}`);
+    const client = this.clients.get(clientId);
+    if (client) {
+      dispatchOnMessage(this, client, message);
+    }
   }
 
   /**
@@ -204,27 +261,36 @@ export class WebSocketGateway {
   }
 
   /**
-   * Add client to room
+   * Add client to a room. Optionally bind connection-scoped data in the same call.
    */
-  joinRoom(clientId: string, roomName: string): void {
-    const client = this.clients.get(clientId);
-    if (client) {
-      client.join(roomName);
-      this.roomManager.addClientToRoom(clientId, roomName);
-      this.stats.totalRooms = this.roomManager.getRoomCount();
+  joinRoom(
+    clientOrId: string | WebSocketClient,
+    roomName: string,
+    data?: Record<string, unknown>
+  ): void {
+    const clientId = typeof clientOrId === 'string' ? clientOrId : clientOrId.id;
+    const client = typeof clientOrId === 'string' ? this.clients.get(clientOrId) : clientOrId;
+    if (!client) return;
+    client.join(roomName);
+    this.roomManager.addClientToRoom(clientId, roomName);
+    this.stats.totalRooms = this.roomManager.getRoomCount();
+    if (data) {
+      for (const [key, value] of Object.entries(data)) {
+        if (value !== undefined) client.set(key, value);
+      }
     }
   }
 
   /**
-   * Remove client from room
+   * Remove client from a room
    */
-  leaveRoom(clientId: string, roomName: string): void {
-    const client = this.clients.get(clientId);
-    if (client) {
-      client.leave(roomName);
-      this.roomManager.removeClientFromRoom(clientId, roomName);
-      this.stats.totalRooms = this.roomManager.getRoomCount();
-    }
+  leaveRoom(clientOrId: string | WebSocketClient, roomName: string): void {
+    const clientId = typeof clientOrId === 'string' ? clientOrId : clientOrId.id;
+    const client = typeof clientOrId === 'string' ? this.clients.get(clientOrId) : clientOrId;
+    if (!client) return;
+    client.leave(roomName);
+    this.roomManager.removeClientFromRoom(clientId, roomName);
+    this.stats.totalRooms = this.roomManager.getRoomCount();
   }
 
   /**
@@ -303,10 +369,11 @@ export class WebSocketGateway {
  * Create a WebSocket client wrapper
  */
 export function createWebSocketClient(socket: unknown, id: string): WebSocketClient {
+  const metadata = new Map<string, unknown>();
   const client: WebSocketClient = {
     id,
     socket,
-    metadata: new Map(),
+    metadata,
     rooms: new Set(),
 
     send(event: string, data: unknown) {
@@ -316,6 +383,14 @@ export function createWebSocketClient(socket: unknown, id: string): WebSocketCli
       } catch (error) {
         logger.error(`Failed to send message to client ${id}:`, error);
       }
+    },
+
+    get<T = unknown>(key: string): T | undefined {
+      return metadata.get(key) as T | undefined;
+    },
+
+    set(key: string, value: unknown) {
+      metadata.set(key, value);
     },
 
     disconnect() {

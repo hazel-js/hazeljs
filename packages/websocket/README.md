@@ -30,36 +30,30 @@ npm install @hazeljs/websocket
 ### 1. Create WebSocket Gateway
 
 ```typescript
-import { Injectable } from '@hazeljs/core';
 import {
+  Realtime,
   WebSocketGateway,
   OnConnect,
   OnDisconnect,
   OnMessage,
-  WebSocketClient,
-  Data,
+  type WebSocketClient,
 } from '@hazeljs/websocket';
 
-@Injectable()
-@WebSocketGateway({ path: '/ws' })
-export class ChatGateway {
+@Realtime('/ws')
+export class ChatGateway extends WebSocketGateway {
   @OnConnect()
-  handleConnection(client: WebSocketClient) {
-    console.log('Client connected:', client.id);
-    client.emit('welcome', { message: 'Welcome to the chat!' });
+  onConnect(client: WebSocketClient) {
+    client.send('welcome', { message: 'Welcome to the chat!' });
   }
 
   @OnDisconnect()
-  handleDisconnect(client: WebSocketClient) {
+  onDisconnect(client: WebSocketClient) {
     console.log('Client disconnected:', client.id);
   }
 
   @OnMessage('message')
-  handleMessage(client: WebSocketClient, @Data() data: { text: string }) {
-    console.log('Received message:', data.text);
-
-    // Broadcast to all clients
-    client.broadcast('message', {
+  onMessage(client: WebSocketClient, data: { text: string }) {
+    this.broadcast('message', {
       from: client.id,
       text: data.text,
       timestamp: new Date(),
@@ -68,15 +62,15 @@ export class ChatGateway {
 }
 ```
 
+`@Realtime` registers the gateway as a service, auto-attaches on app bootstrap, and dispatches `@OnConnect` / `@OnMessage` handlers. Positional `(client, data)` args work without `@Client()` / `@Data()`.
+
 ### 2. Register Gateway
 
 ```typescript
 import { HazelModule } from '@hazeljs/core';
-import { WebSocketModule } from '@hazeljs/websocket';
 import { ChatGateway } from './chat.gateway';
 
 @HazelModule({
-  imports: [WebSocketModule],
   providers: [ChatGateway],
 })
 export class AppModule {}

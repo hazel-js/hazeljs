@@ -15,7 +15,7 @@ export interface WebSocketClient {
   socket: unknown;
 
   /**
-   * Client metadata
+   * Client metadata (prefer {@link get} / {@link set})
    */
   metadata: Map<string, unknown>;
 
@@ -30,17 +30,27 @@ export interface WebSocketClient {
   send(event: string, data: unknown): void;
 
   /**
+   * Read connection-scoped data (survives until disconnect)
+   */
+  get<T = unknown>(key: string): T | undefined;
+
+  /**
+   * Store connection-scoped data
+   */
+  set(key: string, value: unknown): void;
+
+  /**
    * Disconnect client
    */
   disconnect(): void;
 
   /**
-   * Join a room
+   * Join a room (local set only — prefer gateway.joinRoom)
    */
   join(room: string): void;
 
   /**
-   * Leave a room
+   * Leave a room (local set only — prefer gateway.leaveRoom)
    */
   leave(room: string): void;
 

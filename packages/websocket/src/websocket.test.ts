@@ -1044,7 +1044,7 @@ describe('WebSocket Decorators', () => {
 
       const metadata = getRealtimeMetadata(TestGateway);
       expect(metadata).toBeDefined();
-      expect(metadata?.path).toBe('/');
+      expect(metadata?.path).toBe('/ws');
     });
 
     it('should return false for non-realtime gateway', () => {
@@ -1160,6 +1160,184 @@ describe('WebSocket Decorators', () => {
       expect(metadata[0]).toBe('client');
       expect(metadata[1]).toBe('data');
     });
+  });
+});
+
+describe('WebSocketGateway @Realtime attach', () => {
+  it('should apply @Realtime path/maxPayload when attaching without options', async () => {
+    @Realtime({ path: '/realtime', maxPayload: 2048 })
+    class MetaGateway extends WebSocketGateway {}
+
+    const gateway = new MetaGateway();
+    const httpServer = http.createServer();
+    await new Promise<void>((resolve) => httpServer.listen(0, resolve));
+
+    try {
+      gateway.attachToServer(httpServer);
+      expect(gateway.getPath()).toBe('/realtime');
+    } finally {
+      await gateway.close();
+      await new Promise<void>((resolve, reject) =>
+        httpServer.close((err) => (err ? reject(err) : resolve()))
+      );
+    }
+  });
+
+  it('should auto-attach on onApplicationBootstrap when @Realtime is set', async () => {
+    @Realtime({ path: '/auto-ws' })
+    class AutoGateway extends WebSocketGateway {}
+
+    const gateway = new AutoGateway();
+    const httpServer = http.createServer();
+    await new Promise<void>((resolve) => httpServer.listen(0, resolve));
+
+    try {
+      gateway.onApplicationBootstrap({ getServer: () => httpServer } as any);
+      expect(gateway.getPath()).toBe('/auto-ws');
+      expect((gateway as any).wss).toBeTruthy();
+
+      // second bootstrap should not double-attach
+      const wss = (gateway as any).wss;
+      gateway.onApplicationBootstrap({ getServer: () => httpServer } as any);
+      expect((gateway as any).wss).toBe(wss);
+    } finally {
+      await gateway.close();
+      await new Promise<void>((resolve, reject) =>
+        httpServer.close((err) => (err ? reject(err) : resolve()))
+      );
+    }
+  });
+
+  it('should not auto-attach without @Realtime', () => {
+    class PlainGateway extends WebSocketGateway {}
+    const gateway = new PlainGateway();
+    gateway.onApplicationBootstrap({ getServer: () => ({}) } as any);
+    expect((gateway as any).wss).toBeNull();
+  });
+});
+
+describe('WebSocketGateway decorator auto-dispatch', () => {
+  it('should invoke @OnConnect / @OnMessage / @OnDisconnect handlers', () => {
+    const connect = jest.fn();
+    const message = jest.fn();
+    const disconnect = jest.fn();
+
+    class ChatGateway extends WebSocketGateway {
+      @OnConnect()
+      onConnect(@Client() client: ReturnType<typeof createWebSocketClient>) {
+        connect(client.id);
+      }
+
+      @OnMessage('chat')
+      onChat(
+        @Client() client: ReturnType<typeof createWebSocketClient>,
+        @Data() data: { text: string }
+      ) {
+        message(client.id, data);
+      }
+
+      @OnDisconnect()
+      onDisconnect(@Client() client: ReturnType<typeof createWebSocketClient>) {
+        disconnect(client.id);
+      }
+    }
+
+    const gateway = new ChatGateway();
+    const mockSocket = { send: jest.fn(), close: jest.fn() };
+    const client = createWebSocketClient(mockSocket, 'c1');
+
+    (gateway as any).handleConnection(client);
+    expect(connect).toHaveBeenCalledWith('c1');
+
+    (gateway as any).handleMessage('c1', {
+      event: 'chat',
+      data: { text: 'hi' },
+      timestamp: Date.now(),
+    });
+    expect(message).toHaveBeenCalledWith('c1', { text: 'hi' });
+
+    (gateway as any).handleDisconnection('c1');
+    expect(disconnect).toHaveBeenCalledWith('c1');
+  });
+
+  it('should invoke @Subscribe handlers for matching events', () => {
+    const handler = jest.fn();
+
+    class SubGateway extends WebSocketGateway {
+      @Subscribe('space.subscribe')
+      onSubscribe(
+        @Client() _client: ReturnType<typeof createWebSocketClient>,
+        @Data() data: { code: string }
+      ) {
+        handler(data);
+      }
+    }
+
+    const gateway = new SubGateway();
+    const client = createWebSocketClient({ send: jest.fn(), close: jest.fn() }, 'c2');
+    (gateway as any).handleConnection(client);
+    (gateway as any).handleMessage('c2', {
+      event: 'space.subscribe',
+      data: { code: 'ABC' },
+      timestamp: Date.now(),
+    });
+    expect(handler).toHaveBeenCalledWith({ code: 'ABC' });
+  });
+
+  it('should not invoke handlers for unrelated events', () => {
+    const handler = jest.fn();
+
+    class ChatGateway extends WebSocketGateway {
+      @OnMessage('chat')
+      onChat(@Data() data: unknown) {
+        handler(data);
+      }
+    }
+
+    const gateway = new ChatGateway();
+    const client = createWebSocketClient({ send: jest.fn(), close: jest.fn() }, 'c3');
+    (gateway as any).handleConnection(client);
+    (gateway as any).handleMessage('c3', {
+      event: 'other',
+      data: { x: 1 },
+      timestamp: Date.now(),
+    });
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  it('should send error event when a handler throws', async () => {
+    class ChatGateway extends WebSocketGateway {
+      @OnMessage('boom')
+      onBoom() {
+        throw new Error('nope');
+      }
+    }
+
+    const gateway = new ChatGateway();
+    const mockSocket = { send: jest.fn(), close: jest.fn() };
+    const client = createWebSocketClient(mockSocket, 'c4');
+    (gateway as any).handleConnection(client);
+    mockSocket.send.mockClear();
+    (gateway as any).handleMessage('c4', {
+      event: 'boom',
+      data: {},
+      timestamp: Date.now(),
+    });
+    await Promise.resolve();
+    expect(mockSocket.send).toHaveBeenCalled();
+    const payload = JSON.parse(mockSocket.send.mock.calls[0][0]);
+    expect(payload.event).toBe('error');
+    expect(payload.data.message).toBe('nope');
+  });
+
+  it('should joinRoom with client + bind data', () => {
+    const gateway = new WebSocketGateway();
+    const client = createWebSocketClient({ send: jest.fn(), close: jest.fn() }, 'c5');
+    (gateway as any).handleConnection(client);
+    gateway.joinRoom(client, 'room-a', { spaceId: 's1' });
+    expect(client.inRoom('room-a')).toBe(true);
+    expect(client.get('spaceId')).toBe('s1');
+    expect(gateway.getRoomClients('room-a')).toContain('c5');
   });
 });
 

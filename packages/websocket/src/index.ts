@@ -4,6 +4,7 @@
 
 export { WebSocketModule, type WebSocketModuleOptions } from './websocket.module';
 export { WebSocketGateway, createWebSocketClient } from './websocket.gateway';
+export { dispatchOnConnect, dispatchOnDisconnect, dispatchOnMessage } from './decorator-dispatch';
 export {
   Realtime,
   Subscribe,
