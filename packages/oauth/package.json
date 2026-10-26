@@ -15,7 +15,9 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "arctic": "^3.7.0"
+    "@xmldom/xmldom": "^0.9.12",
+    "arctic": "^3.7.0",
+    "xml-crypto": "^6.4.0"
   },
   "devDependencies": {
     "@types/node": "^20.19.39",

@@ -9,6 +9,10 @@ export { OAuthModule } from './oauth.module';
 export { OAuthService } from './oauth.service';
 export { OAuthController } from './oauth.controller';
 export { OAuthStateGuard } from './guards/oauth-state.guard';
+export {
+  MemorySamlAuthnRequestStore,
+  getDefaultSamlAuthnRequestStore,
+} from './saml-authn-request-store';
 export type {
   OAuthModuleOptions,
   OAuthProvidersConfig,
@@ -19,6 +23,7 @@ export type {
   OAuthUser,
   SamlUser,
   SamlCallbackResult,
+  SamlAuthnRequestStore,
   SupportedProvider,
   GoogleProviderConfig,
   MicrosoftProviderConfig,

@@ -65,6 +65,12 @@ After you submit a report, we will:
    - Discord announcement
    - Twitter/X announcement
 
+## Published fixes
+
+### `@hazeljs/oauth` 2.0.11 — SAML ACS signature & request binding
+
+SAML ACS now **fail-closes**: IdP XML signatures are verified against `idpCertificate`, and AuthnRequest IDs are bound via a signed `saml_req` cookie so unsolicited/forged responses are rejected. Apps must set `idpCertificate` (and `idpIssuer` when the IdP entity ID differs from the SSO URL origin). Upgrade from ≤2.0.10 if you use SAML.
+
 ## Security Best Practices
 
 When using HazelJS in production, we recommend:

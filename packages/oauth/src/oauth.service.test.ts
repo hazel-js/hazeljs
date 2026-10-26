@@ -1,3 +1,8 @@
+import { execSync } from 'child_process';
+import { mkdtempSync, readFileSync, rmSync } from 'fs';
+import { tmpdir } from 'os';
+import { join } from 'path';
+import { SignedXml } from 'xml-crypto';
 import { OAuthService } from './oauth.service';
 import * as arctic from 'arctic';
 
@@ -86,9 +91,21 @@ describe('OAuthService', () => {
             issuer: 'https://app.example.com',
             acsUrl: 'https://app.example.com/auth/saml/okta-main/callback',
             audience: 'https://app.example.com',
+            idpIssuer: 'https://idp.example.com',
+            // Placeholder — valid signed fixtures live in saml.provider.test.ts.
+            // Service-level tests that parse responses use unsigned XML and expect rejection.
+            idpCertificate: `-----BEGIN CERTIFICATE-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA0Z3VS5JJcds3xfn/ygWy
+7wOKFAKECERTFORCONFIGONLY0000000000000000000000000000000000000000
+000000000000000000000000000000000000000000000000000000000000000000
+000000000000000000000000000000000000000000000000000000000000000000
+000000000000000000000000000000000000000000000000000000000000000000
+QIDAQAB
+-----END CERTIFICATE-----`,
           },
         },
       },
+      stateSecret: 'test-state-secret',
     });
     mockFetch.mockResolvedValue({
       ok: true,
@@ -103,6 +120,43 @@ describe('OAuthService', () => {
   });
 
   describe('configure and getOptions', () => {
+    it('requires stateSecret when SAML providers are configured', () => {
+      expect(() =>
+        OAuthService.configure({
+          providers: {
+            saml: {
+              okta: {
+                idpKey: 'okta',
+                ssoUrl: 'https://idp.example.com/sso',
+                issuer: 'https://app.example.com',
+                acsUrl: 'https://app.example.com/acs',
+                idpCertificate: 'cert',
+              },
+            },
+          },
+        })
+      ).toThrow(/stateSecret is required/);
+    });
+
+    it('rejects whitespace-only stateSecret when SAML is configured', () => {
+      expect(() =>
+        OAuthService.configure({
+          stateSecret: '   ',
+          providers: {
+            saml: {
+              okta: {
+                idpKey: 'okta',
+                ssoUrl: 'https://idp.example.com/sso',
+                issuer: 'https://app.example.com',
+                acsUrl: 'https://app.example.com/acs',
+                idpCertificate: 'cert',
+              },
+            },
+          },
+        })
+      ).toThrow(/stateSecret is required/);
+    });
+
     it('should throw when not configured', () => {
       (OAuthService as unknown as { options: null }).options = null;
       expect(() => new OAuthService()).toThrow('OAuthModule not configured');
@@ -283,6 +337,13 @@ describe('OAuthService', () => {
       expect(result.requestId).toMatch(/^_/);
     });
 
+    it('includes relayState on SAML authorization URL when provided', () => {
+      const service = new OAuthService();
+      const result = service.getSamlAuthorizationUrl('okta-main', 'return=/app');
+      expect(result.relayState).toBe('return=/app');
+      expect(result.url).toContain('RelayState=');
+    });
+
     it('throws for unknown SAML provider key', () => {
       const service = new OAuthService();
       expect(() => service.getSamlAuthorizationUrl('unknown-idp')).toThrow('not configured');
@@ -300,14 +361,16 @@ describe('OAuthService', () => {
       expect(xml).toContain('AssertionConsumerService');
     });
 
-    it('parses successful SAML callback payload', () => {
+    it('rejects unsigned SAML callback payload', () => {
       const service = new OAuthService();
       const samlResponseXml = `
-        <samlp:Response InResponseTo="_req123">
+        <samlp:Response xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol" xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion" Destination="https://app.example.com/auth/saml/okta-main/callback" InResponseTo="_req123">
+          <saml:Issuer>https://idp.example.com</saml:Issuer>
           <samlp:Status>
             <samlp:StatusCode Value="urn:oasis:names:tc:SAML:2.0:status:Success"/>
           </samlp:Status>
           <saml:Assertion>
+            <saml:Issuer>https://idp.example.com</saml:Issuer>
             <saml:Conditions>
               <saml:AudienceRestriction>
                 <saml:Audience>https://app.example.com</saml:Audience>
@@ -316,37 +379,124 @@ describe('OAuthService', () => {
             <saml:Subject>
               <saml:NameID>user-001</saml:NameID>
             </saml:Subject>
-            <saml:AuthnStatement SessionIndex="session-1"/>
             <saml:AttributeStatement>
               <saml:Attribute Name="email">
                 <saml:AttributeValue>user@example.com</saml:AttributeValue>
-              </saml:Attribute>
-              <saml:Attribute Name="name">
-                <saml:AttributeValue>Saml User</saml:AttributeValue>
               </saml:Attribute>
             </saml:AttributeStatement>
           </saml:Assertion>
         </samlp:Response>
       `;
       const encoded = Buffer.from(samlResponseXml, 'utf8').toString('base64');
-      const result = service.handleSamlCallback('okta-main', encoded, 'relay-123');
-      expect(result.protocol).toBe('saml');
-      expect(result.user.email).toBe('user@example.com');
-      expect(result.nameId).toBe('user-001');
-      expect(result.relayState).toBe('relay-123');
+      expect(() =>
+        service.handleSamlCallback('okta-main', encoded, {
+          expectedRequestId: '_req123',
+          relayState: 'relay-123',
+        })
+      ).toThrow(/not signed/i);
     });
 
     it('throws when SAML callback is unsuccessful', () => {
       const service = new OAuthService();
       const badXml = `
-        <samlp:Response>
+        <samlp:Response xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol" Destination="https://app.example.com/auth/saml/okta-main/callback" InResponseTo="_req123">
           <samlp:Status>
             <samlp:StatusCode Value="urn:oasis:names:tc:SAML:2.0:status:Requester"/>
           </samlp:Status>
         </samlp:Response>
       `;
       const encoded = Buffer.from(badXml, 'utf8').toString('base64');
-      expect(() => service.handleSamlCallback('okta-main', encoded)).toThrow('not successful');
+      expect(() =>
+        service.handleSamlCallback('okta-main', encoded, { expectedRequestId: '_req123' })
+      ).toThrow('not successful');
+    });
+
+    it('returns callback result for a valid signed SAMLResponse', () => {
+      const dir = mkdtempSync(join(tmpdir(), 'saml-svc-'));
+      let privateKey: string;
+      let certificate: string;
+      try {
+        execSync(
+          `openssl req -x509 -newkey rsa:2048 -keyout key.pem -out cert.pem -days 1 -nodes -subj "/CN=idp.example.com"`,
+          { cwd: dir, stdio: 'pipe' }
+        );
+        privateKey = readFileSync(join(dir, 'key.pem'), 'utf8');
+        certificate = readFileSync(join(dir, 'cert.pem'), 'utf8');
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+
+      OAuthService.configure({
+        stateSecret: 'test-state-secret',
+        providers: {
+          saml: {
+            'okta-main': {
+              idpKey: 'okta-main',
+              ssoUrl: 'https://idp.example.com/sso',
+              issuer: 'https://app.example.com',
+              acsUrl: 'https://app.example.com/auth/saml/okta-main/callback',
+              audience: 'https://app.example.com',
+              idpIssuer: 'https://idp.example.com',
+              idpCertificate: certificate,
+            },
+          },
+        },
+      });
+
+      const requestId = '_req-svc-ok';
+      const notBefore = new Date(Date.now() - 60_000).toISOString();
+      const notOnOrAfter = new Date(Date.now() + 3_600_000).toISOString();
+      const unsigned = `<?xml version="1.0"?>
+<samlp:Response xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol" xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion" ID="_resp1" Version="2.0" IssueInstant="${new Date().toISOString()}" Destination="https://app.example.com/auth/saml/okta-main/callback" InResponseTo="${requestId}">
+  <saml:Issuer>https://idp.example.com</saml:Issuer>
+  <samlp:Status><samlp:StatusCode Value="urn:oasis:names:tc:SAML:2.0:status:Success"/></samlp:Status>
+  <saml:Assertion ID="_assert1" Version="2.0" IssueInstant="${new Date().toISOString()}">
+    <saml:Issuer>https://idp.example.com</saml:Issuer>
+    <saml:Subject>
+      <saml:NameID>nameid-1</saml:NameID>
+      <saml:SubjectConfirmation Method="urn:oasis:names:tc:SAML:2.0:cm:bearer">
+        <saml:SubjectConfirmationData Recipient="https://app.example.com/auth/saml/okta-main/callback" NotOnOrAfter="${notOnOrAfter}" InResponseTo="${requestId}"/>
+      </saml:SubjectConfirmation>
+    </saml:Subject>
+    <saml:Conditions NotBefore="${notBefore}" NotOnOrAfter="${notOnOrAfter}">
+      <saml:AudienceRestriction><saml:Audience>https://app.example.com</saml:Audience></saml:AudienceRestriction>
+    </saml:Conditions>
+    <saml:AttributeStatement>
+      <saml:Attribute Name="email"><saml:AttributeValue>user@example.com</saml:AttributeValue></saml:Attribute>
+    </saml:AttributeStatement>
+  </saml:Assertion>
+</samlp:Response>`;
+
+      const sig = new SignedXml({ privateKey, publicCert: certificate });
+      sig.signatureAlgorithm = 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha256';
+      sig.canonicalizationAlgorithm = 'http://www.w3.org/2001/10/xml-exc-c14n#';
+      sig.addReference({
+        xpath: '//*[local-name()="Assertion"]',
+        transforms: [
+          'http://www.w3.org/2000/09/xmldsig#enveloped-signature',
+          'http://www.w3.org/2001/10/xml-exc-c14n#',
+        ],
+        digestAlgorithm: 'http://www.w3.org/2001/04/xmlenc#sha256',
+        uri: '#_assert1',
+      });
+      sig.computeSignature(unsigned, {
+        location: {
+          reference: '//*[local-name()="Assertion"]/*[local-name()="Issuer"]',
+          action: 'after',
+        },
+        prefix: 'ds',
+      });
+      const encoded = Buffer.from(sig.getSignedXml(), 'utf8').toString('base64');
+
+      const service = new OAuthService();
+      const result = service.handleSamlCallback('okta-main', encoded, {
+        expectedRequestId: requestId,
+        relayState: 'relay-xyz',
+      });
+      expect(result.protocol).toBe('saml');
+      expect(result.user.email).toBe('user@example.com');
+      expect(result.relayState).toBe('relay-xyz');
+      expect(result.rawAssertion).toBe(encoded);
     });
   });
 });

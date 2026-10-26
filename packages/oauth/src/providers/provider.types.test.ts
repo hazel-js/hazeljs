@@ -65,6 +65,8 @@ describe('Provider Types', () => {
       issuer: 'https://app.example.com',
       acsUrl: 'https://app.example.com/auth/saml/okta-main/callback',
       audience: 'https://app.example.com',
+      idpCertificate: '-----BEGIN CERTIFICATE-----\nMIIB\n-----END CERTIFICATE-----',
+      idpIssuer: 'https://idp.example.com',
     };
     expect(config.idpKey).toBe('okta-main');
   });

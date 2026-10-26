@@ -50,11 +50,16 @@ export interface SamlProviderConfig {
    */
   acsUrl: string;
   /**
-   * IdP certificate (PEM). Required for signature validation in production.
+   * IdP signing certificate (PEM). Required — unsigned responses are rejected.
    */
-  idpCertificate?: string;
+  idpCertificate: string;
   /**
-   * Optional explicit audience check. Defaults to `issuer`.
+   * IdP entity ID / Issuer. Defaults to `ssoUrl` origin when omitted.
+   * Must match Response and Assertion Issuer values.
+   */
+  idpIssuer?: string;
+  /**
+   * Explicit audience check. Defaults to SP `issuer`. Audience is required in the assertion.
    */
   audience?: string;
   /**
@@ -66,7 +71,7 @@ export interface SamlProviderConfig {
    */
   relayState?: string;
   /**
-   * Optional allowed clock skew for time validations.
+   * Allowed clock skew for Conditions NotBefore / NotOnOrAfter.
    * @default 120
    */
   clockSkewSec?: number;
@@ -155,10 +160,29 @@ export interface OAuthCallbackHandler {
   ): Promise<unknown> | unknown;
 }
 
+/**
+ * Server-side single-use ledger for SAML AuthnRequest IDs (replay defense).
+ */
+export interface SamlAuthnRequestStore {
+  tryConsume(requestId: string, ttlSec?: number): boolean | Promise<boolean>;
+}
+
 export interface OAuthModuleOptions {
   providers: OAuthProvidersConfig;
   /** Default scopes per provider. Override via getAuthorizationUrl scopes param. */
   defaultScopes?: Partial<Record<SupportedProvider, string[]>>;
+  /**
+   * HMAC secret used to sign the SAML AuthnRequest binding cookie.
+   * **Required when any SAML IdP is configured.** Must be a private secret —
+   * IdP certificates are public and must never be used as the cookie key.
+   */
+  stateSecret?: string;
+  /**
+   * Optional server-side store for single-use AuthnRequest IDs (replay defense).
+   * Defaults to an in-memory store. Provide a shared store (e.g. Redis) for
+   * multi-instance deployments.
+   */
+  samlAuthnRequestStore?: SamlAuthnRequestStore;
   /**
    * Optional class (must be registered in the DI container) whose `handle()` method is
    * called after a successful OAuth callback.  Use it to look up / create the user in
