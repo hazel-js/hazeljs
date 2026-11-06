@@ -1,7 +1,7 @@
 /**
  * @hazeljs/event-emitter - Event emitter module for HazelJS
  *
- * Event-driven architecture with decorators, similar to @nestjs/event-emitter.
+ * Event-driven architecture with decorators on top of eventemitter2.
  * Built on eventemitter2 - supports wildcards, namespaces, and async listeners.
  */
 

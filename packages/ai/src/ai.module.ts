@@ -1,22 +1,24 @@
 import { HazelModule } from '@hazeljs/core';
 import { AIEnhancedService } from './ai-enhanced.service';
-import { AIProvider } from './ai-enhanced.types';
+import {
+  getAIModuleOptions,
+  hasNamedModels,
+  listModelNames,
+  resolveNamedModel,
+  setAIModuleOptions,
+  validateNamedModels,
+  type AIModuleOptions,
+} from './models/module-options';
 
-export interface AIModuleOptions {
-  defaultProvider?: AIProvider;
-  providers?: AIProvider[];
-  apiKeys?: Partial<Record<AIProvider, string>>;
-}
+export type { AIModuleOptions };
 
 @HazelModule({
   providers: [AIEnhancedService],
   exports: [AIEnhancedService],
 })
 export class AIModule {
-  private static options: AIModuleOptions = {};
-
   static register(options: AIModuleOptions): typeof AIModule {
-    AIModule.options = options;
+    setAIModuleOptions(options);
 
     // Set API keys in environment if provided (allows runtime configuration)
     if (options.apiKeys) {
@@ -33,10 +35,30 @@ export class AIModule {
       }
     }
 
+    if (options.models) {
+      validateNamedModels(options.models);
+    }
+
     return AIModule;
   }
 
   static getOptions(): AIModuleOptions {
-    return AIModule.options;
+    return getAIModuleOptions();
+  }
+
+  static validateModels(models: NonNullable<AIModuleOptions['models']>): void {
+    validateNamedModels(models);
+  }
+
+  static resolveNamedModel(name: string): ReturnType<typeof resolveNamedModel> {
+    return resolveNamedModel(name);
+  }
+
+  static hasNamedModels(): boolean {
+    return hasNamedModels();
+  }
+
+  static listModelNames(): string[] {
+    return listModelNames();
   }
 }

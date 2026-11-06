@@ -355,7 +355,10 @@ describe('ChatBuilder', () => {
   describe('structured output', () => {
     it('text uses generateObject when objectSchema is set', async () => {
       const schema = z.object({ a: z.string() });
-      mockHost.generateObject = jest.fn().mockResolvedValue({ a: 'x' });
+      mockHost.generateObject = jest.fn().mockResolvedValue({
+        object: { a: 'x' },
+        model: 'gpt-4',
+      });
       const builder = new ChatBuilder(mockHost, 'q').objectSchema(schema);
       const t = await builder.text();
       expect(mockHost.generateObject).toHaveBeenCalled();
@@ -364,7 +367,10 @@ describe('ChatBuilder', () => {
 
     it('text returns string result from generateObject without JSON.stringify', async () => {
       const schema = z.object({ a: z.string() });
-      mockHost.generateObject = jest.fn().mockResolvedValue('plain');
+      mockHost.generateObject = jest.fn().mockResolvedValue({
+        object: 'plain',
+        model: 'gpt-4',
+      });
       const builder = new ChatBuilder(mockHost, 'q').objectSchema(schema);
       const t = await builder.text();
       expect(t).toBe('plain');
@@ -372,7 +378,10 @@ describe('ChatBuilder', () => {
 
     it('object uses host.generateObject when available', async () => {
       const schema = z.object({ n: z.number() });
-      mockHost.generateObject = jest.fn().mockResolvedValue({ n: 1 });
+      mockHost.generateObject = jest.fn().mockResolvedValue({
+        object: { n: 1 },
+        model: 'gpt-4',
+      });
       const builder = new ChatBuilder(mockHost, 'q');
       const o = await builder.object(schema);
       expect(o).toEqual({ n: 1 });

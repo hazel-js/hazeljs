@@ -7,6 +7,7 @@
 export enum AIErrorCode {
   PROVIDER_NOT_FOUND = 'AI_PROVIDER_NOT_FOUND',
   PROVIDER_NOT_CONFIGURED = 'AI_PROVIDER_NOT_CONFIGURED',
+  MODEL_NOT_CONFIGURED = 'AI_MODEL_NOT_CONFIGURED',
   COMPLETION_FAILED = 'AI_COMPLETION_FAILED',
   STREAMING_FAILED = 'AI_STREAMING_FAILED',
   EMBEDDING_FAILED = 'AI_EMBEDDING_FAILED',
@@ -14,17 +15,47 @@ export enum AIErrorCode {
   TOKEN_LIMIT_EXCEEDED = 'AI_TOKEN_LIMIT_EXCEEDED',
   INVALID_REQUEST = 'AI_INVALID_REQUEST',
   AUTHENTICATION_FAILED = 'AI_AUTHENTICATION_FAILED',
+  OUTPUT_INVALID = 'AI_OUTPUT_INVALID',
+  BUDGET_EXCEEDED = 'AI_BUDGET_EXCEEDED',
+  ABORTED = 'AI_ABORTED',
+  MODEL_FAILED = 'AI_MODEL_FAILED',
+  TOOL_NOT_FOUND = 'AI_TOOL_NOT_FOUND',
 }
 
 export class AIError extends Error {
   readonly code: AIErrorCode;
   readonly cause?: Error;
+  readonly text?: string;
+  readonly usage?: {
+    promptTokens: number;
+    completionTokens: number;
+    totalTokens: number;
+  };
+  readonly cost?: number;
+  readonly limit?: { maxTokens?: number; maxCost?: number };
+  readonly attempts?: Array<{ model: string; attempt: number; error: unknown }>;
 
-  constructor(message: string, code: AIErrorCode, cause?: Error) {
+  constructor(
+    message: string,
+    code: AIErrorCode,
+    cause?: Error,
+    extras?: {
+      text?: string;
+      usage?: AIError['usage'];
+      cost?: number;
+      limit?: AIError['limit'];
+      attempts?: AIError['attempts'];
+    }
+  ) {
     super(message);
     this.name = 'AIError';
     this.code = code;
     this.cause = cause;
+    this.text = extras?.text;
+    this.usage = extras?.usage;
+    this.cost = extras?.cost;
+    this.limit = extras?.limit;
+    this.attempts = extras?.attempts;
     Object.setPrototypeOf(this, AIError.prototype);
   }
 
@@ -48,6 +79,13 @@ export class AIError extends Error {
       `AI provider "${name}" is not configured. Set the ${envVar} environment variable ` +
         `or pass apiKey when registering the provider.`,
       AIErrorCode.PROVIDER_NOT_CONFIGURED
+    );
+  }
+
+  static modelNotConfigured(name: string): AIError {
+    return new AIError(
+      `AI model "${name}" is not configured. Register it with AIModule.register({ models: { ${name}: { ... } } }).`,
+      AIErrorCode.MODEL_NOT_CONFIGURED
     );
   }
 
@@ -87,6 +125,44 @@ export class AIError extends Error {
       `Authentication failed for provider "${provider}". Check your API key.`,
       AIErrorCode.AUTHENTICATION_FAILED,
       cause
+    );
+  }
+
+  static outputInvalid(message: string, text?: string): AIError {
+    return new AIError(message, AIErrorCode.OUTPUT_INVALID, undefined, { text });
+  }
+
+  static budgetExceeded(
+    usage: AIError['usage'],
+    cost: number | undefined,
+    limit: AIError['limit']
+  ): AIError {
+    return new AIError(
+      `Call budget exceeded before the next model step.`,
+      AIErrorCode.BUDGET_EXCEEDED,
+      undefined,
+      { usage, cost, limit }
+    );
+  }
+
+  static aborted(reason?: unknown): AIError {
+    const message =
+      reason instanceof Error
+        ? reason.message
+        : typeof reason === 'string'
+          ? reason
+          : 'AI call aborted';
+    return new AIError(message, AIErrorCode.ABORTED, reason instanceof Error ? reason : undefined);
+  }
+
+  static modelFailed(message: string, cause?: Error, attempts?: AIError['attempts']): AIError {
+    return new AIError(message, AIErrorCode.MODEL_FAILED, cause, { attempts });
+  }
+
+  static toolNotFound(name: string): AIError {
+    return new AIError(
+      `Agent tool "${name}" is not registered. Call AIEnhancedService.registerTools(instance).`,
+      AIErrorCode.TOOL_NOT_FOUND
     );
   }
 }

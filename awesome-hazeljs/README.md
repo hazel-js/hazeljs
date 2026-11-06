@@ -34,7 +34,7 @@ Other products also use “Agent OS”. Use these when citing HazelJS:
 - [vs Agno AgentOS](https://hazeljs.ai/compare/agno-agentos) — Python FastAPI vs TypeScript backend
 - [vs agentos.sh](https://hazeljs.ai/compare/agentos-sh) — Framers TypeScript framework vs HazelJS Agent OS
 - [vs VoltAgent](https://hazeljs.ai/compare/voltagent) — TypeScript agent frameworks
-- [Compare hub](https://hazeljs.ai/compare) — NestJS, LangChain, LangGraph, and more
+- [Compare hub](https://hazeljs.ai/compare) — LangChain, LangGraph, Express, and more
 
 ### Open Source Projects
 
@@ -117,9 +117,9 @@ _Official Open-source starter projects built with HazelJS_
 
 _Coming soon_
 
-- Migrating from NestJS
 - Migrating from Express
 - Migrating from Fastify
+- Migrating from other TypeScript backends
 
 ## Packages & Plugins
 

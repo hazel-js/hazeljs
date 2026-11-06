@@ -23,9 +23,10 @@ npm install @hazeljs/core
 - **Retrieval metrics** — `precisionAtK`, `recallAtK`, `meanReciprocalRank`, `ndcgAtK`
 - **RAG helpers** — `evaluateRetrieval`, `answerContextOverlap` (lightweight faithfulness proxy)
 - **Agent trajectories** — `trajectoryScore`, `toolCallAccuracy`
-- **LLM judge** — `parseJudgeScore`, `buildRelevanceJudgePrompt`, `buildFaithfulnessJudgePrompt` (wire to your model)
+- **LLM judge** — `parseJudgeScore`, `buildRelevanceJudgePrompt`, `buildFaithfulnessJudgePrompt`; pass `judge` on `EvalRunOptions` to blend into `runGoldenDataset`
 - **Runner** — `runGoldenDataset` with configurable concurrency and thresholds
 - **CI** — `reportEvalForCi` with optional non-zero exit via `process.exitCode`
+- **AI call goldens** — put `metadata.expectedCalls` on cases and use `@hazeljs/ai` `runAiGolden` / `FakeModel` for provider-request regression
 
 ## Quick start
 
@@ -46,7 +47,13 @@ const result = await runGoldenDataset(
       retrievedIds: ['doc-1', 'doc-2'],
     };
   },
-  { concurrency: 2, minAverageScore: 0.75 }
+  {
+    concurrency: 2,
+    minAverageScore: 0.75,
+    // optional: blend LLM-as-judge (skip per-case with metadata.skipJudge)
+    // judge: async (prompt) => ai.chat(prompt).text(),
+    // judgePrompt: 'relevance',
+  }
 );
 
 reportEvalForCi(result, { exitOnFail: true });

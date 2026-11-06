@@ -31,6 +31,7 @@ export type {
 export {
   PromptOperation,
   RAGOperation,
+  ContextAssembleOperation,
   AgentOperation,
   MLOperation,
   ParallelOperation,
@@ -66,6 +67,7 @@ export { createBuilder, compose, conditional } from './hcel.builder';
 export type {
   PromptOperationConfig,
   RAGOperationConfig,
+  ContextAssembleOperationConfig,
   AgentOperationConfig,
   MLOperationConfig,
   ParallelOperationConfig,

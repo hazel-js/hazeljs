@@ -19,6 +19,7 @@ import type {
   MemorySearchOperationConfig,
   AgentPipelineOperationConfig,
   AgentSupervisorOperationConfig,
+  ContextAssembleOperationConfig,
 } from './hcel.types';
 import type { MemoryService } from '@hazeljs/memory';
 import type {
@@ -96,6 +97,11 @@ export class HCELBuilder<TInput = unknown, TOutput = unknown> implements IHCELBu
     this.operations.push(operation);
 
     return this as unknown as HCELBuilder<string[], TOutput>;
+  }
+
+  contextAssemble(config: ContextAssembleOperationConfig): HCELBuilder<string, TOutput> {
+    this.operations.push(this.operationFactory.createContextAssemble(config));
+    return this as unknown as HCELBuilder<string, TOutput>;
   }
 
   agent(name: string, options: Record<string, unknown> = {}): HCELBuilder<string, TOutput> {

@@ -100,12 +100,13 @@ describe('AICachingMiddleware', () => {
 
 describe('AIRetryMiddleware', () => {
   it('retries then succeeds', async () => {
+    const { AIProviderError } = await import('../errors/provider.error');
     let n = 0;
     const mw = new AIRetryMiddleware(3, 1);
     const out = await mw.handle(req, async () => {
       n += 1;
       if (n < 2) {
-        throw new Error('transient');
+        throw new AIProviderError('transient', { statusCode: 429, retryable: true });
       }
       return res;
     });
@@ -119,7 +120,20 @@ describe('AIRetryMiddleware', () => {
       mw.handle(req, async () => {
         throw new Error('fatal');
       })
-    ).rejects.toThrow('fatal');
+    ).rejects.toMatchObject({ message: 'fatal' });
+  });
+
+  it('does not retry OUTPUT_INVALID', async () => {
+    const { AIError } = await import('../errors/ai.error');
+    let n = 0;
+    const mw = new AIRetryMiddleware(3, 1);
+    await expect(
+      mw.handle(req, async () => {
+        n++;
+        throw AIError.outputInvalid('bad', '{}');
+      })
+    ).rejects.toMatchObject({ code: 'AI_OUTPUT_INVALID' });
+    expect(n).toBe(1);
   });
 });
 

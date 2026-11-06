@@ -37,19 +37,36 @@ export function createHazelAIDiagnosticsProvider(
   );
 }
 
-type GlobalWithHazelAI = typeof globalThis & {
-  __HAZELJS_AI_ENHANCED_SERVICE__?: HazelAICompletionClient;
-};
-
 /**
- * Resolve AIEnhancedService from HazelJS global when aiDiagnostics: true.
+ * Resolve AIEnhancedService from the Hazel DI container when aiDiagnostics: true.
  */
 export function resolveGlobalHazelAIDiagnosticsProvider(
   options: { model?: string; provider?: string } = {}
 ): AIDiagnosticsProvider | undefined {
-  const aiService = (global as GlobalWithHazelAI).__HAZELJS_AI_ENHANCED_SERVICE__;
-  if (!aiService) {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { Container } = require('@hazeljs/core') as {
+      Container: {
+        getInstance: () => {
+          has: (token: unknown) => boolean;
+          resolve: (token: unknown) => HazelAICompletionClient;
+        };
+      };
+    };
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { AIEnhancedService } = require('@hazeljs/ai') as {
+      AIEnhancedService: new (...args: unknown[]) => HazelAICompletionClient;
+    };
+    const container = Container.getInstance();
+    if (!container.has(AIEnhancedService)) {
+      return undefined;
+    }
+    const aiService = container.resolve(AIEnhancedService);
+    if (!aiService?.complete) {
+      return undefined;
+    }
+    return createHazelAIDiagnosticsProvider(aiService, options);
+  } catch {
     return undefined;
   }
-  return createHazelAIDiagnosticsProvider(aiService, options);
 }

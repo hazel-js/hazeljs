@@ -2,6 +2,23 @@
  * Core types for @hazeljs/eval
  */
 
+import type { LLMJudgeFn } from './llm-judge';
+
+/**
+ * Optional provider-call golden shape (used by `@hazeljs/ai` FakeModel matchers).
+ * Store under `GoldenCase.metadata.expectedCalls`.
+ */
+export interface ExpectedCallSlice {
+  /** Exact model id if asserted */
+  model?: string;
+  /** Subset of message roles in order (e.g. ['system','user']) */
+  messageRoles?: string[];
+  /** Tool / function names expected to be offered on the request */
+  toolNames?: string[];
+  /** Substring that must appear in some message content */
+  messageIncludes?: string;
+}
+
 export interface GoldenCase {
   id: string;
   input: string;
@@ -11,6 +28,12 @@ export interface GoldenCase {
   expectedToolCalls?: string[];
   /** Relevant document IDs or content snippets retrieval should surface */
   expectedRetrievedIds?: string[];
+  /**
+   * Free-form case metadata. Recognized keys:
+   * - `expectedCalls`: ExpectedCallSlice[] for FakeModel request goldens
+   * - `judgeContext`: string used when `EvalRunOptions.judgePrompt === 'faithfulness'`
+   * - `skipJudge`: boolean to skip LLM judge for this case
+   */
   metadata?: Record<string, unknown>;
 }
 
@@ -25,6 +48,13 @@ export interface EvalRunOptions {
   concurrency?: number;
   /** Fail CI when average score below threshold */
   minAverageScore?: number;
+  /**
+   * Optional LLM-as-judge. When set, blends judge score with existing matchers
+   * (unless `metadata.skipJudge` is true).
+   */
+  judge?: LLMJudgeFn;
+  /** Which rubric prompt to build (default relevance). */
+  judgePrompt?: 'relevance' | 'faithfulness';
 }
 
 export interface CaseResult {

@@ -31,9 +31,10 @@ export class ChatFacade {
           provider: options?.provider || this.config.defaultProvider,
           model: options?.model || this.config.model,
           temperature: options?.temperature ?? this.config.temperature,
+          instructions: options?.systemPrompt,
         }
       );
-      return typeof out === 'string' ? out : JSON.stringify(out);
+      return typeof out.object === 'string' ? out.object : JSON.stringify(out.object);
     }
 
     const userContent = this.buildUserContent(message, options);

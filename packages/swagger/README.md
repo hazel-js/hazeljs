@@ -117,7 +117,7 @@ YAML is not built in; pipe JSON through your preferred YAML tool if needed.
 
 | Export                  | Role                                                                        |
 | ----------------------- | --------------------------------------------------------------------------- |
-| `SwaggerModule`         | Nest-style module; `setRootModule`, `configure`, `getOptions`               |
+| `SwaggerModule`         | Hazel module; `setRootModule`, `configure`, `getOptions`                    |
 | `SwaggerService`        | `generateAutoSpec(module, options?)`, `generateSpec(controllers, options?)` |
 | `createOpenApiDocument` | Stateless helper around `generateAutoSpec`                                  |
 | `@Swagger`              | Class-level OpenAPI `info` / default `tags`                                 |
@@ -127,7 +127,7 @@ Default components include `Error` and `ValidationError` schemas. Auto-generated
 
 ## Roadmap / not implemented
 
-The following are **not** in this package today (do not rely on READMEs or examples that mention Nest’s full `@nestjs/swagger` surface):
+The following are **not** in this package today:
 
 - `@ApiTags`, `@ApiResponse`, `@ApiProperty`, `@ApiParam`, `@ApiQuery`, `@ApiBody`, `@ApiHeader`, `@ApiBearerAuth`, `@ApiSecurity` as separate decorators
 - DTO / class reflection for schemas

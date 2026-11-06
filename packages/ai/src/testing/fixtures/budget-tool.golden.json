@@ -1,0 +1,33 @@
+{
+  "name": "ai-call-contract-budget-tool",
+  "version": "1.0.0",
+  "cases": [
+    {
+      "id": "simple-complete",
+      "input": "Say hello",
+      "expectedOutput": "hello",
+      "metadata": {
+        "expectedCalls": [
+          {
+            "messageRoles": ["user"],
+            "messageIncludes": "Say hello"
+          }
+        ]
+      }
+    },
+    {
+      "id": "tool-loop",
+      "input": "Use the echo tool",
+      "expectedOutput": "done",
+      "expectedToolCalls": ["echo"],
+      "metadata": {
+        "expectedCalls": [
+          {
+            "toolNames": ["echo"],
+            "messageIncludes": "Use the echo tool"
+          }
+        ]
+      }
+    }
+  ]
+}

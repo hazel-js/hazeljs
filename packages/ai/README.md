@@ -112,6 +112,103 @@ console.log(response.content);
 console.log('Tokens used:', response.usage);
 ```
 
+### Context-native calls (CAG / RAG / KAG / Memory)
+
+Wire a duck-typed `@hazeljs/context` `ContextService` so every `complete()` / ChatBuilder call can assemble multi-source context before the model runs:
+
+```typescript
+import { AIEnhancedService, AIModule } from '@hazeljs/ai';
+import { ContextService } from '@hazeljs/context';
+
+const contextService = new ContextService({
+  /* cag, rag, kag, memory ports */
+});
+AIModule.register({ contextService });
+
+const ai = new AIEnhancedService();
+const res = await ai.complete(
+  { messages: [{ role: 'user', content: 'Refund policy?' }] },
+  { contextRequest: { tenantId: 'acme' } }
+);
+// res.contextMeta.sourcesUsed — e.g. ['cag', 'rag']
+
+// Or per-call / fluent:
+await ai.chat('Refund policy?').context(contextService, { tenantId: 'acme' }).send();
+```
+
+HCEL: `.contextAssemble({ context, tenantId })` prepends assembled text for the next step.
+
+### Eval-native goldens (`runAiGolden`)
+
+Requires optional peer `@hazeljs/eval`. Each case gets a fresh `FakeModel`; assert outputs, tool trajectories, and `metadata.expectedCalls` against recorded provider requests:
+
+```typescript
+import { runAiGolden, runAiGoldenCi, AIEnhancedService } from '@hazeljs/ai';
+
+const result = await runAiGolden({
+  dataset: {
+    name: 'support',
+    version: '1',
+    cases: [
+      {
+        id: 'refund',
+        input: 'Refund policy?',
+        expectedOutput: '30 days',
+        metadata: { expectedCalls: [{ messageIncludes: 'Refund' }] },
+      },
+    ],
+  },
+  repliesForCase: () => ['Refunds within 30 days'],
+  caseRunner: async ({ input, fake }) => {
+    const ai = new AIEnhancedService();
+    ai.registerProvider(fake);
+    const res = await ai.complete(
+      { messages: [{ role: 'user', content: input }] },
+      { provider: 'openai' }
+    );
+    return { output: res.content };
+  },
+});
+
+// CI: sets process.exitCode on failure
+await runAiGoldenCi({ ...same, exitOnFail: true });
+```
+
+### Durable Gatekeeper HITL
+
+`ApprovalPort` can return `{ pending: { approvalId } }`. The tool loop suspends with `finishReason: 'approval-required'`, persists a checkpoint, and resumes after human approval:
+
+```typescript
+import {
+  AIEnhancedService,
+  GatekeeperApprovalPort,
+  InMemoryCallCheckpointStore,
+} from '@hazeljs/ai';
+
+const ai = new AIEnhancedService();
+ai.setApprovalPort(
+  new GatekeeperApprovalPort({
+    async evaluate({ approvalToken }) {
+      if (approvalToken) return { status: 'allowed' };
+      return { status: 'require_approval', approvalId: 'appr_1' };
+    },
+  })
+);
+ai.setCheckpointStore(new InMemoryCallCheckpointStore());
+// or createHumanTaskCallCheckpointStore(humanTasks) for Agent OS durability
+
+const suspended = await ai.complete(req, {
+  tools: ['refund'],
+  approve: ['refund'],
+});
+// suspended.checkpointId, suspended.approvalId
+
+const done = await ai.resumeAfterApproval({
+  checkpointId: suspended.checkpointId!,
+  approvalToken: 'from-human-task',
+});
+```
+
 ## HCEL (Hazel Composable Expression Language)
 
 HCEL is the fastest way to compose multi-step AI pipelines in TypeScript.  

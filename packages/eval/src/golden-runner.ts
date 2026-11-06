@@ -1,6 +1,11 @@
 import type { EvalRunOptions, EvalRunResult, CaseResult, GoldenDataset } from './types';
 import { trajectoryScore } from './agent-trajectory';
 import { precisionAtK } from './retrieval-metrics';
+import {
+  buildFaithfulnessJudgePrompt,
+  buildRelevanceJudgePrompt,
+  parseJudgeScore,
+} from './llm-judge';
 
 export type CaseRunner = (input: {
   id: string;
@@ -35,6 +40,7 @@ export async function runGoldenDataset(
             metadata: c.metadata,
           });
           let score = 0;
+          let scoredParts = 0;
           const details: Record<string, unknown> = {};
 
           if (c.expectedOutput !== undefined) {
@@ -42,29 +48,48 @@ export async function runGoldenDataset(
             const exp = c.expectedOutput;
             const passed =
               out.includes(exp) || out.trim().toLowerCase() === exp.trim().toLowerCase();
-            score = passed ? 1 : 0;
+            score += passed ? 1 : 0;
+            scoredParts += 1;
             details.outputMatch = passed;
           }
 
           if (c.expectedToolCalls && c.expectedToolCalls.length > 0) {
             const traj = trajectoryScore(c.expectedToolCalls, result.toolCalls ?? []);
-            score = score === 0 ? traj : (score + traj) / 2;
+            score += traj;
+            scoredParts += 1;
             details.trajectoryScore = traj;
           }
 
           if (c.expectedRetrievedIds && c.expectedRetrievedIds.length > 0) {
             const rel = new Set(c.expectedRetrievedIds);
             const p = precisionAtK(result.retrievedIds ?? [], rel, 5);
-            score = score === 0 ? p : (score + p) / 2;
+            score += p;
+            scoredParts += 1;
             details.precisionAt5 = p;
           }
 
-          if (
-            c.expectedOutput === undefined &&
-            (!c.expectedToolCalls || c.expectedToolCalls.length === 0) &&
-            (!c.expectedRetrievedIds || c.expectedRetrievedIds.length === 0)
-          ) {
+          const skipJudge = Boolean(c.metadata?.skipJudge);
+          if (options?.judge && !skipJudge) {
+            const promptKind = options.judgePrompt ?? 'relevance';
+            const judgePrompt =
+              promptKind === 'faithfulness'
+                ? buildFaithfulnessJudgePrompt(
+                    String(c.metadata?.judgeContext ?? ''),
+                    result.output ?? ''
+                  )
+                : buildRelevanceJudgePrompt(c.input, result.output ?? '');
+            const raw = await options.judge(judgePrompt);
+            const judged = await parseJudgeScore(raw);
+            score += judged.score;
+            scoredParts += 1;
+            details.judgeScore = judged.score;
+            details.judgeReasoning = judged.reasoning;
+          }
+
+          if (scoredParts === 0) {
             score = 1;
+          } else {
+            score = score / scoredParts;
           }
 
           const threshold = options?.minAverageScore ?? 0.7;

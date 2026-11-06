@@ -20,6 +20,7 @@ import type {
   AgentPipelineOperationConfig,
   AgentSupervisorOperationConfig,
   AgentGraphCompiledOperationConfig,
+  ContextAssembleOperationConfig,
 } from './hcel.types';
 import { HCELError } from './hcel.error';
 import type { MemoryItem } from '@hazeljs/memory';
@@ -92,6 +93,64 @@ export class PromptOperation implements HCELOperation<string, string> {
       return true;
     }
     // Otherwise, we need valid string input
+    return typeof input === 'string' && input.length > 0;
+  }
+}
+
+// ── Context Assemble Operation ─────────────────────────────────
+
+export class ContextAssembleOperation implements HCELOperation<string, string> {
+  id: string;
+  type = 'contextAssemble';
+  metadata: HCELOperationMetadata;
+
+  constructor(
+    _ai: HazelAI,
+    public config: ContextAssembleOperationConfig
+  ) {
+    this.id = `context-assemble-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    this.metadata = {
+      name: 'contextAssemble',
+      description: 'Assemble CAG/RAG/KAG/Memory into prompt context',
+      retriable: true,
+    };
+  }
+
+  async execute(input: string, context: HCELContext): Promise<string> {
+    const query = this.config.query || input;
+    const softFail = this.config.softFail !== false;
+    try {
+      const assembled = await this.config.context.assemble({
+        query,
+        tenantId: this.config.tenantId,
+        namespace: this.config.namespace,
+        agentId: this.config.agentId,
+        userId: this.config.userId ?? context.userId,
+        sessionId: this.config.sessionId ?? context.sessionId,
+      });
+      context.metadata = {
+        ...context.metadata,
+        contextSourcesUsed: assembled.sourcesUsed,
+        contextTokenEstimate: assembled.tokenEstimate,
+        contextPlan: assembled.plan,
+      };
+      if (!assembled.text?.trim()) {
+        return input;
+      }
+      const header = this.config.header ?? 'Assembled context:';
+      return `${header}\n${assembled.text}\n\n${input}`;
+    } catch (err) {
+      if (!softFail) throw err;
+      context.metadata = {
+        ...context.metadata,
+        contextAssembleSoftFailed: true,
+        contextAssembleError: err instanceof Error ? err.message : String(err),
+      };
+      return input;
+    }
+  }
+
+  validate(input: string): boolean {
     return typeof input === 'string' && input.length > 0;
   }
 }
@@ -651,6 +710,10 @@ export class HCELOperationFactory {
 
   createRAG(config: RAGOperationConfig): RAGOperation {
     return new RAGOperation(this.ai, config);
+  }
+
+  createContextAssemble(config: ContextAssembleOperationConfig): ContextAssembleOperation {
+    return new ContextAssembleOperation(this.ai, config);
   }
 
   createAgent(config: AgentOperationConfig): AgentOperation {

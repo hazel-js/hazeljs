@@ -3,6 +3,13 @@
  */
 import logger from '@hazeljs/core';
 import type { AICompletionRequest, AICompletionResponse } from '../ai-enhanced.types';
+import { AIProviderError } from '../errors/provider.error';
+import {
+  isAbortError,
+  isOutputInvalidError,
+  isRetryableProviderError,
+} from '../policy/call-policy';
+import { AIError, AIErrorCode } from '../errors/ai.error';
 
 export type AICompletionHandler = (request: AICompletionRequest) => Promise<AICompletionResponse>;
 
@@ -76,13 +83,13 @@ export class AICachingMiddleware implements AIMiddleware {
   }
 }
 
-/** Retries transient failures with exponential backoff. */
+/** Retries transient provider failures with exponential backoff. */
 export class AIRetryMiddleware implements AIMiddleware {
   readonly name = 'retry';
   constructor(
     private readonly maxAttempts: number = 3,
     private readonly baseDelayMs: number = 200,
-    private readonly isRetryable: (err: unknown) => boolean = () => true
+    private readonly isRetryable: (err: unknown) => boolean = isRetryableProviderError
   ) {}
 
   async handle(
@@ -95,10 +102,21 @@ export class AIRetryMiddleware implements AIMiddleware {
         return await next(request);
       } catch (e) {
         lastErr = e;
-        if (attempt === this.maxAttempts || !this.isRetryable(e)) {
-          throw e;
+        if (
+          attempt === this.maxAttempts ||
+          isAbortError(e) ||
+          isOutputInvalidError(e) ||
+          !this.isRetryable(e)
+        ) {
+          throw e instanceof AIProviderError || e instanceof AIError
+            ? e
+            : AIProviderError.fromUnknown(e);
         }
-        const delay = this.baseDelayMs * Math.pow(2, attempt - 1);
+        const providerErr = AIProviderError.fromUnknown(e);
+        const delay = Math.max(
+          this.baseDelayMs * Math.pow(2, attempt - 1),
+          providerErr.retryAfterMs ?? 0
+        );
         await new Promise((r) => setTimeout(r, delay));
       }
     }
@@ -109,7 +127,13 @@ export class AIRetryMiddleware implements AIMiddleware {
 /** On failure of the primary handler, try a secondary completion (e.g. cheaper model). */
 export class AIFallbackMiddleware implements AIMiddleware {
   readonly name = 'fallback';
-  constructor(private readonly fallback: AICompletionHandler) {}
+  constructor(
+    private readonly fallback: AICompletionHandler,
+    private readonly fallbackIf: (error: unknown) => boolean = (e) =>
+      !isAbortError(e) &&
+      !isOutputInvalidError(e) &&
+      !(e instanceof AIError && e.code === AIErrorCode.BUDGET_EXCEEDED)
+  ) {}
 
   async handle(
     request: AICompletionRequest,
@@ -117,8 +141,28 @@ export class AIFallbackMiddleware implements AIMiddleware {
   ): Promise<AICompletionResponse> {
     try {
       return await next(request);
-    } catch {
-      return this.fallback(request);
+    } catch (error) {
+      if (!this.fallbackIf(error)) {
+        throw error;
+      }
+      try {
+        return await this.fallback(request);
+      } catch (fallbackError) {
+        const cause = error instanceof Error ? error : new Error(String(error));
+        if (fallbackError instanceof AIError) {
+          throw new AIError(fallbackError.message, fallbackError.code, cause, {
+            text: fallbackError.text,
+            usage: fallbackError.usage,
+            cost: fallbackError.cost,
+            limit: fallbackError.limit,
+            attempts: fallbackError.attempts,
+          });
+        }
+        throw AIError.completionFailed(
+          fallbackError instanceof Error ? fallbackError.message : String(fallbackError),
+          cause
+        );
+      }
     }
   }
 }

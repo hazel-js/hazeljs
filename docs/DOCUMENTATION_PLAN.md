@@ -390,13 +390,13 @@ Documentation structure - practical, example-driven guides.
 
 - [x] Common questions
 - [x] Troubleshooting
-- [x] Migration from NestJS
+- [x] Migration guides
 - [x] Performance tips
 
 ### 12. Migration
 
 - [x] From Express
-- [x] From NestJS
+- [x] From other TypeScript backends
 - [x] From Fastify (docs site: migration-fastify guide)
 
 ## Documentation Style Guide

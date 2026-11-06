@@ -42,3 +42,30 @@ export {
   getDefaultTtlForCategory,
   type MemoryServiceConfig,
 } from './config/memory.config';
+
+/** Opt-in governed learning memory (does not change MemoryService / MemoryItem). */
+export {
+  InMemoryGovernedMemoryStore,
+  newGovernedRecord,
+  rankMemories,
+  GovernedMemoryService,
+  MemoryRetrievalCache,
+  createGovernedMemoryContributor,
+} from './learning';
+export type {
+  MemoryLifecycleStatus,
+  GovernedMemoryType,
+  MemorySensitivity,
+  MemoryProvenance,
+  GovernedMemoryRecord,
+  CaptureMemoryInput,
+  MemoryAuthContext,
+  RetrieveMemoryQuery,
+  MemoryHook,
+  GovernedMemoryHooks,
+  RetrievalCacheStore,
+  GovernedMemoryStore,
+  GovernedMemoryServiceOptions,
+  AuditEvent,
+  GovernedMemoryContextContributor,
+} from './learning';

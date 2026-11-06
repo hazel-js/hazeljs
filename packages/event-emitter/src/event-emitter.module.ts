@@ -18,7 +18,7 @@ export interface EventEmitterModuleConfig extends EventEmitterModuleOptions {
 
 /**
  * Event emitter module for HazelJS
- * Provides event-driven architecture with decorators, similar to @nestjs/event-emitter
+ * Provides event-driven architecture with decorators on top of eventemitter2
  *
  * @example
  * ```typescript

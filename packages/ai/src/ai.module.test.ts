@@ -133,6 +133,7 @@ describe('AIModule', () => {
 
   describe('getOptions', () => {
     it('should return empty options initially', () => {
+      AIModule.register({});
       const options = AIModule.getOptions();
       expect(options).toEqual({});
     });

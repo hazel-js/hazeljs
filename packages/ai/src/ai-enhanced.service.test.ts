@@ -353,17 +353,22 @@ describe('AIEnhancedService', () => {
 
   describe('complete() retry logic', () => {
     it('retries on transient failure and succeeds', async () => {
+      const { AIProviderError } = await import('./errors/provider.error');
       service.setRetryConfig(2, 0);
 
       const mock = makeMockProvider('openai');
-      mock.complete.mockRejectedValueOnce(new Error('transient error')).mockResolvedValueOnce({
-        id: '2',
-        content: 'success after retry',
-        role: 'assistant',
-        model: 'test',
-        usage: { promptTokens: 5, completionTokens: 5, totalTokens: 10 },
-        finishReason: 'stop',
-      });
+      mock.complete
+        .mockRejectedValueOnce(
+          new AIProviderError('transient error', { statusCode: 503, retryable: true })
+        )
+        .mockResolvedValueOnce({
+          id: '2',
+          content: 'success after retry',
+          role: 'assistant',
+          model: 'test',
+          usage: { promptTokens: 5, completionTokens: 5, totalTokens: 10 },
+          finishReason: 'stop',
+        });
       service.registerProvider(mock);
       service.setDefaultProvider('openai');
 
@@ -373,14 +378,17 @@ describe('AIEnhancedService', () => {
     });
 
     it('throws after all retries exhausted', async () => {
+      const { AIProviderError } = await import('./errors/provider.error');
       service.setRetryConfig(2, 0);
 
       const mock = makeMockProvider('openai');
-      mock.complete.mockRejectedValue(new Error('always fails'));
+      mock.complete.mockRejectedValue(
+        new AIProviderError('always fails', { statusCode: 503, retryable: true })
+      );
       service.registerProvider(mock);
       service.setDefaultProvider('openai');
 
-      await expect(service.complete(REQUEST)).rejects.toThrow('always fails');
+      await expect(service.complete(REQUEST)).rejects.toThrow(/always fails|Every attempt failed/);
       expect(mock.complete).toHaveBeenCalledTimes(2);
     });
 
@@ -392,7 +400,9 @@ describe('AIEnhancedService', () => {
       service.registerProvider(mock);
       service.setDefaultProvider('openai');
 
-      await expect(service.complete(REQUEST)).rejects.toThrow('Unknown error');
+      await expect(service.complete(REQUEST)).rejects.toThrow(
+        /Provider request failed|string error/
+      );
     });
   });
 
