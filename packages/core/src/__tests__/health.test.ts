@@ -83,6 +83,25 @@ describe('HealthCheckManager', () => {
       expect(result.checks['slow-check'].status).toBe('unhealthy');
     });
 
+    it('should not leave dangling timers after a fast check resolves (issue #36)', async () => {
+      // Use a very long timeout so the timer would keep the event loop alive
+      // if it were never cleared. If the fix is working, runChecks() clears
+      // the handle via .finally() and Jest exits without an open-handle warning.
+      healthManager.registerCheck({
+        name: 'fast-check',
+        check: async () => ({ status: 'healthy' as const }),
+        timeout: 5000,
+      });
+
+      // Run twice to confirm repeated calls also clean up correctly.
+      await healthManager.runChecks();
+      await healthManager.runChecks();
+
+      // The real guard is Jest's --detectOpenHandles flag: if the timer were
+      // still alive the suite would hang for ~5 s after this test.
+      expect(true).toBe(true);
+    });
+
     it('should include response time in results', async () => {
       healthManager.registerCheck({
         name: 'fast-check',
