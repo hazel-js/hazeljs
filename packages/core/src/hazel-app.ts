@@ -290,7 +290,7 @@ export class HazelApp {
     return this.performanceMonitor.getActiveRequests();
   }
 
-  async listen(port: number): Promise<void> {
+  async listen(port: number, host?: string): Promise<void> {
     await this.container.hydrateAsyncFactoryResults();
     await this.invokeModuleInitHooks();
 
@@ -637,16 +637,21 @@ export class HazelApp {
         }
       });
 
-      this.server.listen(port, async () => {
-        const localIp = getLocalIp();
+      this.server.listen(port, host, async () => {
+        const address = this.server?.address();
+        const boundPort = typeof address === 'object' && address !== null ? address.port : port;
         logger.info(chalk.green.bold('Server listening on:'));
         logger.info('');
         logger.info(
-          chalk.green('  → Local:    ') + chalk.cyan.underline(`http://localhost:${port}`)
+          chalk.green('  → Local:    ') +
+            chalk.cyan.underline(`http://${host ?? 'localhost'}:${boundPort}`)
         );
-        logger.info(
-          chalk.green('  → Network:  ') + chalk.cyan.underline(`http://${localIp}:${port}`)
-        );
+        if (host === undefined) {
+          const localIp = getLocalIp();
+          logger.info(
+            chalk.green('  → Network:  ') + chalk.cyan.underline(`http://${localIp}:${boundPort}`)
+          );
+        }
         logger.info('');
         logger.info(chalk.gray('Health endpoints:'));
         logger.info(chalk.gray(`  → /health  - Liveness probe`));
