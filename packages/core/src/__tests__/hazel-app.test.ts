@@ -222,6 +222,31 @@ describe('HazelApp', () => {
       // Clean up
       await app.close();
     }, 10000);
+
+    it('should bind to the given host', async () => {
+      await app.listen(0, '127.0.0.1');
+
+      const address = app.getServer()?.address();
+      expect(address).toMatchObject({ address: '127.0.0.1', family: 'IPv4' });
+
+      await app.close();
+    }, 10000);
+
+    it('should log the bound host and actual port, and skip the Network URL', async () => {
+      const logger = jest.requireMock('../logger') as { info: jest.Mock };
+      logger.info.mockClear();
+
+      await app.listen(0, '127.0.0.1');
+
+      const address = app.getServer()?.address();
+      const port = typeof address === 'object' && address !== null ? address.port : -1;
+      const lines = logger.info.mock.calls.map((c) => String(c[0]));
+      expect(lines.some((l) => l.includes(`http://127.0.0.1:${port}`))).toBe(true);
+      expect(lines.some((l) => l.includes('Network'))).toBe(false);
+      expect(lines.some((l) => l.includes(':0'))).toBe(false);
+
+      await app.close();
+    }, 10000);
   });
 
   describe('close', () => {
