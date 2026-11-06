@@ -51,16 +51,18 @@ export class HealthCheckManager {
       try {
         const startTime = Date.now();
 
-        // Run check with timeout
+        // Run check with timeout — timer is always cleared so it doesn't
+        // keep the event loop alive after the race settles.
+        let timeoutId: NodeJS.Timeout | undefined;
         const result = await Promise.race([
           check.check(),
-          new Promise<HealthCheckResult>((_, reject) =>
-            setTimeout(
+          new Promise<never>((_, reject) => {
+            timeoutId = setTimeout(
               () => reject(new Error(`Health check ${name} timeout`)),
               check.timeout || 5000
-            )
-          ),
-        ]);
+            );
+          }),
+        ]).finally(() => clearTimeout(timeoutId));
 
         result.responseTime = Date.now() - startTime;
         results[name] = result;
