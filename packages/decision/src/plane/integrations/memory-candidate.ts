@@ -6,7 +6,7 @@
 import { defineDecision, type DecisionDefinition } from '../definition';
 import type { DecisionPlane } from '../service';
 import type { PlaneExecutionContext, PlaneResult } from '../result';
-import { createRulesPlaneProvider } from '../providers';
+import { createRulesPlaneProvider, type PlaneProvider } from '../providers';
 
 export const MEMORY_CANDIDATE_ANSWERS = ['persist', 'quarantine', 'discard', 'review'] as const;
 export type MemoryCandidateAnswer = (typeof MEMORY_CANDIDATE_ANSWERS)[number];
@@ -45,13 +45,13 @@ export function createMemoryCandidateDefinition(): DecisionDefinition<
   });
 }
 
-export function createMemoryCandidateRulesProvider() {
+export function createMemoryCandidateRulesProvider(): PlaneProvider {
   return createRulesPlaneProvider<MemoryCandidateAnswer>({
     name: 'memory-candidate-rules',
     rules: [
       {
         answer: 'quarantine',
-        when: (ctx) => {
+        when: (ctx: unknown): boolean => {
           const c = ctx as MemoryCandidateContext;
           return !!(
             c.containsSecret ||
@@ -64,7 +64,7 @@ export function createMemoryCandidateRulesProvider() {
       },
       {
         answer: 'review',
-        when: (ctx) => {
+        when: (ctx: unknown): boolean => {
           const c = ctx as MemoryCandidateContext;
           return !!c.isProcedure;
         },
@@ -72,7 +72,7 @@ export function createMemoryCandidateRulesProvider() {
       },
       {
         answer: 'persist',
-        when: (ctx) => {
+        when: (ctx: unknown): boolean => {
           const c = ctx as MemoryCandidateContext;
           return (
             (c.isPreference || c.sourceKind === 'user') &&
@@ -84,7 +84,7 @@ export function createMemoryCandidateRulesProvider() {
       },
       {
         answer: 'discard',
-        when: (ctx) => {
+        when: (ctx: unknown): boolean => {
           const c = ctx as MemoryCandidateContext;
           return c.sourceKind === 'tool' && (c.sourceTrust ?? 0) < 0.3;
         },

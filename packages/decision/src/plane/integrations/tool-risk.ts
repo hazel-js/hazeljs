@@ -7,7 +7,7 @@
 import { defineDecision, type DecisionDefinition } from '../definition';
 import type { DecisionPlane } from '../service';
 import type { PlaneExecutionContext, PlaneResult } from '../result';
-import { createRulesPlaneProvider } from '../providers';
+import { createRulesPlaneProvider, type PlaneProvider } from '../providers';
 
 export const TOOL_RISK_ANSWERS = ['read', 'write', 'destructive', 'abstain'] as const;
 export type ToolRiskAnswer = (typeof TOOL_RISK_ANSWERS)[number];
@@ -44,13 +44,13 @@ export function createToolRiskDefinition(): DecisionDefinition<typeof TOOL_RISK_
   });
 }
 
-export function createToolRiskRulesProvider() {
+export function createToolRiskRulesProvider(): PlaneProvider {
   return createRulesPlaneProvider<ToolRiskAnswer>({
     name: 'tool-risk-rules',
     rules: [
       {
         answer: 'destructive',
-        when: (ctx) => {
+        when: (ctx: unknown): boolean => {
           const c = ctx as ToolRiskContext;
           return !!(
             c.deletes ||
@@ -63,7 +63,7 @@ export function createToolRiskRulesProvider() {
       },
       {
         answer: 'write',
-        when: (ctx) => {
+        when: (ctx: unknown): boolean => {
           const c = ctx as ToolRiskContext;
           return !!(c.mutates || /create|update|write|set|post/i.test(c.toolName));
         },
@@ -71,7 +71,7 @@ export function createToolRiskRulesProvider() {
       },
       {
         answer: 'read',
-        when: (ctx) => {
+        when: (ctx: unknown): boolean => {
           const c = ctx as ToolRiskContext;
           return !c.mutates && !c.financial && !c.deletes;
         },

@@ -31,7 +31,13 @@ export function createGovernedMemoryContributor(
 ): GovernedMemoryContextContributor {
   return {
     kind: 'memory',
-    async contribute(request) {
+    async contribute(request: {
+      query: string;
+      tenantId: string;
+      userId?: string;
+      sessionId?: string;
+      metadata?: Record<string, unknown>;
+    }): Promise<{ text: string; evidence?: unknown[] }> {
       const auth = options.resolveAuth(request);
       // Never fall back from actor to tenant.
       if (!request.userId && !auth.actorId) {

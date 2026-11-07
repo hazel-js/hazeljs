@@ -6,7 +6,7 @@
 import { defineDecision, type DecisionDefinition } from '../definition';
 import type { DecisionPlane } from '../service';
 import type { PlaneExecutionContext, PlaneResult } from '../result';
-import { createRulesPlaneProvider } from '../providers';
+import { createRulesPlaneProvider, type PlaneProvider } from '../providers';
 
 export const MODEL_ROUTE_ANSWERS = ['fast', 'balanced', 'advanced', 'abstain'] as const;
 export type ModelRouteAnswer = (typeof MODEL_ROUTE_ANSWERS)[number];
@@ -60,13 +60,13 @@ export function createModelRouteDefinition(options?: {
   });
 }
 
-export function createModelRouteRulesProvider() {
+export function createModelRouteRulesProvider(): PlaneProvider {
   return createRulesPlaneProvider<ModelRouteAnswer>({
     name: 'model-route-rules',
     rules: [
       {
         answer: 'abstain',
-        when: (ctx) => {
+        when: (ctx: unknown): boolean => {
           const c = ctx as ModelRouteContext;
           return !!c.agentDisabled;
         },
@@ -74,7 +74,7 @@ export function createModelRouteRulesProvider() {
       },
       {
         answer: 'abstain',
-        when: (ctx) => {
+        when: (ctx: unknown): boolean => {
           const c = ctx as ModelRouteContext;
           if (c.spendLimitUsd === undefined || c.spendUsdSoFar === undefined) return false;
           return c.spendUsdSoFar >= c.spendLimitUsd;
@@ -83,7 +83,7 @@ export function createModelRouteRulesProvider() {
       },
       {
         answer: 'advanced',
-        when: (ctx) => {
+        when: (ctx: unknown): boolean => {
           const c = ctx as ModelRouteContext;
           return c.complexity === 'complex' || c.complexity === 'consequential';
         },
@@ -91,7 +91,7 @@ export function createModelRouteRulesProvider() {
       },
       {
         answer: 'abstain',
-        when: (ctx) => {
+        when: (ctx: unknown): boolean => {
           const c = ctx as ModelRouteContext;
           return c.complexity === 'ambiguous';
         },
@@ -99,7 +99,7 @@ export function createModelRouteRulesProvider() {
       },
       {
         answer: 'balanced',
-        when: (ctx) => {
+        when: (ctx: unknown): boolean => {
           const c = ctx as ModelRouteContext;
           return (c.toolCount ?? 0) >= 2;
         },
@@ -107,7 +107,7 @@ export function createModelRouteRulesProvider() {
       },
       {
         answer: 'fast',
-        when: (ctx) => {
+        when: (ctx: unknown): boolean => {
           const c = ctx as ModelRouteContext;
           return c.complexity === 'routine' || (!c.complexity && (c.toolCount ?? 0) < 2);
         },

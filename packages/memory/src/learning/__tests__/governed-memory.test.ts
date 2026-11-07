@@ -235,8 +235,208 @@ describe('GovernedMemoryService', () => {
     });
     const first = await svc.retrieve({ auth: authA, subjectId: 'user-1' });
     expect(first).toHaveLength(1);
+    // Cache hit path
+    const cached = await svc.retrieve({ auth: authA, subjectId: 'user-1' });
+    expect(cached).toHaveLength(1);
     await svc.forget(cap.id, authA, first[0].version);
     const second = await svc.retrieve({ auth: authA, subjectId: 'user-1' });
     expect(second).toHaveLength(0);
+  });
+
+  it('covers retrieve tokenBudget, hooks, quarantine, and store filters', async () => {
+    const store = new InMemoryGovernedMemoryStore();
+    const svc = new GovernedMemoryService({
+      store,
+      hooks: {
+        failClosed: false,
+        capture: [
+          async () => {
+            throw new Error('ignored when failClosed=false');
+          },
+          async ({ record }) => ({
+            action: 'transform',
+            record: { ...record!, content: `${record!.content} (scrubbed)` },
+          }),
+        ],
+        persist: [async () => ({ action: 'reject', reason: 'persist blocked' })],
+        retrieve: [async () => ({ action: 'reject', reason: 'retrieve blocked' })],
+      },
+    });
+
+    const rejected = await svc.capture({
+      tenantId: 't1',
+      subjectId: 'user-1',
+      scope: 'customer',
+      type: 'preference',
+      content: 'raw',
+      provenance: { sourceKind: 'user', sourceId: 'src-1' },
+      sourceTrust: 0.5,
+      factConfidence: 0.8,
+      status: 'candidate',
+    });
+    expect(rejected.status).toBe('rejected');
+    expect(rejected.content).toBeNull();
+
+    // Same sourceId second observation (confidence flat path)
+    const svc2 = new GovernedMemoryService({ store });
+    await svc2.capture({
+      tenantId: 't1',
+      subjectId: 'user-1',
+      scope: 'customer',
+      type: 'preference',
+      content: 'one',
+      provenance: { sourceKind: 'user', sourceId: 'dup-src' },
+      sourceTrust: 0.5,
+      factConfidence: 0.9,
+      status: 'accepted',
+    });
+    await svc2.capture({
+      tenantId: 't1',
+      subjectId: 'user-1',
+      scope: 'customer',
+      type: 'preference',
+      content: 'two email prefs',
+      provenance: { sourceKind: 'user', sourceId: 'dup-src' },
+      sourceTrust: 0.5,
+      factConfidence: 0.9,
+      status: 'accepted',
+    });
+
+    const bySource = await store.listBySourceId('t1', 'dup-src');
+    expect(bySource.length).toBeGreaterThanOrEqual(2);
+
+    // Expired + superseded + type/scope/text filters
+    const expired = await svc2.capture({
+      tenantId: 't1',
+      subjectId: 'user-1',
+      scope: 'customer',
+      type: 'fact',
+      content: 'stale',
+      provenance: { sourceKind: 'user' },
+      sourceTrust: 0.5,
+      status: 'accepted',
+      expiresAt: new Date(Date.now() - 1000),
+    });
+    void expired;
+    const scoped = await svc2.retrieve({
+      auth: { ...authA, allowedScopes: ['*'] },
+      subjectId: 'user-1',
+      scope: 'customer',
+      type: 'preference',
+      text: 'email',
+      limit: 5,
+      tokenBudget: 8,
+    });
+    expect(scoped.every((r) => r.type === 'preference')).toBe(true);
+    expect(scoped.length).toBeLessThanOrEqual(2);
+
+    // Quarantine + accept procedure denied + forgotten edges
+    const cand = await svc2.capture({
+      tenantId: 't1',
+      subjectId: 'user-1',
+      scope: 'customer',
+      type: 'fact',
+      content: 'maybe',
+      provenance: { sourceKind: 'user' },
+      sourceTrust: 0.4,
+      status: 'candidate',
+    });
+    const q = await svc2.quarantine(cand.id, authA, cand.version);
+    expect(q?.status).toBe('quarantined');
+    expect(await svc2.quarantine('missing', authA, 1)).toBeUndefined();
+    expect(await svc2.forget('missing', authA, 1)).toBeUndefined();
+    expect(await svc2.correct('missing', authA, 1, 'x')).toBeUndefined();
+
+    const proc = await svc2.capture({
+      tenantId: 't1',
+      subjectId: 'user-1',
+      scope: 'customer',
+      type: 'procedure',
+      content: 'do X',
+      provenance: { sourceKind: 'user' },
+      sourceTrust: 0.9,
+      status: 'candidate',
+    });
+    expect(await svc2.accept(proc.id, authA, proc.version)).toBeUndefined();
+
+    const forgotten = await svc2.capture({
+      tenantId: 't1',
+      subjectId: 'user-1',
+      scope: 'customer',
+      type: 'preference',
+      content: 'gone',
+      provenance: { sourceKind: 'user' },
+      sourceTrust: 0.5,
+      status: 'accepted',
+    });
+    const fg = await svc2.forget(forgotten.id, authA, forgotten.version);
+    expect(fg?.status).toBe('forgotten');
+    expect(await svc2.accept(forgotten.id, authA, fg!.version)).toBeUndefined();
+    expect(await svc2.correct(forgotten.id, authA, fg!.version, 'nope')).toBeUndefined();
+    expect(await svc2.promoteScope(forgotten.id, authA, fg!.version, 'org')).toBeUndefined();
+
+    // Retrieve hook reject → empty
+    const blocked = await svc.retrieve({ auth: authA, subjectId: 'user-1' });
+    expect(blocked).toHaveLength(0);
+
+    // Contributor tokenBudget + empty content rows
+    const contributor = createGovernedMemoryContributor(svc2, {
+      resolveAuth: (req) => ({
+        tenantId: req.tenantId,
+        actorId: req.userId ?? 'user-1',
+        allowedScopes: ['customer', 'org'],
+      }),
+    });
+    const contrib = await contributor.contribute({
+      query: 'email',
+      tenantId: 't1',
+      userId: 'user-1',
+      metadata: { tokenBudget: 4 },
+    });
+    expect(typeof contrib.text).toBe('string');
+
+    // Cache helpers: corrupt JSON, expiry, delete
+    const cache = new MemoryRetrievalCache();
+    await cache.set('bad', '{not-json', 60_000);
+    const svcCache = new GovernedMemoryService({
+      store,
+      retrievalCache: cache,
+      retrievalCacheTtlMs: 60_000,
+    });
+    // Force key collision by retrieving then poisoning cache entry then retrieving again
+    await svcCache.capture({
+      tenantId: 't1',
+      subjectId: 'user-1',
+      scope: 'customer',
+      type: 'preference',
+      content: 'cache-me',
+      provenance: { sourceKind: 'user' },
+      sourceTrust: 0.9,
+      status: 'accepted',
+    });
+    await svcCache.retrieve({ auth: authA, subjectId: 'user-1', text: 'cache-me' });
+    await cache.set('t1|user-1|customer,org|user-1|||cache-me|v', '{bad', 60_000);
+    const afterBad = await svcCache.retrieve({
+      auth: authA,
+      subjectId: 'user-1',
+      text: 'cache-me',
+    });
+    expect(afterBad.length).toBeGreaterThanOrEqual(1);
+
+    await cache.set('expire', '[]', 1);
+    await new Promise((r) => setTimeout(r, 5));
+    expect(await cache.get('expire')).toBeNull();
+    expect(await cache.get('missing')).toBeNull();
+    await cache.set('del-me', '[]', 60_000);
+    await cache.delete('del-me');
+    expect(await cache.get('del-me')).toBeNull();
+
+    await store.touch('missing-id');
+    const deniedScope = await store.getById((await store.listBySourceId('t1', 'dup-src'))[0].id, {
+      tenantId: 't1',
+      actorId: 'x',
+      allowedScopes: ['other'],
+    });
+    expect(deniedScope).toBeUndefined();
   });
 });
