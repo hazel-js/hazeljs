@@ -99,6 +99,11 @@ export interface HCELBuilder<TInput = unknown, TOutput = unknown> {
   // Core operations
   prompt(template: string, options?: ChatOptions): HCELBuilder<string, TOutput>;
   rag(source: string, options?: RAGOptions): HCELBuilder<string[], TOutput>;
+  /**
+   * Assemble CAG/RAG/KAG/Memory via a duck-typed ContextAssemblerPort and
+   * prepend the result to the chain input for the next operation.
+   */
+  contextAssemble(config: ContextAssembleOperationConfig): HCELBuilder<string, TOutput>;
   agent(name: string, options?: Record<string, unknown>): HCELBuilder<string, TOutput>;
 
   /**
@@ -237,6 +242,35 @@ export interface RAGOperationConfig extends RAGOptions {
   source: string;
   query?: string;
   [key: string]: unknown; // Add index signature
+}
+
+/** Duck-typed `@hazeljs/context` assemble step for HCEL chains. */
+export interface ContextAssembleOperationConfig {
+  context: {
+    assemble(request: {
+      query: string;
+      tenantId: string;
+      namespace?: string;
+      agentId?: string;
+      userId?: string;
+      sessionId?: string;
+    }): Promise<{
+      text: string;
+      sourcesUsed?: string[];
+      tokenEstimate?: number;
+      plan?: { sources?: string[]; rationale?: string[] };
+    }>;
+  };
+  tenantId: string;
+  query?: string;
+  namespace?: string;
+  agentId?: string;
+  userId?: string;
+  sessionId?: string;
+  /** Soft-fail on assemble error (default true) — return input unchanged. */
+  softFail?: boolean;
+  header?: string;
+  [key: string]: unknown;
 }
 
 export interface AgentOperationConfig {

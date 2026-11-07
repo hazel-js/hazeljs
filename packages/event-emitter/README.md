@@ -2,7 +2,7 @@
 
 **Event Emitter Module for HazelJS**
 
-Event-driven architecture with decorators, similar to `@nestjs/event-emitter`. Built on [eventemitter2](https://github.com/EventEmitter2/EventEmitter2) with support for wildcards, namespaces, and async listeners.
+Event-driven architecture with decorators. Built on [eventemitter2](https://github.com/EventEmitter2/EventEmitter2) with support for wildcards, namespaces, and async listeners.
 
 [![npm version](https://img.shields.io/npm/v/@hazeljs/event-emitter.svg)](https://www.npmjs.com/package/@hazeljs/event-emitter)
 [![npm downloads](https://img.shields.io/npm/dm/@hazeljs/event-emitter)](https://www.npmjs.com/package/@hazeljs/event-emitter)

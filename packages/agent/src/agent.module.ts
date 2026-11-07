@@ -126,13 +126,39 @@ export class AgentService {
       return;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const aiService = (global as any).__HAZELJS_AI_ENHANCED_SERVICE__;
+    let aiService:
+      | { complete: (request: unknown, config?: unknown) => Promise<unknown> }
+      | undefined;
+    try {
+      // Prefer DI container over process-global singleton
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { Container } = require('@hazeljs/core') as {
+        Container: {
+          getInstance: () => {
+            resolve: (token: unknown) => unknown;
+            has?: (token: unknown) => boolean;
+          };
+        };
+      };
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { AIEnhancedService } = require('@hazeljs/ai') as {
+        AIEnhancedService: new (...args: unknown[]) => {
+          complete: (request: unknown, config?: unknown) => Promise<unknown>;
+        };
+      };
+      const container = Container.getInstance();
+      if (!container.has || container.has(AIEnhancedService)) {
+        aiService = container.resolve(AIEnhancedService) as {
+          complete: (request: unknown, config?: unknown) => Promise<unknown>;
+        };
+      }
+    } catch {
+      aiService = undefined;
+    }
 
     if (aiService && typeof aiService.complete === 'function') {
       const llmProvider = AgentService.createLLMProviderFromAI(aiService);
       this.runtime.setLLMProvider(llmProvider);
-      // eslint-disable-next-line no-console
       logger.info('AgentService: LLM provider configured from AIEnhancedService');
     } else if (retryCount < 10) {
       setTimeout(() => this.resolveLLMProvider(retryCount + 1), 50).unref();

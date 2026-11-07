@@ -555,7 +555,7 @@ export class HazelApp {
             }
           }
 
-          // Global middleware (Nest-style) — after prefix strip so paths match route patterns
+          // Global middleware — after prefix strip so paths match route patterns
           const reqForMw = req as unknown as Request;
           const resForMw = new HttpResponse(res);
           await this.globalMiddlewareManager.execute(reqForMw, resForMw);

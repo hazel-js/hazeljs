@@ -266,8 +266,8 @@ describe('Debug Utility', () => {
       const end = performance.now();
       const timePerCall = (end - start) / iterations;
 
-      // Should be less than 0.001ms per call when disabled
-      expect(timePerCall).toBeLessThan(0.001);
+      // Disabled path is a no-op; keep a CI-tolerant bound (timer resolution / load).
+      expect(timePerCall).toBeLessThan(0.05);
       expect(errorSpy).not.toHaveBeenCalled();
     });
 

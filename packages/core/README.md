@@ -17,7 +17,7 @@ The HTTP / DI layer Agent OS sits on. Combine with `@hazeljs/agent`, Skillgate, 
 **Perfect for:**
 
 - Teams putting agents in the same TypeScript backend as APIs
-- Replacing NestJS / Express with one stack
+- Replacing Express-only or DIY DI stacks with one framework
 - TypeScript-first DI without a heavy HTTP adapter
 
 ## Features

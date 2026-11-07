@@ -106,7 +106,7 @@ export GOOGLE_API_KEY=your-gemini-key
 - **Metrics**: Track usage and performance
 - **Multi-provider**: Switch between AI providers
 - **Type Safety**: Full TypeScript support
-- **Dependency Injection**: NestJS integration
+- **Dependency Injection**: HazelJS `Container` / module providers
 
 ## Troubleshooting
 

@@ -8,9 +8,11 @@ import {
   AIEmbeddingResponse,
   AIModelConfig,
   AIJsonSchema,
+  AIMessage,
+  AIToolCall,
 } from './ai-enhanced.types';
 import { ChatBuilder } from './chat-builder';
-import { Service } from '@hazeljs/core';
+import { Container, Service } from '@hazeljs/core';
 import { OpenAIProvider } from './providers/openai.provider';
 import { AnthropicProvider } from './providers/anthropic.provider';
 import { GeminiProvider } from './providers/gemini.provider';
@@ -26,12 +28,44 @@ import { CacheService } from '@hazeljs/cache';
 import logger from '@hazeljs/core';
 import { debug } from './utils/debug';
 import { AIError, AIErrorCode } from './errors/ai.error';
+import { AIProviderError } from './errors/provider.error';
 import { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 import { messageContentToText } from './utils/message-content';
 import type { AIMetrics } from './platform/hazel-ai.types';
 import { AITaskConfig, AITaskResult } from './ai.types';
 import { AITaskExecutor } from './ai-task.executor';
+import {
+  getAIModuleOptions,
+  hasNamedModels,
+  listModelNames,
+  resolveNamedModel,
+  validateNamedModels,
+} from './models/module-options';
+import type {
+  AICallBudget,
+  AIModelPricing,
+  AIUsageListener,
+  ResolvedNamedModel,
+} from './models/model-registry.types';
+import { estimateCost, executeWithCallPolicy, isOutputInvalidError } from './policy/call-policy';
+import { AgentToolRegistry } from './tools/tool-registry';
+import type { AgentToolCaller, AgentToolContext } from './tools/agent-tool.decorator';
+import type { ApprovalPort } from './approval/approval-port';
+import {
+  InMemoryCallCheckpointStore,
+  type CallCheckpoint,
+  type CallCheckpointStore,
+  type CheckpointCallConfig,
+} from './approval/call-checkpoint-store';
+import {
+  injectAssembledContext,
+  lastUserQuery,
+  type CallContextMeta,
+  type CallContextRequest,
+  type ContextAssemblerPort,
+} from './context/context-port';
+import { randomUUID } from 'crypto';
 
 const dbg = debug('ai');
 
@@ -43,6 +77,44 @@ export interface AIEnhancedServiceHooks {
     usage?: import('./ai-enhanced.types').AICompletionResponse['usage'];
     error: boolean;
   }) => void;
+}
+
+export interface CompleteCallConfig {
+  provider?: AIProvider;
+  /** Named model from AIModule.register({ models }) */
+  modelName?: string;
+  userId?: string;
+  cacheKey?: string;
+  cacheTTL?: number;
+  label?: string;
+  timeoutMs?: number;
+  fallback?: string[] | false;
+  fallbackIf?: (error: unknown) => boolean;
+  abortSignal?: AbortSignal;
+  budget?: AICallBudget;
+  tools?: string[];
+  approve?: string[];
+  maxSteps?: number;
+  caller?: AgentToolCaller;
+  onUsage?: AIUsageListener;
+  /** Progress reporter used during streamed tool loops. */
+  onToolProgress?: AgentToolContext['reportProgress'];
+  /** Duck-typed ContextService; falls back to AIModule.register({ contextService }). */
+  context?: ContextAssemblerPort;
+  /** When set (with a context port), assemble CAG/RAG/KAG/Memory into the prompt. */
+  contextRequest?: CallContextRequest;
+  /** Token from a prior Gatekeeper / approval resolve, used on resume. */
+  approvalToken?: string;
+  /** Resume a suspended tool-loop checkpoint. */
+  checkpointId?: string;
+}
+
+export interface GenerateObjectResult<T> {
+  object: T;
+  usage?: AICompletionResponse['usage'];
+  model: string;
+  finishReason?: string;
+  cost?: number;
 }
 
 /**
@@ -62,6 +134,9 @@ export class AIEnhancedService {
   private requestSuccessCount = 0;
   private requestErrorCount = 0;
   private readonly taskExecutor = new AITaskExecutor();
+  private readonly toolRegistry = new AgentToolRegistry();
+  private approvalPort?: ApprovalPort;
+  private checkpointStore: CallCheckpointStore = new InMemoryCallCheckpointStore();
 
   constructor(
     tokenTracker?: TokenTracker,
@@ -73,56 +148,60 @@ export class AIEnhancedService {
     this.hooks = hooks;
     this.initializeProviders();
 
-    // Register this instance globally for easy access by other modules
-    // Users can reference this via: (global as typeof globalThis & { __HAZELJS_AI_ENHANCED_SERVICE__: AIEnhancedService }).__HAZELJS_AI_ENHANCED_SERVICE__
-    (
-      global as typeof globalThis & { __HAZELJS_AI_ENHANCED_SERVICE__: AIEnhancedService }
-    ).__HAZELJS_AI_ENHANCED_SERVICE__ = this;
+    // Register in the DI container so AgentModule / self-healing can resolve without a process global.
+    try {
+      Container.getInstance().register(AIEnhancedService, this);
+    } catch {
+      /* ignore duplicate registration in tests */
+    }
+
+    const opts = getAIModuleOptions();
+    if (opts.defaultProvider) {
+      this.defaultProvider = opts.defaultProvider;
+    }
+    if (opts.defaults?.retry?.attempts) {
+      this.retryAttempts = opts.defaults.retry.attempts;
+    }
+    if (opts.defaults?.retry?.backoff?.delayMs) {
+      this.retryDelay = opts.defaults.retry.backoff.delayMs;
+    }
+    if (opts.models) {
+      validateNamedModels(opts.models);
+    }
+
     logger.info('AI Enhanced Service initialized');
   }
 
-  /**
-   * Initialize AI providers
-   */
   private initializeProviders(): void {
     try {
-      // Initialize OpenAI
       if (process.env.OPENAI_API_KEY) {
         this.providers.set('openai', new OpenAIProvider());
         logger.info('OpenAI provider registered');
       }
-
-      // Initialize Anthropic
       if (process.env.ANTHROPIC_API_KEY) {
         this.providers.set('anthropic', new AnthropicProvider());
         logger.info('Anthropic provider registered');
       }
-
-      // Initialize Gemini
       if (process.env.GEMINI_API_KEY) {
         this.providers.set('gemini', new GeminiProvider());
         logger.info('Gemini provider registered');
       }
-
-      // Initialize Cohere
       if (process.env.COHERE_API_KEY) {
         this.providers.set('cohere', new CohereProvider());
         logger.info('Cohere provider registered');
       }
-
-      // Initialize Ollama only when explicitly enabled.
-      // This avoids unexpected logs/connections in environments that do not use Ollama.
       const ollamaEnabled =
         process.env.OLLAMA_ENABLED === 'true' || process.env.OLLAMA_ENABLED === '1';
       if (ollamaEnabled) {
-        const ollamaProvider = new OllamaProvider({
-          baseURL: process.env.OLLAMA_BASE_URL,
-          defaultModel: process.env.OLLAMA_DEFAULT_MODEL,
-        });
-        this.providers.set('ollama', ollamaProvider);
+        this.providers.set(
+          'ollama',
+          new OllamaProvider({
+            baseURL: process.env.OLLAMA_BASE_URL,
+            defaultModel: process.env.OLLAMA_DEFAULT_MODEL,
+          })
+        );
         logger.info('Ollama provider registered (enabled via OLLAMA_ENABLED)');
       }
-
       if (this.providers.size === 0) {
         logger.warn(
           'No AI providers configured. Set API keys or enable Ollama with OLLAMA_ENABLED=true.'
@@ -133,17 +212,111 @@ export class AIEnhancedService {
     }
   }
 
-  /**
-   * Register a custom provider
-   */
   registerProvider(provider: IAIProvider): void {
     this.providers.set(provider.name, provider);
     logger.info(`Custom provider registered: ${provider.name}`);
   }
 
+  registerTools(instance: object): void {
+    this.toolRegistry.registerTools(instance);
+  }
+
+  setApprovalPort(port: ApprovalPort | undefined): void {
+    this.approvalPort = port;
+  }
+
+  setCheckpointStore(store: CallCheckpointStore): void {
+    this.checkpointStore = store;
+  }
+
   /**
-   * Set default provider
+   * Resume a tool loop after durable HITL approval (finishReason `approval-required`).
    */
+  async resumeAfterApproval(opts: {
+    checkpointId: string;
+    approvalToken?: string;
+    approvalId?: string;
+  }): Promise<AICompletionResponse> {
+    const checkpoint = await this.checkpointStore.get(opts.checkpointId);
+    if (!checkpoint) {
+      throw AIError.invalidRequest(`Unknown checkpoint: ${opts.checkpointId}`);
+    }
+    if (opts.approvalId && opts.approvalId !== checkpoint.approvalId) {
+      throw AIError.invalidRequest(
+        `approvalId mismatch: expected ${checkpoint.approvalId}, got ${opts.approvalId}`
+      );
+    }
+
+    const config: CompleteCallConfig = {
+      ...checkpoint.config,
+      tools: checkpoint.config.tools,
+      approve: checkpoint.config.approve,
+      maxSteps: checkpoint.config.maxSteps,
+      caller: checkpoint.config.caller as AgentToolCaller | undefined,
+      approvalToken: opts.approvalToken,
+      checkpointId: checkpoint.id,
+    };
+
+    const messages = [...checkpoint.messages];
+    const toolResult = await this.invokeRegisteredTool(
+      checkpoint.pendingToolCall,
+      config,
+      messages,
+      { pendingInput: checkpoint.pendingInput, skipPending: false }
+    );
+
+    if (toolResult.kind === 'pending') {
+      // Still waiting — refresh checkpoint and return suspended again.
+      const nextId = randomUUID();
+      const next: CallCheckpoint = {
+        ...checkpoint,
+        id: nextId,
+        createdAt: Date.now(),
+        approvalId: toolResult.approvalId,
+      };
+      await this.checkpointStore.save(next);
+      await this.checkpointStore.delete(checkpoint.id);
+      return {
+        id: `suspended_${nextId}`,
+        content: '',
+        role: 'assistant',
+        model: checkpoint.resolved.modelId,
+        usage: { ...checkpoint.running },
+        finishReason: 'approval-required',
+        approvalId: toolResult.approvalId,
+        checkpointId: nextId,
+        toolCalls: [checkpoint.pendingToolCall],
+      };
+    }
+
+    messages.push({
+      role: 'tool',
+      content: toolResult.text,
+      toolCallId: checkpoint.pendingToolCall.id,
+      name: checkpoint.pendingToolCall.function.name,
+    });
+
+    await this.checkpointStore.delete(checkpoint.id);
+
+    return this.continueToolLoop(
+      {
+        messages,
+        model: checkpoint.request.model,
+        temperature: checkpoint.request.temperature,
+        maxTokens: checkpoint.request.maxTokens,
+        topP: checkpoint.request.topP,
+        responseFormat: checkpoint.request.responseFormat,
+      },
+      config,
+      checkpoint.resolved,
+      {
+        running: { ...checkpoint.running },
+        runningCost: checkpoint.runningCost,
+        committedTools: true,
+      }
+    );
+  }
+
   setDefaultProvider(provider: AIProvider): void {
     if (!this.providers.has(provider)) {
       throw new AIError(
@@ -155,9 +328,6 @@ export class AIEnhancedService {
     logger.info(`Default provider set to: ${provider}`);
   }
 
-  /**
-   * Create a context manager for conversation
-   */
   createContext(
     maxTokens?: number,
     trimStrategy?: ContextTrimStrategy,
@@ -170,84 +340,73 @@ export class AIEnhancedService {
     return this.contextManager;
   }
 
-  /**
-   * Get current context manager
-   */
   getContext(): AIContextManager | undefined {
     return this.contextManager;
   }
 
   /**
-   * Generate completion with retry logic and caching
+   * Generate completion with named models, policy, optional tool loop, cache, and budgets.
    */
   async complete(
     request: AICompletionRequest,
-    config?: {
-      provider?: AIProvider;
-      userId?: string;
-      cacheKey?: string;
-      cacheTTL?: number;
-    }
+    config?: CompleteCallConfig
   ): Promise<AICompletionResponse> {
-    const provider = this.getProvider(config?.provider);
-    const cacheKey = config?.cacheKey || this.generateCacheKey(request);
+    const prepared = await this.prepareRequestWithContext(request, config);
+    const resolved = this.resolveCallTarget(prepared.request.model, config);
+    const cacheKey = config?.cacheKey || this.generateCacheKey(prepared.request);
 
     dbg(
-      'complete start model=%s provider=%s',
-      request.model || 'default',
-      config?.provider || this.defaultProvider
+      'complete start model=%s provider=%s name=%s',
+      resolved.modelId,
+      resolved.provider,
+      resolved.name ?? '(ad-hoc)'
     );
 
-    // Check cache first
     if (this.cacheService && config?.cacheKey) {
       const cached = await this.cacheService.get<AICompletionResponse>(cacheKey);
       if (cached) {
         logger.debug('Returning cached AI response');
-        dbg('complete cache hit key=%s', cacheKey);
-        return cached;
+        return prepared.contextMeta ? { ...cached, contextMeta: prepared.contextMeta } : cached;
       }
     }
 
-    // Check rate limits
-    const estimatedTokens = this.estimateRequestTokens(request);
-    dbg('complete tokens estimated=%d user=%s', estimatedTokens, config?.userId || 'anonymous');
+    const estimatedTokens = this.estimateRequestTokens(prepared.request);
     const limitCheck = await this.tokenTracker.checkLimits(config?.userId, estimatedTokens);
-
     if (!limitCheck.allowed) {
-      dbg('complete rate limited reason=%s', limitCheck.reason || 'unknown');
       throw new AIError(`Rate limit exceeded: ${limitCheck.reason}`, AIErrorCode.RATE_LIMIT);
     }
 
-    // Execute with retry logic
     const startTime = Date.now();
     let response: AICompletionResponse;
     try {
-      response = await this.executeWithRetry(async () => {
-        return await provider.complete(request);
-      });
+      if (config?.tools?.length) {
+        response = await this.runToolLoop(prepared.request, config, resolved);
+      } else {
+        response = await this.runSingleCompletion(prepared.request, config, resolved, {
+          step: 0,
+          running: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
+          runningCost: 0,
+        });
+      }
     } catch (e) {
       this.requestErrorCount++;
-      const duration = Date.now() - startTime;
       this.hooks?.onCompletion?.({
-        provider: provider.name,
-        model: request.model,
-        latencyMs: duration,
+        provider: resolved.provider,
+        model: resolved.modelId,
+        latencyMs: Date.now() - startTime,
         error: true,
       });
       throw e;
     }
+
     const duration = Date.now() - startTime;
-
-    dbg('complete success duration=%dms tokens=%d', duration, response.usage?.totalTokens || 0);
-
     this.requestSuccessCount++;
 
-    // Track token usage
     if (response.usage) {
       this.tokenTracker.track(
         {
           userId: config?.userId,
-          provider: provider.name,
+          provider: resolved.provider,
           model: response.model,
           latencyMs: duration,
           promptTokens: response.usage.promptTokens,
@@ -260,7 +419,7 @@ export class AIEnhancedService {
     }
 
     this.hooks?.onCompletion?.({
-      provider: provider.name,
+      provider: resolved.provider,
       model: response.model,
       latencyMs: duration,
       usage: response.usage,
@@ -268,7 +427,6 @@ export class AIEnhancedService {
     });
 
     try {
-      // Optional OpenTelemetry: enrich active span when @hazeljs/observability is used
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { trace } = require('@opentelemetry/api') as {
         trace: {
@@ -279,47 +437,53 @@ export class AIEnhancedService {
       };
       const span = trace.getActiveSpan();
       if (span && response.usage) {
-        span.setAttribute('llm.provider', provider.name);
+        span.setAttribute('llm.provider', resolved.provider);
         span.setAttribute('llm.usage.total_tokens', response.usage.totalTokens);
       }
     } catch {
       /* optional peer */
     }
 
-    // Cache response
     if (this.cacheService && config?.cacheKey) {
       await this.cacheService.set(cacheKey, response, config.cacheTTL || 3600);
-      dbg('complete cached ttl=%d', config.cacheTTL || 3600);
     }
 
+    if (prepared.contextMeta) {
+      return { ...response, contextMeta: prepared.contextMeta };
+    }
     return response;
   }
 
-  /**
-   * Generate streaming completion
-   */
   async *streamComplete(
     request: AICompletionRequest,
-    config?: {
-      provider?: AIProvider;
-      userId?: string;
-    }
+    config?: CompleteCallConfig
   ): AsyncGenerator<AIStreamChunk> {
-    const provider = this.getProvider(config?.provider);
-
-    // Check rate limits
-    const estimatedTokens = this.estimateRequestTokens(request);
+    const prepared = await this.prepareRequestWithContext(request, config);
+    const resolved = this.resolveCallTarget(prepared.request.model, config);
+    const estimatedTokens = this.estimateRequestTokens(prepared.request);
     const limitCheck = await this.tokenTracker.checkLimits(config?.userId, estimatedTokens);
-
     if (!limitCheck.allowed) {
       throw new AIError(`Rate limit exceeded: ${limitCheck.reason}`, AIErrorCode.RATE_LIMIT);
     }
 
-    try {
-      for await (const chunk of provider.streamComplete(request)) {
-        yield chunk;
+    const provider = this.getProvider(resolved.provider);
+    const req: AICompletionRequest = {
+      ...prepared.request,
+      model: resolved.modelId,
+      stream: true,
+    };
+    let committed = false;
 
-        // Track final usage
+    try {
+      const stream = provider.streamComplete(req);
+      for await (const chunk of stream) {
+        if (config?.abortSignal?.aborted) {
+          throw AIError.aborted(config.abortSignal.reason);
+        }
+        if (chunk.delta || chunk.content) {
+          committed = true;
+        }
+        yield chunk;
         if (chunk.done && chunk.usage) {
           this.tokenTracker.track(
             {
@@ -334,17 +498,25 @@ export class AIEnhancedService {
             request.model
           );
           this.requestSuccessCount++;
+          this.emitUsage(config, resolved, {
+            step: 0,
+            attempt: 1,
+            fallback: false,
+            stream: true,
+            usage: chunk.usage,
+            durationMs: 0,
+            finishReason: 'stop',
+          });
         }
       }
     } catch (error) {
-      logger.error('Streaming completion failed:', error);
-      throw error;
+      if (committed) {
+        throw error;
+      }
+      throw AIProviderError.fromUnknown(error);
     }
   }
 
-  /**
-   * Generate embeddings
-   */
   async embed(
     request: AIEmbeddingRequest,
     config?: {
@@ -357,21 +529,31 @@ export class AIEnhancedService {
     const provider = this.getProvider(config?.provider);
     const cacheKey = config?.cacheKey || this.generateEmbeddingCacheKey(request);
 
-    // Check cache first
     if (this.cacheService && config?.cacheKey) {
       const cached = await this.cacheService.get<AIEmbeddingResponse>(cacheKey);
       if (cached) {
-        logger.debug('Returning cached embeddings');
         return cached;
       }
     }
 
-    // Execute with retry logic
-    const response = await this.executeWithRetry(async () => {
-      return await provider.embed(request);
-    });
+    const response = await executeWithCallPolicy(
+      provider.name,
+      async () => {
+        try {
+          return await provider.embed(request);
+        } catch (e) {
+          throw AIProviderError.fromUnknown(e);
+        }
+      },
+      {
+        timeoutMs: getAIModuleOptions().defaults?.timeoutMs,
+        retry: {
+          attempts: this.retryAttempts,
+          backoff: { delayMs: this.retryDelay },
+        },
+      }
+    );
 
-    // Track token usage
     if (response.usage) {
       this.tokenTracker.track(
         {
@@ -387,35 +569,23 @@ export class AIEnhancedService {
       );
     }
 
-    // Cache response
     if (this.cacheService && config?.cacheKey) {
-      await this.cacheService.set(cacheKey, response, config.cacheTTL || 86400); // 24 hours
+      await this.cacheService.set(cacheKey, response, config.cacheTTL || 86400);
     }
 
     return response;
   }
 
-  /**
-   * Check if a provider is available
-   */
   async isProviderAvailable(provider: AIProvider): Promise<boolean> {
     const providerInstance = this.providers.get(provider);
-    if (!providerInstance) {
-      return false;
-    }
-    return await providerInstance.isAvailable();
+    if (!providerInstance) return false;
+    return providerInstance.isAvailable();
   }
 
-  /**
-   * Get list of available providers
-   */
   getAvailableProviders(): AIProvider[] {
     return Array.from(this.providers.keys());
   }
 
-  /**
-   * Aggregated metrics for {@link HazelAI.getMetrics}.
-   */
   getAIMetrics(): AIMetrics {
     const snap = this.tokenTracker.getSnapshotForMetrics();
     const totalReq = this.requestSuccessCount + this.requestErrorCount;
@@ -439,9 +609,6 @@ export class AIEnhancedService {
     };
   }
 
-  /**
-   * Get token usage statistics
-   */
   getTokenStats(userId?: string, days?: number): unknown {
     if (userId) {
       return this.tokenTracker.getUserStats(userId, days);
@@ -449,62 +616,705 @@ export class AIEnhancedService {
     return this.tokenTracker.getGlobalStats(days);
   }
 
-  /**
-   * Configure model settings
-   */
   configureModel(config: AIModelConfig): void {
     const provider = this.providers.get(config.provider);
     if (!provider) {
       throw new AIError(`Provider "${config.provider}" not found.`, AIErrorCode.PROVIDER_NOT_FOUND);
     }
-
-    // Provider-specific configuration would go here
     logger.info(`Model configured for provider: ${config.provider}`);
   }
 
   /**
-   * Get provider instance
+   * Generate JSON matching a Zod schema. Schema misses are OUTPUT_INVALID (not retried).
    */
+  async generateObject<T>(
+    prompt: string,
+    schema: z.ZodType<T>,
+    options?: {
+      provider?: AIProvider;
+      model?: string;
+      modelName?: string;
+      temperature?: number;
+      instructions?: string;
+      schemaName?: string;
+      schemaDescription?: string;
+      tools?: string[];
+      approve?: string[];
+      maxSteps?: number;
+      caller?: AgentToolCaller;
+      budget?: AICallBudget;
+      abortSignal?: AbortSignal;
+      label?: string;
+      onUsage?: AIUsageListener;
+      context?: ContextAssemblerPort;
+      contextRequest?: CallContextRequest;
+    }
+  ): Promise<GenerateObjectResult<T>> {
+    const zodSchema = schema as z.ZodTypeAny;
+    const jsonSchemaRaw = zodToJsonSchema(zodSchema as never, { target: 'openApi3' }) as Record<
+      string,
+      unknown
+    >;
+    const schemaWrapper: AIJsonSchema = {
+      name: options?.schemaName ?? 'structured_response',
+      description: options?.schemaDescription ?? 'Structured model output',
+      schema: jsonSchemaRaw,
+      strict: true,
+    };
+
+    const messages: AIMessage[] = [];
+    if (options?.instructions) {
+      messages.push({ role: 'system', content: options.instructions });
+    }
+    messages.push({ role: 'user', content: prompt });
+
+    const res = await this.complete(
+      {
+        messages,
+        model: options?.model,
+        temperature: options?.temperature ?? 0.2,
+        responseFormat: schemaWrapper,
+      },
+      {
+        provider: options?.provider,
+        modelName: options?.modelName,
+        tools: options?.tools,
+        approve: options?.approve,
+        maxSteps: options?.maxSteps,
+        caller: options?.caller,
+        budget: options?.budget,
+        abortSignal: options?.abortSignal,
+        label: options?.label,
+        onUsage: options?.onUsage,
+        context: options?.context,
+        contextRequest: options?.contextRequest,
+      }
+    );
+
+    if (options?.tools?.length && res.finishReason === 'tool-calls') {
+      throw AIError.outputInvalid(
+        'generateObject ended on tool-calls without a structured object',
+        res.content
+      );
+    }
+
+    let parsedJson: unknown;
+    try {
+      parsedJson = JSON.parse(res.content);
+    } catch {
+      throw AIError.outputInvalid('Model response was not valid JSON', res.content);
+    }
+
+    const parsed = schema.safeParse(parsedJson);
+    if (!parsed.success) {
+      throw AIError.outputInvalid(parsed.error.message, res.content);
+    }
+
+    const named = options?.modelName ? resolveNamedModel(options.modelName) : undefined;
+    const cost = estimateCost(
+      {
+        promptTokens: res.usage?.promptTokens ?? 0,
+        completionTokens: res.usage?.completionTokens ?? 0,
+      },
+      named?.pricing
+    );
+
+    return {
+      object: parsed.data,
+      usage: res.usage,
+      model: res.model,
+      finishReason: res.finishReason,
+      cost,
+    };
+  }
+
+  setRetryConfig(attempts: number, delay: number): void {
+    this.retryAttempts = attempts;
+    this.retryDelay = delay;
+    logger.info(`Retry config updated: ${attempts} attempts, ${delay}ms delay`);
+  }
+
+  ensureProvider(name: AIProvider): IAIProvider {
+    const provider = this.providers.get(name);
+    if (!provider) {
+      throw new AIError(
+        `AI provider "${name}" is not registered. ` +
+          `Available providers: ${[...this.providers.keys()].join(', ') || '(none)'}. ` +
+          `Set the appropriate API key environment variable or call registerProvider().`,
+        AIErrorCode.PROVIDER_NOT_FOUND
+      );
+    }
+    return provider;
+  }
+
+  listProviders(): AIProvider[] {
+    return [...this.providers.keys()];
+  }
+
+  chat(message: string): ChatBuilder {
+    return new ChatBuilder(this, message);
+  }
+
+  async executeTask(config: AITaskConfig, input: unknown): Promise<AITaskResult> {
+    return this.taskExecutor.executeTask(config, input);
+  }
+
+  // ── internals ────────────────────────────────────────────────────────────
+
+  private resolveCallTarget(
+    requestModel: string | undefined,
+    config?: CompleteCallConfig
+  ): {
+    name?: string;
+    provider: AIProvider;
+    modelId: string;
+    fallback: string[];
+    pricing?: AIModelPricing;
+    timeoutMs?: number;
+    retry?: ResolvedNamedModel['retry'];
+  } {
+    const modelName =
+      config?.modelName ||
+      (requestModel && hasNamedModels() && listModelNames().includes(requestModel)
+        ? requestModel
+        : undefined);
+
+    if (modelName) {
+      const resolved = resolveNamedModel(modelName);
+      return {
+        name: resolved.name,
+        provider: resolved.provider,
+        modelId: resolved.modelId,
+        fallback: resolved.fallback,
+        pricing: resolved.pricing,
+        timeoutMs: resolved.timeoutMs,
+        retry: resolved.retry,
+      };
+    }
+
+    return {
+      provider: config?.provider || this.defaultProvider,
+      modelId: requestModel || 'default',
+      fallback: [],
+      timeoutMs: getAIModuleOptions().defaults?.timeoutMs,
+      retry: getAIModuleOptions().defaults?.retry,
+    };
+  }
+
   private getProvider(providerName?: AIProvider): IAIProvider {
     const name = providerName || this.defaultProvider;
     const provider = this.providers.get(name);
-
     if (!provider) {
       throw new AIError(
         `Provider "${name}" is not registered or available. Available: ${[...this.providers.keys()].join(', ') || '(none)'}.`,
         AIErrorCode.PROVIDER_NOT_FOUND
       );
     }
-
     return provider;
   }
 
-  /**
-   * Execute function with retry logic
-   */
-  private async executeWithRetry<T>(fn: () => Promise<T>): Promise<T> {
-    let lastError: Error | undefined;
+  private assertBudget(
+    running: { promptTokens: number; completionTokens: number; totalTokens: number },
+    runningCost: number,
+    budget?: AICallBudget
+  ): void {
+    if (!budget) return;
+    if (budget.maxTokens !== undefined && running.totalTokens >= budget.maxTokens) {
+      throw AIError.budgetExceeded(running, runningCost, budget);
+    }
+    if (budget.maxCost !== undefined && runningCost >= budget.maxCost) {
+      throw AIError.budgetExceeded(running, runningCost, budget);
+    }
+  }
 
-    for (let attempt = 1; attempt <= this.retryAttempts; attempt++) {
-      try {
-        return await fn();
-      } catch (error) {
-        lastError = error instanceof Error ? error : new Error('Unknown error');
-        logger.warn(`Attempt ${attempt} failed:`, lastError.message);
+  private emitUsage(
+    config: CompleteCallConfig | undefined,
+    resolved: { name?: string; provider: AIProvider; modelId: string; pricing?: AIModelPricing },
+    evt: {
+      step: number;
+      attempt: number;
+      fallback: boolean;
+      stream: boolean;
+      usage: NonNullable<AICompletionResponse['usage']>;
+      durationMs: number;
+      finishReason?: string;
+    }
+  ): void {
+    const cost = estimateCost(
+      {
+        promptTokens: evt.usage.promptTokens,
+        completionTokens: evt.usage.completionTokens,
+      },
+      resolved.pricing
+    );
+    const payload = {
+      label: config?.label,
+      model: {
+        name: resolved.name,
+        provider: resolved.provider,
+        modelId: resolved.modelId,
+      },
+      step: evt.step,
+      attempt: evt.attempt,
+      fallback: evt.fallback,
+      stream: evt.stream,
+      usage: {
+        promptTokens: evt.usage.promptTokens,
+        completionTokens: evt.usage.completionTokens,
+        totalTokens: evt.usage.totalTokens,
+      },
+      cost,
+      durationMs: evt.durationMs,
+      finishReason: evt.finishReason,
+    };
+    try {
+      getAIModuleOptions().onUsage?.(payload);
+    } catch (e) {
+      logger.error('onUsage (module) threw:', e);
+    }
+    try {
+      config?.onUsage?.(payload);
+    } catch (e) {
+      logger.error('onUsage (call) threw:', e);
+    }
+  }
 
-        if (attempt < this.retryAttempts) {
-          const delay = this.retryDelay * Math.pow(2, attempt - 1); // Exponential backoff
-          await new Promise((resolve) => setTimeout(resolve, delay));
+  private async runSingleCompletion(
+    request: AICompletionRequest,
+    config: CompleteCallConfig | undefined,
+    resolved: {
+      name?: string;
+      provider: AIProvider;
+      modelId: string;
+      fallback: string[];
+      pricing?: AIModelPricing;
+      timeoutMs?: number;
+      retry?: ResolvedNamedModel['retry'];
+    },
+    state: {
+      step: number;
+      running: { promptTokens: number; completionTokens: number; totalTokens: number };
+      runningCost: number;
+      committed?: boolean;
+    }
+  ): Promise<AICompletionResponse> {
+    this.assertBudget(
+      state.running,
+      state.runningCost,
+      config?.budget ?? getAIModuleOptions().defaults?.budget
+    );
+
+    const fallbackNames =
+      config?.fallback === false
+        ? []
+        : Array.isArray(config?.fallback)
+          ? config!.fallback
+          : resolved.fallback;
+
+    const timeoutMs = config?.timeoutMs ?? resolved.timeoutMs;
+    const retry = resolved.retry ?? {
+      attempts: this.retryAttempts,
+      backoff: { delayMs: this.retryDelay },
+    };
+
+    const runForResolved = async (
+      target: typeof resolved,
+      isFallback: boolean
+    ): Promise<AICompletionResponse> => {
+      const provider = this.getProvider(target.provider);
+      const req: AICompletionRequest = { ...request, model: target.modelId };
+      const started = Date.now();
+      return executeWithCallPolicy(
+        target.name ?? target.modelId,
+        async (ctx) => {
+          try {
+            const response = await provider.complete(req);
+            if (response.usage) {
+              state.running.promptTokens += response.usage.promptTokens;
+              state.running.completionTokens += response.usage.completionTokens;
+              state.running.totalTokens += response.usage.totalTokens;
+              const stepCost = estimateCost(
+                {
+                  promptTokens: response.usage.promptTokens,
+                  completionTokens: response.usage.completionTokens,
+                },
+                target.pricing
+              );
+              if (stepCost !== undefined) state.runningCost += stepCost;
+              this.emitUsage(config, target, {
+                step: state.step,
+                attempt: ctx.attempt,
+                fallback: isFallback,
+                stream: false,
+                usage: response.usage,
+                durationMs: Date.now() - started,
+                finishReason: response.finishReason,
+              });
+            }
+            return response;
+          } catch (e) {
+            if (isOutputInvalidError(e)) throw e;
+            throw AIProviderError.fromUnknown(e);
+          }
+        },
+        {
+          timeoutMs,
+          retry,
+          abortSignal: config?.abortSignal,
+          committed: state.committed,
+          fallbackIf: config?.fallbackIf,
+          // primary policy handles fallback via runFallback below; disable nested list here
+          fallbackNames: [],
         }
+      );
+    };
+
+    return executeWithCallPolicy(
+      resolved.name ?? resolved.modelId,
+      async () => runForResolved(resolved, false),
+      {
+        timeoutMs,
+        retry: { attempts: 1 }, // retries happen inside runForResolved
+        abortSignal: config?.abortSignal,
+        committed: state.committed,
+        fallbackIf: config?.fallbackIf,
+        fallbackNames,
+      },
+      async (fallbackName) => {
+        const fb = resolveNamedModel(fallbackName);
+        return runForResolved(
+          {
+            name: fb.name,
+            provider: fb.provider,
+            modelId: fb.modelId,
+            fallback: [],
+            pricing: fb.pricing,
+            timeoutMs: fb.timeoutMs,
+            retry: fb.retry,
+          },
+          true
+        );
+      }
+    );
+  }
+
+  private async runToolLoop(
+    request: AICompletionRequest,
+    config: CompleteCallConfig,
+    resolved: {
+      name?: string;
+      provider: AIProvider;
+      modelId: string;
+      fallback: string[];
+      pricing?: AIModelPricing;
+      timeoutMs?: number;
+      retry?: ResolvedNamedModel['retry'];
+    }
+  ): Promise<AICompletionResponse> {
+    return this.continueToolLoop(request, config, resolved, {
+      running: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
+      runningCost: 0,
+      committedTools: false,
+    });
+  }
+
+  private async continueToolLoop(
+    request: AICompletionRequest,
+    config: CompleteCallConfig,
+    resolved: {
+      name?: string;
+      provider: AIProvider;
+      modelId: string;
+      fallback: string[];
+      pricing?: AIModelPricing;
+      timeoutMs?: number;
+      retry?: ResolvedNamedModel['retry'];
+    },
+    state: {
+      running: { promptTokens: number; completionTokens: number; totalTokens: number };
+      runningCost: number;
+      committedTools: boolean;
+    }
+  ): Promise<AICompletionResponse> {
+    const maxSteps = config.maxSteps ?? getAIModuleOptions().defaults?.maxSteps ?? 10;
+    const toolNames = config.tools ?? [];
+    const functions = this.toolRegistry.toAIFunctions(toolNames);
+    const messages: AIMessage[] = [...request.messages];
+    const running = state.running;
+    const runningCost = state.runningCost;
+    let lastResponse: AICompletionResponse | undefined;
+    let committedTools = state.committedTools;
+
+    for (let step = 0; step < maxSteps; step++) {
+      const stepResponse = await this.runSingleCompletion(
+        {
+          ...request,
+          messages,
+          functions,
+          functionCall: 'auto',
+        },
+        config,
+        resolved,
+        { step, running, runningCost, committed: committedTools }
+      );
+      lastResponse = stepResponse;
+
+      const toolCalls = stepResponse.toolCalls;
+      if (!toolCalls?.length) {
+        return {
+          ...stepResponse,
+          usage: { ...running },
+          finishReason: stepResponse.finishReason || 'stop',
+        };
+      }
+
+      if (step === maxSteps - 1) {
+        return {
+          ...stepResponse,
+          usage: { ...running },
+          finishReason: 'tool-calls',
+        };
+      }
+
+      committedTools = true;
+      messages.push({
+        role: 'assistant',
+        content: stepResponse.content || '',
+        toolCalls,
+      });
+
+      for (const call of toolCalls) {
+        const result = await this.invokeRegisteredTool(call, config, messages);
+        if (result.kind === 'pending') {
+          const checkpointId = randomUUID();
+          const checkpointConfig: CheckpointCallConfig = {
+            provider: config.provider,
+            modelName: config.modelName,
+            userId: config.userId,
+            label: config.label,
+            tools: config.tools,
+            approve: config.approve,
+            maxSteps: config.maxSteps,
+            budget: config.budget,
+            caller: config.caller as Record<string, unknown> | undefined,
+          };
+          const checkpoint: CallCheckpoint = {
+            id: checkpointId,
+            createdAt: Date.now(),
+            messages,
+            request: {
+              model: request.model,
+              temperature: request.temperature,
+              maxTokens: request.maxTokens,
+              topP: request.topP,
+              responseFormat: request.responseFormat,
+            },
+            config: checkpointConfig,
+            resolved: {
+              name: resolved.name,
+              provider: resolved.provider,
+              modelId: resolved.modelId,
+              fallback: resolved.fallback,
+              pricing: resolved.pricing,
+              timeoutMs: resolved.timeoutMs,
+              retry: resolved.retry,
+            },
+            running: { ...running },
+            runningCost,
+            pendingToolCall: call,
+            pendingInput: result.input,
+            approvalId: result.approvalId,
+            idempotencyKey: result.idempotencyKey,
+          };
+          await this.checkpointStore.save(checkpoint);
+          return {
+            id: `suspended_${checkpointId}`,
+            content: '',
+            role: 'assistant',
+            model: resolved.modelId,
+            usage: { ...running },
+            finishReason: 'approval-required',
+            approvalId: result.approvalId,
+            checkpointId,
+            toolCalls: [call],
+          };
+        }
+        messages.push({
+          role: 'tool',
+          content: result.text,
+          toolCallId: call.id,
+          name: call.function.name,
+        });
       }
     }
 
-    throw lastError || new Error('All retry attempts failed');
+    return {
+      ...(lastResponse as AICompletionResponse),
+      usage: { ...running },
+      finishReason: 'tool-calls',
+    };
+  }
+
+  private async invokeRegisteredTool(
+    call: AIToolCall,
+    config: CompleteCallConfig,
+    messages: AIMessage[],
+    opts?: { pendingInput?: unknown; skipPending?: boolean }
+  ): Promise<
+    | { kind: 'ok'; text: string }
+    | {
+        kind: 'pending';
+        approvalId: string;
+        input: unknown;
+        idempotencyKey: string;
+      }
+  > {
+    const tool = this.toolRegistry.get(call.function.name);
+    let input: unknown = opts?.pendingInput;
+    if (input === undefined) {
+      input = {};
+      try {
+        input = call.function.arguments ? JSON.parse(call.function.arguments) : {};
+      } catch {
+        return { kind: 'ok', text: JSON.stringify({ error: 'Invalid tool arguments JSON' }) };
+      }
+    }
+
+    if (tool.inputSchema && opts?.pendingInput === undefined) {
+      const parsed = tool.inputSchema.safeParse(input);
+      if (!parsed.success) {
+        return { kind: 'ok', text: JSON.stringify({ error: parsed.error.message }) };
+      }
+      input = parsed.data;
+    }
+
+    const idempotencyKey = `${call.id}:${call.function.name}`;
+    const approveList = config.approve ?? [];
+    if (approveList.includes(call.function.name)) {
+      if (!this.approvalPort) {
+        return {
+          kind: 'ok',
+          text: JSON.stringify({
+            error: 'Tool requires approval but no ApprovalPort is configured',
+          }),
+        };
+      }
+      const decision = await this.approvalPort.approve({
+        toolName: call.function.name,
+        input,
+        idempotencyKey,
+        approvalToken: config.approvalToken,
+        caller: config.caller,
+      });
+      if (decision === 'approved') {
+        // continue to invoke
+      } else if (typeof decision === 'object' && 'pending' in decision) {
+        if (opts?.skipPending) {
+          return {
+            kind: 'ok',
+            text: JSON.stringify({
+              error: 'Tool still requires approval',
+              approvalId: decision.pending.approvalId,
+            }),
+          };
+        }
+        return {
+          kind: 'pending',
+          approvalId: decision.pending.approvalId,
+          input,
+          idempotencyKey,
+        };
+      } else {
+        const reason =
+          typeof decision === 'object' && 'rejected' in decision ? decision.rejected : 'rejected';
+        return {
+          kind: 'ok',
+          text: JSON.stringify({
+            rejected: true,
+            reason,
+          }),
+        };
+      }
+    }
+
+    const ctx: AgentToolContext = {
+      name: call.function.name,
+      toolCallId: call.id,
+      signal: config.abortSignal,
+      caller: config.caller,
+      idempotencyKey,
+      messages,
+      reportProgress: async (progress, total, message) => {
+        await config.onToolProgress?.(progress, total, message);
+      },
+    };
+
+    try {
+      const output = await tool.invoke(input, ctx);
+      return {
+        kind: 'ok',
+        text: typeof output === 'string' ? output : JSON.stringify(output ?? null),
+      };
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      return { kind: 'ok', text: JSON.stringify({ error: msg }) };
+    }
   }
 
   /**
-   * Generate cache key for completion request
+   * Optionally assemble unified context (CAG/RAG/KAG/Memory) into the prompt.
+   * Soft-fails like AgentRuntime: assemble errors leave the original messages.
    */
+  private async prepareRequestWithContext(
+    request: AICompletionRequest,
+    config?: CompleteCallConfig
+  ): Promise<{ request: AICompletionRequest; contextMeta?: CallContextMeta }> {
+    const contextRequest = config?.contextRequest;
+    if (!contextRequest?.tenantId) {
+      return { request };
+    }
+
+    const port = config?.context ?? getAIModuleOptions().contextService;
+    if (!port) {
+      return { request };
+    }
+
+    const query = contextRequest.query?.trim() || lastUserQuery(request.messages) || '';
+
+    try {
+      const assembled = await port.assemble({
+        query,
+        tenantId: contextRequest.tenantId,
+        namespace: contextRequest.namespace,
+        agentId: contextRequest.agentId,
+        userId: contextRequest.userId ?? config?.userId,
+        sessionId: contextRequest.sessionId,
+      });
+      const contextMeta: CallContextMeta = {
+        sourcesUsed: assembled.sourcesUsed,
+        tokenEstimate: assembled.tokenEstimate,
+        plan: assembled.plan,
+      };
+      if (!assembled.text?.trim()) {
+        return { request, contextMeta };
+      }
+      return {
+        request: {
+          ...request,
+          messages: injectAssembledContext(request.messages, assembled.text),
+        },
+        contextMeta,
+      };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      logger.warn(`Context assemble soft-failed: ${message}`);
+      return {
+        request,
+        contextMeta: { softFailed: true, error: message },
+      };
+    }
+  }
+
   private generateCacheKey(request: AICompletionRequest): string {
     const key = JSON.stringify({
       messages: request.messages,
@@ -515,9 +1325,6 @@ export class AIEnhancedService {
     return `ai:completion:${this.hashString(key)}`;
   }
 
-  /**
-   * Generate cache key for embedding request
-   */
   private generateEmbeddingCacheKey(request: AIEmbeddingRequest): string {
     const key = JSON.stringify({
       input: request.input,
@@ -526,22 +1333,16 @@ export class AIEnhancedService {
     return `ai:embedding:${this.hashString(key)}`;
   }
 
-  /**
-   * Simple string hash function
-   */
   private hashString(str: string): string {
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
       const char = str.charCodeAt(i);
       hash = (hash << 5) - hash + char;
-      hash = hash & hash; // Convert to 32-bit integer
+      hash = hash & hash;
     }
     return Math.abs(hash).toString(36);
   }
 
-  /**
-   * Estimate tokens for a request (rough estimation)
-   */
   private estimateRequestTokens(request: AICompletionRequest): number {
     const text = request.messages
       .map((m) => (typeof m.content === 'string' ? m.content : messageContentToText(m.content)))
@@ -565,7 +1366,6 @@ export class AIEnhancedService {
     return promptTokens + (request.maxTokens || 1000);
   }
 
-  /** Optional `tiktoken` install yields more accurate counts (cl100k_base). */
   private tryTiktokenCount(text: string): number | null {
     try {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -584,121 +1384,5 @@ export class AIEnhancedService {
     } catch {
       return null;
     }
-  }
-
-  /**
-   * Generate JSON matching a Zod schema (OpenAI-style JSON schema response format when supported).
-   */
-  async generateObject<T>(
-    prompt: string,
-    schema: z.ZodType<T>,
-    options?: {
-      provider?: AIProvider;
-      model?: string;
-      temperature?: number;
-      maxRetries?: number;
-    }
-  ): Promise<T> {
-    const zodSchema = schema as z.ZodTypeAny;
-    // zod-to-json-schema + Zod can trigger TS2589 on some schemas; keep output loosely typed.
-    const jsonSchemaRaw = zodToJsonSchema(zodSchema as never, { target: 'openApi3' }) as Record<
-      string,
-      unknown
-    >;
-    const schemaWrapper: AIJsonSchema = {
-      name: 'structured_response',
-      description: 'Structured model output',
-      schema: jsonSchemaRaw,
-      strict: true,
-    };
-    let lastErr: Error | undefined;
-    const attempts = Math.max(1, options?.maxRetries ?? 2);
-    for (let i = 0; i < attempts; i++) {
-      try {
-        const res = await this.complete(
-          {
-            messages: [{ role: 'user', content: prompt }],
-            model: options?.model,
-            temperature: options?.temperature ?? 0.2,
-            responseFormat: schemaWrapper,
-          },
-          { provider: options?.provider }
-        );
-        const parsed = schema.safeParse(JSON.parse(res.content));
-        if (parsed.success) {
-          return parsed.data;
-        }
-        lastErr = new Error(parsed.error.message);
-      } catch (e) {
-        lastErr = e instanceof Error ? e : new Error(String(e));
-      }
-    }
-    throw AIError.completionFailed(
-      `generateObject failed after ${attempts} attempt(s): ${lastErr?.message || 'unknown'}`,
-      lastErr
-    );
-  }
-
-  /**
-   * Set retry configuration
-   */
-  setRetryConfig(attempts: number, delay: number): void {
-    this.retryAttempts = attempts;
-    this.retryDelay = delay;
-    logger.info(`Retry config updated: ${attempts} attempts, ${delay}ms delay`);
-  }
-
-  /**
-   * Ensure a provider is registered and throw an actionable error if not.
-   */
-  ensureProvider(name: AIProvider): IAIProvider {
-    const provider = this.providers.get(name);
-    if (!provider) {
-      throw new AIError(
-        `AI provider "${name}" is not registered. ` +
-          `Available providers: ${[...this.providers.keys()].join(', ') || '(none)'}. ` +
-          `Set the appropriate API key environment variable or call registerProvider().`,
-        AIErrorCode.PROVIDER_NOT_FOUND
-      );
-    }
-    return provider;
-  }
-
-  /**
-   * List all registered provider names.
-   */
-  listProviders(): AIProvider[] {
-    return [...this.providers.keys()];
-  }
-
-  /**
-   * Fluent chat builder — the easiest way to call an LLM.
-   *
-   * @example
-   * ```ts
-   * const answer = await ai.chat('Summarize this article')
-   *   .system('You are a helpful assistant')
-   *   .model('gpt-4')
-   *   .temperature(0.3)
-   *   .text();
-   *
-   * // Streaming
-   * for await (const chunk of ai.chat('Hello').stream()) {
-   *   process.stdout.write(chunk.delta);
-   * }
-   *
-   * // JSON parsing
-   * const data = await ai.chat('Return a JSON list of colors')
-   *   .model('gpt-4')
-   *   .json<string[]>();
-   * ```
-   */
-  chat(message: string): ChatBuilder {
-    return new ChatBuilder(this, message);
-  }
-
-  /** Run a legacy @AITask configuration (used by the AITask decorator). */
-  async executeTask(config: AITaskConfig, input: unknown): Promise<AITaskResult> {
-    return this.taskExecutor.executeTask(config, input);
   }
 }

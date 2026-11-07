@@ -361,10 +361,10 @@ await AgentModule.forRootAsync({
 - **Observable** - Built-in event system
 - **Production-ready** - Error handling, retries, timeouts
 
-### vs NestJS + LangChain
+### vs bolting an agent library onto a generic HTTP framework
 
 - **AI-native** - Memory and RAG as primitives
-- **Simpler** - No need for separate agent library
+- **Simpler** - No need for a separate agent library
 - **Integrated** - Works with HazelJS modules
 - **Lightweight** - No Express/Fastify dependency
 

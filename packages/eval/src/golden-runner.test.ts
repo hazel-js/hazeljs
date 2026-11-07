@@ -107,4 +107,29 @@ describe('runGoldenDataset', () => {
     );
     expect(r.passed).toBe(false);
   });
+
+  it('blends LLM judge score when judge is provided', async () => {
+    const r = await runGoldenDataset(
+      ds([{ id: '1', input: 'what is 2+2', expectedOutput: '4' }]),
+      async () => ({ output: '4' }),
+      {
+        minAverageScore: 0.5,
+        judge: async () => JSON.stringify({ score: 0.8, reasoning: 'correct' }),
+      }
+    );
+    expect(r.caseResults[0].details?.judgeScore).toBe(0.8);
+    expect(r.caseResults[0].score).toBeCloseTo(0.9, 5);
+    expect(r.passed).toBe(true);
+  });
+
+  it('skips judge when metadata.skipJudge is true', async () => {
+    const judge = jest.fn(async () => JSON.stringify({ score: 0 }));
+    const r = await runGoldenDataset(
+      ds([{ id: '1', input: 'q', expectedOutput: 'ok', metadata: { skipJudge: true } }]),
+      async () => ({ output: 'ok' }),
+      { minAverageScore: 0.5, judge }
+    );
+    expect(judge).not.toHaveBeenCalled();
+    expect(r.caseResults[0].score).toBe(1);
+  });
 });

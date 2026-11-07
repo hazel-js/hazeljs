@@ -29,3 +29,34 @@ model MemoryItem {
   @@index([expiresAt])
   @@map("memory_items")
 }
+
+/// Opt-in governed learning memory. Existing MemoryItem rows are unchanged.
+/// MemoryService never queries this table. No Prisma store adapter ships yet —
+/// runtime uses InMemoryGovernedMemoryStore; apps may wire this table themselves.
+model GovernedMemoryRecord {
+  id                   String    @id
+  tenantId             String    @map("tenant_id")
+  subjectId            String    @map("subject_id")
+  scope                String
+  type                 String
+  content              String?
+  provenance           Json
+  sourceTrust          Float     @map("source_trust")
+  factConfidence       Float?    @map("fact_confidence")
+  extractionConfidence Float?    @map("extraction_confidence")
+  version              Int       @default(1)
+  status               String
+  sensitivity          String    @default("normal")
+  expiresAt            DateTime? @map("expires_at")
+  lineageIds           Json      @map("lineage_ids")
+  sourceId             String?   @map("source_id")
+  supersededBy         String?   @map("superseded_by")
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime  @updatedAt @map("updated_at")
+  accessCount          Int       @default(0) @map("access_count")
+
+  @@index([tenantId, subjectId, status])
+  @@index([tenantId, scope, status])
+  @@index([expiresAt])
+  @@map("governed_memory_records")
+}

@@ -2,7 +2,14 @@
  * @hazeljs/eval — Evaluation toolkit for AI-native HazelJS apps
  */
 
-export type { GoldenCase, GoldenDataset, EvalRunOptions, CaseResult, EvalRunResult } from './types';
+export type {
+  GoldenCase,
+  GoldenDataset,
+  EvalRunOptions,
+  CaseResult,
+  EvalRunResult,
+  ExpectedCallSlice,
+} from './types';
 
 export { precisionAtK, recallAtK, meanReciprocalRank, ndcgAtK } from './retrieval-metrics';
 

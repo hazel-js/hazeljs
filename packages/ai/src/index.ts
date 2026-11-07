@@ -71,7 +71,11 @@ export { AIError, AIErrorCode } from './errors/ai.error';
 export type { IUsageStore, AIUsageRecord } from './tracking/usage.store';
 export { InMemoryUsageStore } from './tracking/usage.store';
 
-export type { AIEnhancedServiceHooks } from './ai-enhanced.service';
+export type {
+  AIEnhancedServiceHooks,
+  CompleteCallConfig,
+  GenerateObjectResult,
+} from './ai-enhanced.service';
 
 export {
   composeAIMiddleware,
@@ -84,9 +88,95 @@ export {
   type AICacheAdapter,
 } from './middleware/ai-middleware';
 
+export { AIProviderError } from './errors/provider.error';
+export type {
+  NamedAIModelDefinition,
+  AIModuleCallDefaults,
+  AICallBudget,
+  AIModelPricing,
+  AIUsageListener,
+  ResolvedNamedModel,
+  AIRetryDefaults,
+} from './models/model-registry.types';
+export type { AIModuleOptions } from './models/module-options';
+
+export {
+  AgentTool,
+  getAgentToolMetadata,
+  getAgentToolsFromClass,
+  type AgentToolOptions,
+  type AgentToolMetadata,
+  type AgentToolContext,
+  type AgentToolCaller,
+  type RegisteredAgentTool,
+} from './tools/agent-tool.decorator';
+export { AgentToolRegistry } from './tools/tool-registry';
+
+export {
+  type ApprovalPort,
+  type ApprovalRequest,
+  type ApprovalDecision,
+  InMemoryApprovalPort,
+} from './approval/approval-port';
+export {
+  GatekeeperApprovalPort,
+  type GatekeeperApprovalEvaluator,
+} from './approval/gatekeeper-approval-port';
+export {
+  InMemoryCallCheckpointStore,
+  createHumanTaskCallCheckpointStore,
+  type CallCheckpoint,
+  type CallCheckpointStore,
+  type CheckpointCallConfig,
+  type HumanTaskCheckpointAdapter,
+} from './approval/call-checkpoint-store';
+
+export { FakeModel, type FakeModelReply } from './testing/fake-model';
+export {
+  matchExpectedCalls,
+  parseExpectedCalls,
+  type ExpectedCallSlice,
+  type CallMatchFailure,
+} from './testing/call-matcher';
+export {
+  runAiGolden,
+  runAiGoldenCi,
+  type AiGoldenDataset,
+  type AiGoldenCase,
+  type AiGoldenCaseRunner,
+  type AiGoldenCaseContext,
+  type RunAiGoldenOptions,
+  type AiEvalRunOptions,
+  type AiEvalRunResult,
+} from './testing/run-ai-golden';
+
+export {
+  pipeTextStreamToResponse,
+  pipeUIMessageStreamToResponse,
+  wireClientAbort,
+  type UIStreamOptions,
+  type StreamProgressEvent,
+} from './stream/ui-stream';
+
+export {
+  executeWithCallPolicy,
+  estimateCost,
+  isRetryableProviderError,
+  isAbortError,
+  isOutputInvalidError,
+} from './policy/call-policy';
+
 export { createGuardrailPreflightMiddleware } from './middleware/guardrails-ai.middleware';
 
 export type { AIContextManagerOptions, ContextTrimStrategy } from './context/context.manager';
+export type {
+  ContextAssemblerPort,
+  ContextAssembleRequest,
+  AssembledContextResult,
+  CallContextRequest,
+  CallContextMeta,
+} from './context/context-port';
+export { injectAssembledContext, lastUserQuery } from './context/context-port';
 
 // Debug utility
 export { debug, setDebugEnabled } from './utils/debug';
@@ -121,6 +211,7 @@ export {
   AgentGraphCompiledOperation,
   PromptOperation,
   RAGOperation,
+  ContextAssembleOperation,
   AgentOperation,
   MLOperation,
   ParallelOperation,
@@ -149,6 +240,7 @@ export type {
   AgentPipelineOperationConfig,
   AgentSupervisorOperationConfig,
   AgentGraphCompiledOperationConfig,
+  ContextAssembleOperationConfig,
 } from './platform/hcel';
 
 export type {

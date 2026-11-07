@@ -158,6 +158,18 @@ export interface AICompletionResponse {
   };
   toolCalls?: AIToolCall[];
   finishReason?: string;
+  /** Populated when a ContextAssemblerPort ran before the call. */
+  contextMeta?: {
+    sourcesUsed?: string[];
+    tokenEstimate?: number;
+    plan?: { sources?: string[]; rationale?: string[] };
+    softFailed?: boolean;
+    error?: string;
+  };
+  /** Set when the tool loop suspends for durable human approval. */
+  approvalId?: string;
+  /** Opaque checkpoint id for resumeAfterApproval. */
+  checkpointId?: string;
 }
 
 /**

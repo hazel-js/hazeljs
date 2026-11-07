@@ -27,17 +27,19 @@ import type {
   AIFunction,
   AIMessageContentPart,
 } from './ai-enhanced.types';
+import type { CompleteCallConfig } from './ai-enhanced.service';
+import type { CallContextRequest, ContextAssemblerPort } from './context/context-port';
 import { messageContentToText } from './utils/message-content';
 
 /** Minimal interface so ChatBuilder doesn't import the full service class. */
 export interface ChatBuilderHost {
   complete(
     request: AICompletionRequest,
-    config?: { provider?: AIProvider; userId?: string; cacheKey?: string; cacheTTL?: number }
+    config?: CompleteCallConfig
   ): Promise<AICompletionResponse>;
   streamComplete(
     request: AICompletionRequest,
-    config?: { provider?: AIProvider; userId?: string }
+    config?: CompleteCallConfig
   ): AsyncGenerator<AIStreamChunk>;
   generateObject?<T>(
     prompt: string,
@@ -47,8 +49,15 @@ export interface ChatBuilderHost {
       model?: string;
       temperature?: number;
       maxRetries?: number;
+      context?: ContextAssemblerPort;
+      contextRequest?: CallContextRequest;
     }
-  ): Promise<T>;
+  ): Promise<{
+    object: T;
+    usage?: AICompletionResponse['usage'];
+    model: string;
+    finishReason?: string;
+  }>;
 }
 
 export class ChatBuilder {
@@ -65,6 +74,9 @@ export class ChatBuilder {
   private _functionCall?: 'auto' | 'none' | { name: string };
   private _extraParts: AIMessageContentPart[] = [];
   private _outputSchema?: z.ZodType<unknown>;
+  private _context?: ContextAssemblerPort;
+  private _contextRequest?: CallContextRequest;
+  private _modelName?: string;
 
   constructor(
     private readonly host: ChatBuilderHost,
@@ -94,6 +106,12 @@ export class ChatBuilder {
   /** Set the model name (e.g. 'gpt-4', 'claude-3-opus'). */
   model(name: string): this {
     this._model = name;
+    return this;
+  }
+
+  /** Named model from AIModule.register({ models }). */
+  modelName(name: string): this {
+    this._modelName = name;
     return this;
   }
 
@@ -141,6 +159,16 @@ export class ChatBuilder {
     return this;
   }
 
+  /**
+   * Assemble CAG/RAG/KAG/Memory via a duck-typed ContextAssemblerPort
+   * before the model call.
+   */
+  context(port: ContextAssemblerPort, request: CallContextRequest): this {
+    this._context = port;
+    this._contextRequest = request;
+    return this;
+  }
+
   /** Append an image URL to the user message (multimodal; OpenAI and others). */
   imageUrl(url: string): this {
     this._extraParts.push({ type: 'image_url', imageUrl: url });
@@ -169,23 +197,21 @@ export class ChatBuilder {
 
   /** Send the request and return the full response. */
   async send(): Promise<AICompletionResponse> {
-    return this.host.complete(this.buildRequest(), {
-      provider: this._provider,
-      userId: this._userId,
-      cacheKey: this._cacheKey,
-      cacheTTL: this._cacheTTL,
-    });
+    return this.host.complete(this.buildRequest(), this.buildConfig());
   }
 
   /** Send the request and return only the text content. */
   async text(): Promise<string> {
     if (this._outputSchema && this.host.generateObject) {
       const prompt = this.buildPromptString();
-      const data = await this.host.generateObject(prompt, this._outputSchema, {
+      const result = await this.host.generateObject(prompt, this._outputSchema, {
         provider: this._provider,
         model: this._model,
         temperature: this._temperature,
+        context: this._context,
+        contextRequest: this._contextRequest,
       });
+      const data = result.object;
       return typeof data === 'string' ? data : JSON.stringify(data);
     }
     const response = await this.send();
@@ -196,11 +222,14 @@ export class ChatBuilder {
   async object<T>(schema: z.ZodType<T>): Promise<T> {
     if (this.host.generateObject) {
       const prompt = this.buildPromptString();
-      return this.host.generateObject(prompt, schema, {
+      const result = await this.host.generateObject(prompt, schema, {
         provider: this._provider,
         model: this._model,
         temperature: this._temperature,
+        context: this._context,
+        contextRequest: this._contextRequest,
       });
+      return result.object;
     }
     const raw = await this.json<unknown>();
     return schema.parse(raw);
@@ -219,13 +248,22 @@ export class ChatBuilder {
 
   /** Stream the response, yielding chunks as they arrive. */
   async *stream(): AsyncGenerator<AIStreamChunk> {
-    yield* this.host.streamComplete(this.buildRequest(), {
-      provider: this._provider,
-      userId: this._userId,
-    });
+    yield* this.host.streamComplete(this.buildRequest(), this.buildConfig());
   }
 
   // ── Internal ─────────────────────────────────────────────────────────────
+
+  private buildConfig(): CompleteCallConfig {
+    return {
+      provider: this._provider,
+      userId: this._userId,
+      cacheKey: this._cacheKey,
+      cacheTTL: this._cacheTTL,
+      modelName: this._modelName,
+      context: this._context,
+      contextRequest: this._contextRequest,
+    };
+  }
 
   private buildRequest(): AICompletionRequest {
     const msgs = [...this._messages];

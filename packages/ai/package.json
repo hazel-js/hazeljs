@@ -29,6 +29,7 @@
     "zod-to-json-schema": "^3.25.0"
   },
   "devDependencies": {
+    "@hazeljs/eval": "^2.0.13",
     "@hazeljs/prompts": "^2.0.13",
     "@hazeljs/rag": "^2.0.13",
     "@types/node": "^20.19.39",
@@ -64,8 +65,11 @@
   "homepage": "https://hazeljs.ai",
   "peerDependencies": {
     "@hazeljs/agent": "^2.0.13",
+    "@hazeljs/agent-gatekeeper": "^2.0.13",
     "@hazeljs/cache": "^2.0.13",
+    "@hazeljs/context": "^2.0.13",
     "@hazeljs/core": "^2.0.13",
+    "@hazeljs/eval": "^2.0.13",
     "@hazeljs/guardrails": "^2.0.13",
     "@hazeljs/memory": "^2.0.13",
     "@hazeljs/ml": "^2.0.13",
@@ -81,6 +85,15 @@
       "optional": true
     },
     "@hazeljs/agent": {
+      "optional": true
+    },
+    "@hazeljs/agent-gatekeeper": {
+      "optional": true
+    },
+    "@hazeljs/context": {
+      "optional": true
+    },
+    "@hazeljs/eval": {
       "optional": true
     },
     "@hazeljs/ml": {
