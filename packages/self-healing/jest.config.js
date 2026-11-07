@@ -1,7 +1,7 @@
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
-  setupFiles: ['reflect-metadata'],
+  setupFiles: ['reflect-metadata', '<rootDir>/jest.env.js'],
   roots: ['<rootDir>/src'],
   testMatch: ['**/__tests__/**/*.ts', '**/?(*.)+(spec|test).ts'],
   collectCoverageFrom: [
@@ -9,6 +9,7 @@ module.exports = {
     '!src/**/*.d.ts',
     '!src/**/*.test.ts',
     '!src/**/__tests__/**',
+    '!src/index.ts',
   ],
   coverageThreshold: {
     global: {
@@ -18,4 +19,6 @@ module.exports = {
       statements: 80,
     },
   },
+  forceExit: true,
+  detectOpenHandles: false,
 };

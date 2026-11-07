@@ -23,18 +23,54 @@ describe('Hazel AI integration', () => {
     expect(result?.category).toBe('memory');
   });
 
-  it('resolves Hazel AI service from the DI container', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { Container } = require('@hazeljs/core') as {
-      Container: {
-        getInstance: () => {
-          register: (token: unknown, value: unknown) => void;
-          has: (token: unknown) => boolean;
-        };
-      };
-    };
-    const AIEnhancedService = class {
-      complete = jest.fn().mockResolvedValue({
+  it('passes model and provider options through to complete', async () => {
+    const complete = jest.fn().mockResolvedValue({
+      content: JSON.stringify({
+        category: 'memory',
+        confidence: 0.9,
+        message: 'ok',
+        suggestedStrategies: ['memory-cleanup'],
+      }),
+    });
+    const provider = createHazelAIDiagnosticsProvider(
+      { complete },
+      { model: 'gpt-test', provider: 'openai' }
+    );
+    await provider.diagnose(new Error('oom'), { target: 'Worker' });
+    expect(complete).toHaveBeenCalledWith(expect.objectContaining({ model: 'gpt-test' }), {
+      provider: 'openai',
+    });
+  });
+
+  it('resolveGlobal returns undefined when container has no AIEnhancedService', async () => {
+    await jest.isolateModulesAsync(async () => {
+      jest.doMock(
+        '@hazeljs/ai',
+        () => ({
+          AIEnhancedService: class AIEnhancedService {},
+        }),
+        { virtual: true }
+      );
+      jest.doMock('@hazeljs/core', () => ({
+        Container: {
+          getInstance: () => ({
+            has: () => false,
+            resolve: () => {
+              throw new Error('not registered');
+            },
+          }),
+        },
+      }));
+
+      const { resolveGlobalHazelAIDiagnosticsProvider: resolve } =
+        await import('../integrations/hazel-ai');
+      expect(resolve()).toBeUndefined();
+    });
+  });
+
+  it('resolveGlobal builds a provider when container has AIEnhancedService', async () => {
+    await jest.isolateModulesAsync(async () => {
+      const complete = jest.fn().mockResolvedValue({
         content: JSON.stringify({
           category: 'timeout',
           confidence: 0.7,
@@ -42,23 +78,44 @@ describe('Hazel AI integration', () => {
           suggestedStrategies: ['auto-restart'],
         }),
       });
-    };
+      class AIEnhancedService {
+        complete = complete;
+      }
+      jest.doMock('@hazeljs/ai', () => ({ AIEnhancedService }), { virtual: true });
+      jest.doMock('@hazeljs/core', () => ({
+        Container: {
+          getInstance: () => ({
+            has: (token: unknown) => token === AIEnhancedService,
+            resolve: () => new AIEnhancedService(),
+          }),
+        },
+      }));
 
-    jest.doMock('@hazeljs/ai', () => ({ AIEnhancedService }), { virtual: true });
+      const { resolveGlobalHazelAIDiagnosticsProvider: resolve } =
+        await import('../integrations/hazel-ai');
+      const provider = resolve({ model: 'm1' });
+      expect(provider).toBeDefined();
+      expect(typeof provider?.diagnose).toBe('function');
+    });
+  });
 
-    const container = Container.getInstance();
-    const instance = new AIEnhancedService();
-    container.register(AIEnhancedService, instance);
+  it('resolveGlobal returns undefined when ai package cannot load', async () => {
+    await jest.isolateModulesAsync(async () => {
+      jest.doMock(
+        '@hazeljs/ai',
+        () => {
+          throw new Error('not installed');
+        },
+        { virtual: true }
+      );
 
-    // Direct bridge still works when caller has the instance
-    const provider = createHazelAIDiagnosticsProvider(instance);
-    expect(provider).toBeDefined();
+      const { resolveGlobalHazelAIDiagnosticsProvider: resolve } =
+        await import('../integrations/hazel-ai');
+      expect(resolve()).toBeUndefined();
+    });
+  });
 
-    const result = await provider!.diagnose(new Error('timeout'), { target: 'Api.call' });
-    expect(result?.category).toBe('timeout');
-
-    // resolveGlobal may be undefined if @hazeljs/ai mock isn't loaded by require cache;
-    // createHazelAIDiagnosticsProvider is the supported explicit path.
-    void resolveGlobalHazelAIDiagnosticsProvider;
+  it('exports resolveGlobalHazelAIDiagnosticsProvider', () => {
+    expect(typeof resolveGlobalHazelAIDiagnosticsProvider).toBe('function');
   });
 });
