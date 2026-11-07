@@ -188,6 +188,7 @@ export type {
   IssueDelegationInput,
   RuntimeAdapter,
   GovernedToolExecutorOptions,
+  GovernedToolExecutor,
   GovernedToolResult,
   GovernedRuntimeOptions,
   GovernedRuntime,

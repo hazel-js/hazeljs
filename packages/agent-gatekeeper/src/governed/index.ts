@@ -43,6 +43,7 @@ export type { RuntimeAdapter, RuntimeStartRequest } from './adapters';
 export { createGovernedToolExecutor, createGovernedRuntime } from './runtime';
 export type {
   GovernedToolExecutorOptions,
+  GovernedToolExecutor,
   GovernedToolResult,
   GovernedRuntimeOptions,
   GovernedRuntime,

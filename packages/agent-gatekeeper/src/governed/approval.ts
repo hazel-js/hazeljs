@@ -41,7 +41,10 @@ export function withGovernedApproval(
 } {
   return {
     provider,
-    async createGoverned(request, extras) {
+    async createGoverned(
+      request: ApprovalRequest,
+      extras?: { argumentDigest?: string; actorId?: string }
+    ): Promise<GovernedApprovalRequest> {
       const enriched = {
         ...request,
         argumentDigest: extras?.argumentDigest,

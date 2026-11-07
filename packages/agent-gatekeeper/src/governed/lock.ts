@@ -26,7 +26,7 @@ export class MemoryDistributedLock implements DistributedLock {
     const owner = `mem_${now}_${Math.random().toString(36).slice(2)}`;
     this.held.set(key, { owner, expiresAt: now + ttlMs });
     return {
-      release: async () => {
+      release: async (): Promise<void> => {
         const cur = this.held.get(key);
         if (cur?.owner === owner) this.held.delete(key);
       },
@@ -53,7 +53,7 @@ export class RedisDistributedLock implements DistributedLock {
     const result = await this.redis.set(full, owner, 'PX', ttlMs, 'NX');
     if (result !== 'OK') return null;
     return {
-      release: async () => {
+      release: async (): Promise<void> => {
         if (this.redis.eval) {
           await this.redis.eval(
             `if redis.call("get", KEYS[1]) == ARGV[1] then return redis.call("del", KEYS[1]) else return 0 end`,

@@ -9,9 +9,14 @@ import type { ApprovalProvider } from '../approval/provider';
 import { buildApprovalRequest } from '../approval/provider';
 import { invocationFingerprint } from '../security';
 import type { AuditSink } from '../audit/sink';
-import type { ProtectedTool, ToolInvocationContext } from '../types';
+import type { ApprovalRequest, ProtectedTool, ToolInvocationContext } from '../types';
 import { argumentDigest } from './digest';
-import { withGovernedApproval } from './approval';
+import {
+  withGovernedApproval,
+  type GovernedApprovalRequest,
+  type GovernedConsumeInput,
+  type GovernedConsumeResult,
+} from './approval';
 import type { DistributedLock } from './lock';
 import type { ToolAttemptLedger } from './ledger';
 import { acknowledgeCancel, markUnknown, requestCancel, type GovernedRunStore } from './run-store';
@@ -19,6 +24,7 @@ import type { RuntimeAdapter } from './adapters';
 import {
   assertGovernedManifest,
   StaleApprovalError,
+  type GovernedRunRecord,
   type GovernedToolRequest,
   type TrustedCallerContext,
 } from './types';
@@ -45,7 +51,21 @@ export interface GovernedToolResult {
   attemptStatus?: string;
 }
 
-export function createGovernedToolExecutor(options: GovernedToolExecutorOptions) {
+export interface GovernedToolExecutor {
+  execute(caller: TrustedCallerContext, request: GovernedToolRequest): Promise<GovernedToolResult>;
+  governedApprovals: {
+    provider: ApprovalProvider;
+    consumeGoverned(input: GovernedConsumeInput): Promise<GovernedConsumeResult>;
+    createGoverned(
+      request: ApprovalRequest,
+      extras?: { argumentDigest?: string; actorId?: string }
+    ): Promise<GovernedApprovalRequest>;
+  };
+}
+
+export function createGovernedToolExecutor(
+  options: GovernedToolExecutorOptions
+): GovernedToolExecutor {
   const governed = withGovernedApproval(options.approvals, options.lock);
 
   async function execute(
@@ -254,17 +274,28 @@ export function createGovernedToolExecutor(options: GovernedToolExecutorOptions)
 export interface GovernedRuntimeOptions {
   adapter: RuntimeAdapter;
   runStore: GovernedRunStore;
-  toolExecutor: ReturnType<typeof createGovernedToolExecutor>;
+  toolExecutor: GovernedToolExecutor;
   audit?: AuditSink;
 }
 
-export function createGovernedRuntime(options: GovernedRuntimeOptions) {
+export interface GovernedRuntime {
+  adapter: RuntimeAdapter;
+  start(caller: TrustedCallerContext, input: unknown): Promise<GovernedRunRecord>;
+  status(runId: string): Promise<GovernedRunRecord | undefined>;
+  requestCancel(runId: string): Promise<GovernedRunRecord | undefined>;
+  executeTool(
+    caller: TrustedCallerContext,
+    request: GovernedToolRequest
+  ): Promise<GovernedToolResult>;
+}
+
+export function createGovernedRuntime(options: GovernedRuntimeOptions): GovernedRuntime {
   assertGovernedManifest(options.adapter.manifest);
 
   return {
     adapter: options.adapter,
 
-    async start(caller: TrustedCallerContext, input: unknown) {
+    async start(caller: TrustedCallerContext, input: unknown): Promise<GovernedRunRecord> {
       const started = await options.adapter.start({ caller, input });
       const record = await options.runStore.create({
         runId: caller.runId,
@@ -280,7 +311,7 @@ export function createGovernedRuntime(options: GovernedRuntimeOptions) {
       return record;
     },
 
-    async status(runId: string) {
+    async status(runId: string): Promise<GovernedRunRecord | undefined> {
       const record = await options.runStore.get(runId);
       if (!record) return undefined;
       if (record.providerSessionId) {
@@ -292,7 +323,7 @@ export function createGovernedRuntime(options: GovernedRuntimeOptions) {
       return record;
     },
 
-    async requestCancel(runId: string) {
+    async requestCancel(runId: string): Promise<GovernedRunRecord | undefined> {
       const record = await options.runStore.get(runId);
       if (!record) return undefined;
       const patch = requestCancel(record);
@@ -306,10 +337,11 @@ export function createGovernedRuntime(options: GovernedRuntimeOptions) {
       return updated;
     },
 
-    async executeTool(caller: TrustedCallerContext, request: GovernedToolRequest) {
+    async executeTool(
+      caller: TrustedCallerContext,
+      request: GovernedToolRequest
+    ): Promise<GovernedToolResult> {
       return options.toolExecutor.execute(caller, request);
     },
   };
 }
-
-export type GovernedRuntime = ReturnType<typeof createGovernedRuntime>;
