@@ -40,6 +40,22 @@ export const HAZEL_PACKAGES: HazelPackageMeta[] = [
     setupTemplate: null,
   },
   {
+    shortName: 'autonomous',
+    npm: '@hazeljs/autonomous',
+    label: 'Autonomous Application Runtime (@hazeljs/autonomous)',
+    hint: 'import { AutonomousModule } from "@hazeljs/autonomous";\n  // AutonomousModule.forRoot({ observability: { enabled: true } })',
+    moduleImport: "import { AutonomousModule } from '@hazeljs/autonomous';",
+    moduleExpression: 'AutonomousModule.forRoot({ observability: { enabled: true } })',
+    setupTemplate: `import { AutonomousModule } from '@hazeljs/autonomous';
+
+// Add AutonomousModule.forRoot(...) to your HazelModule imports.
+// Mark services with @Autonomous / @Observe / @Capability from @hazeljs/core.
+export const autonomousImports = [
+  AutonomousModule.forRoot({ observability: { enabled: true } }),
+];
+`,
+  },
+  {
     shortName: 'audit',
     npm: '@hazeljs/audit',
     label: 'Audit Logging (@hazeljs/audit)',

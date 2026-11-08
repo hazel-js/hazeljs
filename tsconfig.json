@@ -161,6 +161,7 @@
     { "path": "./packages/agent-gatekeeper" },
     { "path": "./packages/agent-vm" },
     { "path": "./packages/organism" },
-    { "path": "./packages/decision" }
+    { "path": "./packages/decision" },
+    { "path": "./packages/autonomous" }
   ]
 }
