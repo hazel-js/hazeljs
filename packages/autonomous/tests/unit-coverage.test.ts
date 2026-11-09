@@ -129,9 +129,10 @@ describe('unit coverage — policies, registry, envelope', () => {
     expect(redactPayload('short')).toBe('short');
     expect((redactPayload('x'.repeat(600)) as string).endsWith('…')).toBe(true);
     expect(redactPayload(['a', { password: 'secret' }])).toEqual(['a', { password: '[REDACTED]' }]);
-    expect(
-      redactPayload({ api_key: 'k', nested: { token: 't', ok: true } })
-    ).toEqual({ api_key: '[REDACTED]', nested: { token: '[REDACTED]', ok: true } });
+    expect(redactPayload({ api_key: 'k', nested: { token: 't', ok: true } })).toEqual({
+      api_key: '[REDACTED]',
+      nested: { token: '[REDACTED]', ok: true },
+    });
     // depth truncate
     let deep: unknown = { v: 1 };
     for (let i = 0; i < 12; i++) deep = { child: deep };
@@ -160,22 +161,26 @@ describe('unit coverage — rules engine', () => {
   it('returns no-action for disabled and observe-only', async () => {
     const engine = new RulesDecisionEngine();
     expect(
-      (await engine.evaluate({
-        observation: baseObs,
-        serviceId: 's',
-        mode: 'disabled',
-        allowedCapabilities: ['orders.retry'],
-        policies: [],
-      })).type
+      (
+        await engine.evaluate({
+          observation: baseObs,
+          serviceId: 's',
+          mode: 'disabled',
+          allowedCapabilities: ['orders.retry'],
+          policies: [],
+        })
+      ).type
     ).toBe('no-action');
     expect(
-      (await engine.evaluate({
-        observation: baseObs,
-        serviceId: 's',
-        mode: 'observe-only',
-        allowedCapabilities: ['orders.retry'],
-        policies: [],
-      })).type
+      (
+        await engine.evaluate({
+          observation: baseObs,
+          serviceId: 's',
+          mode: 'observe-only',
+          allowedCapabilities: ['orders.retry'],
+          policies: [],
+        })
+      ).type
     ).toBe('no-action');
   });
 
@@ -260,22 +265,28 @@ describe('unit coverage — loop protection', () => {
 
   it('enforces depth, actions, cooldown, and duplicate eventId', () => {
     const loop = new LoopProtector();
-    expect(() =>
-      loop.assertAllowed(obs({ depth: 3 }), protection, 0)
-    ).toThrow(/maxDepth/);
+    expect(() => loop.assertAllowed(obs({ depth: 3 }), protection, 0)).toThrow(/maxDepth/);
 
     expect(() => loop.assertAllowed(obs(), protection, 2)).toThrow(/maxActionsPerRun/);
 
     loop.assertAllowed(obs({ eventId: 'a', subject: 's' }), protection, 0);
-    expect(() =>
-      loop.assertAllowed(obs({ eventId: 'b', subject: 's' }), protection, 0)
-    ).toThrow(/Cooldown/);
+    expect(() => loop.assertAllowed(obs({ eventId: 'b', subject: 's' }), protection, 0)).toThrow(
+      /Cooldown/
+    );
 
     loop.clear();
     // Same eventId, different subject keys — cooldown key differs; fingerprint catches dup.
-    loop.assertAllowed(obs({ eventId: 'dup', subject: 'one' }), { ...protection, cooldownMs: 0 }, 0);
+    loop.assertAllowed(
+      obs({ eventId: 'dup', subject: 'one' }),
+      { ...protection, cooldownMs: 0 },
+      0
+    );
     expect(() =>
-      loop.assertAllowed(obs({ eventId: 'dup', subject: 'two' }), { ...protection, cooldownMs: 0 }, 0)
+      loop.assertAllowed(
+        obs({ eventId: 'dup', subject: 'two' }),
+        { ...protection, cooldownMs: 0 },
+        0
+      )
     ).toThrow(/Duplicate/);
   });
 
@@ -443,18 +454,21 @@ describe('unit coverage — memory store + agent bridge', () => {
   });
 
   it('createAgentBackedRunStore projects AgentRun records', async () => {
-    const runs = new Map<string, {
-      id: string;
-      agentName: string;
-      status: string;
-      input?: unknown;
-      output?: unknown;
-      error?: { message: string; code?: string };
-      tenantId?: string;
-      createdAt: Date;
-      updatedAt: Date;
-      metadata?: Record<string, unknown>;
-    }>();
+    const runs = new Map<
+      string,
+      {
+        id: string;
+        agentName: string;
+        status: string;
+        input?: unknown;
+        output?: unknown;
+        error?: { message: string; code?: string };
+        tenantId?: string;
+        createdAt: Date;
+        updatedAt: Date;
+        metadata?: Record<string, unknown>;
+      }
+    >();
 
     const repo = {
       async create(input: {
@@ -578,10 +592,7 @@ describe('unit coverage — AutonomousModule', () => {
     const container = Container.getInstance();
     container.register(Boot, new Boot());
 
-    const boot = new AutonomousBootstrapService(
-      { autoDiscover: false, services: [Boot] },
-      runtime
-    );
+    const boot = new AutonomousBootstrapService({ autoDiscover: false, services: [Boot] }, runtime);
     await boot.onModuleInit();
     expect(runtime.registry.listServices().length).toBe(1);
     await boot.onModuleDestroy();
@@ -904,7 +915,12 @@ describe('unit coverage — runtime branches', () => {
       runtime as unknown as {
         pendingApprovals: Map<
           string,
-          { runId: string; capabilityId: string; argumentsHash: string; gatekeeperApprovalId?: string }
+          {
+            runId: string;
+            capabilityId: string;
+            argumentsHash: string;
+            gatekeeperApprovalId?: string;
+          }
         >;
       }
     ).pendingApprovals;
@@ -1051,9 +1067,9 @@ describe('unit coverage — runtime branches', () => {
         timeline: [],
       },
     });
-    await expect(
-      runtime.resume('bad-decision', { approved: true, actor: 'x' })
-    ).rejects.toThrow(/no executable decision/);
+    await expect(runtime.resume('bad-decision', { approved: true, actor: 'x' })).rejects.toThrow(
+      /no executable decision/
+    );
 
     @Injectable()
     @Autonomous({
