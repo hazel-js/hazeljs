@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/autonomous",
-  "version": "2.0.13",
+  "version": "2.0.15",
   "description": "HazelJS Autonomous Application Runtime — governed observe→decide→approve→execute for ordinary services",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
