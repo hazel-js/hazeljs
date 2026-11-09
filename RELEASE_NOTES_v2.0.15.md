@@ -25,13 +25,13 @@ hazel add autonomous --setup
 
 ## Modes
 
-| Mode | Behavior |
-|------|----------|
-| `disabled` | Off |
-| `observe-only` | Record only |
-| `suggest` | Recommendations only |
-| `approval-required` | HITL before effects |
-| `governed-auto` | Execute granted + Gatekeeper-allowed capabilities |
+| Mode                | Behavior                                          |
+| ------------------- | ------------------------------------------------- |
+| `disabled`          | Off                                               |
+| `observe-only`      | Record only                                       |
+| `suggest`           | Recommendations only                              |
+| `approval-required` | HITL before effects                               |
+| `governed-auto`     | Execute granted + Gatekeeper-allowed capabilities |
 
 ## Docs
 
