@@ -1,0 +1,30 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "composite": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "paths": {
+      "@hazeljs/core": ["../core/dist"],
+      "@hazeljs/agent": ["../agent/dist"],
+      "@hazeljs/agent-gatekeeper": ["../agent-gatekeeper/dist"],
+      "@hazeljs/agent-vm": ["../agent-vm/dist"],
+      "@hazeljs/decision": ["../decision/dist"],
+      "@hazeljs/event-emitter": ["../event-emitter/dist"]
+    },
+    "types": ["jest", "node", "reflect-metadata"]
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "**/*.test.ts", "tests", "examples"],
+  "references": [
+    { "path": "../core" },
+    { "path": "../agent" },
+    { "path": "../agent-gatekeeper" },
+    { "path": "../agent-vm" },
+    { "path": "../decision" },
+    { "path": "../event-emitter" }
+  ]
+}

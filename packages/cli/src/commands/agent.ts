@@ -581,6 +581,133 @@ export function registerAgentCommand(program: Command): void {
     });
 
   runs
+    .command('timeline')
+    .description('Print autonomous (AAR) timeline events from AgentRun metadata')
+    .argument('<runId>', 'Run id')
+    .option('--store <path>', 'Path to runs JSON', DEFAULT_RUN_STORE)
+    .option('--dir <path>', 'Durable store directory')
+    .action(async (runId: string, opts: { store: string; dir?: string }) => {
+      try {
+        const { FileAgentRunRepository, createDurableRunStore } = await import('@hazeljs/agent');
+        const repo = opts.dir
+          ? createDurableRunStore(path.resolve(process.cwd(), opts.dir)).runRepository
+          : new FileAgentRunRepository(path.resolve(process.cwd(), opts.store));
+        const run = await repo.get(runId);
+        if (!run) {
+          // eslint-disable-next-line no-console
+          console.error(`Run not found: ${runId}`);
+          process.exitCode = 1;
+          return;
+        }
+        const timeline =
+          (
+            run.metadata as
+              | { timeline?: Array<{ at: string; type: string; detail?: string }> }
+              | undefined
+          )?.timeline ?? [];
+        for (const e of timeline) {
+          // eslint-disable-next-line no-console
+          console.log(`${e.at}  ${e.type}${e.detail ? ` — ${e.detail}` : ''}`);
+        }
+        if (timeline.length === 0) {
+          // eslint-disable-next-line no-console
+          console.log('(no AAR timeline on this run — check hazel logs for Agent OS timeline)');
+        }
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.error(e);
+        process.exitCode = 1;
+      }
+    });
+
+  runs
+    .command('replay')
+    .description('Dry-run replay summary for a recorded run (never repeats side effects)')
+    .argument('<runId>', 'Run id')
+    .option('--store <path>', 'Path to runs JSON', DEFAULT_RUN_STORE)
+    .option('--dir <path>', 'Durable store directory')
+    .option('--dry-run', 'Recorded outputs only (required for safety)', true)
+    .action(async (runId: string, opts: { store: string; dir?: string; dryRun?: boolean }) => {
+      try {
+        if (opts.dryRun === false) {
+          throw new Error('Live replay is disabled. Use --dry-run (default).');
+        }
+        const { FileAgentRunRepository, createDurableRunStore } = await import('@hazeljs/agent');
+        const repo = opts.dir
+          ? createDurableRunStore(path.resolve(process.cwd(), opts.dir)).runRepository
+          : new FileAgentRunRepository(path.resolve(process.cwd(), opts.store));
+        const run = await repo.get(runId);
+        if (!run) {
+          // eslint-disable-next-line no-console
+          console.error(`Run not found: ${runId}`);
+          process.exitCode = 1;
+          return;
+        }
+        // eslint-disable-next-line no-console
+        console.log(
+          JSON.stringify(
+            {
+              mode: 'dry-run',
+              sourceRunId: runId,
+              status: run.status,
+              metadata: run.metadata,
+              output: run.output,
+              note: 'Dry-run replay uses recorded state only — no live side effects.',
+            },
+            null,
+            2
+          )
+        );
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.error(e);
+        process.exitCode = 1;
+      }
+    });
+
+  runs
+    .command('diff')
+    .description('Diff two AgentRun / autonomous run records')
+    .argument('<runA>', 'First run id')
+    .argument('<runB>', 'Second run id')
+    .option('--store <path>', 'Path to runs JSON', DEFAULT_RUN_STORE)
+    .option('--dir <path>', 'Durable store directory')
+    .action(async (runA: string, runB: string, opts: { store: string; dir?: string }) => {
+      try {
+        const { FileAgentRunRepository, createDurableRunStore } = await import('@hazeljs/agent');
+        const repo = opts.dir
+          ? createDurableRunStore(path.resolve(process.cwd(), opts.dir)).runRepository
+          : new FileAgentRunRepository(path.resolve(process.cwd(), opts.store));
+        const a = await repo.get(runA);
+        const b = await repo.get(runB);
+        if (!a || !b) {
+          // eslint-disable-next-line no-console
+          console.error('Both runs required');
+          process.exitCode = 1;
+          return;
+        }
+        // eslint-disable-next-line no-console
+        console.log(
+          JSON.stringify(
+            {
+              runA,
+              runB,
+              status: { a: a.status, b: b.status },
+              metadata: { a: a.metadata, b: b.metadata },
+              output: { a: a.output, b: b.output },
+            },
+            null,
+            2
+          )
+        );
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.error(e);
+        process.exitCode = 1;
+      }
+    });
+
+  runs
     .command('cancel')
     .description('Mark an AgentRun CANCELLED in the file store (does not abort a live worker)')
     .argument('<runId>', 'AgentRun / execution id')

@@ -62,6 +62,7 @@ import { registerGatekeeperCommand } from './commands/gatekeeper';
 import { registerDecisionCommand } from './commands/decision';
 import { registerStoreCommand } from './commands/store';
 import { registerOrganismCommand } from './commands/organism';
+import { registerAutonomousRunCommands } from './commands/autonomous-runs';
 
 // Read version from package.json to ensure consistency
 const packageJson = JSON.parse(readFileSync(join(__dirname, '../package.json'), 'utf8'));
@@ -75,6 +76,7 @@ program
 
 // Local-first Agent OS aliases (`hazel new agent`, apply, ps, …) before `hazel new <app>`
 registerLocalOsCommands(program);
+registerAutonomousRunCommands(program);
 
 // New app command
 generateApp(program);
