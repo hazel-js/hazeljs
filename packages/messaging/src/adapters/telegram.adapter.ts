@@ -54,8 +54,7 @@ export class TelegramAdapter implements IChannelAdapter {
     const from = msg.from;
     const chat = msg.chat;
     const fromAny = from as
-      | { first_name?: string; last_name?: string; username?: string }
-      | undefined;
+      { first_name?: string; last_name?: string; username?: string } | undefined;
     const name =
       [fromAny?.first_name, fromAny?.last_name].filter(Boolean).join(' ') || fromAny?.username;
     const chatAny = chat as { id: number; type?: string };

@@ -602,8 +602,7 @@ export function registerAgentCommand(program: Command): void {
         const timeline =
           (
             run.metadata as
-              | { timeline?: Array<{ at: string; type: string; detail?: string }> }
-              | undefined
+              { timeline?: Array<{ at: string; type: string; detail?: string }> } | undefined
           )?.timeline ?? [];
         for (const e of timeline) {
           // eslint-disable-next-line no-console

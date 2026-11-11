@@ -3,11 +3,7 @@
  */
 
 export type AutonomousMode =
-  | 'disabled'
-  | 'observe-only'
-  | 'suggest'
-  | 'approval-required'
-  | 'governed-auto';
+  'disabled' | 'observe-only' | 'suggest' | 'approval-required' | 'governed-auto';
 
 export type CapabilityEffect = 'read-only' | 'idempotent' | 'reversible' | 'irreversible';
 

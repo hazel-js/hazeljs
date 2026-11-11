@@ -82,13 +82,7 @@ export interface A2ASkill {
 // ---------------------------------------------------------------------------
 
 export type A2ATaskState =
-  | 'submitted'
-  | 'working'
-  | 'input-required'
-  | 'completed'
-  | 'canceled'
-  | 'failed'
-  | 'unknown';
+  'submitted' | 'working' | 'input-required' | 'completed' | 'canceled' | 'failed' | 'unknown';
 
 /**
  * A2A Task — the core unit of work

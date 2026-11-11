@@ -16,7 +16,7 @@
     "clean": "rm -rf dist && find src -type f \\( -name '*.js' -o -name '*.d.ts' -o -name '*.d.ts.map' \\) -delete 2>/dev/null || true"
   },
   "dependencies": {
-    "zod": "^3.25.76"
+    "zod": "^4.6.7"
   },
   "peerDependencies": {
     "@hazeljs/core": "^2.0.15"

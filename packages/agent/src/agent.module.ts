@@ -127,8 +127,7 @@ export class AgentService {
     }
 
     let aiService:
-      | { complete: (request: unknown, config?: unknown) => Promise<unknown> }
-      | undefined;
+      { complete: (request: unknown, config?: unknown) => Promise<unknown> } | undefined;
     try {
       // Prefer DI container over process-global singleton
       // eslint-disable-next-line @typescript-eslint/no-require-imports

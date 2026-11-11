@@ -172,15 +172,14 @@ function memoryWithLock<T>(runId: string, fn: () => Promise<T>): Promise<T> {
   const _next = new Promise<void>((r) => {
     resolveNext = r;
   });
-  const chain = prev.then(
-    (): Promise<T> =>
-      (async (): Promise<T> => {
-        try {
-          return await fn();
-        } finally {
-          resolveNext!();
-        }
-      })()
+  const chain = prev.then((): Promise<T> =>
+    (async (): Promise<T> => {
+      try {
+        return await fn();
+      } finally {
+        resolveNext!();
+      }
+    })()
   );
   memoryLockQueues.set(runId, chain);
   return chain as Promise<T>;

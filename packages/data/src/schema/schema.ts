@@ -17,8 +17,7 @@ export type SchemaValidator<T = unknown> = (
 ) => { success: true; data: T } | { success: false; errors: SchemaValidationError[] };
 
 type SyncResult<T> =
-  | { success: true; data: T }
-  | { success: false; errors: SchemaValidationError[] };
+  { success: true; data: T } | { success: false; errors: SchemaValidationError[] };
 
 type Refinement<T> = { fn: (v: T) => boolean; message: string };
 type AsyncRefinement<T> = { fn: (v: T) => Promise<boolean>; message: string };

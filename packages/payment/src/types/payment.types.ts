@@ -94,8 +94,4 @@ export interface CreateCustomerOptions {
  * Subscription status filter for listSubscriptions.
  */
 export type SubscriptionStatusFilter =
-  | 'active'
-  | 'canceled'
-  | 'incomplete_expired'
-  | 'unpaid'
-  | 'all';
+  'active' | 'canceled' | 'incomplete_expired' | 'unpaid' | 'all';

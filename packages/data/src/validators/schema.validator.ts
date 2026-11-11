@@ -37,7 +37,6 @@ export class SchemaValidator {
     value: unknown
   ): { success: true; data: T } | { success: false; errors: SchemaValidationError[] } {
     return schema.validate(value) as
-      | { success: true; data: T }
-      | { success: false; errors: SchemaValidationError[] };
+      { success: true; data: T } | { success: false; errors: SchemaValidationError[] };
   }
 }

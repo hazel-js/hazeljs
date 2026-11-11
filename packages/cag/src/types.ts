@@ -7,14 +7,7 @@ export type TokenBudgetStrategy = 'truncate' | 'priority' | 'compress' | 'summar
 export type InvalidationStrategy = 'ttl' | 'version' | 'manual';
 
 export type ContextSourceType =
-  | 'text'
-  | 'json'
-  | 'file'
-  | 'url'
-  | 'function'
-  | 'rag'
-  | 'memory'
-  | 'custom';
+  'text' | 'json' | 'file' | 'url' | 'function' | 'rag' | 'memory' | 'custom';
 
 export interface ContextLoadInput {
   tenantId: string;

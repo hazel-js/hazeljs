@@ -372,8 +372,7 @@ export class QualityService {
    */
   schemaDrift(
     expected:
-      | string[]
-      | { shape?: Record<string, unknown>; toJsonSchema?: () => Record<string, unknown> }
+      string[] | { shape?: Record<string, unknown>; toJsonSchema?: () => Record<string, unknown> }
   ): SyncCheckFn {
     const expectedFields = Array.isArray(expected)
       ? expected

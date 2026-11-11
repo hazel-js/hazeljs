@@ -107,8 +107,7 @@ export class GrpcServer {
 
     const pkg = this.options.package;
     const pkgObj = this.protoDescriptor[pkg] as
-      | Record<string, { service: grpc.ServiceDefinition }>
-      | undefined;
+      Record<string, { service: grpc.ServiceDefinition }> | undefined;
 
     if (!pkgObj) {
       throw new Error(

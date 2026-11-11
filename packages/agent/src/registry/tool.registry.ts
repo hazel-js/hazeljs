@@ -6,7 +6,7 @@
 import { ToolMetadata, ToolDefinition } from '../types/tool.types';
 import { LLMToolDefinition } from '../types/llm.types';
 import { getToolMetadata, getAgentTools } from '../decorators/tool.decorator';
-import { zodToJsonSchema } from 'zod-to-json-schema';
+import { z } from 'zod';
 
 /**
  * Tool Registry - manages tool registration and lookup
@@ -104,13 +104,15 @@ export class ToolRegistry {
     return tools.map((tool) => {
       // Modern path: Zod schema available
       if (tool.schema) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const jsonSchema = zodToJsonSchema(tool.schema as any) as any;
+        const jsonSchema = z.toJSONSchema(tool.schema, { target: 'openapi-3.0' }) as {
+          properties?: Record<string, { type: string; description: string; enum?: unknown[] }>;
+          required?: string[];
+        };
         return {
           name: tool.name,
           description: tool.description,
           parameters: {
-            type: 'object',
+            type: 'object' as const,
             properties: jsonSchema.properties ?? {},
             required: jsonSchema.required ?? [],
           },

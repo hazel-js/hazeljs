@@ -7,7 +7,7 @@ const AGENT_TOOLS_CLASS_KEY = 'hazel:ai:agent-tools';
 export interface AgentToolOptions {
   name?: string;
   description: string;
-  inputSchema?: z.ZodTypeAny;
+  inputSchema?: z.ZodType;
 }
 
 export interface AgentToolMetadata extends AgentToolOptions {
@@ -65,6 +65,6 @@ export interface AgentToolContext {
 export interface RegisteredAgentTool {
   name: string;
   description: string;
-  inputSchema?: z.ZodTypeAny;
+  inputSchema?: z.ZodType;
   invoke: (input: unknown, ctx: AgentToolContext) => Promise<unknown>;
 }

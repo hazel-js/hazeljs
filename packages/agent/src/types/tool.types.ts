@@ -27,7 +27,7 @@ export interface ToolConfig {
   /** Legacy manual parameter definitions */
   parameters?: ToolParameter[];
   /** Modern Zod schema for strongly-typed input validation */
-  schema?: z.ZodTypeAny;
+  schema?: z.ZodType;
   requiresApproval?: boolean;
   timeout?: number;
   retries?: number;

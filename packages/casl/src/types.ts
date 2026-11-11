@@ -32,5 +32,4 @@ export interface IPolicyHandler<A extends AnyAbility = AnyAbility> {
 
 /** Union of the two supported handler shapes. */
 export type AnyPolicyHandler<A extends AnyAbility = AnyAbility> =
-  | PolicyHandler<A>
-  | IPolicyHandler<A>;
+  PolicyHandler<A> | IPolicyHandler<A>;

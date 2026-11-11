@@ -5,10 +5,7 @@
 export type MetricName = 'cpu' | 'memory' | 'requests' | 'latency' | string;
 
 export type ForecastModel =
-  | 'exponential-smoothing'
-  | 'seasonal-pattern'
-  | 'ai'
-  | 'time-series-forecast';
+  'exponential-smoothing' | 'seasonal-pattern' | 'ai' | 'time-series-forecast';
 
 export interface MetricSample {
   metric: MetricName;

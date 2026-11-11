@@ -64,9 +64,7 @@ export async function importGraph(
       ? extractRelationsFromStore(graphStore)
       : asList(
           graphStore.relationships as
-            | Map<string, GraphRagRelationshipLike>
-            | GraphRagRelationshipLike[]
-            | undefined
+            Map<string, GraphRagRelationshipLike> | GraphRagRelationshipLike[] | undefined
         );
 
   let entityCount = 0;

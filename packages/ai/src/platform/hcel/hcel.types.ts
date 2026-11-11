@@ -219,11 +219,7 @@ export interface HCELPersistenceService {
 
 export interface HCELEvent {
   type:
-    | 'operation.start'
-    | 'operation.complete'
-    | 'operation.error'
-    | 'chain.start'
-    | 'chain.complete';
+    'operation.start' | 'operation.complete' | 'operation.error' | 'chain.start' | 'chain.complete';
   chainId: string;
   operationId?: string;
   timestamp: number;

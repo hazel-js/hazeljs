@@ -45,6 +45,5 @@ export function getDecisionMetadata(
   propertyKey: string | symbol
 ): DecisionMethodMetadata | undefined {
   return Reflect.getMetadata(DECISION_METADATA_KEY, target, propertyKey) as
-    | DecisionMethodMetadata
-    | undefined;
+    DecisionMethodMetadata | undefined;
 }

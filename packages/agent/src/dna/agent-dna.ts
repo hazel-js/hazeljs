@@ -65,20 +65,10 @@ export interface AgentDnaSchedule {
 export type AgentDnaDecisionRiskLevel = 'low' | 'medium' | 'high' | 'critical';
 
 export type AgentDnaDecisionStrategyMode =
-  | 'auto'
-  | 'fast'
-  | 'standard'
-  | 'deliberate'
-  | 'human-required'
-  | 'rules';
+  'auto' | 'fast' | 'standard' | 'deliberate' | 'human-required' | 'rules';
 
 export type AgentDnaDecisionPolicyAction =
-  | 'allow'
-  | 'deny'
-  | 'critique'
-  | 'review'
-  | 'escalate'
-  | 'fallback';
+  'allow' | 'deny' | 'critique' | 'review' | 'escalate' | 'fallback';
 
 /** Declarative Decision DNA nested under an Agent DNA document. */
 export interface AgentDnaDecision {

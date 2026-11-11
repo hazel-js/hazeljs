@@ -198,8 +198,7 @@ export class ItemItemCFModel {
   @Train()
   async train(data: TrainingData): Promise<TrainingResult> {
     const ratings = (data.ratings ?? data.userItemRatings) as
-      | Record<string, Record<string, number>>
-      | undefined;
+      Record<string, Record<string, number>> | undefined;
     if (!ratings)
       throw new Error('Training data must include ratings: { userId: { itemId: score } }');
     this.cf.fit(ratings);

@@ -4,12 +4,7 @@
  */
 
 export type MemoryLifecycleStatus =
-  | 'candidate'
-  | 'accepted'
-  | 'quarantined'
-  | 'rejected'
-  | 'forgotten'
-  | 'superseded';
+  'candidate' | 'accepted' | 'quarantined' | 'rejected' | 'forgotten' | 'superseded';
 
 export type GovernedMemoryType = 'fact' | 'preference' | 'procedure';
 

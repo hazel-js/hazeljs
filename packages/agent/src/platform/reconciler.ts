@@ -130,8 +130,7 @@ export class PlatformReconciler {
 
   async reconcileDeployment(name: string, namespace = 'default'): Promise<ReconcileResult> {
     const deployment = this.repo.get('AgentDeployment', name, namespace) as
-      | AgentDeployment
-      | undefined;
+      AgentDeployment | undefined;
     if (!deployment) {
       throw new Error(`AgentDeployment not found: ${namespace}/AgentDeployment/${name}`);
     }
@@ -146,8 +145,7 @@ export class PlatformReconciler {
     const defRef = deployment.spec.definitionRef;
     const defNs = defRef.namespace ?? namespace;
     const definition = this.repo.get('AgentDefinition', defRef.name, defNs) as
-      | AgentDefinition
-      | undefined;
+      AgentDefinition | undefined;
 
     if (!definition) {
       status = setCondition(

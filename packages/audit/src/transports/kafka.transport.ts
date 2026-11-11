@@ -15,8 +15,7 @@ export interface KafkaAuditSender {
   send(
     topic: string,
     messages:
-      | { key?: string; value: string | Buffer }
-      | Array<{ key?: string; value: string | Buffer }>
+      { key?: string; value: string | Buffer } | Array<{ key?: string; value: string | Buffer }>
   ): Promise<void>;
 }
 

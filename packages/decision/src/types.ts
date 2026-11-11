@@ -7,31 +7,16 @@ import type { AgentDnaDecision } from '@hazeljs/agent';
 export type DecisionRiskLevel = 'low' | 'medium' | 'high' | 'critical';
 
 export type DecisionExecutionStrategy =
-  | 'fast'
-  | 'standard'
-  | 'deliberate'
-  | 'human-required'
-  | 'rules';
+  'fast' | 'standard' | 'deliberate' | 'human-required' | 'rules';
 
 export type DecisionStrategyInput =
-  | DecisionExecutionStrategy
-  | 'auto'
-  | { mode: DecisionExecutionStrategy | 'auto' | 'rules' };
+  DecisionExecutionStrategy | 'auto' | { mode: DecisionExecutionStrategy | 'auto' | 'rules' };
 
 export type DecisionPolicyAction =
-  | 'allow'
-  | 'deny'
-  | 'critique'
-  | 'review'
-  | 'escalate'
-  | 'fallback';
+  'allow' | 'deny' | 'critique' | 'review' | 'escalate' | 'fallback';
 
 export type DecisionConfidenceType =
-  | 'provider'
-  | 'heuristic'
-  | 'ensemble'
-  | 'calibrated'
-  | 'self-reported';
+  'provider' | 'heuristic' | 'ensemble' | 'calibrated' | 'self-reported';
 
 export interface DecisionRiskObject {
   level: DecisionRiskLevel;

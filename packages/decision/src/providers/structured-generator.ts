@@ -8,7 +8,7 @@ import type { z } from 'zod';
 export interface StructuredObjectGenerator {
   generateObject(
     prompt: string,
-    schema: z.ZodTypeAny,
+    schema: z.ZodType,
     options?: {
       provider?: string;
       model?: string;

@@ -30,7 +30,6 @@ import { debug } from './utils/debug';
 import { AIError, AIErrorCode } from './errors/ai.error';
 import { AIProviderError } from './errors/provider.error';
 import { z } from 'zod';
-import { zodToJsonSchema } from 'zod-to-json-schema';
 import { messageContentToText } from './utils/message-content';
 import type { AIMetrics } from './platform/hazel-ai.types';
 import { AITaskConfig, AITaskResult } from './ai.types';
@@ -431,8 +430,7 @@ export class AIEnhancedService {
       const { trace } = require('@opentelemetry/api') as {
         trace: {
           getActiveSpan: () =>
-            | { setAttribute: (k: string, v: string | number) => void }
-            | undefined;
+            { setAttribute: (k: string, v: string | number) => void } | undefined;
         };
       };
       const span = trace.getActiveSpan();
@@ -650,8 +648,8 @@ export class AIEnhancedService {
       contextRequest?: CallContextRequest;
     }
   ): Promise<GenerateObjectResult<T>> {
-    const zodSchema = schema as z.ZodTypeAny;
-    const jsonSchemaRaw = zodToJsonSchema(zodSchema as never, { target: 'openApi3' }) as Record<
+    const zodSchema = schema as z.ZodType;
+    const jsonSchemaRaw = z.toJSONSchema(zodSchema, { target: 'openapi-3.0' }) as Record<
       string,
       unknown
     >;

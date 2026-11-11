@@ -8,8 +8,7 @@ export interface MemoryQuery {
   userId: string;
   category?: MemoryCategory | MemoryCategory[];
   source?:
-    | import('./memory-item.types').MemorySource
-    | import('./memory-item.types').MemorySource[];
+    import('./memory-item.types').MemorySource | import('./memory-item.types').MemorySource[];
   minConfidence?: number;
   notExpired?: boolean;
   limit?: number;

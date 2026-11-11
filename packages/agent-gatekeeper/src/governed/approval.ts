@@ -64,8 +64,7 @@ export function withGovernedApproval(
       }
       try {
         const before = (await provider.get(input.approvalId)) as
-          | GovernedApprovalRequest
-          | undefined;
+          GovernedApprovalRequest | undefined;
         if (!before) return { valid: false, reason: 'Approval not found' };
 
         if (

@@ -4,7 +4,7 @@ import {
   type AgentToolContext,
   type RegisteredAgentTool,
 } from './agent-tool.decorator';
-import { zodToJsonSchema } from 'zod-to-json-schema';
+import { z } from 'zod';
 import type { AIFunction } from '../ai-enhanced.types';
 
 export class AgentToolRegistry {
@@ -51,7 +51,7 @@ export class AgentToolRegistry {
       let properties: Record<string, { type: string; description?: string; enum?: string[] }> = {};
       let required: string[] | undefined;
       if (tool.inputSchema) {
-        const json = zodToJsonSchema(tool.inputSchema as never, { target: 'openApi3' }) as {
+        const json = z.toJSONSchema(tool.inputSchema, { target: 'openapi-3.0' }) as {
           properties?: Record<string, { type?: string; description?: string; enum?: string[] }>;
           required?: string[];
         };

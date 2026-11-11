@@ -271,12 +271,10 @@ export function buildDecisionFlowDefinition(
       when: e.when
         ? (ctx: { state: Record<string, unknown>; outputs: Record<string, unknown> }): boolean => {
             const policy = (ctx.outputs.policy ?? ctx.state.policy) as
-              | { outcome?: string }
-              | undefined;
+              { outcome?: string } | undefined;
             const hitl = (ctx.outputs.hitl ?? ctx.state.hitl) as { status?: string } | undefined;
             const gate = (ctx.outputs.skillgate ?? ctx.state.skillgate) as
-              | { authorized?: boolean }
-              | undefined;
+              { authorized?: boolean } | undefined;
             if (e.when === 'policy.allow') return policy?.outcome === 'allow';
             if (e.when === 'policy.review|escalate') {
               return policy?.outcome === 'review' || policy?.outcome === 'escalate';

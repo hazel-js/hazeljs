@@ -9,9 +9,7 @@ export interface ApprovalRequest {
 }
 
 export type ApprovalDecision =
-  | 'approved'
-  | { rejected: string }
-  | { pending: { approvalId: string } };
+  'approved' | { rejected: string } | { pending: { approvalId: string } };
 
 export interface ApprovalPort {
   approve(request: ApprovalRequest): Promise<ApprovalDecision>;

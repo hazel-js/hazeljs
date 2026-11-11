@@ -91,9 +91,7 @@ export class PdfToAudioController {
 
     const state = await job.getState();
     const progress = job.progress as
-      | { completed?: number; total?: number; phase?: string }
-      | number
-      | undefined;
+      { completed?: number; total?: number; phase?: string } | number | undefined;
     const completedChunks = typeof progress === 'object' ? progress?.completed : undefined;
     const totalChunks = typeof progress === 'object' ? progress?.total : undefined;
     const phase = typeof progress === 'object' ? progress?.phase : undefined;

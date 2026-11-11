@@ -107,20 +107,18 @@ export class DatabaseStateManager implements IAgentStateManager {
       userId: record.userId || undefined,
       input: record.input,
       state: record.state as AgentState,
-      steps: (record.steps || []).map(
-        (step: DatabaseStep): AgentStep => ({
-          id: step.id,
-          agentId: step.agentId,
-          executionId: step.executionId,
-          stepNumber: step.stepNumber,
-          state: step.state as AgentState,
-          action: step.action as AgentStep['action'],
-          result: step.result as AgentStep['result'],
-          error: step.error as AgentStep['error'],
-          timestamp: new Date(step.timestamp),
-          duration: step.duration,
-        })
-      ),
+      steps: (record.steps || []).map((step: DatabaseStep): AgentStep => ({
+        id: step.id,
+        agentId: step.agentId,
+        executionId: step.executionId,
+        stepNumber: step.stepNumber,
+        state: step.state as AgentState,
+        action: step.action as AgentStep['action'],
+        result: step.result as AgentStep['result'],
+        error: step.error as AgentStep['error'],
+        timestamp: new Date(step.timestamp),
+        duration: step.duration,
+      })),
       memory: {
         conversationHistory: (record.conversationHistory || []).map((msg: DatabaseMessage) => ({
           role: msg.role,

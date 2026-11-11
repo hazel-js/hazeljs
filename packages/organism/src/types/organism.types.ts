@@ -230,13 +230,7 @@ export interface DetectedNeed {
 }
 
 export type OrganismDecisionAction =
-  | 'delegate'
-  | 'spawn'
-  | 'specialize'
-  | 'reproduce'
-  | 'terminate'
-  | 'reallocate'
-  | 'observe';
+  'delegate' | 'spawn' | 'specialize' | 'reproduce' | 'terminate' | 'reallocate' | 'observe';
 
 export interface ResourceRequest {
   tokens?: number;
@@ -493,11 +487,7 @@ export const DEFAULT_SURVIVAL_CONFIG: SurvivalConfig = {
 };
 
 export type SurvivalState =
-  | 'healthy'
-  | 'watch'
-  | 'resource-reduced'
-  | 'candidate-for-termination'
-  | 'terminated';
+  'healthy' | 'watch' | 'resource-reduced' | 'candidate-for-termination' | 'terminated';
 
 /** Phase 4 — agent economy */
 

@@ -204,7 +204,7 @@ export interface AgentGatekeeperOptions {
 export interface ToolExecutorGateInput {
   tool: {
     name: string;
-    schema?: z.ZodTypeAny;
+    schema?: z.ZodType;
     capability?: string;
     requiresApproval?: boolean;
     riskLevel?: ToolRiskLevel;

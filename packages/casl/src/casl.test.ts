@@ -160,9 +160,11 @@ describe('PoliciesGuard', () => {
   it('returns true when no handlers are provided', async () => {
     const casl = setupFactory();
     const Guard = PoliciesGuard();
-    const guard = new (Guard as new (svc: CaslService<AppAbility>) => {
-      canActivate: (ctx: unknown) => Promise<boolean>;
-    })(casl);
+    const guard = new (
+      Guard as new (svc: CaslService<AppAbility>) => {
+        canActivate: (ctx: unknown) => Promise<boolean>;
+      }
+    )(casl);
     const ctx = makeCtx({ id: '1', role: 'user' });
     await expect(guard.canActivate(ctx)).resolves.toBe(true);
   });
@@ -170,9 +172,11 @@ describe('PoliciesGuard', () => {
   it('returns true when all function handlers pass', async () => {
     const casl = setupFactory();
     const Guard = PoliciesGuard<AppAbility>((ability) => ability.can('read', 'Post'));
-    const guard = new (Guard as new (svc: CaslService<AppAbility>) => {
-      canActivate: (ctx: unknown) => Promise<boolean>;
-    })(casl);
+    const guard = new (
+      Guard as new (svc: CaslService<AppAbility>) => {
+        canActivate: (ctx: unknown) => Promise<boolean>;
+      }
+    )(casl);
     const ctx = makeCtx({ id: '1', role: 'user' });
     await expect(guard.canActivate(ctx)).resolves.toBe(true);
   });
@@ -180,9 +184,11 @@ describe('PoliciesGuard', () => {
   it('throws 403 when a handler returns false', async () => {
     const casl = setupFactory();
     const Guard = PoliciesGuard<AppAbility>((ability) => ability.can('delete', 'Post'));
-    const guard = new (Guard as new (svc: CaslService<AppAbility>) => {
-      canActivate: (ctx: unknown) => Promise<boolean>;
-    })(casl);
+    const guard = new (
+      Guard as new (svc: CaslService<AppAbility>) => {
+        canActivate: (ctx: unknown) => Promise<boolean>;
+      }
+    )(casl);
     const ctx = makeCtx({ id: '1', role: 'user' });
 
     await expect(guard.canActivate(ctx)).rejects.toMatchObject({ status: 403 });
@@ -191,9 +197,11 @@ describe('PoliciesGuard', () => {
   it('throws 401 when req.user is missing', async () => {
     const casl = setupFactory();
     const Guard = PoliciesGuard<AppAbility>((ability) => ability.can('read', 'Post'));
-    const guard = new (Guard as new (svc: CaslService<AppAbility>) => {
-      canActivate: (ctx: unknown) => Promise<boolean>;
-    })(casl);
+    const guard = new (
+      Guard as new (svc: CaslService<AppAbility>) => {
+        canActivate: (ctx: unknown) => Promise<boolean>;
+      }
+    )(casl);
     const ctx = makeCtx(undefined);
 
     await expect(guard.canActivate(ctx)).rejects.toMatchObject({ status: 401 });
@@ -207,9 +215,11 @@ describe('PoliciesGuard', () => {
     };
 
     const Guard = PoliciesGuard<AppAbility>(classHandler);
-    const guard = new (Guard as new (svc: CaslService<AppAbility>) => {
-      canActivate: (ctx: unknown) => Promise<boolean>;
-    })(casl);
+    const guard = new (
+      Guard as new (svc: CaslService<AppAbility>) => {
+        canActivate: (ctx: unknown) => Promise<boolean>;
+      }
+    )(casl);
     const ctx = makeCtx({ id: '1', role: 'user' });
 
     await expect(guard.canActivate(ctx)).resolves.toBe(true);
@@ -223,9 +233,11 @@ describe('PoliciesGuard', () => {
       (ability) => ability.can('delete', 'Post'),
       (ability) => ability.can('create', 'Post')
     );
-    const guard = new (Guard as new (svc: CaslService<AppAbility>) => {
-      canActivate: (ctx: unknown) => Promise<boolean>;
-    })(casl);
+    const guard = new (
+      Guard as new (svc: CaslService<AppAbility>) => {
+        canActivate: (ctx: unknown) => Promise<boolean>;
+      }
+    )(casl);
     const ctx = makeCtx({ id: 'admin-1', role: 'admin' });
     await expect(guard.canActivate(ctx)).resolves.toBe(true);
   });

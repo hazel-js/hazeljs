@@ -253,16 +253,14 @@ export class PipelineBuilder {
   toSchema(): PipelineDefinition {
     return {
       name: this._name,
-      steps: this._steps.map(
-        (s): SerializedStep => ({
-          name: s.name,
-          ...(s.when ? { conditional: true } : {}),
-          ...(s.parallel ? { parallel: true, parallelCount: s.parallel.length } : {}),
-          ...(s.branch ? { branch: true } : {}),
-          ...(s.retry ? { retry: s.retry } : {}),
-          ...(s.timeoutMs ? { timeoutMs: s.timeoutMs } : {}),
-        })
-      ),
+      steps: this._steps.map((s): SerializedStep => ({
+        name: s.name,
+        ...(s.when ? { conditional: true } : {}),
+        ...(s.parallel ? { parallel: true, parallelCount: s.parallel.length } : {}),
+        ...(s.branch ? { branch: true } : {}),
+        ...(s.retry ? { retry: s.retry } : {}),
+        ...(s.timeoutMs ? { timeoutMs: s.timeoutMs } : {}),
+      })),
     };
   }
 

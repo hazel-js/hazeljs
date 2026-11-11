@@ -241,8 +241,7 @@ export class AgentOS {
 
   async get(id: string): Promise<OfficeAgent | undefined> {
     const dep = this.platform.repo.get('AgentDeployment', id, this.namespace) as
-      | AgentDeployment
-      | undefined;
+      AgentDeployment | undefined;
     if (!dep) return undefined;
     return this.toOfficeAgent(dep);
   }
@@ -529,8 +528,7 @@ export class AgentOS {
 
   private readOccupancy(name: string): OfficeAgentOccupancy {
     const dep = this.platform.repo.get('AgentDeployment', name, this.namespace) as
-      | AgentDeployment
-      | undefined;
+      AgentDeployment | undefined;
     return occupancyFromBackend(dep?.status?.backend);
   }
 
@@ -539,8 +537,7 @@ export class AgentOS {
     patch: Partial<OfficeAgentOccupancy> & { desiredPhase?: DesiredAgentPhase }
   ): Promise<void> {
     const dep = this.platform.repo.get('AgentDeployment', name, this.namespace) as
-      | AgentDeployment
-      | undefined;
+      AgentDeployment | undefined;
     if (!dep) return;
     const backend = { ...(dep.status?.backend ?? {}), ...patch };
     this.platform.repo.updateStatus(

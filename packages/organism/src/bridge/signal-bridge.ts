@@ -79,11 +79,7 @@ export function incidentNeedMappings(
 }
 
 export type OutcomeVerdictLike =
-  | 'successful'
-  | 'partially_successful'
-  | 'neutral'
-  | 'unsuccessful'
-  | string;
+  'successful' | 'partially_successful' | 'neutral' | 'unsuccessful' | string;
 
 /** Map an outer outcome evaluation into AgentOutcomeReport for utility/reputation. */
 export function toAgentOutcomeReport(input: {

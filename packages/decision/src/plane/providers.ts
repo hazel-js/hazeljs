@@ -128,14 +128,11 @@ export function createRulesPlaneProvider<TAnswer extends string = string>(option
   };
 }
 
-function buildStructuredSchema(answers: readonly string[]): z.ZodObject<
-  {
-    answer: z.ZodEnum<[string, ...string[]]>;
-    summary: z.ZodOptional<z.ZodString>;
-    confidence: z.ZodOptional<z.ZodNumber>;
-  },
-  'strict'
-> {
+function buildStructuredSchema(answers: readonly string[]): z.ZodType<{
+  answer: string;
+  summary?: string;
+  confidence?: number;
+}> {
   if (answers.length < 1) {
     throw new Error('Structured provider requires at least one answer');
   }
