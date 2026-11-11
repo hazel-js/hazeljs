@@ -54,15 +54,22 @@ describe('upgrade smoke — Zod 4 schema round-trip (ai → gatekeeper)', () => 
 
   it('converts tool schemas to OpenAPI-shaped JSON Schema via z.toJSONSchema', () => {
     class OrderTools {
-      @AgentTool({
-        name: 'orders.lookup',
-        description: 'Look up an order',
-        inputSchema: orderSchema,
-      })
       async lookup(input: OrderInput): Promise<{ ok: true; orderId: string }> {
         return { ok: true, orderId: input.orderId };
       }
     }
+
+    // Apply classic MethodDecorator explicitly (3-arg) so this file typechecks
+    // under both experimentalDecorators and Stage-3-default IDE projects.
+    const descriptor = Object.getOwnPropertyDescriptor(OrderTools.prototype, 'lookup');
+    if (!descriptor) {
+      throw new Error('expected lookup method descriptor');
+    }
+    AgentTool({
+      name: 'orders.lookup',
+      description: 'Look up an order',
+      inputSchema: orderSchema,
+    })(OrderTools.prototype, 'lookup', descriptor);
 
     const registry = new AgentToolRegistry();
     registry.registerTools(new OrderTools());
