@@ -15,10 +15,7 @@ import {
   fromFunction,
 } from '../../packages/agent-gatekeeper/dist';
 import type { ToolInvocationContext } from '../../packages/agent-gatekeeper/dist';
-import {
-  createStructuredPlaneProvider,
-  defineDecision,
-} from '../../packages/decision/dist';
+import { createStructuredPlaneProvider, defineDecision } from '../../packages/decision/dist';
 import type { StructuredObjectGenerator } from '../../packages/decision/dist';
 import { OpenTelemetryProvider } from '../../packages/observability/dist';
 import { flow } from '../../packages/flow/dist';
