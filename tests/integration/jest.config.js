@@ -19,6 +19,8 @@ module.exports = {
     ],
   },
   moduleNameMapper: {
+    // Resolve from this package (CI installs via `npm ci` in tests/integration).
+    '^zod$': '<rootDir>/node_modules/zod',
     '^@hazeljs/core$': '<rootDir>/../../packages/core/src/index.ts',
     '^@hazeljs/config$': '<rootDir>/../../packages/config/src/index.ts',
     '^@hazeljs/auth$': '<rootDir>/../../packages/auth/src/index.ts',

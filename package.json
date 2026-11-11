@@ -26,7 +26,7 @@
     "version:minor": "lerna version minor --no-push",
     "version:major": "lerna version major --no-push",
     "test": "npm run test --workspaces --if-present && npm run test:integration",
-    "test:integration": "cd tests/integration && npm test",
+    "test:integration": "cd tests/integration && npm ci && npm test",
     "test:ci": "npm run test:ci --workspaces --if-present && npm run test:integration",
     "lint": "npm run lint --workspaces --if-present",
     "lint:fix": "npm run lint:fix --workspaces --if-present",
