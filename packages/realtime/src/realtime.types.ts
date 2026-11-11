@@ -11,16 +11,7 @@ export type RealtimeProvider = 'openai' | 'gemini';
  * OpenAI Realtime voice options
  */
 export type OpenAIVoice =
-  | 'alloy'
-  | 'ash'
-  | 'ballad'
-  | 'coral'
-  | 'echo'
-  | 'sage'
-  | 'shimmer'
-  | 'verse'
-  | 'marin'
-  | 'cedar';
+  'alloy' | 'ash' | 'ballad' | 'coral' | 'echo' | 'sage' | 'shimmer' | 'verse' | 'marin' | 'cedar';
 
 /**
  * Audio format for real-time sessions

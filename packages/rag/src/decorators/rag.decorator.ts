@@ -9,14 +9,7 @@ type NewableFunction = new (...args: unknown[]) => unknown;
 
 export interface RAGModuleOptions {
   vectorDB?:
-    | 'pinecone'
-    | 'weaviate'
-    | 'qdrant'
-    | 'chroma'
-    | 'milvus'
-    | 'pgvector'
-    | 'redis'
-    | 'memory';
+    'pinecone' | 'weaviate' | 'qdrant' | 'chroma' | 'milvus' | 'pgvector' | 'redis' | 'memory';
   embeddingModel?: string;
   chunkSize?: number;
   chunkOverlap?: number;

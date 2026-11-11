@@ -253,9 +253,7 @@ import { RagModule } from '@hazeljs/rag';
 
 @HazelModule({
   imports: [
-    RagModule.forRoot({
-      /* ... */
-    }),
+    RagModule.forRoot({/* ... */}),
     AgentModule.forRoot({
       runtime: { defaultMaxSteps: 10 },
       agents: [SupportAgent, SalesAgent],

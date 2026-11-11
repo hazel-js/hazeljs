@@ -26,8 +26,7 @@ export function createProductionGatekeeper(deps: {
     send(
       topic: string,
       messages:
-        | { key?: string; value: string | Buffer }
-        | Array<{ key?: string; value: string | Buffer }>
+        { key?: string; value: string | Buffer } | Array<{ key?: string; value: string | Buffer }>
     ): Promise<void>;
   };
 }): AgentGatekeeper {

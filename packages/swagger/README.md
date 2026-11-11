@@ -21,9 +21,7 @@ import { SwaggerModule } from '@hazeljs/swagger';
 
 @HazelModule({
   imports: [SwaggerModule],
-  controllers: [
-    /* ... */
-  ],
+  controllers: [/* ... */],
 })
 export class AppModule {}
 

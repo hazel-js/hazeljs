@@ -120,9 +120,7 @@ Wire a duck-typed `@hazeljs/context` `ContextService` so every `complete()` / Ch
 import { AIEnhancedService, AIModule } from '@hazeljs/ai';
 import { ContextService } from '@hazeljs/context';
 
-const contextService = new ContextService({
-  /* cag, rag, kag, memory ports */
-});
+const contextService = new ContextService({/* cag, rag, kag, memory ports */});
 AIModule.register({ contextService });
 
 const ai = new AIEnhancedService();

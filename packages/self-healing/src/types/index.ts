@@ -3,12 +3,7 @@
  */
 
 export type HealingStrategyName =
-  | 'auto-restart'
-  | 'config-rollback'
-  | 'memory-cleanup'
-  | 'safe-mode'
-  | 'pod-restart'
-  | 'hpa-boost';
+  'auto-restart' | 'config-rollback' | 'memory-cleanup' | 'safe-mode' | 'pod-restart' | 'hpa-boost';
 
 export type HealingNotifyEvent =
   | 'critical-healing'
@@ -22,12 +17,7 @@ export type HealingNotifyEvent =
   | 'graceful-drain';
 
 export type ErrorCategory =
-  | 'dependency'
-  | 'config'
-  | 'memory'
-  | 'timeout'
-  | 'performance'
-  | 'unknown';
+  'dependency' | 'config' | 'memory' | 'timeout' | 'performance' | 'unknown';
 
 export type SelfHealOnError = 'diagnose-and-fix' | 'retry-only' | 'safe-mode-only';
 

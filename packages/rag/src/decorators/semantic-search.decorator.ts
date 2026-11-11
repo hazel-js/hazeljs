@@ -185,8 +185,7 @@ export function getTimeWeightedRetrievalOptions(
   propertyKey: string | symbol
 ): TimeWeightedRetrievalOptions | undefined {
   return Reflect.getMetadata(TIME_WEIGHTED_RETRIEVAL_KEY, target, propertyKey) as
-    | TimeWeightedRetrievalOptions
-    | undefined;
+    TimeWeightedRetrievalOptions | undefined;
 }
 
 /**

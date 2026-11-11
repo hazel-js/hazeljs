@@ -61,10 +61,7 @@ export class RealtimeModule {
     module: typeof RealtimeModule;
     providers: Array<{
       provide:
-        | string
-        | typeof RealtimeService
-        | typeof RealtimeGateway
-        | typeof RealtimeBootstrapService;
+        string | typeof RealtimeService | typeof RealtimeGateway | typeof RealtimeBootstrapService;
       useFactory?: unknown;
       useClass?: typeof RealtimeBootstrapService;
       inject?: unknown[];
