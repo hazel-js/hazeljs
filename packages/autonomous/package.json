@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/autonomous",
-  "version": "2.0.15",
+  "version": "2.0.16",
   "description": "HazelJS Autonomous Application Runtime — governed observe→decide→approve→execute for ordinary services",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -44,9 +44,9 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
-    "@hazeljs/agent": "^2.0.15",
-    "@hazeljs/agent-gatekeeper": "^2.0.15",
-    "@hazeljs/core": "^2.0.15",
+    "@hazeljs/agent": "^2.0.16",
+    "@hazeljs/agent-gatekeeper": "^2.0.16",
+    "@hazeljs/core": "^2.0.16",
     "@types/jest": "^29.5.14",
     "@types/node": "^20.19.39",
     "jest": "^29.7.0",
@@ -56,12 +56,12 @@
     "typescript": "^6.0.3"
   },
   "peerDependencies": {
-    "@hazeljs/agent": "^2.0.15",
-    "@hazeljs/agent-gatekeeper": "^2.0.15",
-    "@hazeljs/agent-vm": "^2.0.15",
-    "@hazeljs/core": "^2.0.15",
-    "@hazeljs/decision": "^2.0.15",
-    "@hazeljs/event-emitter": "^2.0.15",
+    "@hazeljs/agent": "^2.0.16",
+    "@hazeljs/agent-gatekeeper": "^2.0.16",
+    "@hazeljs/agent-vm": "^2.0.16",
+    "@hazeljs/core": "^2.0.16",
+    "@hazeljs/decision": "^2.0.16",
+    "@hazeljs/event-emitter": "^2.0.16",
     "@opentelemetry/api": "^1.9.0"
   },
   "peerDependenciesMeta": {

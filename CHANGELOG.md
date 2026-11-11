@@ -44,6 +44,23 @@ All notable changes to HazelJS are documented here. The project follows [Semanti
 
 ---
 
+## [2.0.16] - 2026-11-11
+
+### Fixed / upgraded
+
+- Within-range dependency refresh (axios, bullmq, ioredis, openai, stripe, graphql, gRPC, prettier, typescript-eslint, and more)
+- **Zod 4** (`^4.6.7`) for `ai`, `agent`, `agent-gatekeeper`, `decision`, `eval`, `autonomous`
+- Native `z.toJSONSchema` replaces `zod-to-json-schema` in AI/agent tool registries
+- **Vitest 3** for `flow` / `flow-runtime`
+- OpenTelemetry alignment in `observability` (SDK 2.12 + exporter 0.223; API pinned to 1.9.1)
+- Upgrade-smoke integration tests covering Zod round-trips, Decision plane, unmocked OTEL, and flow↔flow-runtime
+
+### Breaking
+
+- Apps consuming Zod schemas from the upgraded packages should use Zod 4
+
+---
+
 ## [1.0.1] - 2026-06-14
 
 ### `@hazeljs/agent` — Production hardening
