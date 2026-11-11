@@ -15,12 +15,12 @@
 
 ### Dependencies
 
-| Area | Change |
-| ---- | ------ |
+| Area              | Change                                                                                                                                                                          |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Lockfile / ranges | Within-range updates including `axios`, `bullmq`, `ioredis`, `openai`, `stripe`, `graphql`, `@casl/ability`, `@grpc/*`, `prettier`, `typescript-eslint`, `ws`, `tsx`, `typeorm` |
-| Zod | `^3.25` → `^4.6.7` in `ai`, `agent`, `agent-gatekeeper`, `decision`, `eval`, `autonomous` |
-| Vitest | `^2.1.9` → `^3.2.7` (+ `@vitest/coverage-v8`) in `flow`, `flow-runtime` |
-| OpenTelemetry | Exporter `^0.223.0`, resources/SDK `^2.12.1`; root pin `@opentelemetry/api@1.9.1` (SDK peer requires `<1.10`) |
+| Zod               | `^3.25` → `^4.6.7` in `ai`, `agent`, `agent-gatekeeper`, `decision`, `eval`, `autonomous`                                                                                       |
+| Vitest            | `^2.1.9` → `^3.2.7` (+ `@vitest/coverage-v8`) in `flow`, `flow-runtime`                                                                                                         |
+| OpenTelemetry     | Exporter `^0.223.0`, resources/SDK `^2.12.1`; root pin `@opentelemetry/api@1.9.1` (SDK peer requires `<1.10`)                                                                   |
 
 ### Code fixes for Zod 4
 
