@@ -63,6 +63,7 @@ export * from './dna/hot-reload';
 export * from './dna/marketplace';
 export * from './dna/bootstrap-from-dna';
 export * from './dna/apply-dna-overlays';
+export * from './dna/apply-agent-dna';
 export * from './llm/http-llm.provider';
 export * from './store';
 export * from './knowledge/knowledge-freshness';

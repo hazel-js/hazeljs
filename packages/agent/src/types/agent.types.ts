@@ -170,6 +170,15 @@ export interface AgentConfig {
   tenantId?: string;
   /** Capability grants for tool/memory/model policy (AOS-008). Empty = unrestricted. */
   capabilities?: string[];
+  /**
+   * Auto-load Agent DNA on `registerAgentInstance`.
+   * - `true` → `{projectRoot}/dna/{name}.dna.json`
+   * - `string` → absolute path, or path relative to `projectRoot`
+   *
+   * Applies prompt / description / model and merges PolicyEngine rules without
+   * replacing `@Tool` handlers. Gatekeeper merges DNA policies via `bindGatekeeper`.
+   */
+  dna?: boolean | string;
 }
 
 type NewableFunction = new (...args: unknown[]) => unknown;

@@ -51,6 +51,49 @@ describe('createAgentGatekeeperBundle', () => {
     expect(getBoundGatekeeper(runtime)).toBe(bundle);
   });
 
+  it('bindGatekeeper merges DNA already on runtime and later onDnaApplied', () => {
+    const listeners: Array<(name: string, dna: { policies?: unknown[] }) => void> = [];
+    const runtime = {
+      getAllAgentDna: () => [
+        {
+          policies: [
+            {
+              id: 'commit-hitl',
+              tool: 'commit',
+              effect: 'require_approval',
+              priority: 50,
+            },
+          ],
+        },
+      ],
+      onDnaApplied: (listener: (name: string, dna: { policies?: unknown[] }) => void) => {
+        listeners.push(listener);
+        return () => undefined;
+      },
+    };
+    const policies: AgentGatekeeperPolicy[] = [allowAll];
+    const bundle = createAgentGatekeeperBundle({
+      policies,
+      audit: { testMode: true },
+    });
+    bindGatekeeper(runtime, bundle);
+    expect(policies.some((p) => p.id === 'commit-hitl')).toBe(true);
+
+    for (const listener of listeners) {
+      listener('bot', {
+        policies: [
+          {
+            id: 'extra-hitl',
+            tool: 'write',
+            effect: 'require_approval',
+            priority: 10,
+          },
+        ],
+      });
+    }
+    expect(policies.some((p) => p.id === 'extra-hitl')).toBe(true);
+  });
+
   it('formatGatekeeperBootLine includes tenant extras', () => {
     const bundle = createAgentGatekeeperBundle({
       policies: [allowAll],

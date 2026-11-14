@@ -39,6 +39,11 @@ export interface AgentModuleOptions {
   runtime?: AgentRuntimeConfig;
   agents?: NewableFunction[];
   autoDiscover?: boolean;
+  /**
+   * Project root for `@Agent({ dna: true | relativePath })` resolution.
+   * Copied onto `runtime.projectRoot` when not already set.
+   */
+  projectRoot?: string;
   /** Pre-connected Redis client or URL (use forRootAsync when only url is available) */
   redis?: { client?: RedisClientLike; url?: string };
   /** Prisma client for database-backed state */
@@ -475,6 +480,7 @@ export class AgentModule {
       runtime.stateManagerOptions ?? AgentModule.buildStateManagerOptions(config);
     runtime.useRedisApprovals = runtime.useRedisApprovals ?? config.useRedisApprovals;
     runtime.observabilityProvider = runtime.observabilityProvider ?? config.observabilityProvider;
+    runtime.projectRoot = runtime.projectRoot ?? config.projectRoot;
 
     AgentModule.options = { ...config, runtime };
     return AgentModule;
@@ -497,6 +503,7 @@ export class AgentModule {
 
     runtime.useRedisApprovals = runtime.useRedisApprovals ?? config.useRedisApprovals;
     runtime.observabilityProvider = runtime.observabilityProvider ?? config.observabilityProvider;
+    runtime.projectRoot = runtime.projectRoot ?? config.projectRoot;
 
     AgentModule.options = { ...config, runtime };
     return AgentModule;

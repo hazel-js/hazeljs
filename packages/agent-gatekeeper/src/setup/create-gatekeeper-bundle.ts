@@ -20,8 +20,15 @@ import { createToolExecutorGate, type CreateToolExecutorGateOptions } from '../a
 import { resolveAuditSink, type ResolveAuditSinkOptions } from './resolve-audit-sink';
 import { tryCreateRedisApprovalProvider } from './redis-from-env';
 import type { HumanTaskLookup } from './human-task-resume';
+import { mergeDnaPolicies } from '../policy/bridge';
 
 export type GatekeeperApprovalBackend = 'human-task' | 'redis' | 'memory' | 'custom';
+
+/** Minimal AgentRuntime surface used by bindGatekeeper for DNA policy merge. */
+export interface DnaAwareRuntime {
+  getAllAgentDna?(): Array<{ policies?: unknown[] }>;
+  onDnaApplied?(listener: (agentName: string, dna: { policies?: unknown[] }) => void): () => void;
+}
 
 export interface HumanTaskServiceLike extends HumanTaskLookup {
   create(input: {
@@ -78,8 +85,29 @@ export interface AgentGatekeeperBundle {
 
 const bound = new WeakMap<object, AgentGatekeeperBundle>();
 
+/**
+ * Bind Gatekeeper to a runtime for resume helpers.
+ * Also merges Agent DNA policies into `bundle.policies` for agents already
+ * registered and for any later `@Agent({ dna })` apply via `onDnaApplied`.
+ */
 export function bindGatekeeper(runtime: object, bundle: AgentGatekeeperBundle): void {
   bound.set(runtime, bundle);
+
+  const dnaRuntime = runtime as DnaAwareRuntime;
+  const merge = (dna: { policies?: unknown[] }): void => {
+    mergeDnaPolicies(bundle.policies, dna);
+  };
+
+  if (typeof dnaRuntime.getAllAgentDna === 'function') {
+    for (const dna of dnaRuntime.getAllAgentDna()) {
+      merge(dna);
+    }
+  }
+  if (typeof dnaRuntime.onDnaApplied === 'function') {
+    dnaRuntime.onDnaApplied((_agentName, dna) => {
+      merge(dna);
+    });
+  }
 }
 
 export function getBoundGatekeeper(runtime: object): AgentGatekeeperBundle | undefined {

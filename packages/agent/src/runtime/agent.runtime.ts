@@ -50,6 +50,7 @@ import { attachTimelineStore } from '../timeline/timeline.store';
 import { hotReloadAgentDna, type HotReloadResult } from '../dna/hot-reload';
 import { installAgentPackage } from '../dna/marketplace';
 import type { AgentDna, MarketplaceAgentPackage } from '../dna/agent-dna';
+import { loadAndApplyAgentDna, type DnaAppliedListener } from '../dna/apply-agent-dna';
 import { CircuitBreakerError } from '@hazeljs/resilience';
 import { InMemoryAgentRunRepository, type AgentRunRepository } from '../run/agent-run.repository';
 import { AgentRunStatus } from '../run/agent-run.types';
@@ -183,6 +184,11 @@ export interface AgentRuntimeConfig {
    * Enforces effect lattice rules and journals reversible tool outputs.
    */
   effectGate?: import('../effects/tool-effect-gate.interface').IToolEffectGate;
+  /**
+   * Project root for resolving `@Agent({ dna: true })` → `dna/{name}.dna.json`
+   * and relative DNA paths. Defaults to `process.cwd()`.
+   */
+  projectRoot?: string;
 }
 
 /**
@@ -228,6 +234,9 @@ export class AgentRuntime {
     (event: AgentEvent<StateChangedEvent>) => void,
     (event: AgentEvent) => void
   > = new Map();
+  /** DNA applied via `@Agent({ dna })` on registerAgentInstance. */
+  private agentDnaByName = new Map<string, AgentDna>();
+  private dnaAppliedListeners = new Set<DnaAppliedListener>();
 
   constructor(config: AgentRuntimeConfig = {}) {
     this.config = {
@@ -414,11 +423,77 @@ export class AgentRuntime {
    * Register an agent instance.
    * Also patches any @Delegate-decorated methods so they call the target agent
    * via this runtime rather than executing the original (stub) method body.
+   * When `@Agent({ dna })` is set, loads and applies DNA (prompt/model/policies)
+   * without replacing `@Tool` handlers.
    */
   registerAgentInstance(agentName: string, instance: unknown): void {
     this.agentRegistry.registerInstance(agentName, instance);
     this.patchDelegateMethods(agentName, instance);
     this.toolRegistry.registerAgentTools(agentName, instance);
+    this.applyDecoratorDna(agentName);
+  }
+
+  /**
+   * DNA loaded for an agent via `@Agent({ dna })` (if any).
+   */
+  getAgentDna(agentName: string): AgentDna | undefined {
+    return this.agentDnaByName.get(agentName);
+  }
+
+  /** All DNA documents applied through decorator auto-load. */
+  getAllAgentDna(): AgentDna[] {
+    return Array.from(this.agentDnaByName.values());
+  }
+
+  /**
+   * Subscribe to DNA apply events (used by Gatekeeper `bindGatekeeper` to merge policies).
+   * Returns an unsubscribe function.
+   */
+  onDnaApplied(listener: DnaAppliedListener): () => void {
+    this.dnaAppliedListeners.add(listener);
+    return () => {
+      this.dnaAppliedListeners.delete(listener);
+    };
+  }
+
+  private applyDecoratorDna(agentName: string): void {
+    const meta = this.agentRegistry.getAgent(agentName);
+    if (meta?.dna === undefined || meta.dna === false) {
+      return;
+    }
+    try {
+      const { dna } = loadAndApplyAgentDna(
+        {
+          getAgent: (name) => this.agentRegistry.getAgent(name),
+          patchAgent: (name, patch) => this.agentRegistry.patchAgent(name, patch),
+          getPolicyEngine: () => this.policyEngine,
+          setPolicyEngine: (engine) => this.setPolicyEngine(engine),
+        },
+        {
+          name: agentName,
+          dna: meta.dna,
+          projectRoot: this.config.projectRoot,
+        }
+      );
+      this.agentDnaByName.set(agentName, dna);
+      for (const listener of this.dnaAppliedListeners) {
+        try {
+          listener(agentName, dna);
+        } catch (err) {
+          this.logger.warn(
+            `DNA applied listener failed for ${agentName}: ${
+              err instanceof Error ? err.message : String(err)
+            }`
+          );
+        }
+      }
+    } catch (err) {
+      this.logger.error(
+        `Failed to apply @Agent DNA for ${agentName}`,
+        err instanceof Error ? err : undefined
+      );
+      throw err;
+    }
   }
 
   /**
