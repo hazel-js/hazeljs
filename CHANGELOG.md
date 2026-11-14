@@ -6,6 +6,23 @@ All notable changes to HazelJS are documented here. The project follows [Semanti
 
 ## [Unreleased]
 
+---
+
+## [2.0.17] - 2026-11-14
+
+### Added
+
+- **`@hazeljs/agent` — Decorator DNA**: `@Agent({ dna: true | path })` auto-loads DNA on `registerAgentInstance`; `applyAgentDna` / `loadDnaFile` / `resolveAgentDnaPath`; `projectRoot` on `AgentModule` / `AgentRuntimeConfig`; `getAgentDna` / `onDnaApplied`
+- **`@hazeljs/agent-gatekeeper`**: `bindGatekeeper` merges DNA policies (existing + `onDnaApplied`)
+
+### Notes
+
+- Opt-in only; store/platform overlay unchanged. No breaking changes.
+
+---
+
+## [Unreleased — historical Agent OS notes]
+
 ### Agent OS — production hardening
 
 - Separate **critique** vs **validate** loop stages; failed loops return `FAILED` below `successScore`; softer no-LLM heuristic (score 70)
