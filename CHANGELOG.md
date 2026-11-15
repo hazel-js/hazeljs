@@ -8,6 +8,21 @@ All notable changes to HazelJS are documented here. The project follows [Semanti
 
 ---
 
+## [2.0.18] - 2026-11-15
+
+### Added
+
+- **`@hazeljs/memory` — Governed learning loop**: `learnFromTurn` (extract → classify → capture → auto-accept); `RuleBasedObservationExtractor`; wired `extract` / `consolidate` hooks; `defaultClassifyMemoryCandidate`; optional Decision Plane `classifier`
+- **`PrismaGovernedMemoryStore` / `createPrismaGovernedMemoryStore`**: durable store for `governed_memory_records` via `@hazeljs/memory/prisma`
+- Docs: `docs/guides/governed-memory.md` updated for the full turn loop
+
+### Notes
+
+- Opt-in only; `MemoryService` / `memory_items` unchanged. No breaking changes.
+- Blog: https://hazeljs.ai/blog/governed-learning-memory-learn-from-turn
+
+---
+
 ## [2.0.17] - 2026-11-14
 
 ### Added
