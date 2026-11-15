@@ -13,6 +13,12 @@ export function createPrismaMemoryStore(prisma: PrismaMemoryStoreOptions['prisma
 
 export type { PrismaMemoryStoreOptions } from './store/adapters/prisma.store';
 export {
+  createPrismaGovernedMemoryStore,
+  PrismaGovernedMemoryStore,
+  type GovernedMemoryPrismaClient,
+  type PrismaGovernedMemoryStoreOptions,
+} from './learning/prisma-governed.store';
+export {
   createMemoryPrismaClient,
   getMemoryPrismaClient,
   resetMemoryPrismaClient,

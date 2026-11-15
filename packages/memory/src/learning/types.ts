@@ -78,11 +78,32 @@ export interface RetrieveMemoryQuery {
 
 export type MemoryHookName = 'capture' | 'extract' | 'consolidate' | 'persist' | 'retrieve';
 
+/** Optional turn payload for extract/consolidate hooks during learnFromTurn. */
+export interface MemoryHookTurn {
+  userText: string;
+  assistantText?: string;
+  subjectId: string;
+  sessionId?: string;
+  runId?: string;
+}
+
 export interface MemoryHookContext {
   name: MemoryHookName;
   record?: GovernedMemoryRecord;
   query?: RetrieveMemoryQuery;
   auth?: MemoryAuthContext;
+  /** Present during learnFromTurn extract/consolidate phases. */
+  turn?: MemoryHookTurn;
+  /** Draft observations during consolidate (mutable list for hooks to filter/transform via continue). */
+  observations?: Array<{
+    type: GovernedMemoryType;
+    content: string;
+    provenance: MemoryProvenance;
+    sourceTrust: number;
+    extractionConfidence: number;
+    factConfidence?: number;
+    sourceId?: string;
+  }>;
 }
 
 export type MemoryHookResult =

@@ -31,8 +31,8 @@ model MemoryItem {
 }
 
 /// Opt-in governed learning memory. Existing MemoryItem rows are unchanged.
-/// MemoryService never queries this table. No Prisma store adapter ships yet —
-/// runtime uses InMemoryGovernedMemoryStore; apps may wire this table themselves.
+/// MemoryService never queries this table. Use createPrismaGovernedMemoryStore
+/// from '@hazeljs/memory/prisma' (or InMemoryGovernedMemoryStore for tests).
 model GovernedMemoryRecord {
   id                   String    @id
   tenantId             String    @map("tenant_id")

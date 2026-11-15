@@ -16,6 +16,7 @@
 - **Optional TTL** — e.g. for emotional state or short-lived context
 - **Composite store** — Route by category to primary + optional episodic/vector store
 - **RAG & agent integration** — Use `createHazelMemoryStoreAdapter` from `@hazeljs/rag/memory-hazel` to back `MemoryManager`; share one store across `RAGPipelineWithMemory` and `AgentRuntime`
+- **Governed learning loop** — Opt-in `GovernedMemoryService.learnFromTurn()` extracts preferences/facts, classifies, captures, and auto-accepts high-trust user prefs (see [governed-memory guide](../../docs/guides/governed-memory.md))
 
 ## Installation
 
@@ -103,6 +104,28 @@ const rag = new RAGPipelineWithMemory(config, memoryManager, llmFunction);
 ```
 
 See [@hazeljs/rag README](../rag/README.md) (Memory System / Using @hazeljs/memory as the backend) for full details.
+
+## Governed learning (opt-in)
+
+Separate from `MemoryService` / `memory_items`:
+
+```typescript
+import { GovernedMemoryService, InMemoryGovernedMemoryStore } from '@hazeljs/memory';
+
+const memory = new GovernedMemoryService({ store: new InMemoryGovernedMemoryStore() });
+const auth = { tenantId: 't1', actorId: 'u1', allowedScopes: ['customer'] };
+
+await memory.learnFromTurn({
+  auth,
+  tenantId: 't1',
+  subjectId: 'u1',
+  userText: 'I prefer email for refunds.',
+});
+
+const rows = await memory.retrieve({ auth, subjectId: 'u1', text: 'email' });
+```
+
+Durable store: `createPrismaGovernedMemoryStore` from `@hazeljs/memory/prisma`.
 
 ## Scripts
 

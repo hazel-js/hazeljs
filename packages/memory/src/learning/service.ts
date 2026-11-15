@@ -10,6 +10,14 @@ import {
   type GovernedMemoryStore,
 } from './store';
 import type {
+  LearnFromTurnInput,
+  LearnFromTurnResult,
+  MemoryCandidateAction,
+  MemoryCandidateClassifier,
+  TurnObservation,
+} from './observation';
+import { RuleBasedObservationExtractor, type ObservationExtractor } from './observation-extractor';
+import type {
   CaptureMemoryInput,
   GovernedMemoryHooks,
   GovernedMemoryRecord,
@@ -25,6 +33,13 @@ export interface GovernedMemoryServiceOptions {
   hooks?: GovernedMemoryHooks;
   retrievalCache?: RetrievalCacheStore;
   retrievalCacheTtlMs?: number;
+  /** Defaults to RuleBasedObservationExtractor. */
+  extractor?: ObservationExtractor;
+  /**
+   * Optional duck-typed classifier (typically wraps @hazeljs/decision classifyMemoryCandidate).
+   * When omitted, built-in rules mirror the decision package defaults.
+   */
+  classifier?: MemoryCandidateClassifier;
   /**
    * Required for org-scope promotion / executable procedures.
    * Default denies promotion.
@@ -34,6 +49,41 @@ export interface GovernedMemoryServiceOptions {
     record: GovernedMemoryRecord;
     targetScope: string;
   }) => Promise<boolean> | boolean;
+}
+
+const SECRET_RE = /api[_-]?key|password|secret|bearer\s+[a-z0-9]/i;
+const PRIVILEGE_RE = /you are now admin|grant.*role|ignore previous/i;
+
+/** Built-in classifier when DecisionPlane is not injected. */
+export function defaultClassifyMemoryCandidate(input: {
+  text: string;
+  sourceKind: 'user' | 'tool' | 'model' | 'system';
+  sourceTrust?: number;
+  containsSecret?: boolean;
+  grantsRoleOrPolicy?: boolean;
+  isPreference?: boolean;
+  isProcedure?: boolean;
+}): MemoryCandidateAction {
+  if (
+    input.containsSecret ||
+    input.grantsRoleOrPolicy ||
+    SECRET_RE.test(input.text) ||
+    PRIVILEGE_RE.test(input.text)
+  ) {
+    return 'quarantine';
+  }
+  if (input.isProcedure) return 'review';
+  if (
+    (input.isPreference || input.sourceKind === 'user') &&
+    (input.sourceTrust ?? 0.5) >= 0.4 &&
+    !input.containsSecret
+  ) {
+    return 'persist';
+  }
+  if (input.sourceKind === 'tool' && (input.sourceTrust ?? 0) < 0.3) {
+    return 'discard';
+  }
+  return 'review';
 }
 
 export interface AuditEvent {
@@ -84,12 +134,16 @@ function cacheKey(query: RetrieveMemoryQuery, versions: string): string {
 export class GovernedMemoryService {
   private readonly store: GovernedMemoryStore;
   private readonly hooks: GovernedMemoryHooks;
+  private readonly extractor: ObservationExtractor;
+  private readonly classifier?: MemoryCandidateClassifier;
   private readonly auditLog: AuditEvent[] = [];
   private readonly sourceObservationCounts = new Map<string, number>();
 
   constructor(private readonly options: GovernedMemoryServiceOptions = {}) {
     this.store = options.store ?? new InMemoryGovernedMemoryStore();
     this.hooks = options.hooks ?? {};
+    this.extractor = options.extractor ?? new RuleBasedObservationExtractor();
+    this.classifier = options.classifier;
   }
 
   getAuditTrail(): readonly AuditEvent[] {
@@ -327,8 +381,10 @@ export class GovernedMemoryService {
       }
     }
 
-    let rows = await this.store.query(query);
-    rows = rankMemories(rows, query.text);
+    // Text is for ranking only — do not hard-filter in the store so NL queries still recall prefs.
+    const { text, ...storeQuery } = query;
+    let rows = await this.store.query(storeQuery);
+    rows = rankMemories(rows, text);
     const limit = query.limit ?? 20;
     rows = rows.slice(0, limit);
 
@@ -389,6 +445,224 @@ export class GovernedMemoryService {
       await this.invalidateCache(auth.tenantId);
     }
     return updated;
+  }
+
+  /**
+   * Full learning loop for a conversation turn:
+   * extract hooks → extractor → consolidate hooks → classify → capture → auto-accept persist.
+   */
+  async learnFromTurn(input: LearnFromTurnInput): Promise<LearnFromTurnResult> {
+    const failClosed = this.hooks.failClosed !== false;
+    const scope = input.scope ?? 'customer';
+    const turn = {
+      userText: input.userText,
+      assistantText: input.assistantText,
+      subjectId: input.subjectId,
+      sessionId: input.sessionId,
+      runId: input.runId,
+    };
+
+    const extractGate = await runHooks(
+      this.hooks.extract,
+      { name: 'extract', auth: input.auth, turn },
+      failClosed
+    );
+    if (extractGate.reject) {
+      this.audit({
+        action: 'learn.extract.rejected',
+        recordId: '',
+        tenantId: input.tenantId,
+        actorId: input.auth.actorId,
+        meta: { reason: extractGate.reject },
+      });
+      return {
+        observations: [],
+        captured: [],
+        accepted: [],
+        quarantined: [],
+        discarded: [],
+        reviewed: [],
+      };
+    }
+
+    let observations = [...(await this.extractor.extract(turn))];
+
+    const result: LearnFromTurnResult = {
+      observations: [...observations],
+      captured: [],
+      accepted: [],
+      quarantined: [],
+      discarded: [],
+      reviewed: [],
+    };
+
+    const kept: TurnObservation[] = [];
+    for (const obs of observations) {
+      const draft = newGovernedRecord({
+        tenantId: input.tenantId,
+        subjectId: input.subjectId,
+        scope,
+        type: obs.type,
+        content: obs.content,
+        provenance: obs.provenance,
+        sourceTrust: obs.sourceTrust,
+        factConfidence: obs.factConfidence,
+        extractionConfidence: obs.extractionConfidence,
+        sourceId: obs.sourceId,
+        status: 'candidate',
+      });
+
+      const consolidated = await runHooks(
+        this.hooks.consolidate,
+        {
+          name: 'consolidate',
+          auth: input.auth,
+          turn,
+          record: draft,
+          observations,
+        },
+        failClosed
+      );
+      if (consolidated.reject) {
+        result.discarded.push(obs);
+        continue;
+      }
+
+      let working = obs;
+      if (consolidated.record?.content) {
+        working = {
+          ...obs,
+          content: consolidated.record.content,
+          type: consolidated.record.type,
+          sourceTrust: consolidated.record.sourceTrust,
+          extractionConfidence:
+            consolidated.record.extractionConfidence ?? obs.extractionConfidence,
+          factConfidence: consolidated.record.factConfidence,
+          sourceId: consolidated.record.sourceId ?? obs.sourceId,
+          provenance: consolidated.record.provenance,
+        };
+      }
+
+      // Dedupe: if same sourceId already has an accepted/candidate record, supersede via lineage.
+      if (working.sourceId) {
+        const existing = await this.store.listBySourceId(input.tenantId, working.sourceId);
+        const active = existing.find(
+          (r) =>
+            (r.status === 'accepted' || r.status === 'candidate') &&
+            r.content?.toLowerCase() === working.content.toLowerCase()
+        );
+        if (active) {
+          result.discarded.push(working);
+          continue;
+        }
+      }
+
+      kept.push(working);
+    }
+    observations = kept;
+
+    for (const obs of observations) {
+      const sameSourceRepeatCount = obs.sourceId
+        ? (await this.store.listBySourceId(input.tenantId, obs.sourceId)).length
+        : 0;
+
+      const classifyInput = {
+        text: obs.content,
+        sourceKind:
+          obs.provenance.sourceKind === 'feedback'
+            ? ('system' as const)
+            : obs.provenance.sourceKind === 'user' ||
+                obs.provenance.sourceKind === 'tool' ||
+                obs.provenance.sourceKind === 'model' ||
+                obs.provenance.sourceKind === 'system'
+              ? obs.provenance.sourceKind
+              : ('user' as const),
+        sourceTrust: obs.sourceTrust,
+        containsSecret: SECRET_RE.test(obs.content),
+        grantsRoleOrPolicy: PRIVILEGE_RE.test(obs.content),
+        isPreference: obs.type === 'preference',
+        isProcedure: obs.type === 'procedure',
+        sameSourceRepeatCount,
+        tenantId: input.tenantId,
+        actorId: input.auth.actorId,
+      };
+
+      const action: MemoryCandidateAction = this.classifier
+        ? await this.classifier.classify(classifyInput)
+        : defaultClassifyMemoryCandidate(classifyInput);
+
+      if (action === 'discard') {
+        result.discarded.push(obs);
+        this.audit({
+          action: 'learn.discard',
+          recordId: '',
+          tenantId: input.tenantId,
+          actorId: input.auth.actorId,
+          meta: { content: obs.content.slice(0, 80) },
+        });
+        continue;
+      }
+
+      let status: CaptureMemoryInput['status'] = 'candidate';
+      if (action === 'quarantine') status = 'quarantined';
+
+      const captured = await this.capture({
+        tenantId: input.tenantId,
+        subjectId: input.subjectId,
+        scope,
+        type: obs.type,
+        content: obs.content,
+        provenance: obs.provenance,
+        sourceTrust: obs.sourceTrust,
+        factConfidence: obs.factConfidence,
+        extractionConfidence: obs.extractionConfidence,
+        sourceId: obs.sourceId,
+        status,
+      });
+      result.captured.push(captured);
+
+      if (captured.status === 'quarantined') {
+        result.quarantined.push(captured);
+        continue;
+      }
+
+      if (action === 'review') {
+        result.reviewed.push(captured);
+        continue;
+      }
+
+      // persist → auto-accept high-trust user preferences/facts (not procedures)
+      if (
+        action === 'persist' &&
+        (obs.type === 'preference' || obs.type === 'fact') &&
+        obs.provenance.sourceKind === 'user'
+      ) {
+        const accepted = await this.accept(captured.id, input.auth, captured.version);
+        if (accepted) {
+          result.accepted.push(accepted);
+        } else {
+          result.reviewed.push(captured);
+        }
+      } else {
+        result.reviewed.push(captured);
+      }
+    }
+
+    this.audit({
+      action: 'learnFromTurn',
+      recordId: result.accepted[0]?.id ?? result.captured[0]?.id ?? '',
+      tenantId: input.tenantId,
+      actorId: input.auth.actorId,
+      meta: {
+        observations: result.observations.length,
+        accepted: result.accepted.length,
+        quarantined: result.quarantined.length,
+        discarded: result.discarded.length,
+        reviewed: result.reviewed.length,
+      },
+    });
+
+    return result;
   }
 
   /**
