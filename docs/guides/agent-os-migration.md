@@ -20,12 +20,12 @@ Additive APIs only. Existing apps that do not call the new entry points keep tod
 | API                                              | Package                     | Persistence that ships                                                                |
 | ------------------------------------------------ | --------------------------- | ------------------------------------------------------------------------------------- |
 | `defineDecision` / `createDecisionPlane`         | `@hazeljs/decision`         | `MemoryDecisionCacheStore` / `RedisDecisionCacheStore`                                |
-| `createGovernedRuntime` / governed tool executor | `@hazeljs/agent-gatekeeper` | Redis lock + ledger; **in-memory** `MemoryGovernedRunStore`                           |
-| `GovernedMemoryService`                          | `@hazeljs/memory`           | **`InMemoryGovernedMemoryStore`** (SQL migration exists; no Prisma store adapter yet) |
+| `createGovernedRuntime` / governed tool executor | `@hazeljs/agent-gatekeeper` | Redis lock + ledger; **in-memory** `MemoryGovernedRunStore` (no governed SQL adapter yet) |
+| `GovernedMemoryService` / `learnFromTurn`        | `@hazeljs/memory`           | `InMemoryGovernedMemoryStore` **or** `createPrismaGovernedMemoryStore` (`@hazeljs/memory/prisma`) |
 
 ## Database
 
-Optional additive Prisma model + SQL under `packages/memory/prisma/` for `governed_memory_records`. Run only if you adopt governed memory and wire your own store. Existing `memory_items` rows are untouched. `MemoryService` startup does not query the new table.
+Optional additive Prisma model + SQL under `packages/memory/prisma/` for `governed_memory_records`. Use `createPrismaGovernedMemoryStore` when you need durable governed memory. Existing `memory_items` rows are untouched. `MemoryService` startup does not query the new table.
 
 ## Approvals
 
@@ -35,5 +35,5 @@ Governed paths set optional `argumentDigest` and wrap consume with `withGoverned
 
 1. Decision Plane for routing / risk labels (no write path change).
 2. GovernedRuntime beside existing tool gates for destructive tools.
-3. Governed memory for preferences that need correct/forget with CAS (in-memory store today).
+3. Governed memory via `learnFromTurn` for preferences that need correct/forget with CAS (in-memory or Prisma store).
 4. Wire `createGovernedMemoryContributor` into `ContextService` instead of `createMemoryContributor` when actor scoping matters.

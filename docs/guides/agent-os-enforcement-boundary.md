@@ -28,13 +28,14 @@ This work does **not** claim HIPAA/GDPR compliance, complete computer-use mediat
 
 ## Shipped vs roadmap
 
-| Shipped                                             | Roadmap / unavailable                                                               |
-| --------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| Decision Plane (rules, structured, inject-only jev) | OpenAI Decisions API (undocumented)                                                 |
-| Local governed runtime + Redis lock/ledger ports    | Governed SQL run store; live OpenAI Agents without opt-in                           |
-| Governed memory + **in-memory** store               | Prisma/Postgres governed memory store adapter                                       |
-| Redis Decision Plane cache port                     | Automatic product adoption into Zynli Flows                                         |
-| Framework APIs only in HazelJS                      | Zynli product demo lives under `zynli/zynli-reference` (not published with HazelJS) |
+| Shipped                                                                                          | Roadmap / unavailable                                                                 |
+| ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------- |
+| Decision Plane (rules, structured, inject-only jev)                                              | OpenAI Decisions API (undocumented; typed unavailable stub only)                      |
+| Local governed runtime + Redis lock/ledger ports                                                 | Governed SQL run store (`MemoryGovernedRunStore` today)                               |
+| Governed memory: `learnFromTurn` + in-memory + **Prisma** (`createPrismaGovernedMemoryStore`)    | Memory `review` candidates in Gatekeeper HITL UI (accept APIs exist)                  |
+| Redis Decision Plane cache port                                                                  | Live OpenAI Agents path (adapter + `HAZEL_OPENAI_AGENTS_LIVE` gate; `start` refuses)  |
+| Framework APIs only in HazelJS                                                                   | `@AutonomousOptimization`; automatic Zynli Flows product adoption                     |
+| —                                                                                                | Zynli product demo lives under `zynli/zynli-reference` (not published with HazelJS)   |
 
 ## Threat boundaries
 
