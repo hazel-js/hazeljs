@@ -17,10 +17,10 @@ Additive APIs only. Existing apps that do not call the new entry points keep tod
 
 ## New opt-in entry points
 
-| API                                              | Package                     | Persistence that ships                                                                |
-| ------------------------------------------------ | --------------------------- | ------------------------------------------------------------------------------------- |
-| `defineDecision` / `createDecisionPlane`         | `@hazeljs/decision`         | `MemoryDecisionCacheStore` / `RedisDecisionCacheStore`                                |
-| `createGovernedRuntime` / governed tool executor | `@hazeljs/agent-gatekeeper` | Redis lock + ledger; **in-memory** `MemoryGovernedRunStore` (no governed SQL adapter yet) |
+| API                                              | Package                     | Persistence that ships                                                                            |
+| ------------------------------------------------ | --------------------------- | ------------------------------------------------------------------------------------------------- |
+| `defineDecision` / `createDecisionPlane`         | `@hazeljs/decision`         | `MemoryDecisionCacheStore` / `RedisDecisionCacheStore`                                            |
+| `createGovernedRuntime` / governed tool executor | `@hazeljs/agent-gatekeeper` | Redis lock + ledger; **in-memory** `MemoryGovernedRunStore` (no governed SQL adapter yet)         |
 | `GovernedMemoryService` / `learnFromTurn`        | `@hazeljs/memory`           | `InMemoryGovernedMemoryStore` **or** `createPrismaGovernedMemoryStore` (`@hazeljs/memory/prisma`) |
 
 ## Database
