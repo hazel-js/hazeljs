@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/context",
-  "version": "2.0.18",
+  "version": "2.1.0",
   "description": "Unified Agent Context Engine for HazelJS — plan and assemble CAG, RAG, KAG, and Memory",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -33,12 +33,12 @@
     "typescript": "^6.0.3"
   },
   "peerDependencies": {
-    "@hazeljs/core": "^2.0.18",
-    "@hazeljs/cag": "^2.0.18",
-    "@hazeljs/kag": "^2.0.18",
-    "@hazeljs/rag": "^2.0.18",
-    "@hazeljs/memory": "^2.0.18",
-    "@hazeljs/event-emitter": "^2.0.18"
+    "@hazeljs/core": "^2.1.0",
+    "@hazeljs/cag": "^2.1.0",
+    "@hazeljs/kag": "^2.1.0",
+    "@hazeljs/rag": "^2.1.0",
+    "@hazeljs/memory": "^2.1.0",
+    "@hazeljs/event-emitter": "^2.1.0"
   },
   "peerDependenciesMeta": {
     "@hazeljs/cag": {
