@@ -58,6 +58,9 @@
       "path": "./packages/payment"
     },
     {
+      "path": "./packages/mail"
+    },
+    {
       "path": "./packages/config"
     },
     {

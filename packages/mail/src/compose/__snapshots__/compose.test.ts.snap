@@ -1,0 +1,23 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`EmailComposer renders stable HTML and text 1`] = `
+"<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /></head>
+<body style="margin:0;padding:0;background:#F3F4F6;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#F3F4F6;padding:24px 12px;">
+    <tr><td align="center">
+      <table role="presentation" width="100%" style="max-width:560px;background:#FFFFFF;border-radius:8px;padding:32px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+        <tr><td>
+          <div style="font-size:20px;font-weight:700;color:#0F766E;margin-bottom:24px;">Hazel</div>
+          <div style="margin-bottom:20px;"><h2 style="margin:0 0 8px;font-size:18px;color:#111827;">Hi</h2><p style="margin:0 0 16px;line-height:1.6;color:#111827;">Body line</p></div>
+          <p style="margin:28px 0;"><a href="https://example.com" style="display:inline-block;background:#0F766E;color:#FFFFFF;text-decoration:none;padding:12px 20px;border-radius:6px;font-weight:600;">Go</a></p>
+          
+          <p style="margin:16px 0 0;font-size:12px;color:#6B7280;">Sent by HazelJS</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>"
+`;
