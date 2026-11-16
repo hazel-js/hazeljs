@@ -52,9 +52,9 @@ describe('MailService extra coverage', () => {
   it('sendMailable throws for unknown catalog name', async () => {
     MailModule.forRoot({ memory: true });
     const mail = new MailService();
-    await expect(
-      mail.sendMailable('does-not-exist', { to: 'a@b.com', data: {} })
-    ).rejects.toThrow(/Unknown mailable/);
+    await expect(mail.sendMailable('does-not-exist', { to: 'a@b.com', data: {} })).rejects.toThrow(
+      /Unknown mailable/
+    );
   });
 
   it('sendTemplate throws when templates are not configured', async () => {

@@ -19,4 +19,3 @@ describe('lifecycleEventName', () => {
     expect(lifecycleEventName('unknown')).toBe(MAIL_FAILED);
   });
 });
-

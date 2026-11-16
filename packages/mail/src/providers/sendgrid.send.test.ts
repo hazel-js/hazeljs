@@ -54,9 +54,7 @@ describe('SendGridMailProvider.send', () => {
 
   it('throws when from is missing', async () => {
     const provider = new SendGridMailProvider({ apiKey: 'SG.test' });
-    await expect(
-      provider.send({ ...baseMessage, from: '' })
-    ).rejects.toThrow(/from address/);
+    await expect(provider.send({ ...baseMessage, from: '' })).rejects.toThrow(/from address/);
   });
 
   it('throws on API errors and parses non-json bodies', async () => {
@@ -70,9 +68,9 @@ describe('SendGridMailProvider.send', () => {
     }) as typeof fetch;
 
     const provider = new SendGridMailProvider({ apiKey: 'SG.test', from: 'a@b.com' });
-    await expect(provider.send({ ...baseMessage, from: 'a@b.com', idempotencyKey: undefined })).rejects.toThrow(
-      /SendGrid send failed/
-    );
+    await expect(
+      provider.send({ ...baseMessage, from: 'a@b.com', idempotencyKey: undefined })
+    ).rejects.toThrow(/SendGrid send failed/);
   });
 
   it('uses EU baseUrl when configured', async () => {
@@ -92,7 +90,11 @@ describe('SendGridMailProvider.send', () => {
       from: 'a@b.com',
       webhookSecret: 'sec',
     });
-    const result = await provider.send({ ...baseMessage, from: 'a@b.com', idempotencyKey: undefined });
+    const result = await provider.send({
+      ...baseMessage,
+      from: 'a@b.com',
+      idempotencyKey: undefined,
+    });
     expect(result.messageId).toMatch(/^sendgrid-/);
     expect(provider.isWebhookConfigured()).toBe(true);
   });
