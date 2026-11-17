@@ -104,8 +104,8 @@ describe('agent templates scaffold', () => {
     expect(ctx).toMatch(/ContextService/);
     expect(ctx).toMatch(/createDefaultMemoryStore/);
     const pkg = JSON.parse(fs.readFileSync(path.join(dest, 'package.json'), 'utf8'));
-    expect(pkg.dependencies['@hazeljs/context']).toBe('^2.0.9');
-    expect(pkg.dependencies['@hazeljs/memory']).toBe('^2.0.9');
+    expect(pkg.dependencies['@hazeljs/context']).toBe('^2.1.0');
+    expect(pkg.dependencies['@hazeljs/memory']).toBe('^2.1.0');
   });
 
   it('scaffolds bare DNA package', () => {
@@ -128,9 +128,9 @@ describe('agent templates scaffold', () => {
     expect(fs.existsSync(path.join(dest, 'deploy/kubernetes/hpa.yaml'))).toBe(true);
     expect(fs.existsSync(path.join(dest, 'dna/agent.marketplace.json'))).toBe(true);
     const pkg = JSON.parse(fs.readFileSync(path.join(dest, 'package.json'), 'utf8'));
-    expect(pkg.dependencies['@hazeljs/self-healing']).toBe('^2.0.9');
-    expect(pkg.dependencies['@hazeljs/predictive-scaling']).toBe('^2.0.9');
-    expect(pkg.dependencies['@hazeljs/agent']).toBe('^2.0.9');
+    expect(pkg.dependencies['@hazeljs/self-healing']).toBe('^2.1.0');
+    expect(pkg.dependencies['@hazeljs/predictive-scaling']).toBe('^2.1.0');
+    expect(pkg.dependencies['@hazeljs/agent']).toBe('^2.1.0');
     expect(pkg.dependencies['reflect-metadata']).toBeUndefined();
     const main = fs.readFileSync(path.join(dest, 'src/main.ts'), 'utf8');
     const agent = fs.readFileSync(path.join(dest, 'src/support.agent.ts'), 'utf8');
