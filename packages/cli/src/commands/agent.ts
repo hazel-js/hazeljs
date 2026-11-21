@@ -200,7 +200,7 @@ export function registerAgentCommand(program: Command): void {
             ],
           };
           const note = isLocalOs
-            ? 'Note: `hazel apply` loads `./agent.ts` into hazeld. Without OPENAI_API_KEY hazeld uses a mock LLM.'
+            ? 'Note: `hazel apply` loads `agents/index.ts` (or `./agent.ts`) into hazeld and matches DNA name → `@Agent`. Add agents under `agents/`, import them in the barrel, apply a YAML per name. Without OPENAI_API_KEY hazeld uses a mock LLM.'
             : result.template === 'bare'
               ? 'Note: `hazel agent run` on DNA uses stub tools. Pass --mock or set OPENAI_API_KEY.'
               : 'Note: `hazel agent run` on DNA uses stub tools. Use the app (`npm run dev`) for real @Tool / Skillgate handlers.';

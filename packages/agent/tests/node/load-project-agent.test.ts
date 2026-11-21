@@ -6,7 +6,12 @@ import * as os from 'os';
 import * as path from 'path';
 import { Agent } from '../../src/decorators/agent.decorator';
 import { Tool } from '../../src/decorators/tool.decorator';
-import { loadProjectAgent, projectAgentFromModule } from '../../src/node/load-project-agent';
+import {
+  loadProjectAgent,
+  loadProjectAgents,
+  projectAgentFromModule,
+  projectAgentsFromModule,
+} from '../../src/node/load-project-agent';
 import { AgentOS } from '../../src/os/agent-os';
 import { defineAgent } from '../../src/os/define-agent';
 import { createMockLlmProvider } from '../../src/llm/http-llm.provider';
@@ -88,6 +93,18 @@ describe('projectAgentFromModule (src)', () => {
       /does not match DNA name "desk"/
     );
   });
+
+  it('projectAgentsFromModule returns every @Agent', () => {
+    const bundle = projectAgentsFromModule(
+      { DeskAgent, OtherAgent },
+      { filePath: 'agents/index.ts' }
+    );
+    expect(bundle.agents.map((a) => a.name).sort()).toEqual(['desk', 'other']);
+    expect(Object.keys(bundle.agents.find((a) => a.name === 'desk')!.handlers).sort()).toEqual([
+      'issue_refund',
+      'lookup_order',
+    ]);
+  });
 });
 
 describe('loadProjectAgent (src I/O)', () => {
@@ -151,6 +168,22 @@ module.exports = { Plain };
       fs.rmSync(root, { recursive: true, force: true });
     }
   });
+
+  it('prefers agents/index candidate over root agent.js', () => {
+    const root = tmpDir('hazel-agents-prefer-');
+    try {
+      fs.writeFileSync(
+        path.join(root, 'package.json'),
+        JSON.stringify({ name: 'tmp', version: '1.0.0' })
+      );
+      fs.mkdirSync(path.join(root, 'agents'));
+      fs.writeFileSync(path.join(root, 'agent.js'), 'module.exports = {};\n');
+      fs.writeFileSync(path.join(root, 'agents/index.js'), 'module.exports = {};\n');
+      expect(() => loadProjectAgents(root)).toThrow(/agents[/\\]index\.js/);
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
 });
 
 describe('AgentOS deploy with project agent wiring', () => {
@@ -162,7 +195,7 @@ describe('AgentOS deploy with project agent wiring', () => {
     }
   }
 
-  it('registers project class/handlers via loadProjectAgent', async () => {
+  it('registers project class/handlers via loadProjectAgents', async () => {
     const project = projectAgentFromModule(
       { WiredAgent },
       { preferredAgentName: 'desk', filePath: 'agent.ts' }
@@ -170,9 +203,9 @@ describe('AgentOS deploy with project agent wiring', () => {
     const spy = jest
       .spyOn(
         require('../../src/node/load-project-agent') as typeof import('../../src/node/load-project-agent'),
-        'loadProjectAgent'
+        'loadProjectAgents'
       )
-      .mockReturnValue(project);
+      .mockReturnValue({ filePath: 'agent.ts', agents: [{ ...project, name: 'desk' }] });
 
     const root = tmpDir('hazel-os-wire-');
     const osPlane = new AgentOS({
@@ -230,10 +263,102 @@ describe('AgentOS deploy with project agent wiring', () => {
           autonomy: 'high',
         })
       );
-      expect(warn).toHaveBeenCalledWith(expect.stringContaining('Could not load project agent.ts'));
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining('Could not load project agents'));
       expect(osPlane.runtime.getAgentMetadata('desk')).toBeDefined();
     } finally {
       warn.mockRestore();
+      await osPlane.dispose();
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('picks agent by DNA name when barrel has multiple @Agent classes', async () => {
+    @Agent({ name: 'desk' })
+    class DeskA {
+      @Tool()
+      async ping() {
+        return { via: 'desk' as const };
+      }
+    }
+    @Agent({ name: 'shipping' })
+    class ShipA {
+      @Tool()
+      async track() {
+        return { via: 'shipping' as const };
+      }
+    }
+    const bundle = projectAgentsFromModule({ DeskA, ShipA }, { filePath: 'agents/index.js' });
+    const spy = jest
+      .spyOn(
+        require('../../src/node/load-project-agent') as typeof import('../../src/node/load-project-agent'),
+        'loadProjectAgents'
+      )
+      .mockReturnValue(bundle);
+
+    const root = tmpDir('hazel-os-multi-');
+    const osPlane = new AgentOS({
+      projectRoot: root,
+      llmProvider: createMockLlmProvider('Done.'),
+    });
+    try {
+      await osPlane.deploy(
+        defineAgent({
+          name: 'shipping',
+          mission: 'Ship',
+          skills: [{ name: 'track', description: 'Track' }],
+          autonomy: 'high',
+        })
+      );
+      const tools = osPlane.runtime.getAgentTools('shipping');
+      const track = tools.find((t) => t.name === 'track');
+      const out = await track!.method!.call(track!.target, {});
+      expect(out).toEqual({ via: 'shipping' });
+      expect(spy).toHaveBeenCalled();
+    } finally {
+      spy.mockRestore();
+      await osPlane.dispose();
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('warns when barrel agents do not match DNA name', async () => {
+    @Agent({ name: 'desk' })
+    class OnlyDesk {
+      @Tool()
+      async ping() {
+        return { ok: true };
+      }
+    }
+    const bundle = projectAgentsFromModule({ OnlyDesk }, { filePath: 'agents/index.js' });
+    const spy = jest
+      .spyOn(
+        require('../../src/node/load-project-agent') as typeof import('../../src/node/load-project-agent'),
+        'loadProjectAgents'
+      )
+      .mockReturnValue(bundle);
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+    const root = tmpDir('hazel-os-mismatch-');
+    const osPlane = new AgentOS({
+      projectRoot: root,
+      llmProvider: createMockLlmProvider('Done.'),
+    });
+    try {
+      await osPlane.deploy(
+        defineAgent({
+          name: 'shipping',
+          mission: 'Ship',
+          skills: [{ name: 'track', description: 'Track' }],
+          autonomy: 'high',
+        })
+      );
+      expect(warn).toHaveBeenCalledWith(
+        expect.stringContaining('No project @Agent named "shipping"')
+      );
+      expect(osPlane.runtime.getAgentMetadata('shipping')).toBeDefined();
+    } finally {
+      warn.mockRestore();
+      spy.mockRestore();
       await osPlane.dispose();
       fs.rmSync(root, { recursive: true, force: true });
     }
@@ -292,9 +417,47 @@ module.exports = { FixtureAgent, agentName: '${agentName}' };
   fs.writeFileSync(path.join(root, 'agent.js'), body);
 }
 
+function writeAgentsBarrel(root: string): void {
+  fs.mkdirSync(path.join(root, 'agents'), { recursive: true });
+  fs.writeFileSync(
+    path.join(root, 'agents/desk.js'),
+    `'use strict';
+require('reflect-metadata');
+const { Agent, Tool } = require('@hazeljs/agent');
+class DeskAgent {
+  async ping() { return { who: 'desk' }; }
+}
+Tool()(DeskAgent.prototype, 'ping', Object.getOwnPropertyDescriptor(DeskAgent.prototype, 'ping'));
+Agent({ name: 'desk' })(DeskAgent);
+module.exports = { DeskAgent };
+`
+  );
+  fs.writeFileSync(
+    path.join(root, 'agents/shipping.js'),
+    `'use strict';
+require('reflect-metadata');
+const { Agent, Tool } = require('@hazeljs/agent');
+class ShippingAgent {
+  async track() { return { who: 'shipping' }; }
+}
+Tool()(ShippingAgent.prototype, 'track', Object.getOwnPropertyDescriptor(ShippingAgent.prototype, 'track'));
+Agent({ name: 'shipping' })(ShippingAgent);
+module.exports = { ShippingAgent };
+`
+  );
+  fs.writeFileSync(
+    path.join(root, 'agents/index.js'),
+    `'use strict';
+const { DeskAgent } = require('./desk');
+const { ShippingAgent } = require('./shipping');
+module.exports = { DeskAgent, ShippingAgent };
+`
+  );
+}
+
 (distReady ? describe : describe.skip)('loadProjectAgent (dist E2E)', () => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { loadProjectAgent: loadDist } = require(
+  const { loadProjectAgent: loadDist, loadProjectAgents: loadDistAll } = require(
     distLoader
   ) as typeof import('../../src/node/load-project-agent');
   // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -340,6 +503,38 @@ module.exports = { FixtureAgent, agentName: '${agentName}' };
       const lookup = tools.find((t) => t.name === 'lookup_order');
       const out = await lookup!.method!.call(lookup!.target, { orderId: 'ORD-2042' });
       expect(out).toEqual({ found: true, orderId: 'ORD-2042', via: 'agent.js' });
+    } finally {
+      await osPlane.dispose();
+    }
+  });
+
+  it('loads multi-agent barrel and picks by DNA name', async () => {
+    writeAgentsBarrel(root);
+    const bundle = loadDistAll(root);
+    expect(bundle?.filePath).toMatch(/agents[/\\]index\.js$/);
+    expect(bundle?.agents.map((a) => a.name).sort()).toEqual(['desk', 'shipping']);
+
+    const desk = loadDist(root, 'desk');
+    expect(desk?.name).toBe('desk');
+    await expect(desk!.handlers.ping({})).resolves.toEqual({ who: 'desk' });
+
+    const osPlane = new DistOS({
+      projectRoot: root,
+      llmProvider: mockDist('Done.'),
+    });
+    try {
+      await osPlane.deploy(
+        defineDist({
+          name: 'shipping',
+          mission: 'Ship',
+          skills: [{ name: 'track', description: 'Track' }],
+          autonomy: 'high',
+        })
+      );
+      const tools = osPlane.runtime.getAgentTools('shipping');
+      const track = tools.find((t) => t.name === 'track');
+      const out = await track!.method!.call(track!.target, {});
+      expect(out).toEqual({ who: 'shipping' });
     } finally {
       await osPlane.dispose();
     }

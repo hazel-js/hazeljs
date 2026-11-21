@@ -9,7 +9,7 @@
 import { Command } from 'commander';
 import * as fs from 'fs';
 import * as path from 'path';
-import { extractDna, loadDnaOrYaml } from './dna-file';
+import { extractDna, listProjectDnaFiles, loadDnaOrYaml } from './dna-file';
 
 function resolveHazeldScript(): string {
   return path.join(__dirname, '..', 'hazeld.js');
@@ -54,27 +54,72 @@ function printTable(rows: Array<Record<string, string>>, cols: string[]): void {
 export function registerLocalOsCommands(program: Command): void {
   program
     .command('apply')
-    .description('Ensure hazeld is running, apply DNA / platform YAML, return to the prompt')
-    .argument('[file]', 'DNA JSON/YAML or AgentDefinition', 'agent.yaml')
+    .description(
+      'Ensure hazeld is running, apply DNA / AgentDefinition YAML (one file, several files, or --all)'
+    )
+    .argument('[files...]', 'DNA JSON/YAML file(s); default agent.yaml (or use --all)')
+    .option('--all', 'Apply every AgentDefinition / DNA YAML|JSON in the project root')
     .option('--json', 'Machine-readable output')
-    .action(async (file: string, opts: { json?: boolean }) => {
+    .action(async (files: string[], opts: { all?: boolean; json?: boolean }) => {
       try {
-        const doc = await loadDnaOrYaml(file);
-        const dna = extractDna(doc);
-        const res = await ctl({ op: 'apply', dna: dna as never });
-        const agent = res.data as { name?: string; id?: string; status?: string };
-        const name = agent?.name ?? agent?.id ?? 'agent';
+        let targets: string[];
+        if (opts.all) {
+          targets = listProjectDnaFiles(process.cwd());
+          if (targets.length === 0) {
+            throw new Error(
+              'No AgentDefinition / DNA files found in this directory (*.yaml, *.yml, *.json).'
+            );
+          }
+        } else if (files.length > 0) {
+          targets = files;
+        } else {
+          targets = ['agent.yaml'];
+        }
+
+        const applied: Array<{ file: string; name: string; data: unknown }> = [];
+        for (const file of targets) {
+          const doc = await loadDnaOrYaml(file);
+          const dna = extractDna(doc);
+          const res = await ctl({ op: 'apply', dna: dna as never });
+          const agent = res.data as { name?: string; id?: string; status?: string };
+          const name = agent?.name ?? agent?.id ?? 'agent';
+          applied.push({ file, name, data: res.data });
+        }
+
         if (opts.json) {
           // eslint-disable-next-line no-console
-          console.log(JSON.stringify({ ok: true, agent: res.data }, null, 2));
+          console.log(
+            JSON.stringify(
+              {
+                ok: true,
+                agents: applied.map((a) => a.data),
+                files: applied.map((a) => ({ file: a.file, name: a.name })),
+              },
+              null,
+              2
+            )
+          );
           return;
         }
-        // eslint-disable-next-line no-console
-        console.log(`✓ Agent "${name}" applied`);
-        // eslint-disable-next-line no-console
-        console.log(`  Status: Running (hosted by hazeld)`);
-        // eslint-disable-next-line no-console
-        console.log(`  Inspect: hazel inspect ${name}`);
+
+        if (applied.length === 1) {
+          const { name } = applied[0];
+          // eslint-disable-next-line no-console
+          console.log(`✓ Agent "${name}" applied`);
+          // eslint-disable-next-line no-console
+          console.log(`  Status: Running (hosted by hazeld)`);
+          // eslint-disable-next-line no-console
+          console.log(`  Inspect: hazel inspect ${name}`);
+        } else {
+          // eslint-disable-next-line no-console
+          console.log(`✓ Applied ${applied.length} agents`);
+          for (const a of applied) {
+            // eslint-disable-next-line no-console
+            console.log(`  ${a.name}  ←  ${path.basename(a.file)}`);
+          }
+          // eslint-disable-next-line no-console
+          console.log(`  Inspect: hazel inspect <agent>`);
+        }
         // eslint-disable-next-line no-console
         console.log(`  Survives terminal close — daemon keeps the Agent OS node alive.`);
       } catch (e) {

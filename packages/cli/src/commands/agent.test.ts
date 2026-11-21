@@ -67,22 +67,27 @@ describe('agent templates scaffold', () => {
       expect.arrayContaining([
         'package.json',
         'agent.yaml',
-        'agent.ts',
+        'agents/index.ts',
+        'agents/desk.agent.ts',
         'README.md',
         '.env.example',
       ])
     );
     expect(result.files).not.toEqual(
-      expect.arrayContaining(['host.ts', 'showcase.ts', 'demo-llm.ts'])
+      expect.arrayContaining(['host.ts', 'showcase.ts', 'demo-llm.ts', 'agent.ts'])
     );
     expect(fs.existsSync(path.join(dest, 'agent.yaml'))).toBe(true);
-    expect(fs.existsSync(path.join(dest, 'agent.ts'))).toBe(true);
+    expect(fs.existsSync(path.join(dest, 'agents/index.ts'))).toBe(true);
+    expect(fs.existsSync(path.join(dest, 'agents/desk.agent.ts'))).toBe(true);
+    expect(fs.existsSync(path.join(dest, 'agent.ts'))).toBe(false);
     expect(fs.existsSync(path.join(dest, '.env.example'))).toBe(true);
     expect(fs.existsSync(path.join(dest, 'deploy/kubernetes'))).toBe(false);
-    const agent = fs.readFileSync(path.join(dest, 'agent.ts'), 'utf8');
+    const agent = fs.readFileSync(path.join(dest, 'agents/desk.agent.ts'), 'utf8');
     expect(agent).toMatch(/lookup_order/);
     expect(agent).toMatch(/issue_refund/);
     expect(agent).toMatch(/requiresApproval:\s*true/);
+    const barrel = fs.readFileSync(path.join(dest, 'agents/index.ts'), 'utf8');
+    expect(barrel).toMatch(/desk\.agent/);
     const pkg = JSON.parse(fs.readFileSync(path.join(dest, 'package.json'), 'utf8'));
     expect(pkg.dependencies['@hazeljs/agent']).toBe('^2.1.0');
     expect(pkg.dependencies['@hazeljs/agent-gatekeeper']).toBe('^2.1.0');
@@ -91,6 +96,11 @@ describe('agent templates scaffold', () => {
     const readme = fs.readFileSync(path.join(dest, 'README.md'), 'utf8');
     expect(readme).toMatch(/OPENAI_API_KEY/);
     expect(readme).toMatch(/Prerequisites/);
+    expect(readme).toMatch(/Getting started/);
+    expect(readme).toMatch(/Add another agent/);
+    expect(readme).toMatch(/Lifecycle commands/);
+    expect(readme).toMatch(/hazel apply --all/);
+    expect(readme).toMatch(/hazel delete/);
     const envExample = fs.readFileSync(path.join(dest, '.env.example'), 'utf8');
     expect(envExample).toMatch(/OPENAI_API_KEY=/);
   });
@@ -106,7 +116,8 @@ describe('agent templates scaffold', () => {
       expect.arrayContaining([
         'package.json',
         'agent.yaml',
-        'agent.ts',
+        'agents/index.ts',
+        'agents/desk.agent.ts',
         'context.ts',
         'kb/policy.md',
         'kb/faq.md',
@@ -115,9 +126,10 @@ describe('agent templates scaffold', () => {
         '.env.example',
       ])
     );
-    const agent = fs.readFileSync(path.join(dest, 'agent.ts'), 'utf8');
+    const agent = fs.readFileSync(path.join(dest, 'agents/desk.agent.ts'), 'utf8');
     expect(agent).toMatch(/assemble_context/);
     expect(agent).toMatch(/issue_refund/);
+    expect(agent).toMatch(/from '\.\.\/context'/);
     const ctx = fs.readFileSync(path.join(dest, 'context.ts'), 'utf8');
     expect(ctx).toMatch(/ContextService/);
     expect(ctx).toMatch(/createDefaultMemoryStore/);
@@ -130,6 +142,11 @@ describe('agent templates scaffold', () => {
     expect(pkg.dependencies['reflect-metadata']).toBeUndefined();
     const readme = fs.readFileSync(path.join(dest, 'README.md'), 'utf8');
     expect(readme).toMatch(/OPENAI_API_KEY/);
+    expect(readme).toMatch(/Getting started/);
+    expect(readme).toMatch(/Add another agent/);
+    expect(readme).toMatch(/Lifecycle commands/);
+    expect(readme).toMatch(/hazel apply --all/);
+    expect(readme).toMatch(/hazel delete/);
   });
 
   it('scaffolds bare DNA package', () => {
@@ -144,7 +161,11 @@ describe('agent templates scaffold', () => {
     expect(pkg.dna.name).toBeTruthy();
     const rootPkg = JSON.parse(fs.readFileSync(path.join(dest, 'package.json'), 'utf8'));
     expect(rootPkg.dependencies['@hazeljs/agent']).toBe('^2.1.0');
-    expect(fs.readFileSync(path.join(dest, 'README.md'), 'utf8')).toMatch(/OPENAI_API_KEY/);
+    const readme = fs.readFileSync(path.join(dest, 'README.md'), 'utf8');
+    expect(readme).toMatch(/OPENAI_API_KEY/);
+    expect(readme).toMatch(/Getting started/);
+    expect(readme).toMatch(/store publish/);
+    expect(readme).toMatch(/stub/);
   });
 
   it('scaffolds agent-os with real tool source', () => {
@@ -168,7 +189,11 @@ describe('agent templates scaffold', () => {
     expect(main).toMatch(/resolveLlmFromEnv/);
     const envExample = fs.readFileSync(path.join(dest, '.env.example'), 'utf8');
     expect(envExample).toMatch(/OPENAI_API_KEY=/);
-    expect(fs.readFileSync(path.join(dest, 'README.md'), 'utf8')).toMatch(/OPENAI_API_KEY/);
+    const readme = fs.readFileSync(path.join(dest, 'README.md'), 'utf8');
+    expect(readme).toMatch(/OPENAI_API_KEY/);
+    expect(readme).toMatch(/Getting started/);
+    expect(readme).toMatch(/npm run dev/);
+    expect(readme).toMatch(/Add \/ change tools/);
   });
 
   it('scaffolds skillgate with openapi sample', () => {
@@ -179,7 +204,11 @@ describe('agent templates scaffold', () => {
     expect(fs.existsSync(path.join(dest, '.env.example'))).toBe(true);
     const pkg = JSON.parse(fs.readFileSync(path.join(dest, 'package.json'), 'utf8'));
     expect(pkg.dependencies['@hazeljs/agent']).toBe('^2.1.0');
-    expect(fs.readFileSync(path.join(dest, 'README.md'), 'utf8')).toMatch(/OPENAI_API_KEY/);
+    const readme = fs.readFileSync(path.join(dest, 'README.md'), 'utf8');
+    expect(readme).toMatch(/OPENAI_API_KEY/);
+    expect(readme).toMatch(/Getting started/);
+    expect(readme).toMatch(/npm run report/);
+    expect(readme).toMatch(/Customize/);
   });
 
   it('refuses non-empty dest without force', () => {

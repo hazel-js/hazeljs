@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { extractDna, loadDnaOrYaml } from './dna-file';
+import { extractDna, isAgentDnaDocument, listProjectDnaFiles, loadDnaOrYaml } from './dna-file';
 import { scaffoldAgentProject } from './agent-templates';
 
 describe('extractDna', () => {
@@ -108,5 +108,61 @@ tools: []
     );
     const dna = extractDna(await loadDnaOrYaml(file)) as { name: string };
     expect(dna.name).toBe('yml_bot');
+  });
+});
+
+describe('listProjectDnaFiles', () => {
+  let tmp: string;
+
+  beforeEach(() => {
+    tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'hazel-dna-list-'));
+  });
+
+  afterEach(() => {
+    fs.rmSync(tmp, { recursive: true, force: true });
+  });
+
+  it('detects AgentDefinition docs and ignores package.json', () => {
+    expect(isAgentDnaDocument({ kind: 'AgentDefinition', spec: { dna: { name: 'x' } } })).toBe(
+      true
+    );
+    expect(isAgentDnaDocument({ name: 'campus-assistant', version: '1.0.0' })).toBe(false);
+  });
+
+  it('lists agent.yaml before other DNA files and skips non-DNA yaml', () => {
+    fs.writeFileSync(
+      path.join(tmp, 'shipping.yaml'),
+      `
+apiVersion: agent.hazeljs.dev/v1alpha1
+kind: AgentDefinition
+metadata: { name: shipping }
+spec:
+  dna:
+    format: hazeljs.agent.dna
+    name: shipping
+    tools: []
+`
+    );
+    fs.writeFileSync(
+      path.join(tmp, 'agent.yaml'),
+      `
+apiVersion: agent.hazeljs.dev/v1alpha1
+kind: AgentDefinition
+metadata: { name: desk }
+spec:
+  dna:
+    format: hazeljs.agent.dna
+    name: desk
+    tools: []
+`
+    );
+    fs.writeFileSync(path.join(tmp, 'notes.yaml'), 'title: not an agent\n');
+    fs.writeFileSync(
+      path.join(tmp, 'package.json'),
+      JSON.stringify({ name: 'tmp', version: '1.0.0' })
+    );
+
+    const files = listProjectDnaFiles(tmp).map((f) => path.basename(f));
+    expect(files).toEqual(['agent.yaml', 'shipping.yaml']);
   });
 });

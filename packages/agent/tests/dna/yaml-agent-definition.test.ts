@@ -97,9 +97,12 @@ describe('AgentDefinition YAML DNA', () => {
     const spy = jest
       .spyOn(
         require('../../src/node/load-project-agent') as typeof import('../../src/node/load-project-agent'),
-        'loadProjectAgent'
+        'loadProjectAgents'
       )
-      .mockReturnValue(project);
+      .mockReturnValue({
+        filePath: 'agent.ts',
+        agents: [{ ...project, name: 'my_bot' }],
+      });
 
     const root = fs.mkdtempSync(path.join(os.tmpdir(), 'hazel-yaml-apply-'));
     const dna = extractDnaFromDoc(parseYaml(LOCAL_TEMPLATE_YAML));

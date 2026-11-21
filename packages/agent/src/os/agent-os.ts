@@ -6,7 +6,7 @@
 import * as path from 'path';
 import { parseDna, type AgentDna } from '../dna/agent-dna';
 import { createAgentClassFromDna, type DnaToolHandler } from '../dna/bootstrap-from-dna';
-import { loadProjectAgent } from '../node/load-project-agent';
+import { loadProjectAgents } from '../node/load-project-agent';
 import {
   createLocalPlatform,
   PLATFORM_API_VERSION,
@@ -467,14 +467,24 @@ export class AgentOS {
   }
 
   private registerFromDna(dna: AgentDna): void {
-    // Prefer ./agent.ts handlers from the project (hazel apply cwd / HAZEL_PROJECT_ROOT).
-    let project: ReturnType<typeof loadProjectAgent>;
+    // Prefer project agents (agents/index.ts barrel or agent.ts) — AgentModule-style.
+    let project: import('../node/load-project-agent').ProjectAgentModule | undefined;
     try {
-      project = loadProjectAgent(this.projectRoot, dna.name);
+      const bundle = loadProjectAgents(this.projectRoot);
+      if (bundle?.agents.length) {
+        project = bundle.agents.find((a) => a.name === dna.name);
+        if (!project) {
+          const available = bundle.agents.map((a) => a.name ?? '(unnamed)').join(', ');
+          // eslint-disable-next-line no-console
+          console.warn(
+            `[AgentOS] No project @Agent named "${dna.name}". Available: ${available}. Using DNA stubs.`
+          );
+        }
+      }
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       // eslint-disable-next-line no-console
-      console.warn(`[AgentOS] Could not load project agent.ts: ${msg}`);
+      console.warn(`[AgentOS] Could not load project agents: ${msg}`);
       project = undefined;
     }
 

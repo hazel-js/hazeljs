@@ -6,6 +6,7 @@
 npm i -g @hazeljs/cli
 hazel new agent my-bot && cd my-bot && npm i
 hazel apply agent.yaml    # starts hazeld; returns to the prompt
+hazel apply --all         # apply every AgentDefinition YAML in the folder
 hazel inspect my_bot      # Status: Running — survives terminal close
 ```
 
@@ -72,7 +73,7 @@ hazel benchmark
 hazel eval
 ```
 
-`hazel apply` ensures `hazeld`, registers DNA, and loads `./agent.ts` `@Tool` handlers into the live node. `hazel agent apply` still writes platform desired state. `hazel agent run` is a DNA-only smoke with stubs (no `agent.ts`).
+`hazel apply` ensures `hazeld`, registers DNA, and loads `agents/index.ts` (or `./agent.ts`) `@Tool` handlers into the live node — DNA name must match `@Agent({ name })`. Add more agents under `agents/`, import them in the barrel, and apply with `hazel apply --all` (or list files). `hazel agent apply` still writes platform desired state. `hazel agent run` is a DNA-only smoke with stubs.
 
 ### Create a framework application (secondary)
 

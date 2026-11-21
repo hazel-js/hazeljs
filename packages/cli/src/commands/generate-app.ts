@@ -275,7 +275,9 @@ export function generateApp(program: Command) {
                     'Next:',
                     ...payload.next.map((l) => `  ${l}`),
                     '',
-                    'Without OPENAI_API_KEY the agent uses a mock LLM; set the key for real tool selection.',
+                    isLocalOs
+                      ? 'Note: `hazel apply` loads `agents/index.ts` (or `./agent.ts`) and matches DNA name → `@Agent`. Add agents under `agents/`, import them in the barrel, apply a YAML per name. Without OPENAI_API_KEY hazeld uses a mock LLM.'
+                      : 'Without OPENAI_API_KEY the agent uses a mock LLM; set the key for real tool selection.',
                   ].join('\n')
             );
           } catch (e) {

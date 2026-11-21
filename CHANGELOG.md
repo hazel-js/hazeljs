@@ -8,6 +8,22 @@ All notable changes to HazelJS are documented here. The project follows [Semanti
 
 ---
 
+## [2.1.1] - 2026-11-21
+
+### Added
+
+- **`@hazeljs/config` — `loadEnvFiles`**: shared dotenv loader (no DI); `ConfigService` uses it
+- **`@hazeljs/agent` — `resolveLlmFromEnv` / `loadProjectEnv`**: hazeld & AgentOS use OpenAI when `OPENAI_API_KEY` is set, else mock; project `.env` loaded via config
+- **`@hazeljs/cli` — agent scaffolds**: `.env.example`, README prerequisites, `@hazeljs/agent-gatekeeper` + `@hazeljs/config` deps; no direct `reflect-metadata`
+- **`benchmarks/agent-runtime`**: hazeld conformance (smoke / crash / durable-step / refund load)
+
+### Notes
+
+- Full GitHub release notes: [`RELEASE_NOTES_v2.1.1.md`](./RELEASE_NOTES_v2.1.1.md)
+- No breaking changes vs 2.1.0
+
+---
+
 ## [2.0.18] - 2026-11-15
 
 ### Added

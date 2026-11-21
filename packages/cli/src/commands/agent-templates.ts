@@ -1,8 +1,8 @@
 /**
  * Agent OS project templates for `hazel agent new` / `hazel new agent`.
  *
- * DNA ≈ OpenAPI for agents (contract). `agent.ts` = real `@Tool` handlers.
- * `hazel apply` loads `./agent.ts` into hazeld. `hazel agent run` on DNA alone still uses stubs.
+ * DNA ≈ OpenAPI for agents (contract). `agents/*.agent.ts` = real `@Tool` handlers.
+ * `hazel apply` loads `agents/index.ts` (or `./agent.ts`) into hazeld. `hazel agent run` on DNA alone still uses stubs.
  */
 
 import * as fs from 'fs';
@@ -21,13 +21,13 @@ export const AGENT_TEMPLATES: AgentTemplateMeta[] = [
     id: 'local',
     label: 'Local Agent OS (default)',
     description:
-      'Order-support desk agent: agent.ts (@Tool) + agent.yaml — hazel apply (no Kubernetes)',
+      'Order-support desk: agents/*.agent.ts barrel + agent.yaml — hazel apply (no Kubernetes)',
   },
   {
     id: 'context',
     label: 'Context desk (CAG+RAG+KAG+Memory)',
     description:
-      'Local Agent OS + ContextService planner — policy cache, handbook RAG, entity graph, prefs, HITL refunds',
+      'Local Agent OS + agents/ barrel + ContextService — policy cache, handbook RAG, entity graph, prefs, HITL',
   },
   {
     id: 'bare',
@@ -171,7 +171,8 @@ function localFiles(projectName: string): Record<string, string> {
       2
     ),
     'tsconfig.json': localAgentTsconfig(),
-    'agent.ts': localAgentTs(dnaName, className),
+    'agents/index.ts': localAgentsIndex(className),
+    'agents/desk.agent.ts': localDeskAgentTs(dnaName, className),
     'agent.yaml': localAgentYaml(dnaName, display),
     'README.md': localAgentReadme(display, dnaName),
     '.env.example': agentEnvExample(),
@@ -193,13 +194,26 @@ function localAgentTsconfig(): string {
     "rootDir": ".",
     "outDir": "dist"
   },
-  "include": ["*.ts"]
+  "include": ["agents/**/*.ts", "*.ts"]
 }
 `;
 }
 
-/** Single-file desk agent: look up orders + HITL refunds. */
-function localAgentTs(dnaName: string, className: string): string {
+/** AgentModule-style barrel — import every agent file so @Agent registers. */
+function localAgentsIndex(className: string): string {
+  return `/**
+ * Project agents barrel (same idea as importing classes before AgentModule.forRoot()).
+ * hazeld loads this file via loadProjectAgents() and matches DNA name → @Agent class.
+ */
+export { ${className} } from './desk.agent';
+
+// Add new agents here, then apply a matching YAML (spec.dna.name === @Agent name):
+// export { ShippingAgent } from './shipping.agent';
+`;
+}
+
+/** Desk agent: look up orders + HITL refunds. */
+function localDeskAgentTs(dnaName: string, className: string): string {
   return `import { Agent, Tool } from '@hazeljs/agent';
 
 /** Sample orders — replace with your DB / API. */
@@ -259,7 +273,7 @@ export class ${className} {
 
 function localAgentYaml(dnaName: string, display: string): string {
   return `# DNA contract for ${display} — identity, prompt, tool catalog.
-# Handlers: agent.ts. Apply: hazel apply agent.yaml
+# Handlers: agents/desk.agent.ts (via agents/index.ts). Apply: hazel apply agent.yaml
 apiVersion: agent.hazeljs.dev/v1alpha1
 kind: AgentDefinition
 metadata:
@@ -327,30 +341,73 @@ cp .env.example .env
 
 | File | Role |
 | --- | --- |
-| \`agent.yaml\` | DNA — prompt, tool catalog, HITL flags |
-| \`agent.ts\` | Handlers — \`@Tool\` methods (+ \`parameters\` / \`requiresApproval\`) |
+| \`agent.yaml\` | DNA — prompt, tool catalog, HITL (\`spec.dna.name\` must match \`@Agent({ name })\`) |
+| \`agents/index.ts\` | Barrel — import/export every agent file (AgentModule-style) |
+| \`agents/desk.agent.ts\` | Desk \`@Agent\` + \`@Tool\` handlers |
 | \`.env.example\` | \`OPENAI_API_KEY\`, optional model / base URL |
 
-## Run
+## Getting started
 
 \`\`\`bash
-hazel apply agent.yaml   # starts hazeld; loads agent.ts + .env
-hazel inspect ${dnaName}
+# Apply every AgentDefinition YAML in this folder (starts hazeld if needed)
+hazel apply --all
+
+# Or apply one / several files
+hazel apply agent.yaml
+
 hazel ps
+hazel inspect ${dnaName}
 hazel run ${dnaName} "look up order ORD-2042"
 hazel run ${dnaName} "refund order ORD-2042"
 hazel approvals
 hazel approve <taskId>
 \`\`\`
 
+\`hazel apply\` starts \`hazeld\` if needed — agents stay Running after you close the terminal.
+Re-run \`hazel apply\` (or \`--all\`) after editing agent files to reload handlers.
+
+## Lifecycle commands
+
+| Command | What it does |
+| --- | --- |
+| \`hazel apply --all\` | Register / reload every DNA YAML in the project root |
+| \`hazel apply <file…>\` | Register / reload one or more YAML files |
+| \`hazel ps\` | List agents and status (Running / Stopped) |
+| \`hazel inspect <name>\` | Show DNA, tools, occupancy for one agent |
+| \`hazel run <name> "…"\` | Send a message to a Running agent |
+| \`hazel stop <name>\` | Pause an agent (stays listed as Stopped) |
+| \`hazel start <name>\` | Resume a stopped agent |
+| \`hazel restart <name>\` | Stop then start |
+| \`hazel delete <name>\` | Remove the agent from hazeld (unregisters it) |
+| \`hazel approvals\` | List pending HITL approvals |
+| \`hazel approve <taskId>\` | Approve a waiting tool call |
+| \`hazel deny <taskId>\` | Deny a waiting tool call |
+
+\`\`\`bash
+hazel stop ${dnaName}       # pause only
+hazel start ${dnaName}      # resume
+hazel delete ${dnaName}     # remove from hazeld (files stay on disk)
+hazel apply agent.yaml      # register again from YAML
+\`\`\`
+
+## Add another agent
+
+1. Create \`agents/shipping.agent.ts\` with \`@Agent({ name: 'shipping' })\` and \`@Tool\` methods.
+2. Export it from \`agents/index.ts\` (e.g. \`export { ShippingAgent } from './shipping.agent';\`).
+3. Add \`shipping.yaml\` with \`spec.dna.name: shipping\` and a \`tools:\` catalog matching your \`@Tool\` methods.
+4. Apply:
+
+\`\`\`bash
+hazel apply shipping.yaml
+# or reload everything:
+hazel apply --all
+\`\`\`
+
+hazeld loads \`agents/index.ts\` and matches **DNA name → \`@Agent({ name })\`**. Names must match exactly.
+
 - **With \`OPENAI_API_KEY\`:** OpenAI function calling selects tools.
 - **Without a key:** mock LLM replies (tools still registered; no real selection).
-- If hazeld was already running before you set the key, **restart** it (\`hazel doctor\` / stop + \`hazel apply\` again) so it reloads \`.env\`.
-
-\`hazel apply\` starts \`hazeld\` if needed — agents stay Running after you close the terminal.
-Re-run \`hazel apply\` after editing \`agent.ts\` to reload handlers.
-
-Replace the in-memory \`ORDERS\` map in \`agent.ts\` with your DB or API.
+- If hazeld was already running before you set the key, **restart** it so it reloads \`.env\`.
 
 Want CAG + RAG + KAG + Memory on the same path?  
 \`hazel new agent my-desk --template=context\`
@@ -418,14 +475,15 @@ function contextFiles(projectName: string): Record<string, string> {
     "rootDir": ".",
     "outDir": "dist"
   },
-  "include": ["*.ts", "scripts/**/*.ts"]
+  "include": ["agents/**/*.ts", "*.ts", "scripts/**/*.ts"]
 }
 `,
     'kb/policy.md': contextKbPolicy(),
     'kb/faq.md': contextKbFaq(),
     'kb/graph.json': contextKbGraph(),
     'context.ts': contextDeskTs(),
-    'agent.ts': contextAgentTs(dnaName, className),
+    'agents/index.ts': localAgentsIndex(className),
+    'agents/desk.agent.ts': contextAgentTs(dnaName, className),
     'agent.yaml': contextAgentYaml(dnaName, display),
     'scripts/walkthrough.ts': contextWalkthroughTs(dnaName),
     'README.md': contextAgentReadme(display, dnaName),
@@ -675,7 +733,7 @@ export async function rememberPreference(
 
 function contextAgentTs(dnaName: string, className: string): string {
   return `import { Agent, Tool } from '@hazeljs/agent';
-import { assembleContext, rememberPreference } from './context';
+import { assembleContext, rememberPreference } from '../context';
 
 const ORDERS: Record<string, { customer: string; item: string; total: number; status: string }> = {
   'ORD-2042': {
@@ -791,7 +849,7 @@ export class ${className} {
 
 function contextAgentYaml(dnaName: string, display: string): string {
   return `# DNA for ${display} — context desk (CAG+RAG+KAG+Memory + HITL).
-# Handlers: agent.ts · Context planner: context.ts · Seeds: kb/
+# Handlers: agents/desk.agent.ts (via agents/index.ts) · Context: context.ts · Seeds: kb/
 apiVersion: agent.hazeljs.dev/v1alpha1
 kind: AgentDefinition
 metadata:
@@ -896,23 +954,59 @@ cp .env.example .env
 
 | File | Role |
 | --- | --- |
-| \`agent.ts\` | Tools: assemble_context, remember, lookup_order, issue_refund |
+| \`agents/index.ts\` | Barrel — import/export every \`@Agent\` file |
+| \`agents/desk.agent.ts\` | Tools: assemble_context, remember, lookup_order, issue_refund |
 | \`context.ts\` | \`ContextService\` planner + offline CAG/RAG/KAG/Memory ports |
 | \`kb/\` | policy.md, faq.md, graph.json |
-| \`agent.yaml\` | DNA for \`hazel apply\` (loads \`agent.ts\` into hazeld) |
+| \`agent.yaml\` | DNA for \`hazel apply\` (matches \`@Agent\` name via barrel) |
 | \`.env.example\` | \`OPENAI_API_KEY\`, optional model / base URL |
 
-## Run
+## Getting started
 
 \`\`\`bash
-npm run demo          # offline planner walkthrough (logs sources)
-hazel apply agent.yaml
+# Offline context planner walkthrough (no hazeld)
+npm run demo
+
+# Apply DNA + start hazeld, then chat
+hazel apply --all
+hazel ps
+hazel inspect ${dnaName}
 hazel run ${dnaName} "What is the refund policy for damaged goods?"
 hazel run ${dnaName} "refund order ORD-2042"
 hazel approvals
+hazel approve <taskId>
 \`\`\`
 
-Restart hazeld after changing \`.env\` if it was already running.
+\`hazel apply\` starts \`hazeld\` if needed. Re-run after editing \`agents/\` or YAML.
+
+## Lifecycle commands
+
+| Command | What it does |
+| --- | --- |
+| \`hazel apply --all\` | Register / reload every DNA YAML in the project root |
+| \`hazel apply <file…>\` | Register / reload one or more YAML files |
+| \`hazel ps\` | List agents and status |
+| \`hazel inspect <name>\` | Show DNA, tools, occupancy |
+| \`hazel run <name> "…"\` | Send a message |
+| \`hazel stop <name>\` / \`start\` / \`restart\` | Pause / resume / bounce |
+| \`hazel delete <name>\` | Remove from hazeld (files stay on disk) |
+| \`hazel approvals\` / \`approve\` / \`deny\` | HITL gatekeeper |
+
+\`\`\`bash
+hazel stop ${dnaName}
+hazel start ${dnaName}
+hazel delete ${dnaName}
+hazel apply agent.yaml
+\`\`\`
+
+## Add another agent
+
+1. Create \`agents/foo.agent.ts\` with \`@Agent({ name: 'foo' })\` and \`@Tool\` methods.
+2. Export it from \`agents/index.ts\`.
+3. Add \`foo.yaml\` with matching \`spec.dna.name\` and tool catalog.
+4. \`hazel apply foo.yaml\` or \`hazel apply --all\`.
+
+hazeld matches **DNA name → \`@Agent({ name })\`**. Restart hazeld after changing \`.env\` if it was already running.
 
 Deeper package labs (Meridian): \`example:rag\` · \`example:cag\` · \`example:kag\` · \`example:context\`
 
@@ -959,13 +1053,13 @@ function bareFiles(projectName: string): Record<string, string> {
     '.env.example': agentEnvExample(),
     'README.md': `# ${projectName}
 
-Bare **Agent DNA** package (contract only — like OpenAPI for an agent).
+Bare **Agent DNA** package — contract only (OpenAPI-for-agents). No \`@Tool\` handlers yet.
 
 ## Prerequisites
 
 - **Node.js 18+**
 - \`npm install\` (\`@hazeljs/agent\` + \`@hazeljs/cli\`)
-- Optional: \`OPENAI_API_KEY\` in \`.env\` for a real LLM (\`hazel agent run\` uses mock without it, or pass \`--mock\`)
+- Optional: \`OPENAI_API_KEY\` for a real LLM (\`hazel agent run\` uses a mock without it, or pass \`--mock\`)
 
 ## Setup
 
@@ -975,22 +1069,39 @@ cp .env.example .env
 # Optionally set OPENAI_API_KEY=sk-...
 \`\`\`
 
-## Commands
+| File | Role |
+| --- | --- |
+| \`dna/agent.marketplace.json\` | DNA + marketplace metadata (prompt, tools catalog) |
+| \`.env.example\` | Optional \`OPENAI_API_KEY\` |
+
+## Getting started
 
 \`\`\`bash
-# Smoke-run (Agent OS engine + stub tools + mock/real LLM)
+# 1) Smoke-run DNA with stub tools
 npx hazel agent run dna/agent.marketplace.json "hello"
 npx hazel agent run dna/agent.marketplace.json "hello" --mock
 
-# Publish to local registry, then install into a project
+# 2) Publish to the local store, then install into an app
 npx hazel store publish dna/agent.marketplace.json
 npx hazel store install @local/${sanitizeNpmName(projectName)}-agent --cwd /path/to/app
 \`\`\`
 
+## Commands
+
+| Command | What it does |
+| --- | --- |
+| \`npx hazel agent run dna/agent.marketplace.json "…"\` | Run DNA with **stub** tools (+ mock/real LLM) |
+| \`npx hazel agent run … --mock\` | Force mock LLM (no API key needed) |
+| \`npx hazel store publish dna/agent.marketplace.json\` | Publish package to local store |
+| \`npx hazel store install @local/… --cwd <app>\` | Install DNA package into another project |
+
 ## Important
 
-\`hazel agent run\` executes the **runtime** with **stub** tool handlers.
-Wire real \`@Tool\` / Skillgate handlers in your Hazel app for production behavior.
+- \`hazel agent run\` uses **stub** handlers — fine for packaging smoke, not production.
+- For real tools + local daemon: \`hazel new agent my-desk\` (local template) → \`hazel apply --all\`.
+- For API-governed skills: \`hazel new agent my-api --template=skillgate\`.
+
+Guide: [Agent DNA & marketplace](https://hazeljs.ai/docs/guides/local-agent-os)
 `,
   };
 }
@@ -1408,7 +1519,7 @@ main().catch((e) => {
 `,
     'README.md': `# ${projectName}
 
-**Agent OS mini-app** — DNA contract + **real** \`@Tool\` implementations.
+**Agent OS mini-app** — DNA contract + **real** \`@Tool\` handlers in a Node process (not hazeld).
 
 ## Prerequisites
 
@@ -1426,40 +1537,65 @@ cp .env.example .env
 
 | Path | Role |
 | --- | --- |
-| \`dna/agent.marketplace.json\` | DNA / marketplace package (OpenAPI-for-agents) |
-| \`src/support.agent.ts\` | Real tool handlers |
-| \`src/main.ts\` | AgentRuntime bootstrap (\`resolveLlmFromEnv\`) |
+| \`dna/agent.marketplace.json\` | DNA / marketplace package (prompt + tool catalog) |
+| \`src/support.agent.ts\` | Real \`@Agent\` / \`@Tool\` handlers |
+| \`src/main.ts\` | \`AgentRuntime\` bootstrap (\`resolveLlmFromEnv\`) |
 | \`src/ops/stack.ts\` | Predictive scaling + self-healing ops stack |
 | \`deploy/kubernetes/\` | K8s Deployment, HPA, RBAC for in-cluster ops |
-| \`.env.example\` | \`OPENAI_API_KEY\`, HITL, ops flags |
+| \`.env.example\` | \`OPENAI_API_KEY\`, \`HITL\`, ops flags |
 
-## Run
+## Getting started
 
 \`\`\`bash
+# 1) Run the mini-app with real tools
 npm run dev
-npm run dev -- I want a refund for ORD-1002
+npm run dev -- "I want a refund for ORD-1002"
 
-# DNA smoke (stubs — not the same as npm run dev)
+# 2) Optional: DNA smoke with stub tools (not the same as npm run dev)
 npx hazel agent run dna/agent.marketplace.json "hello"
 
-# Package+Store
+# 3) Publish / install the DNA package
 npm run store:publish
 npm run store:install
 \`\`\`
 
-Set \`HITL=1\` to pause on \`processRefund\` approvals.
+Set \`HITL=1\` in \`.env\` to pause on \`processRefund\` approvals.
+
+## Commands
+
+| Command | What it does |
+| --- | --- |
+| \`npm run dev\` | Start AgentRuntime with real \`@Tool\` handlers |
+| \`npm run dev -- "…"\` | Same, with a one-shot user message |
+| \`npx hazel agent run dna/…\` | DNA-only smoke (**stubs** — packaging check) |
+| \`npm run store:publish\` | Publish DNA to local store |
+| \`npm run store:install\` | Install published package |
+| \`ENABLE_OPS_STACK=1 npm run dev\` | Enable predictive scaling + self-healing |
+| \`kubectl apply -k deploy/kubernetes\` | Deploy ops-capable workload to the cluster |
+
+## Add / change tools
+
+1. Edit \`src/support.agent.ts\` — add \`@Tool\` methods (and keep DNA \`tools\` in sync if you publish).
+2. Update \`dna/agent.marketplace.json\` tool catalog / prompt if the contract changes.
+3. Re-run \`npm run dev\`.
+
+For a **local hazeld daemon** multi-agent layout (\`agents/*.agent.ts\` + \`hazel apply --all\`), use:
+
+\`\`\`bash
+hazel new agent my-desk
+\`\`\`
 
 ## Production ops (predictive + self-healing)
 
 \`\`\`bash
 ENABLE_OPS_STACK=1 npm run dev
-
-# Deploy to Kubernetes (requires kubectl + kustomize)
 kubectl apply -k deploy/kubernetes
 \`\`\`
 
 - **Proactive:** \`@hazeljs/predictive-scaling\` forecasts traffic and adjusts HPA min replicas
 - **Reactive:** \`@hazeljs/self-healing\` heals failures, drains pods, opens Slack/Jira alerts
+
+Guide: [Local Agent OS](https://hazeljs.ai/docs/guides/local-agent-os)
 `,
     ...agentOsOpsFiles(npm, projectName),
   };
@@ -1585,25 +1721,63 @@ console.log('Registered tools:', registry.getAgentTools('api-concierge').map((t)
 
 - **Node.js 18+**
 - \`npm install\` (\`@hazeljs/agent\`, \`@hazeljs/skillgate\`, \`@hazeljs/cli\`)
-- Optional: \`OPENAI_API_KEY\` in \`.env\` for \`hazel agent run\` (or pass \`--mock\`)
+- Optional: \`OPENAI_API_KEY\` for \`hazel agent run\` (or pass \`--mock\`)
+- Optional: upstream API at \`API_BASE_URL\` (default \`http://127.0.0.1:3000\`)
 
 ## Setup
 
 \`\`\`bash
 npm install
 cp .env.example .env
-# Optionally set OPENAI_API_KEY=sk-...
+# Optionally set OPENAI_API_KEY=sk-... and API_BASE_URL=...
 \`\`\`
 
-## Run
+| File | Role |
+| --- | --- |
+| \`openapi/sample.openapi.json\` | Sample OpenAPI (\`getOrder\` read, \`createRefund\` write+approval) |
+| \`src/report.ts\` | Skillgate \`fromOpenApi\` → include/deny report + registry |
+| \`dna/agent.marketplace.json\` | DNA / marketplace package for store + CLI smoke |
+| \`.env.example\` | \`OPENAI_API_KEY\`, \`API_BASE_URL\` |
+
+## Getting started
 
 \`\`\`bash
-npm run report          # Skillgate included/denied report
-npx hazel agent run dna/agent.marketplace.json
-npx hazel store publish dna/agent.marketplace.json
+# 1) See which OpenAPI ops become agent skills
+npm run report
+
+# 2) Smoke-run DNA (stub tools unless you wire Skillgate into a runtime)
+npm run agent:run
+npx hazel agent run dna/agent.marketplace.json "get order ORD-1" --mock
+
+# 3) Publish the DNA package
+npm run store:publish
+\`\`\`
+
+## Commands
+
+| Command | What it does |
+| --- | --- |
+| \`npm run report\` | Print Skillgate included/denied skills + registered tool names |
+| \`npm run agent:run\` | \`hazel agent run\` against the DNA package |
+| \`npx hazel agent run dna/… --mock\` | DNA smoke with mock LLM |
+| \`npm run store:publish\` | Publish DNA to local store |
+
+## Customize
+
+1. Edit \`openapi/sample.openapi.json\` — add paths / \`x-hazel-skill\` metadata.
+2. Point \`API_BASE_URL\` at your real API.
+3. Re-run \`npm run report\` to verify include/deny + approval classes.
+4. Update \`dna/agent.marketplace.json\` if the published tool catalog should change.
+
+For a **local hazeld** desk with \`agents/*.agent.ts\` + \`hazel apply --all\`:
+
+\`\`\`bash
+hazel new agent my-desk
 \`\`\`
 
 See also: full showcase \`hazeljs-skillgate-agent-starter\` in the monorepo.
+
+Guide: [Local Agent OS](https://hazeljs.ai/docs/guides/local-agent-os)
 `,
   };
 }
