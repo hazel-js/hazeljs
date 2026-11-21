@@ -8,6 +8,21 @@ All notable changes to HazelJS are documented here. The project follows [Semanti
 
 ---
 
+## [2.1.2] - 2026-11-21
+
+### Added
+
+- **`@hazeljs/agent` — `loadProjectAgents`**: AgentModule-style multi-agent load from `agents/index.ts` (falls back to `agent.ts`); DNA name → `@Agent` match in AgentOS
+- **`@hazeljs/cli` — `hazel apply --all`**: apply every AgentDefinition / DNA YAML|JSON in the project root; multi-file `hazel apply a.yaml b.yaml`
+- **`@hazeljs/cli` — local/context scaffolds**: `agents/index.ts` + `agents/desk.agent.ts` barrel layout; getting-started + lifecycle READMEs for all agent templates
+
+### Notes
+
+- Full GitHub release notes: [`RELEASE_NOTES_v2.1.2.md`](./RELEASE_NOTES_v2.1.2.md)
+- No breaking changes vs 2.1.1 (root `agent.ts` still works)
+
+---
+
 ## [2.1.1] - 2026-11-21
 
 ### Added
