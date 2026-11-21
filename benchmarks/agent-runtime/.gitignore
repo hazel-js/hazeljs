@@ -1,0 +1,6 @@
+node_modules/
+tmp/
+logs/
+results/*
+!results/README.md
+*.tsbuildinfo

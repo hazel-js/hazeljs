@@ -65,6 +65,7 @@ export * from './dna/bootstrap-from-dna';
 export * from './dna/apply-dna-overlays';
 export * from './dna/apply-agent-dna';
 export * from './llm/http-llm.provider';
+export * from './llm/resolve-llm-from-env';
 export * from './store';
 export * from './knowledge/knowledge-freshness';
 export * from './memory-graph/graphrag-bridge';

@@ -249,15 +249,20 @@ export function generateApp(program: Command) {
                 : 'local',
               force: options.force,
             });
+            const isLocalOs = result.template === 'local' || result.template === 'context';
             const payload = {
               ok: true,
               action: 'new-agent',
               ...result,
               next: [
                 `cd ${path.relative(process.cwd(), result.path) || '.'}`,
+                'cp .env.example .env   # set OPENAI_API_KEY',
                 'npm install',
-                'hazel apply agent.yaml',
-                'hazel inspect <agent>',
+                ...(isLocalOs
+                  ? ['hazel apply agent.yaml', 'hazel inspect <agent>']
+                  : result.template === 'bare'
+                    ? ['npx hazel agent run dna/agent.marketplace.json "hello"']
+                    : ['npm run dev']),
               ],
             };
             console.log(
@@ -269,6 +274,8 @@ export function generateApp(program: Command) {
                     '',
                     'Next:',
                     ...payload.next.map((l) => `  ${l}`),
+                    '',
+                    'Without OPENAI_API_KEY the agent uses a mock LLM; set the key for real tool selection.',
                   ].join('\n')
             );
           } catch (e) {

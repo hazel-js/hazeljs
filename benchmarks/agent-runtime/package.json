@@ -1,0 +1,32 @@
+{
+  "name": "@hazeljs/agent-runtime-conformance",
+  "version": "0.0.0",
+  "private": true,
+  "description": "HazelJS Agent OS conformance — small hazeld app + Jest (not published)",
+  "scripts": {
+    "test": "jest --runInBand --testPathPattern=tests/",
+    "test:smoke": "jest --runInBand --testPathPattern='baseline|integrity|durable-steps.smoke'",
+    "test:crash": "jest --runInBand --testPathPattern=crash",
+    "test:bench": "jest --runInBand --testPathPattern='durable-steps\\.(smoke|load)|refund-load'",
+    "test:full": "jest --runInBand",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@hazeljs/agent": "file:../../packages/agent",
+    "@hazeljs/agent-gatekeeper": "file:../../packages/agent-gatekeeper",
+    "@hazeljs/core": "file:../../packages/core",
+    "reflect-metadata": "^0.2.2",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.14",
+    "@types/node": "^20.19.39",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.4.9",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.3"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

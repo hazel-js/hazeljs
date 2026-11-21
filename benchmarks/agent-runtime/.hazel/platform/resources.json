@@ -1,0 +1,140 @@
+{
+  "apiVersion": "agent.hazeljs.dev/v1alpha1",
+  "items": [
+    {
+      "apiVersion": "agent.hazeljs.dev/v1alpha1",
+      "kind": "AgentDefinition",
+      "metadata": {
+        "name": "refund-conformance",
+        "namespace": "default",
+        "generation": 50,
+        "resourceVersion": "100",
+        "creationTimestamp": "2026-11-17T18:07:59.103Z"
+      },
+      "spec": {
+        "dna": {
+          "format": "hazeljs.agent.dna",
+          "version": "1.0.0",
+          "name": "refund-conformance",
+          "systemPrompt": "You are refund-conformance. Mission: Read the order, then propose a bounded refund when asked.",
+          "tools": [
+            {
+              "name": "read_order",
+              "description": "Read an order"
+            },
+            {
+              "name": "refund",
+              "description": "Issue a bounded refund",
+              "requiresApproval": true
+            }
+          ],
+          "exportedAt": "2026-11-17T20:14:02.097Z",
+          "identity": {
+            "name": "refund-conformance"
+          },
+          "mission": {
+            "goal": "Read the order, then propose a bounded refund when asked."
+          },
+          "memory": {
+            "enabled": true,
+            "strategy": "working+long-term"
+          }
+        }
+      },
+      "status": {
+        "observedGeneration": 50,
+        "conditions": [
+          {
+            "type": "Validated",
+            "status": "True",
+            "reason": "Resolved",
+            "message": "DNA resolved",
+            "observedGeneration": 50,
+            "lastTransitionTime": "2026-11-17T20:14:02.102Z"
+          },
+          {
+            "type": "Ready",
+            "status": "True",
+            "reason": "Ready",
+            "message": "Definition ready",
+            "observedGeneration": 50,
+            "lastTransitionTime": "2026-11-17T20:14:02.102Z"
+          }
+        ],
+        "backend": {
+          "dnaName": "refund-conformance",
+          "dnaVersion": "1.0.0",
+          "source": "nested",
+          "toolCount": 2
+        }
+      }
+    },
+    {
+      "apiVersion": "agent.hazeljs.dev/v1alpha1",
+      "kind": "AgentDeployment",
+      "metadata": {
+        "name": "refund-conformance",
+        "namespace": "default",
+        "generation": 1,
+        "resourceVersion": "207",
+        "creationTimestamp": "2026-11-17T18:07:59.104Z"
+      },
+      "spec": {
+        "definitionRef": {
+          "kind": "AgentDefinition",
+          "name": "refund-conformance",
+          "namespace": "default"
+        },
+        "runtimeClassName": "local"
+      },
+      "status": {
+        "observedGeneration": 1,
+        "conditions": [
+          {
+            "type": "Validated",
+            "status": "True",
+            "reason": "Resolved",
+            "message": "Definition and DNA resolved",
+            "observedGeneration": 1,
+            "lastTransitionTime": "2026-11-17T18:07:59.109Z"
+          },
+          {
+            "type": "Progressing",
+            "status": "False",
+            "reason": "Applied",
+            "message": "Agent registered in AgentOS (hazeld)",
+            "observedGeneration": 1,
+            "lastTransitionTime": "2026-11-17T20:14:02.103Z"
+          },
+          {
+            "type": "Ready",
+            "status": "True",
+            "reason": "Ready",
+            "message": "Agent registered in AgentOS (hazeld)",
+            "observedGeneration": 1,
+            "lastTransitionTime": "2026-11-17T18:07:59.118Z"
+          },
+          {
+            "type": "Degraded",
+            "status": "False",
+            "reason": "Ready",
+            "message": "Backend reported ready",
+            "observedGeneration": 1,
+            "lastTransitionTime": "2026-11-17T18:07:59.118Z"
+          }
+        ],
+        "backend": {
+          "runtimeClassName": "local",
+          "definition": "refund-conformance",
+          "dnaName": "refund-conformance",
+          "dnaSource": "nested",
+          "hosted": true,
+          "recordedAt": "2026-11-17T20:14:02.103Z",
+          "desiredPhase": "running"
+        },
+        "message": "Agent registered in AgentOS (hazeld)",
+        "phase": "running"
+      }
+    }
+  ]
+}

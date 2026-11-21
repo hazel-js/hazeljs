@@ -30,7 +30,8 @@ import { AgentEventType, type AgentEvent } from '../types/event.types';
 import { AgentRuntime, type AgentRuntimeConfig } from '../runtime/agent.runtime';
 import type { AgentExecutionResult } from '../types/agent.types';
 import type { ToolAuthorizationGate } from '../authorization/tool-authorization-gate.interface';
-import { createMockLlmProvider } from '../llm/http-llm.provider';
+import { resolveLlmFromEnv } from '../llm/resolve-llm-from-env';
+import { loadProjectEnv } from '../node/load-project-env';
 import { autonomyPolicyRules } from './autonomy-policies';
 import { defineAgent, type DefineAgentInput } from './define-agent';
 import { occupancyFromBackend, projectOfficeStatus } from './status';
@@ -84,6 +85,7 @@ export class AgentOS {
     this.durableJobs = options.durableJobs;
     const projectRoot = options.projectRoot ?? process.cwd();
     this.projectRoot = path.resolve(projectRoot);
+    loadProjectEnv(this.projectRoot);
     this.namespace = options.namespace ?? 'default';
     this.skillHandlers = options.skillHandlers ?? {};
     const durableDir = path.resolve(options.durableDir ?? path.join(projectRoot, '.hazel', 'runs'));
@@ -120,7 +122,7 @@ export class AgentOS {
     this.usage = new UsageLedger();
 
     this.runtime = new AgentRuntime({
-      llmProvider: options.llmProvider ?? createMockLlmProvider(),
+      llmProvider: resolveLlmFromEnv({ llmProvider: options.llmProvider }),
       durableSuspend: true,
       workerId: options.workerId ?? 'agent-os',
       enableRetry: false,

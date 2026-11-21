@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
  * hazeld — long-lived HazelJS Agent OS node (survives terminal close).
+ * Project `.env` is loaded inside runHazeldMain via `@hazeljs/config` loadEnvFiles.
  */
 
 import { runHazeldMain } from '@hazeljs/agent';

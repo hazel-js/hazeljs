@@ -89,3 +89,42 @@ jobs:
           HAZEL_K8S_NAMESPACE: hazel-platform-ci
           HAZEL_K8S_IMAGE: registry.k8s.io/pause:3.9
         run: npx jest --runInBand --testPathPattern=platform.kubernetes.live --coverage=false
+
+  # Bounded Agent OS conformance (hazeld app + Jest; process crash + file store).
+  agent-runtime-conformance-smoke:
+    runs-on: ubuntu-latest
+    needs: []
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: 'npm'
+
+      - name: Install monorepo dependencies
+        run: npm ci
+
+      - name: Build agent + gatekeeper
+        run: npm run build --workspace=@hazeljs/agent --workspace=@hazeljs/agent-gatekeeper
+
+      - name: Install conformance suite deps
+        working-directory: benchmarks/agent-runtime
+        run: npm install
+
+      - name: Conformance smoke (baseline + MCP unsupported)
+        working-directory: benchmarks/agent-runtime
+        run: npm run test:smoke
+
+      - name: Conformance crash (SIGKILL hazeld)
+        working-directory: benchmarks/agent-runtime
+        run: npm run test:crash
+
+      - name: Upload conformance evidence
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-runtime-conformance-smoke
+          path: benchmarks/agent-runtime/results/
+          if-no-files-found: ignore

@@ -118,6 +118,17 @@ function toPascalCase(name: string): string {
   return parts.map((p) => p.charAt(0).toUpperCase() + p.slice(1)).join('') || 'Desk';
 }
 
+/** Shared OpenAI / Agent OS env template for scaffolds. */
+function agentEnvExample(extra = ''): string {
+  return `# Required for real tool selection via OpenAI (otherwise hazeld / AgentOS uses mock LLM)
+OPENAI_API_KEY=
+
+# Optional
+HAZEL_AGENT_MODEL=gpt-4o-mini
+OPENAI_BASE_URL=
+${extra}`;
+}
+
 function localFiles(projectName: string): Record<string, string> {
   const dnaName = agentDnaName(projectName);
   const npm = sanitizeNpmName(projectName);
@@ -139,12 +150,13 @@ function localFiles(projectName: string): Record<string, string> {
         },
         dependencies: {
           '@hazeljs/agent': '^2.1.0',
+          '@hazeljs/agent-gatekeeper': '^2.1.0',
+          '@hazeljs/config': '^2.1.0',
           '@hazeljs/core': '^2.1.0',
           '@hazeljs/eval': '^2.1.0',
           '@hazeljs/prompts': '^2.1.0',
           '@hazeljs/rag': '^2.1.0',
           '@hazeljs/resilience': '^2.1.0',
-          'reflect-metadata': '^0.2.2',
         },
         devDependencies: {
           '@hazeljs/cli': '^2.1.0',
@@ -162,6 +174,7 @@ function localFiles(projectName: string): Record<string, string> {
     'agent.ts': localAgentTs(dnaName, className),
     'agent.yaml': localAgentYaml(dnaName, display),
     'README.md': localAgentReadme(display, dnaName),
+    '.env.example': agentEnvExample(),
     '.npmrc': 'legacy-peer-deps=true\n',
   };
 }
@@ -293,26 +306,46 @@ Order-support desk agent for local Agent OS.
 
 **What it does:** look up sample orders (\`ORD-2042\`) and issue refunds that **pause for human approval**.
 
+## Prerequisites
+
+- **Node.js 18+**
+- Packages listed in \`package.json\` (installed via \`npm install\`):
+  - \`@hazeljs/agent\` — runtime, \`@Tool\`, hazeld
+  - \`@hazeljs/agent-gatekeeper\` — HITL approvals
+  - \`@hazeljs/config\` — loads project \`.env\` (\`loadEnvFiles\`) for hazeld
+  - \`@hazeljs/core\` + peers (\`prompts\`, \`rag\`, \`resilience\`, …)
+  - \`@hazeljs/cli\` (dev) — \`hazel\` / \`hazeld\` binaries
+- **OpenAI API key** for real tool selection (optional — without it hazeld uses a mock LLM)
+
+## Setup
+
+\`\`\`bash
+npm install
+cp .env.example .env
+# Edit .env and set OPENAI_API_KEY=sk-...
+\`\`\`
+
 | File | Role |
 | --- | --- |
 | \`agent.yaml\` | DNA — prompt, tool catalog, HITL flags |
 | \`agent.ts\` | Handlers — \`@Tool\` methods (+ \`parameters\` / \`requiresApproval\`) |
+| \`.env.example\` | \`OPENAI_API_KEY\`, optional model / base URL |
+
+## Run
 
 \`\`\`bash
-npm install
-hazel apply agent.yaml   # starts hazeld; loads agent.ts handlers
+hazel apply agent.yaml   # starts hazeld; loads agent.ts + .env
 hazel inspect ${dnaName}
-\`\`\`
-
-Try it:
-
-\`\`\`bash
 hazel ps
 hazel run ${dnaName} "look up order ORD-2042"
 hazel run ${dnaName} "refund order ORD-2042"
 hazel approvals
 hazel approve <taskId>
 \`\`\`
+
+- **With \`OPENAI_API_KEY\`:** OpenAI function calling selects tools.
+- **Without a key:** mock LLM replies (tools still registered; no real selection).
+- If hazeld was already running before you set the key, **restart** it (\`hazel doctor\` / stop + \`hazel apply\` again) so it reloads \`.env\`.
 
 \`hazel apply\` starts \`hazeld\` if needed — agents stay Running after you close the terminal.
 Re-run \`hazel apply\` after editing \`agent.ts\` to reload handlers.
@@ -348,6 +381,8 @@ function contextFiles(projectName: string): Record<string, string> {
         },
         dependencies: {
           '@hazeljs/agent': '^2.1.0',
+          '@hazeljs/agent-gatekeeper': '^2.1.0',
+          '@hazeljs/config': '^2.1.0',
           '@hazeljs/context': '^2.1.0',
           '@hazeljs/core': '^2.1.0',
           '@hazeljs/cag': '^2.1.0',
@@ -357,7 +392,6 @@ function contextFiles(projectName: string): Record<string, string> {
           '@hazeljs/prompts': '^2.1.0',
           '@hazeljs/rag': '^2.1.0',
           '@hazeljs/resilience': '^2.1.0',
-          'reflect-metadata': '^0.2.2',
         },
         devDependencies: {
           '@hazeljs/cli': '^2.1.0',
@@ -395,6 +429,7 @@ function contextFiles(projectName: string): Record<string, string> {
     'agent.yaml': contextAgentYaml(dnaName, display),
     'scripts/walkthrough.ts': contextWalkthroughTs(dnaName),
     'README.md': contextAgentReadme(display, dnaName),
+    '.env.example': agentEnvExample(),
     '.npmrc': 'legacy-peer-deps=true\n',
   };
 }
@@ -837,6 +872,20 @@ function contextAgentReadme(display: string, dnaName: string): string {
 
 **Context desk** — local Agent OS + multi-layer context + HITL refunds.
 
+## Prerequisites
+
+- **Node.js 18+**
+- \`npm install\` (includes \`@hazeljs/agent\`, \`@hazeljs/agent-gatekeeper\`, \`@hazeljs/config\`, context/RAG peers, \`@hazeljs/cli\`)
+- **OpenAI API key** for real tool selection (optional — mock LLM without it)
+
+## Setup
+
+\`\`\`bash
+npm install
+cp .env.example .env
+# Set OPENAI_API_KEY=sk-...
+\`\`\`
+
 | Layer | Demo prompt |
 | --- | --- |
 | **CAG** | "What is the refund policy for damaged goods?" |
@@ -851,15 +900,19 @@ function contextAgentReadme(display: string, dnaName: string): string {
 | \`context.ts\` | \`ContextService\` planner + offline CAG/RAG/KAG/Memory ports |
 | \`kb/\` | policy.md, faq.md, graph.json |
 | \`agent.yaml\` | DNA for \`hazel apply\` (loads \`agent.ts\` into hazeld) |
+| \`.env.example\` | \`OPENAI_API_KEY\`, optional model / base URL |
+
+## Run
 
 \`\`\`bash
-npm install
 npm run demo          # offline planner walkthrough (logs sources)
 hazel apply agent.yaml
 hazel run ${dnaName} "What is the refund policy for damaged goods?"
 hazel run ${dnaName} "refund order ORD-2042"
 hazel approvals
 \`\`\`
+
+Restart hazeld after changing \`.env\` if it was already running.
 
 Deeper package labs (Meridian): \`example:rag\` · \`example:cag\` · \`example:kag\` · \`example:context\`
 
@@ -890,6 +943,12 @@ function bareFiles(projectName: string): Record<string, string> {
           'store:publish': 'hazel store publish dna/agent.marketplace.json',
           'store:install': 'hazel store install dna/agent.marketplace.json',
         },
+        dependencies: {
+          '@hazeljs/agent': '^2.1.0',
+        },
+        devDependencies: {
+          '@hazeljs/cli': '^2.1.0',
+        },
         keywords: ['hazeljs', 'agent-os', 'dna'],
         license: 'Apache-2.0',
       },
@@ -897,15 +956,31 @@ function bareFiles(projectName: string): Record<string, string> {
       2
     ),
     'dna/agent.marketplace.json': pkgJson,
+    '.env.example': agentEnvExample(),
     'README.md': `# ${projectName}
 
 Bare **Agent DNA** package (contract only — like OpenAPI for an agent).
+
+## Prerequisites
+
+- **Node.js 18+**
+- \`npm install\` (\`@hazeljs/agent\` + \`@hazeljs/cli\`)
+- Optional: \`OPENAI_API_KEY\` in \`.env\` for a real LLM (\`hazel agent run\` uses mock without it, or pass \`--mock\`)
+
+## Setup
+
+\`\`\`bash
+npm install
+cp .env.example .env
+# Optionally set OPENAI_API_KEY=sk-...
+\`\`\`
 
 ## Commands
 
 \`\`\`bash
 # Smoke-run (Agent OS engine + stub tools + mock/real LLM)
 npx hazel agent run dna/agent.marketplace.json "hello"
+npx hazel agent run dna/agent.marketplace.json "hello" --mock
 
 # Publish to local registry, then install into a project
 npx hazel store publish dna/agent.marketplace.json
@@ -925,7 +1000,7 @@ function agentOsOpsFiles(npm: string, _projectName: string): Record<string, stri
   const hpaName = `${npm}-hpa`;
 
   return {
-    '.env.example': `# Agent runtime
+    '.env.example': agentEnvExample(`# Agent runtime
 HITL=0
 
 # Ops stack (proactive scaling + reactive self-healing)
@@ -936,7 +1011,7 @@ K8S_HPA_NAME=${hpaName}
 PROMETHEUS_URL=http://prometheus.monitoring.svc:9090
 SLACK_BOT_TOKEN=
 PAGERDUTY_ROUTING_KEY=
-`,
+`),
     'src/ops/stack.ts': `import { createOperationsStack } from '@hazeljs/predictive-scaling';
 import {
   FetchKubernetesRestartClient,
@@ -1194,10 +1269,13 @@ Use lookupOrder for facts. Call processRefund only after lookup. Be concise.`,
         },
         dependencies: {
           '@hazeljs/agent': '^2.1.0',
+          '@hazeljs/config': '^2.1.0',
+          '@hazeljs/core': '^2.1.0',
           '@hazeljs/self-healing': '^2.1.0',
           '@hazeljs/predictive-scaling': '^2.1.0',
         },
         devDependencies: {
+          '@hazeljs/cli': '^2.1.0',
           '@types/node': '^20.19.39',
           'ts-node': '^10.9.2',
           typescript: '^5.9.3',
@@ -1281,7 +1359,7 @@ export class SupportAgent {
 import {
   AgentRuntime,
   AgentEventType,
-  createMockLlmProvider,
+  resolveLlmFromEnv,
   type AgentEvent,
 } from '@hazeljs/agent';
 import { SupportAgent } from './support.agent';
@@ -1295,10 +1373,8 @@ async function main() {
     process.on('SIGINT', () => stopAgentOpsStack());
     process.on('SIGTERM', () => stopAgentOpsStack());
   }
-  // Demo uses mock LLM. Wire OpenAI (or another provider) in production apps.
-  const llm = createMockLlmProvider(
-    'Used real @Tool handlers on AgentRuntime. (Replace createMockLlmProvider with your LLM.)'
-  );
+  // Uses OPENAI_API_KEY from env/.env when set; otherwise mock LLM.
+  const llm = resolveLlmFromEnv();
 
   const runtime = new AgentRuntime({
     llmProvider: llm,
@@ -1334,18 +1410,32 @@ main().catch((e) => {
 
 **Agent OS mini-app** — DNA contract + **real** \`@Tool\` implementations.
 
+## Prerequisites
+
+- **Node.js 18+**
+- \`npm install\` (\`@hazeljs/agent\`, \`@hazeljs/core\`, \`@hazeljs/config\`, ops packages, \`@hazeljs/cli\`)
+- **OpenAI API key** for real tool selection (optional — mock without it)
+
+## Setup
+
+\`\`\`bash
+npm install
+cp .env.example .env
+# Set OPENAI_API_KEY=sk-...
+\`\`\`
+
 | Path | Role |
 | --- | --- |
 | \`dna/agent.marketplace.json\` | DNA / marketplace package (OpenAPI-for-agents) |
 | \`src/support.agent.ts\` | Real tool handlers |
-| \`src/main.ts\` | AgentRuntime bootstrap + optional DNA overlay |
+| \`src/main.ts\` | AgentRuntime bootstrap (\`resolveLlmFromEnv\`) |
 | \`src/ops/stack.ts\` | Predictive scaling + self-healing ops stack |
 | \`deploy/kubernetes/\` | K8s Deployment, HPA, RBAC for in-cluster ops |
+| \`.env.example\` | \`OPENAI_API_KEY\`, HITL, ops flags |
 
-## Quick start
+## Run
 
 \`\`\`bash
-npm install
 npm run dev
 npm run dev -- I want a refund for ORD-1002
 
@@ -1362,7 +1452,6 @@ Set \`HITL=1\` to pause on \`processRefund\` approvals.
 ## Production ops (predictive + self-healing)
 
 \`\`\`bash
-cp .env.example .env
 ENABLE_OPS_STACK=1 npm run dev
 
 # Deploy to Kubernetes (requires kubectl + kustomize)
@@ -1410,6 +1499,7 @@ function skillgateFiles(projectName: string): Record<string, string> {
           '@hazeljs/skillgate': '^2.1.0',
         },
         devDependencies: {
+          '@hazeljs/cli': '^2.1.0',
           '@types/node': '^20.19.39',
           'ts-node': '^10.9.2',
           typescript: '^5.9.3',
@@ -1436,6 +1526,9 @@ function skillgateFiles(projectName: string): Record<string, string> {
       2
     ),
     'dna/agent.marketplace.json': marketplace,
+    '.env.example': agentEnvExample(`# Skillgate upstream API
+API_BASE_URL=http://127.0.0.1:3000
+`),
     'openapi/sample.openapi.json': JSON.stringify(
       {
         openapi: '3.0.3',
@@ -1488,8 +1581,23 @@ console.log('Registered tools:', registry.getAgentTools('api-concierge').map((t)
 
 **Skillgate** starter — OpenAPI → governed agent skills + DNA package.
 
+## Prerequisites
+
+- **Node.js 18+**
+- \`npm install\` (\`@hazeljs/agent\`, \`@hazeljs/skillgate\`, \`@hazeljs/cli\`)
+- Optional: \`OPENAI_API_KEY\` in \`.env\` for \`hazel agent run\` (or pass \`--mock\`)
+
+## Setup
+
 \`\`\`bash
 npm install
+cp .env.example .env
+# Optionally set OPENAI_API_KEY=sk-...
+\`\`\`
+
+## Run
+
+\`\`\`bash
 npm run report          # Skillgate included/denied report
 npx hazel agent run dna/agent.marketplace.json
 npx hazel store publish dna/agent.marketplace.json

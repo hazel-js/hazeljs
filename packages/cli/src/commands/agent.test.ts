@@ -64,18 +64,35 @@ describe('agent templates scaffold', () => {
       template: 'local',
     });
     expect(result.files).toEqual(
-      expect.arrayContaining(['package.json', 'agent.yaml', 'agent.ts', 'README.md'])
+      expect.arrayContaining([
+        'package.json',
+        'agent.yaml',
+        'agent.ts',
+        'README.md',
+        '.env.example',
+      ])
     );
     expect(result.files).not.toEqual(
       expect.arrayContaining(['host.ts', 'showcase.ts', 'demo-llm.ts'])
     );
     expect(fs.existsSync(path.join(dest, 'agent.yaml'))).toBe(true);
     expect(fs.existsSync(path.join(dest, 'agent.ts'))).toBe(true);
+    expect(fs.existsSync(path.join(dest, '.env.example'))).toBe(true);
     expect(fs.existsSync(path.join(dest, 'deploy/kubernetes'))).toBe(false);
     const agent = fs.readFileSync(path.join(dest, 'agent.ts'), 'utf8');
     expect(agent).toMatch(/lookup_order/);
     expect(agent).toMatch(/issue_refund/);
     expect(agent).toMatch(/requiresApproval:\s*true/);
+    const pkg = JSON.parse(fs.readFileSync(path.join(dest, 'package.json'), 'utf8'));
+    expect(pkg.dependencies['@hazeljs/agent']).toBe('^2.1.0');
+    expect(pkg.dependencies['@hazeljs/agent-gatekeeper']).toBe('^2.1.0');
+    expect(pkg.dependencies['@hazeljs/config']).toBe('^2.1.0');
+    expect(pkg.dependencies['reflect-metadata']).toBeUndefined();
+    const readme = fs.readFileSync(path.join(dest, 'README.md'), 'utf8');
+    expect(readme).toMatch(/OPENAI_API_KEY/);
+    expect(readme).toMatch(/Prerequisites/);
+    const envExample = fs.readFileSync(path.join(dest, '.env.example'), 'utf8');
+    expect(envExample).toMatch(/OPENAI_API_KEY=/);
   });
 
   it('scaffolds context desk with ContextService seeds', () => {
@@ -95,6 +112,7 @@ describe('agent templates scaffold', () => {
         'kb/faq.md',
         'kb/graph.json',
         'scripts/walkthrough.ts',
+        '.env.example',
       ])
     );
     const agent = fs.readFileSync(path.join(dest, 'agent.ts'), 'utf8');
@@ -106,17 +124,27 @@ describe('agent templates scaffold', () => {
     const pkg = JSON.parse(fs.readFileSync(path.join(dest, 'package.json'), 'utf8'));
     expect(pkg.dependencies['@hazeljs/context']).toBe('^2.1.0');
     expect(pkg.dependencies['@hazeljs/memory']).toBe('^2.1.0');
+    expect(pkg.dependencies['@hazeljs/agent']).toBe('^2.1.0');
+    expect(pkg.dependencies['@hazeljs/agent-gatekeeper']).toBe('^2.1.0');
+    expect(pkg.dependencies['@hazeljs/config']).toBe('^2.1.0');
+    expect(pkg.dependencies['reflect-metadata']).toBeUndefined();
+    const readme = fs.readFileSync(path.join(dest, 'README.md'), 'utf8');
+    expect(readme).toMatch(/OPENAI_API_KEY/);
   });
 
   it('scaffolds bare DNA package', () => {
     const dest = path.join(tmp, 'bare-demo');
     const result = scaffoldAgentProject({ name: 'bare-demo', destDir: dest, template: 'bare' });
     expect(result.files).toContain('dna/agent.marketplace.json');
+    expect(result.files).toContain('.env.example');
     const pkg = JSON.parse(
       fs.readFileSync(path.join(dest, 'dna/agent.marketplace.json'), 'utf8')
     ) as { dna: { format: string; name: string } };
     expect(pkg.dna.format).toBe('hazeljs.agent.dna');
     expect(pkg.dna.name).toBeTruthy();
+    const rootPkg = JSON.parse(fs.readFileSync(path.join(dest, 'package.json'), 'utf8'));
+    expect(rootPkg.dependencies['@hazeljs/agent']).toBe('^2.1.0');
+    expect(fs.readFileSync(path.join(dest, 'README.md'), 'utf8')).toMatch(/OPENAI_API_KEY/);
   });
 
   it('scaffolds agent-os with real tool source', () => {
@@ -127,15 +155,20 @@ describe('agent templates scaffold', () => {
     expect(fs.existsSync(path.join(dest, 'src/ops/stack.ts'))).toBe(true);
     expect(fs.existsSync(path.join(dest, 'deploy/kubernetes/hpa.yaml'))).toBe(true);
     expect(fs.existsSync(path.join(dest, 'dna/agent.marketplace.json'))).toBe(true);
+    expect(fs.existsSync(path.join(dest, '.env.example'))).toBe(true);
     const pkg = JSON.parse(fs.readFileSync(path.join(dest, 'package.json'), 'utf8'));
     expect(pkg.dependencies['@hazeljs/self-healing']).toBe('^2.1.0');
     expect(pkg.dependencies['@hazeljs/predictive-scaling']).toBe('^2.1.0');
     expect(pkg.dependencies['@hazeljs/agent']).toBe('^2.1.0');
+    expect(pkg.dependencies['@hazeljs/config']).toBe('^2.1.0');
+    expect(pkg.dependencies['@hazeljs/core']).toBe('^2.1.0');
     expect(pkg.dependencies['reflect-metadata']).toBeUndefined();
     const main = fs.readFileSync(path.join(dest, 'src/main.ts'), 'utf8');
-    const agent = fs.readFileSync(path.join(dest, 'src/support.agent.ts'), 'utf8');
     expect(main).not.toMatch(/reflect-metadata/);
-    expect(agent).not.toMatch(/reflect-metadata/);
+    expect(main).toMatch(/resolveLlmFromEnv/);
+    const envExample = fs.readFileSync(path.join(dest, '.env.example'), 'utf8');
+    expect(envExample).toMatch(/OPENAI_API_KEY=/);
+    expect(fs.readFileSync(path.join(dest, 'README.md'), 'utf8')).toMatch(/OPENAI_API_KEY/);
   });
 
   it('scaffolds skillgate with openapi sample', () => {
@@ -143,6 +176,10 @@ describe('agent templates scaffold', () => {
     scaffoldAgentProject({ name: 'sg-demo', destDir: dest, template: 'skillgate' });
     expect(fs.existsSync(path.join(dest, 'openapi/sample.openapi.json'))).toBe(true);
     expect(fs.existsSync(path.join(dest, 'src/report.ts'))).toBe(true);
+    expect(fs.existsSync(path.join(dest, '.env.example'))).toBe(true);
+    const pkg = JSON.parse(fs.readFileSync(path.join(dest, 'package.json'), 'utf8'));
+    expect(pkg.dependencies['@hazeljs/agent']).toBe('^2.1.0');
+    expect(fs.readFileSync(path.join(dest, 'README.md'), 'utf8')).toMatch(/OPENAI_API_KEY/);
   });
 
   it('refuses non-empty dest without force', () => {

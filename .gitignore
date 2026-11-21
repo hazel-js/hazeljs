@@ -41,4 +41,12 @@ logs/
 
 # Temporary files
 tmp/
-temp/ 
+temp/
+
+# Agent runtime conformance suite local artifacts
+benchmarks/agent-runtime/tmp/
+benchmarks/agent-runtime/results/*.json
+benchmarks/agent-runtime/results/*.md
+benchmarks/agent-runtime/results/raw/
+benchmarks/agent-runtime/node_modules/
+benchmarks/agent-runtime/dist/ 

@@ -1,9 +1,7 @@
 import { Service } from '@hazeljs/core';
 import { ConfigModuleOptions, ValidationSchema } from './config.module';
-import * as dotenv from 'dotenv';
-import * as fs from 'fs';
-import * as path from 'path';
 import logger from '@hazeljs/core';
+import { loadEnvFiles } from './load-env-files';
 
 @Service()
 export class ConfigService {
@@ -58,28 +56,18 @@ export class ConfigService {
   }
 
   /**
-   * Load environment files
+   * Load environment files via shared loadEnvFiles helper.
    */
   private loadEnvFiles(envFilePath?: string | string[]): void {
-    const paths = Array.isArray(envFilePath) ? envFilePath : envFilePath ? [envFilePath] : ['.env'];
-
-    for (const filePath of paths) {
-      const fullPath = path.resolve(process.cwd(), filePath);
-
-      if (fs.existsSync(fullPath)) {
-        logger.debug(`Loading environment file: ${fullPath}`);
-        const result = dotenv.config({ path: fullPath });
-
-        if (result.parsed) {
-          this.config = { ...this.config, ...result.parsed };
-        }
-
-        if (result.error) {
-          logger.warn(`Error loading ${fullPath}:`, result.error);
-        }
-      } else {
-        logger.debug(`Environment file not found: ${fullPath}`);
-      }
+    const { loaded, parsed } = loadEnvFiles({
+      cwd: process.cwd(),
+      envFilePath: envFilePath ?? '.env',
+    });
+    for (const fullPath of loaded) {
+      logger.debug(`Loading environment file: ${fullPath}`);
+    }
+    if (Object.keys(parsed).length > 0) {
+      this.config = { ...this.config, ...parsed };
     }
   }
 

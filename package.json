@@ -44,7 +44,10 @@
     "db:logs": "docker-compose logs -f",
     "flow:migrate": "npm run prisma:migrate --workspace=@hazeljs/flow",
     "flow:test": "npm run test --workspace=@hazeljs/flow",
-    "flow:runtime": "npm run dev --workspace=@hazeljs/flow-runtime"
+    "flow:runtime": "npm run dev --workspace=@hazeljs/flow-runtime",
+    "conformance:smoke": "cd benchmarks/agent-runtime && npm run test:smoke",
+    "conformance:crash": "cd benchmarks/agent-runtime && npm run test:crash",
+    "conformance:full": "cd benchmarks/agent-runtime && npm run test:full"
   },
   "repository": {
     "type": "git",

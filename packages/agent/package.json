@@ -42,6 +42,7 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@hazeljs/config": "^2.1.0",
     "@hazeljs/core": "^2.1.0",
     "@hazeljs/eval": "^2.1.0",
     "@hazeljs/prompts": "^2.1.0",
@@ -54,6 +55,7 @@
     "typescript": "^6.0.3"
   },
   "peerDependencies": {
+    "@hazeljs/config": "^2.1.0",
     "@hazeljs/core": "^2.1.0",
     "@hazeljs/eval": "^2.1.0",
     "@hazeljs/guardrails": "^2.1.0",
@@ -67,6 +69,10 @@
     "redis": ">=4.0.0"
   },
   "peerDependenciesMeta": {
+    "@hazeljs/config": {
+      "optional": true,
+      "description": "loadEnvFiles for project .env in hazeld / AgentOS"
+    },
     "@hazeljs/eval": {
       "optional": true,
       "description": "Agent trajectory evaluation helpers"

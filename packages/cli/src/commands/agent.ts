@@ -185,11 +185,13 @@ export function registerAgentCommand(program: Command): void {
             ...result,
             next: [
               `cd ${path.relative(process.cwd(), result.path) || '.'}`,
+              'cp .env.example .env   # set OPENAI_API_KEY',
+              'npm install',
               result.template === 'bare'
                 ? 'npx hazel agent run dna/agent.marketplace.json "hello"'
                 : isLocalOs
-                  ? 'npm install && hazel apply agent.yaml'
-                  : 'npm install && npm run dev',
+                  ? 'hazel apply agent.yaml'
+                  : 'npm run dev',
               ...(result.template === 'bare'
                 ? ['npx hazel store publish dna/agent.marketplace.json']
                 : isLocalOs
@@ -198,9 +200,9 @@ export function registerAgentCommand(program: Command): void {
             ],
           };
           const note = isLocalOs
-            ? 'Note: `hazel apply` loads `./agent.ts` into hazeld. `hazel agent run` on DNA alone still uses stubs.'
+            ? 'Note: `hazel apply` loads `./agent.ts` into hazeld. Without OPENAI_API_KEY hazeld uses a mock LLM.'
             : result.template === 'bare'
-              ? 'Note: `hazel agent run` on DNA uses stub tools.'
+              ? 'Note: `hazel agent run` on DNA uses stub tools. Pass --mock or set OPENAI_API_KEY.'
               : 'Note: `hazel agent run` on DNA uses stub tools. Use the app (`npm run dev`) for real @Tool / Skillgate handlers.';
           // eslint-disable-next-line no-console
           console.log(

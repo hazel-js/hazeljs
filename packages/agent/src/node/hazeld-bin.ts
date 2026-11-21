@@ -3,9 +3,11 @@
  * hazeld binary entry (also re-exported from @hazeljs/cli).
  */
 
+import { loadProjectEnv } from './load-project-env';
 import { runHazeldMain } from './hazeld-server';
 
 const projectRoot = process.env.HAZEL_PROJECT_ROOT ?? process.cwd();
+loadProjectEnv(projectRoot);
 
 runHazeldMain({
   home: process.env.HAZEL_HOME,

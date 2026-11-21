@@ -13,4 +13,5 @@ export * from './gatekeeper';
 export * from './hazeld-server';
 export * from './ensure-daemon';
 export * from './load-project-agent';
+export * from './load-project-env';
 export { VERSION as NODE_VERSION } from './version';

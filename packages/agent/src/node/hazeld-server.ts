@@ -10,6 +10,7 @@ import { DurableJobStore, nextCronDate } from './jobs';
 import { ensureHazelHome, hazelHome } from './paths';
 import { ScheduleTriggerHandler } from './triggers';
 import { createHostServiceManager } from './host-service';
+import { loadProjectEnv } from './load-project-env';
 import type { AgentDna } from '../dna/agent-dna';
 
 export interface HazeldServerOptions extends LocalNodeOptions {
@@ -183,8 +184,12 @@ function scheduleCronFromDna(dna: AgentDna): string | undefined {
 
 /** Entry for the hazeld binary. */
 export async function runHazeldMain(options: HazeldServerOptions = {}): Promise<void> {
-  const server = new HazeldServer(options);
+  const projectRoot = options.projectRoot ?? process.env.HAZEL_PROJECT_ROOT ?? process.cwd();
+  loadProjectEnv(projectRoot);
+
+  const server = new HazeldServer({ ...options, projectRoot });
   const { socketPath, pid } = await server.start();
+  const hasKey = Boolean(process.env.OPENAI_API_KEY?.trim());
   // eslint-disable-next-line no-console
   console.log(`Hazel Agent OS Node (hazeld)`);
   // eslint-disable-next-line no-console
@@ -193,6 +198,10 @@ export async function runHazeldMain(options: HazeldServerOptions = {}): Promise<
   console.log(`  socket: ${socketPath}`);
   // eslint-disable-next-line no-console
   console.log(`  home:   ${hazelHome(options.home).home}`);
+  // eslint-disable-next-line no-console
+  console.log(
+    `  llm:    ${hasKey ? 'openai (OPENAI_API_KEY)' : 'mock (set OPENAI_API_KEY in .env)'}`
+  );
 
   const shutdown = async (): Promise<void> => {
     await server.stop();

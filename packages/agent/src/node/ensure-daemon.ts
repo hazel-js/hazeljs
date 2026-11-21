@@ -7,6 +7,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { hazelHome, ensureHazelHome } from './paths';
 import { isDaemonReachable } from './control-api';
+import { loadProjectEnv } from './load-project-env';
 
 export interface EnsureDaemonOptions {
   home?: string;
@@ -23,6 +24,10 @@ export async function ensureDaemon(options: EnsureDaemonOptions = {}): Promise<{
   socketPath: string;
 }> {
   const home = ensureHazelHome(hazelHome(options.home));
+  const projectRoot = options.projectRoot ?? process.cwd();
+  // Inherit project .env into this process so the spawned hazeld gets OPENAI_API_KEY etc.
+  loadProjectEnv(projectRoot);
+
   if (await isDaemonReachable(home.socketPath)) {
     let pid: number | undefined;
     try {
@@ -40,9 +45,9 @@ export async function ensureDaemon(options: EnsureDaemonOptions = {}): Promise<{
     env: {
       ...process.env,
       HAZEL_HOME: home.home,
-      HAZEL_PROJECT_ROOT: options.projectRoot ?? process.cwd(),
+      HAZEL_PROJECT_ROOT: projectRoot,
     },
-    cwd: options.projectRoot ?? process.cwd(),
+    cwd: projectRoot,
   });
   child.unref();
 
