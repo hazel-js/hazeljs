@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/mail",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "description": "Structured email for HazelJS — EmailDocument compose API, delivery policy, multi-provider send, lifecycle webhooks",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -28,9 +28,9 @@
     "typescript": "^6.0.3"
   },
   "peerDependencies": {
-    "@hazeljs/core": "^2.1.1",
-    "@hazeljs/event-emitter": "^2.1.1",
-    "@hazeljs/queue": "^2.1.1",
+    "@hazeljs/core": "^2.1.2",
+    "@hazeljs/event-emitter": "^2.1.2",
+    "@hazeljs/queue": "^2.1.2",
     "handlebars": "^4.7.8",
     "mjml": "^4.15.3",
     "nodemailer": "^6.9.0"

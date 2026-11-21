@@ -1,6 +1,6 @@
 {
   "name": "@hazeljs/kag",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "description": "Knowledge-Augmented Generation for HazelJS — entities, facts, relations, and structured reasoning",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -35,11 +35,11 @@
     "typescript": "^6.0.3"
   },
   "peerDependencies": {
-    "@hazeljs/core": "^2.1.1",
-    "@hazeljs/ai": "^2.1.1",
-    "@hazeljs/rag": "^2.1.1",
-    "@hazeljs/memory": "^2.1.1",
-    "@hazeljs/event-emitter": "^2.1.1"
+    "@hazeljs/core": "^2.1.2",
+    "@hazeljs/ai": "^2.1.2",
+    "@hazeljs/rag": "^2.1.2",
+    "@hazeljs/memory": "^2.1.2",
+    "@hazeljs/event-emitter": "^2.1.2"
   },
   "peerDependenciesMeta": {
     "@hazeljs/ai": {
