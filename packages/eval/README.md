@@ -2,6 +2,8 @@
 
 Evaluation toolkit for HazelJS AI applications: golden datasets, classical IR metrics (precision/recall@k, MRR, NDCG), RAG-style heuristics, agent trajectory scoring, LLM-as-judge helpers, and CI-friendly reporting.
 
+**Scope:** CI regression gates — not a Studio or experiment dashboard. For playgrounds and experiments, bring [Langfuse or Braintrust](https://hazeljs.ai/docs/guides/observability-partners) via OpenTelemetry.
+
 [![npm version](https://img.shields.io/npm/v/@hazeljs/eval.svg)](https://www.npmjs.com/package/@hazeljs/eval)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 

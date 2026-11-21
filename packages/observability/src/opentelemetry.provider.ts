@@ -25,6 +25,7 @@ export class OpenTelemetryProvider implements ObservabilityProvider {
     if (config.otlpEndpoint) {
       this.exporter = new OTLPTraceExporter({
         url: config.otlpEndpoint,
+        ...(config.otlpHeaders ? { headers: config.otlpHeaders } : {}),
       });
       spanProcessors.push(new BatchSpanProcessor(this.exporter));
     }

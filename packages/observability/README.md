@@ -2,7 +2,7 @@
 
 **Production-grade observability for AI agents and LLM flows.**
 
-Trace complex reasoning loops, monitor per-request LLM costs, and debug agentic workflows with native OpenTelemetry support. One decorator, one provider. Ship observable AI features without the manual instrumentation.
+Trace agent loops, monitor per-request LLM costs, and export spans over OpenTelemetry. Local day-2 debug stays on Inspector; Studio/experiment UX is bring-your-own (Langfuse, Braintrust) via OTLP.
 
 [![npm version](https://img.shields.io/npm/v/@hazeljs/observability.svg)](https://www.npmjs.com/package/@hazeljs/observability)
 [![npm downloads](https://img.shields.io/npm/dm/@hazeljs/observability)](https://www.npmjs.com/package/@hazeljs/observability)
@@ -10,12 +10,13 @@ Trace complex reasoning loops, monitor per-request LLM costs, and debug agentic 
 
 ## Features
 
-- 🕵️ **Native Tracing** - Auto-instrumentation via `@Trace()` decorator
-- 📊 **Cost Tracking** - Monitor LLM token usage and estimated API costs in real-time
-- 🌐 **OpenTelemetry** - Built on industry-standard OTel for vendor neutrality (Jaeger, Honeycomb, etc.)
-- ⚡ **Zero Overhead** - Asynchronous span processing that never blocks your agent execution
-- 🎯 **Type-Safe Spans** - Rich metadata capture with full TypeScript support
-- 🏗️ **Distributed Context** - Trace flows across multiple agents and services
+- **Native tracing** — `@Trace()` decorator on agent/tool methods
+- **Cost tracking** — LLM token usage as span attributes
+- **OpenTelemetry** — vendor-neutral OTLP (Jaeger, Honeycomb, Langfuse, Braintrust, …)
+- **Auth headers** — `otlpHeaders` for partner backends that require Basic/Bearer auth
+- **Type-safe spans** — TypeScript-first metadata
+
+HazelJS does **not** ship a Mastra-style Studio. Use [Inspector](https://hazeljs.ai/docs/packages/inspector) for local Agent OS timelines and [CI eval](https://hazeljs.ai/docs/packages/eval) for deploy gates. For playgrounds and experiments, see [Observability partners](https://hazeljs.ai/docs/guides/observability-partners).
 
 ## Installation
 
@@ -25,32 +26,60 @@ npm install @hazeljs/observability
 
 ### Peer Dependencies
 
-Install the OpenTelemetry API and SDK if not already present:
-
 ```bash
-npm install @opentelemetry/api @opentelemetry/sdk-trace-node @opentelemetry/resources @opentelemetry/semantic-conventions
+npm install @opentelemetry/api @opentelemetry/sdk-trace-node @opentelemetry/resources @opentelemetry/semantic-conventions @opentelemetry/exporter-trace-otlp-http
 ```
 
 ## Quick Start
 
 ### 1. Initialize the Provider
 
-Initialize the `OpenTelemetryProvider` in your application's entry point:
-
 ```typescript
 import { OpenTelemetryProvider } from '@hazeljs/observability';
 
 const provider = new OpenTelemetryProvider({
   serviceName: 'my-ai-agent',
-  endpoint: 'http://localhost:4318/v1/traces', // OTLP endpoint
+  otlpEndpoint: 'http://localhost:4318/v1/traces',
 });
 
-provider.initialize();
+await provider.start();
 ```
 
-### 2. Trace Methods with @Trace()
+### 2. Export to Langfuse / Braintrust
 
-Simply drop the `@Trace()` decorator on any synchronous or asynchronous method:
+```typescript
+const auth = Buffer.from(
+  `${process.env.LANGFUSE_PUBLIC_KEY}:${process.env.LANGFUSE_SECRET_KEY}`
+).toString('base64');
+
+const provider = new OpenTelemetryProvider({
+  serviceName: 'support-agent',
+  otlpEndpoint: 'https://cloud.langfuse.com/api/public/otel/v1/traces',
+  otlpHeaders: {
+    Authorization: `Basic ${auth}`,
+    'x-langfuse-ingestion-version': '4',
+  },
+});
+
+await provider.start();
+```
+
+Braintrust example:
+
+```typescript
+new OpenTelemetryProvider({
+  serviceName: 'support-agent',
+  otlpEndpoint: 'https://api.braintrust.dev/otel/v1/traces',
+  otlpHeaders: {
+    Authorization: `Bearer ${process.env.BRAINTRUST_API_KEY}`,
+    'x-bt-parent': `project_name:${process.env.BRAINTRUST_PROJECT}`,
+  },
+});
+```
+
+No first-party `@langfuse/*` / `@braintrust/*` dependencies — OTLP only. You may attach vendor span processors yourself if your team already uses those SDKs.
+
+### 3. Trace Methods with `@Trace()`
 
 ```typescript
 import { Trace } from '@hazeljs/observability';
@@ -59,9 +88,7 @@ import { Injectable } from '@hazeljs/core';
 @Injectable()
 export class FinancialAgent {
   @Trace('analyze-portfolio')
-  async analyzePortfolio(data: any) {
-    // This method call is now automatically captured as a span
-    // including duration, status, and metadata.
+  async analyzePortfolio(data: unknown) {
     return await this.performHeavyAnalysis(data);
   }
 }
@@ -69,78 +96,46 @@ export class FinancialAgent {
 
 ## Cost & Token Tracking
 
-Integrate LLM cost tracking directly into your traces:
-
 ```typescript
-import { Trace, useObservability } from '@hazeljs/observability';
-
-class ChatService {
-  @Trace('llm-completion')
-  async complete(prompt: string) {
-    const { trackCost } = useObservability();
-    const response = await this.llm.generate(prompt);
-
-    // Capture token usage and cost as span attributes
-    trackCost('gpt-4o', response.usage.inputTokens, response.usage.outputTokens);
-
-    return response;
-  }
-}
+provider.trackCost('gpt-4o', response.usage.inputTokens, response.usage.outputTokens);
 ```
 
-## Architecture
-
-The observability package follows the A2A (Agent-to-Agent) and OTel specifications to ensure your traces are compatible with the broader ecosystem.
-
-<MermaidDiagram chart={`graph TD
-A["@Trace() Decorator"] --> B["Observability Service"]
-B --> C["OpenTelemetry Provider"]
-C --> D["OTLP Exporter"]
-D --> E["Observability Platform<br/>(Jaeger, Honeycomb, Datadog)"]
-
-    style A fill:#3b82f6,color:#fff
-    style B fill:#6366f1,color:#fff
-    style C fill:#10b981,color:#fff
-
-`} />
+Attaches `llm.model`, `llm.usage.prompt_tokens`, `llm.usage.completion_tokens`, and `llm.usage.total_tokens` on the active span.
 
 ## API Reference
 
-### OpenTelemetryProvider
+### `ObservabilityConfig`
+
+| Field          | Type                      | Description                            |
+| -------------- | ------------------------- | -------------------------------------- |
+| `serviceName`  | `string`                  | Service name in your tracing backend   |
+| `otlpEndpoint` | `string?`                 | Full OTLP HTTP traces URL              |
+| `otlpHeaders`  | `Record<string, string>?` | Auth / vendor headers                  |
+| `logPrompts`   | `boolean?`                | Log prompts on spans (default `false`) |
+
+### `OpenTelemetryProvider`
 
 ```typescript
 class OpenTelemetryProvider {
-  constructor(config: { serviceName: string; endpoint?: string; headers?: Record<string, string> });
-  initialize(): void;
-  shutdown(): Promise<void>;
+  constructor(config: ObservabilityConfig);
+  start(): Promise<void>;
+  stop(): Promise<void>;
+  getTracer(name: string): Tracer;
+  trackCost(model: string, promptTokens: number, completionTokens: number): void;
 }
 ```
 
-### @Trace Decorator
+### `@Trace` Decorator
 
 ```typescript
 @Trace(spanName?: string, options?: TraceOptions)
 ```
-
-**TraceOptions:**
-
-- `attributes`: Static attributes to add to the span.
-- `captureArgs`: Whether to capture method arguments (default: `false`).
-- `captureResult`: Whether to capture method return value (default: `false`).
-
-## Examples
-
-See the [examples](../../example/src/observability) directory for complete working examples with Jaeger and Honeycomb.
 
 ## Testing
 
 ```bash
 npm test
 ```
-
-## Contributing
-
-Contributions are welcome! Please read our [Contributing Guide](../../CONTRIBUTING.md) for details.
 
 ## License
 
@@ -149,5 +144,6 @@ Apache 2.0 © [HazelJS](https://hazeljs.ai)
 ## Links
 
 - [Documentation](https://hazeljs.ai/docs/packages/observability)
+- [Observability partners](https://hazeljs.ai/docs/guides/observability-partners)
 - [GitHub](https://github.com/hazel-js/hazeljs)
 - [Discord](https://discord.gg/PxNBPzvQk7)

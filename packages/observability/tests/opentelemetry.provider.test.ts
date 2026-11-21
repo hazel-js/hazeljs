@@ -71,6 +71,24 @@ describe('OpenTelemetryProvider', () => {
     expect(providerInstance.register).toHaveBeenCalled();
   });
 
+  it('passes otlpHeaders to the OTLP exporter', async () => {
+    const headers = {
+      Authorization: 'Basic dGVzdDp0ZXN0',
+      'x-langfuse-ingestion-version': '4',
+    };
+    const provider = new OpenTelemetryProvider({
+      serviceName: 'test-service',
+      otlpEndpoint: 'https://cloud.langfuse.com/api/public/otel/v1/traces',
+      otlpHeaders: headers,
+    });
+    await provider.start();
+
+    expect(OTLPTraceExporter).toHaveBeenCalledWith({
+      url: 'https://cloud.langfuse.com/api/public/otel/v1/traces',
+      headers,
+    });
+  });
+
   it('shuts down smoothly without exporter', async () => {
     const provider = new OpenTelemetryProvider({ serviceName: 'test-service' });
     await provider.start();

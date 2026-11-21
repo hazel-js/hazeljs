@@ -34,8 +34,17 @@ export interface ObservabilityProvider {
 export interface ObservabilityConfig {
   /** The service name to appear in tracing tools (e.g. 'agent-runtime') */
   serviceName: string;
-  /** Otlp GRPC/HTTP exporter endpoint (e.g., Datadog, Jaeger, Zipkin) */
+  /**
+   * OTLP HTTP exporter URL for traces.
+   * Use the full traces path when the backend requires it
+   * (e.g. `https://cloud.langfuse.com/api/public/otel/v1/traces`).
+   */
   otlpEndpoint?: string;
+  /**
+   * HTTP headers for the OTLP exporter (auth for Langfuse, Braintrust, etc.).
+   * Vendor-neutral — Hazel does not ship Langfuse/Braintrust SDKs.
+   */
+  otlpHeaders?: Record<string, string>;
   /** Whether to log prompts directly to the spans (false by default for privacy) */
   logPrompts?: boolean;
 }
