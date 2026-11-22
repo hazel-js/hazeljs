@@ -8,6 +8,20 @@ All notable changes to HazelJS are documented here. The project follows [Semanti
 
 ---
 
+## [2.1.3] - 2026-11-21
+
+### Added
+
+- **`@hazeljs/observability` — `otlpHeaders`**: optional HTTP headers on the OTLP trace exporter (Langfuse / Braintrust Basic or Bearer auth without vendor SDKs)
+- **Docs**: observability README partner OTLP examples; `@hazeljs/eval` README clarifies CI-gate scope vs Studio/experiment dashboards
+
+### Notes
+
+- Full GitHub release notes: [`RELEASE_NOTES_v2.1.3.md`](./RELEASE_NOTES_v2.1.3.md)
+- No breaking changes vs 2.1.2 (`otlpEndpoint`-only configs unchanged)
+
+---
+
 ## [2.1.2] - 2026-11-21
 
 ### Added
